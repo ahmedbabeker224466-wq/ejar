@@ -4,32 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-type NavItem = {
+export type NavItem = {
   href: string;
   label: string;
   icon: ReactNode;
 };
 
-const HomeIcon = (
-  <svg
-    aria-hidden="true"
-    viewBox="0 0 24 24"
-    width="28"
-    height="28"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M3 10.5 12 3l9 7.5" />
-    <path d="M5 9.5V21h14V9.5" />
-  </svg>
-);
-
-const items: NavItem[] = [{ href: "/", label: "الرئيسية", icon: HomeIcon }];
-
-export function BottomNav() {
+export function BottomNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
   return (

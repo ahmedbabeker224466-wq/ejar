@@ -14,6 +14,13 @@ const variantClasses: Record<ButtonVariant, string> = {
     "bg-surface text-primary border-2 border-primary hover:bg-primary-soft disabled:opacity-50",
 };
 
+/** Button styling, also used for links that should look like buttons. */
+export function buttonClassName(variant: ButtonVariant = "primary", fullWidth = true) {
+  return `inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-6 text-lg font-semibold transition-colors disabled:cursor-not-allowed ${
+    fullWidth ? "w-full" : ""
+  } ${variantClasses[variant]}`;
+}
+
 export function Button({
   variant = "primary",
   fullWidth = true,
@@ -24,9 +31,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-6 text-lg font-semibold transition-colors disabled:cursor-not-allowed ${
-        fullWidth ? "w-full" : ""
-      } ${variantClasses[variant]} ${className}`}
+      className={`${buttonClassName(variant, fullWidth)} ${className}`}
       {...props}
     />
   );
