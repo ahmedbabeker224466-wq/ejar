@@ -2,6 +2,7 @@
 
 const mysql = require('mysql2/promise');
 const logger = require('../utils/logger');
+const { TABLES } = require('../database/schema');
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -10,11 +11,17 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   charset: 'utf8mb4',
-  timezone: 'Z', // store and read timestamps as UTC
+  timezone: 'Z', // mysql2 reads and writes DATETIME values as UTC
   dateStrings: ['DATE'], // keep DATE columns as 'YYYY-MM-DD' strings
   waitForConnections: true,
   connectionLimit: 10,
   connectTimeout: 5000,
+});
+
+// Make CURRENT_TIMESTAMP and TIMESTAMP columns UTC on every connection, so the
+// database and mysql2 agree whatever the server's own time zone is.
+pool.pool.on('connection', (connection) => {
+  connection.query("SET time_zone = '+00:00'");
 });
 
 /** True when the database answers a trivial query. */
@@ -28,16 +35,22 @@ async function ping() {
 }
 
 /**
- * Runs at startup. Table creation is added here in the next task.
- * Never throws: an unreachable database is logged and the app keeps serving.
+ * Runs at startup: creates any missing table, in dependency order.
+ * Safe to run repeatedly. Never throws: problems are logged and the app keeps
+ * serving, so an unreachable database cannot crash the process.
  */
-async function ensureSchema() {
+async function ensureSchema(targetPool = pool) {
+  let current = null;
   try {
-    await pool.query('SELECT 1');
-    logger.info('Database reachable; schema check complete');
+    for (const table of TABLES) {
+      current = table.name;
+      await targetPool.query(table.sql);
+    }
+    logger.info(`Database schema ready (${TABLES.length} tables)`);
     return true;
   } catch (err) {
-    logger.error(`Database unreachable (${err.code || err.message}); the app will run without it`);
+    const where = current ? ` while creating table ${current}` : '';
+    logger.error(`Database schema check failed${where}: ${err.code || err.message}`);
     return false;
   }
 }

@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "seed": "node database/seed.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

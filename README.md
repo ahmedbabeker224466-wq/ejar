@@ -15,7 +15,7 @@ cPanel hosting, so the dependency list is fixed; see `CLAUDE.md` before adding o
 
 ## Run locally
 
-1. Install Node.js 20.9 or newer and MySQL 8.
+1. Install Node.js 20.9 or newer and MySQL 8.0.13+ (or MariaDB 10.2+).
 2. Install dependencies:
    ```bash
    npm install
@@ -28,12 +28,19 @@ cPanel hosting, so the dependency list is fixed; see `CLAUDE.md` before adding o
    ```bash
    npm start
    ```
-   Open http://localhost:3000. The app still starts if the database is
-   unreachable; `/health` reports the database status.
-5. Run the tests:
+   Open http://localhost:3000. At startup the app creates any missing table
+   (`database/schema.js`). It still starts if the database is unreachable;
+   `/health` reports the database status.
+5. Insert the default plans, message templates and settings (safe to repeat):
+   ```bash
+   npm run seed
+   ```
+6. Run the tests:
    ```bash
    npm test
    ```
+   Database tests are skipped unless `TEST_DB_NAME` names a separate, empty
+   database the `DB_USER` can write to.
 
 ## Project layout
 
@@ -41,9 +48,10 @@ cPanel hosting, so the dependency list is fixed; see `CLAUDE.md` before adding o
 |---|---|
 | `server.js` | Express app: security headers, static files, routes, error handlers |
 | `config/db.js` | MySQL pool and `ensureSchema()`, run at startup |
+| `database/` | `schema.js` (all tables, in creation order) and `seed.js` (default rows) |
 | `routes/` | HTTP routes |
 | `middleware/` | 404 and error handlers |
-| `services/` | Business logic (e.g. `assetVersion.js` for cache-busting URLs) |
+| `services/` | Business logic: `scopeToOffice.js` (office isolation), `audit.js`, `inviteCode.js`, `assetVersion.js` |
 | `utils/` | Logger and time helpers |
 | `views/` | EJS layout, partials, pages and error pages |
 | `public/` | Static CSS/JS served with fingerprinted URLs |
