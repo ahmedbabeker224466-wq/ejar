@@ -2,7 +2,7 @@
 
 const mysql = require('mysql2/promise');
 const logger = require('../utils/logger');
-const { TABLES } = require('../database/schema');
+const { TABLES, COLUMN_ADDITIONS, INDEX_ADDITIONS } = require('../database/schema');
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -35,9 +35,10 @@ async function ping() {
 }
 
 /**
- * Runs at startup: creates any missing table, in dependency order.
- * Safe to run repeatedly. Never throws: problems are logged and the app keeps
- * serving, so an unreachable database cannot crash the process.
+ * Runs at startup: creates any missing table, in dependency order, then adds
+ * any column or index a newer version introduced. Safe to run repeatedly.
+ * Never throws: problems are logged and the app keeps serving, so an
+ * unreachable database cannot crash the process.
  */
 async function ensureSchema(targetPool = pool) {
   let current = null;
@@ -46,10 +47,34 @@ async function ensureSchema(targetPool = pool) {
       current = table.name;
       await targetPool.query(table.sql);
     }
+    for (const { table, column, definition } of COLUMN_ADDITIONS) {
+      current = `${table}.${column}`;
+      const [found] = await targetPool.query(
+        `SELECT 1 FROM information_schema.columns
+          WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+        [table, column],
+      );
+      if (found.length === 0) {
+        await targetPool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+        logger.info(`Added column ${table}.${column}`);
+      }
+    }
+    for (const { table, index, columns } of INDEX_ADDITIONS) {
+      current = `${table}.${index}`;
+      const [found] = await targetPool.query(
+        `SELECT 1 FROM information_schema.statistics
+          WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?`,
+        [table, index],
+      );
+      if (found.length === 0) {
+        await targetPool.query(`ALTER TABLE \`${table}\` ADD INDEX \`${index}\` (${columns})`);
+        logger.info(`Added index ${table}.${index}`);
+      }
+    }
     logger.info(`Database schema ready (${TABLES.length} tables)`);
     return true;
   } catch (err) {
-    const where = current ? ` while creating table ${current}` : '';
+    const where = current ? ` at ${current}` : '';
     logger.error(`Database schema check failed${where}: ${err.code || err.message}`);
     return false;
   }

@@ -58,6 +58,7 @@ const TABLES = [
     'session_epoch INT NOT NULL DEFAULT 1',
     'twofa_secret VARBINARY(255) NULL',
     'twofa_enabled TINYINT(1) NOT NULL DEFAULT 0',
+    'twofa_backup_codes JSON NULL', // HMAC hashes of unused backup codes
     'last_seen_at DATETIME NULL',
     'UNIQUE KEY uq_users_phone (phone)',
   ]),
@@ -69,7 +70,9 @@ const TABLES = [
     'attempts TINYINT UNSIGNED NOT NULL DEFAULT 0',
     'expires_at DATETIME NOT NULL',
     'consumed_at DATETIME NULL',
+    'ip VARCHAR(45) NULL', // for the per-IP request limit
     'KEY idx_otp_codes_phone_expires (phone, expires_at)',
+    'KEY idx_otp_codes_ip_created (ip, created_at)',
   ]),
 
   table('user_sessions', [
@@ -763,8 +766,22 @@ const TABLES = [
   ]),
 ];
 
+// Columns and indexes added after a table first shipped. CREATE TABLE above
+// already includes them for new databases; ensureSchema() adds them to older
+// databases that are missing them.
+const COLUMN_ADDITIONS = [
+  { table: 'users', column: 'twofa_backup_codes', definition: 'JSON NULL AFTER twofa_enabled' },
+  { table: 'otp_codes', column: 'ip', definition: 'VARCHAR(45) NULL AFTER consumed_at' },
+];
+
+const INDEX_ADDITIONS = [
+  { table: 'otp_codes', index: 'idx_otp_codes_ip_created', columns: 'ip, created_at' },
+];
+
 module.exports = {
   TABLES,
+  COLUMN_ADDITIONS,
+  INDEX_ADDITIONS,
   statements: TABLES.map((t) => t.sql),
   tableNames: TABLES.map((t) => t.name),
 };

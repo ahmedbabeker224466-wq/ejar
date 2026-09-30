@@ -1,0 +1,40 @@
+<section class="auth card">
+  <h1>أدخل رمز الدخول</h1>
+  <p class="lead">أرسلنا رمزاً من 6 أرقام إلى <bdi dir="ltr" class="nowrap"><%= phoneLocal %></bdi></p>
+
+  <% if (error) { %>
+    <div class="flash flash--danger" role="alert"><%= error %></div>
+  <% } %>
+
+  <form method="post" action="/login/verify" id="otp-form" novalidate>
+    <fieldset class="otp" dir="ltr">
+      <legend class="visually-hidden">رمز الدخول</legend>
+      <% for (let i = 1; i <= 6; i++) { %>
+        <input
+          class="otp__box"
+          name="d<%= i %>"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="1"
+          <%= i === 1 ? 'autocomplete=one-time-code autofocus' : 'autocomplete=off' %>
+          aria-label="الرقم <%= i %>"
+        >
+      <% } %>
+    </fieldset>
+    <input type="hidden" name="code" id="otp-code">
+    <button type="submit" class="btn btn--primary btn--block btn--large">تأكيد الدخول</button>
+  </form>
+
+  <form method="post" action="/login/resend" class="auth__secondary">
+    <p class="muted" id="resend-wait" <%= resendIn > 0 ? '' : 'hidden' %>>
+      يمكنك طلب رمز جديد بعد <span id="resend-seconds"><%= resendIn %></span> ثانية
+    </p>
+    <button type="submit" class="btn btn--secondary btn--block" id="resend-button" data-wait="<%= resendIn %>">
+      إرسال رمز جديد
+    </button>
+  </form>
+
+  <p class="auth__link"><a href="/login">تغيير رقم الجوال</a></p>
+</section>
+<script src="<%= assetUrl('/js/otp.js') %>" defer></script>

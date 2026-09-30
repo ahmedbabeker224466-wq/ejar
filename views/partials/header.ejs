@@ -4,6 +4,10 @@
     <nav class="site-nav" aria-label="القائمة الرئيسية">
       <a href="/" <%- currentPath === '/' ? 'aria-current="page"' : '' %>>الرئيسية</a>
     </nav>
-    <a href="/login" class="btn btn--primary btn--small">تسجيل الدخول</a>
+    <% if (currentUser) { %>
+      <a href="/logout" class="btn btn--secondary btn--small">تسجيل الخروج</a>
+    <% } else { %>
+      <a href="/login" class="btn btn--primary btn--small">تسجيل الدخول</a>
+    <% } %>
   </div>
 </header>

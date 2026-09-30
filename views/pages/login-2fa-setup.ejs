@@ -1,0 +1,39 @@
+<section class="auth card">
+  <h1>تفعيل التحقق بخطوتين</h1>
+  <p class="lead">حساب إدارة المنصة يحتاج خطوة حماية إضافية. تستغرق دقيقتين مرة واحدة فقط.</p>
+
+  <% if (error) { %>
+    <div class="flash flash--danger" role="alert"><%= error %></div>
+  <% } %>
+
+  <ol class="steps">
+    <li>ثبّت تطبيق مصادقة في جوالك، مثل Google Authenticator أو Microsoft Authenticator.</li>
+    <li>
+      من نفس الجوال اضغط الزر التالي لإضافة الحساب إلى التطبيق:
+      <a href="<%= uri %>" class="btn btn--secondary btn--block">إضافة الحساب إلى تطبيق المصادقة</a>
+    </li>
+    <li>
+      أو أدخل هذا المفتاح يدوياً في التطبيق:
+      <code class="secret" dir="ltr"><%= secretGroups.join(' ') %></code>
+    </li>
+    <li>اكتب الرمز المكوّن من 6 أرقام الظاهر في التطبيق:</li>
+  </ol>
+
+  <form method="post" action="/login/2fa/setup" novalidate>
+    <div class="field">
+      <label for="code">الرمز من التطبيق</label>
+      <input
+        id="code"
+        name="code"
+        class="input input--code"
+        type="text"
+        dir="ltr"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        maxlength="6"
+        required
+      >
+    </div>
+    <button type="submit" class="btn btn--primary btn--block btn--large">تفعيل</button>
+  </form>
+</section>

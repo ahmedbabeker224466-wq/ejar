@@ -1,0 +1,31 @@
+<section class="auth card">
+  <h1>التحقق بخطوتين</h1>
+  <p class="lead">افتح تطبيق المصادقة في جوالك واكتب الرمز المكوّن من 6 أرقام.</p>
+
+  <% if (error) { %>
+    <div class="flash flash--danger" role="alert"><%= error %></div>
+  <% } %>
+
+  <form method="post" action="/login/2fa" novalidate>
+    <div class="field">
+      <label for="code">الرمز</label>
+      <input
+        id="code"
+        name="code"
+        class="input input--code"
+        type="text"
+        dir="ltr"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        maxlength="12"
+        aria-describedby="code-hint"
+        autofocus
+        required
+      >
+      <p id="code-hint" class="field-hint">لا تستطيع الوصول للتطبيق؟ اكتب أحد رموز الاحتياط بدلاً منه.</p>
+    </div>
+    <button type="submit" class="btn btn--primary btn--block btn--large">تأكيد</button>
+  </form>
+
+  <p class="auth__link"><a href="/login">البدء من جديد</a></p>
+</section>

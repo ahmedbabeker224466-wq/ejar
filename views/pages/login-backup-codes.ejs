@@ -1,0 +1,15 @@
+<section class="auth card">
+  <span class="badge badge--calm">تم التفعيل</span>
+  <h1>رموز الاحتياط</h1>
+  <p class="lead">
+    احفظ هذه الرموز في مكان آمن. إذا فقدت جوالك تستطيع الدخول بأحدها بدلاً من رمز التطبيق.
+    كل رمز يعمل مرة واحدة فقط.
+  </p>
+  <div class="flash flash--warning" role="note">لن تظهر هذه الرموز مرة أخرى.</div>
+  <ul class="backup-codes" dir="ltr">
+    <% codes.forEach(function (code) { %>
+      <li><code><%= code %></code></li>
+    <% }) %>
+  </ul>
+  <a href="<%= next %>" class="btn btn--primary btn--block btn--large">حفظتها، تابع</a>
+</section>
