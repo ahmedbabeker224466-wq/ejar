@@ -1,0 +1,12 @@
+# Used only if you deploy with cPanel "Git Version Control" (pull from GitHub
+# inside cPanel). The GitHub Actions FTPS workflow does not need this file.
+# Replace CPANEL_USERNAME with your cPanel user name, and "aqdi" with the
+# application root you chose in "Setup Node.js App".
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/CPANEL_USERNAME/aqdi
+    - /bin/mkdir -p $DEPLOYPATH/tmp
+    # No --delete: .env, uploads/ and backups/ on the server must survive.
+    - /usr/bin/rsync -a --exclude='.git' --exclude='.github' --exclude='.env' --exclude='node_modules' --exclude='uploads' --exclude='backups' --exclude='tests' --exclude='reference' --exclude='*.md' ./ $DEPLOYPATH/
+    - /bin/touch $DEPLOYPATH/tmp/restart.txt

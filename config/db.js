@@ -34,15 +34,25 @@ async function ping() {
   }
 }
 
+async function countTables(targetPool) {
+  const [[row]] = await targetPool.query(
+    'SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN (?)',
+    [TABLES.map((t) => t.name)],
+  );
+  return Number(row.n);
+}
+
 /**
  * Runs at startup: creates any missing table, in dependency order, then adds
  * any column or index a newer version introduced. Safe to run repeatedly.
- * Never throws: problems are logged and the app keeps serving, so an
- * unreachable database cannot crash the process.
+ * Never throws: returns { ok, found, created, total, error } so the caller can
+ * report it, and an unreachable database cannot crash the process.
  */
 async function ensureSchema(targetPool = pool) {
   let current = null;
+  const result = { ok: false, found: 0, created: 0, total: TABLES.length, error: null };
   try {
+    result.found = await countTables(targetPool);
     for (const table of TABLES) {
       current = table.name;
       await targetPool.query(table.sql);
@@ -71,13 +81,15 @@ async function ensureSchema(targetPool = pool) {
         logger.info(`Added index ${table}.${index}`);
       }
     }
-    logger.info(`Database schema ready (${TABLES.length} tables)`);
-    return true;
+    result.created = (await countTables(targetPool)) - result.found;
+    result.ok = true;
+    return result;
   } catch (err) {
+    result.error = err.code || err.message;
     const where = current ? ` at ${current}` : '';
-    logger.error(`Database schema check failed${where}: ${err.code || err.message}`);
-    return false;
+    logger.error(`Database schema check failed${where}: ${result.error}`);
+    return result;
   }
 }
 
-module.exports = { pool, ping, ensureSchema };
+module.exports = { pool, ping, ensureSchema, countTables };

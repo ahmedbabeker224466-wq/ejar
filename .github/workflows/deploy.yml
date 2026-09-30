@@ -1,0 +1,62 @@
+name: Deploy to cPanel
+
+# Runs after the CI workflow finishes on main, and only if the tests passed,
+# so a failing commit never reaches the live site.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: deploy-cpanel
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    env:
+      HAS_FTP: ${{ secrets.FTP_HOST != '' && secrets.FTP_USER != '' && secrets.FTP_PASSWORD != '' }}
+    steps:
+      - name: Skip until the FTP secrets are added
+        if: env.HAS_FTP != 'true'
+        run: echo "::notice::Deployment skipped: add FTP_HOST, FTP_USER and FTP_PASSWORD in Settings > Secrets and variables > Actions."
+
+      - uses: actions/checkout@v4
+        if: env.HAS_FTP == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      # A changed tmp/restart.txt makes Passenger restart the app after upload.
+      - name: Mark the app for restart
+        if: env.HAS_FTP == 'true'
+        run: mkdir -p tmp && date -u +%Y-%m-%dT%H:%M:%SZ > tmp/restart.txt
+
+      - name: Upload changed files over FTPS
+        if: env.HAS_FTP == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./
+          # The application root, relative to where the FTP account lands.
+          # Optional secret FTP_SERVER_DIR, e.g. "./aqdi/"; default is the FTP root.
+          server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .github/**
+            **/node_modules/**
+            .env
+            .env.*
+            uploads/**
+            backups/**
+            tests/**
+            reference/**
+            deploy/*.md
+            **/*.md
+            .cpanel.yml

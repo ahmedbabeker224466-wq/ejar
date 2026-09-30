@@ -1,104 +1,56 @@
 'use strict';
 
+// Startup file for cPanel ("Setup Node.js App" -> Application startup file).
+// Passenger loads this file through its own loader, so it must start the
+// server unconditionally (no `require.main === module` check).
+
 require('dotenv').config({ quiet: true });
 
-const path = require('path');
-const express = require('express');
-const helmet = require('helmet');
-const cookieParser = require('cookie-parser');
-const expressLayouts = require('express-ejs-layouts');
-
-const db = require('./config/db');
+const app = require('./app');
 const logger = require('./utils/logger');
-const { createAssetVersion } = require('./services/assetVersion');
-const routes = require('./routes');
-const authRoutes = require('./routes/auth');
-const areaRoutes = require('./routes/areas');
-const { loadUser } = require('./middleware/auth');
-const notFound = require('./middleware/notFound');
-const errorHandler = require('./middleware/errorHandler');
+const selfCheck = require('./services/selfCheck');
+const { setReport, state } = require('./services/runtimeState');
 
-const PUBLIC_DIR = path.join(__dirname, 'public');
-const assets = createAssetVersion(PUBLIC_DIR);
+const DB_RETRY_MS = 30 * 1000;
 
-const app = express();
-
-// cPanel runs the app behind a local reverse proxy; trust it (and only it) so
-// req.ip is the visitor's address, which the per-IP login limit relies on.
-app.set('trust proxy', 'loopback');
-
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", 'https://fonts.googleapis.com'],
-        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:'],
-        connectSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        frameAncestors: ["'none'"],
-        baseUri: ["'self'"],
-        formAction: ["'self'"],
-      },
-    },
-    // 'no-referrer' (helmet's default) makes browsers send "Origin: null" on
-    // form posts, which the same-origin check would reject.
-    referrerPolicy: { policy: 'same-origin' },
-  }),
-);
-app.use(cookieParser());
-app.use(express.urlencoded({ extended: false, limit: '20kb' }));
-app.use(express.json({ limit: '20kb' }));
-
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-app.use(expressLayouts);
-app.set('layout', 'layouts/main');
-
-// Values every template can use.
-app.use((req, res, next) => {
-  res.locals.assetUrl = assets.assetUrl;
-  res.locals.appUrl = process.env.APP_URL || '';
-  res.locals.currentPath = req.path;
-  res.locals.flash = [];
-  res.locals.currentUser = null;
-  res.locals.title = 'عقدي';
-  next();
+process.on('unhandledRejection', (reason) => {
+  logger.error(`Unhandled promise rejection: ${reason && reason.message ? reason.message : reason}`);
 });
 
-app.use(
-  express.static(PUBLIC_DIR, {
-    cacheControl: false,
-    setHeaders(res, filePath) {
-      const urlPath = '/' + path.relative(PUBLIC_DIR, filePath).split(path.sep).join('/');
-      res.setHeader('Cache-Control', assets.cacheControlFor(urlPath, res.req.query.v));
-    },
-  }),
-);
-
-// After static files, so serving CSS/JS never touches the database.
-app.use(loadUser());
-
-app.use(routes);
-app.use(authRoutes);
-app.use(areaRoutes);
-
-app.use(notFound);
-app.use(errorHandler);
-
-if (require.main === module) {
-  const port = Number(process.env.PORT) || 3000;
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-    logger.error('JWT_SECRET is missing or shorter than 32 characters: nobody can sign in');
-  }
-  if ((process.env.SMS_PROVIDER || '').toLowerCase() === 'console' && process.env.NODE_ENV === 'production') {
-    logger.warn('SMS_PROVIDER=console in production: login codes are written to the log, not sent');
-  }
-  db.ensureSchema().finally(() => {
-    app.listen(port, () => logger.info(`Aqdi listening on port ${port}`));
-  });
+/** Retries the database until it answers, then leaves maintenance mode. */
+function retryDatabaseUntilReady() {
+  const timer = setInterval(async () => {
+    const report = await selfCheck.run();
+    if (!report.maintenance) {
+      clearInterval(timer);
+      setReport(report);
+      logger.info(`Database is reachable again; serving normally\n${selfCheck.formatReport(report)}`);
+    }
+  }, DB_RETRY_MS);
+  timer.unref();
 }
 
-module.exports = app;
+async function start() {
+  let report;
+  try {
+    report = await selfCheck.run();
+  } catch (err) {
+    report = { maintenance: true, reasons: [`self-check crashed (${err.message})`] };
+  }
+  setReport(report);
+  if (report.node) logger.info(`\n${selfCheck.formatReport(report)}`);
+
+  // Only the database can recover on its own; missing settings need a restart.
+  const envOk = report.env && report.env.ok;
+  if (state.maintenance && envOk) retryDatabaseUntilReady();
+
+  // Under Passenger (cPanel) listen() is taken over and the port is ignored;
+  // PORT or 3000 is for local runs.
+  const port = Number(process.env.PORT) || 3000;
+  const underPassenger = typeof global.PhusionPassenger !== 'undefined';
+  app.listen(port, () =>
+    logger.info(underPassenger ? 'Aqdi started under Passenger' : `Aqdi listening on port ${port}`),
+  );
+}
+
+start();

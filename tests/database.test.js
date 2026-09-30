@@ -30,8 +30,12 @@ test.after(async () => {
 });
 
 test('ensureSchema() runs twice in a row without error', { skip }, async () => {
-  assert.equal(await db.ensureSchema(), true);
-  assert.equal(await db.ensureSchema(), true);
+  const first = await db.ensureSchema();
+  const second = await db.ensureSchema();
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, true);
+  assert.equal(second.created, 0, 'the second run creates nothing');
+  assert.equal(second.found, second.total);
   const { tableNames } = require('../database/schema');
   const [rows] = await db.pool.query(
     'SELECT table_name AS name FROM information_schema.tables WHERE table_schema = ?',

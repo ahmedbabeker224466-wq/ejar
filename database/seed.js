@@ -180,7 +180,7 @@ if (require.main === module) {
   (async () => {
     let ok = false;
     try {
-      if (!(await db.ensureSchema())) throw new Error('schema check failed');
+      if (!(await db.ensureSchema()).ok) throw new Error('schema check failed');
       const counts = await seed(db.pool);
       logger.info(
         `Seed complete: ${counts.plans} plans, ${counts.templates} templates, ${counts.settings} settings added`,

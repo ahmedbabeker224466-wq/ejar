@@ -28,7 +28,8 @@ cPanel hosting, so the dependency list is fixed; see `CLAUDE.md` before adding o
    ```bash
    npm start
    ```
-   Open http://localhost:3000. At startup the app creates any missing table
+   Open http://localhost:3000. At startup the app logs a self-check block and
+   creates any missing table
    (`database/schema.js`). It still starts if the database is unreachable;
    `/health` reports the database status.
 5. Insert the default plans, message templates and settings (safe to repeat):
@@ -42,16 +43,61 @@ cPanel hosting, so the dependency list is fixed; see `CLAUDE.md` before adding o
    Database tests are skipped unless `TEST_DB_NAME` names a separate, empty
    database the `DB_USER` can write to.
 
+## Run locally on Windows
+
+1. Install **Node.js 20 LTS** from https://nodejs.org (accept the defaults).
+2. Install **MySQL Community Server 8** from https://dev.mysql.com/downloads/installer/
+   (choose "Server only"; remember the root password you set). XAMPP's MariaDB
+   10.4+ also works.
+3. Create the database. Open **MySQL 8.0 Command Line Client**, enter the root
+   password, then run:
+   ```sql
+   CREATE DATABASE aqdi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+4. Open **PowerShell** in the project folder (Shift + right-click the folder →
+   "Open PowerShell window here") and run:
+   ```powershell
+   npm install
+   Copy-Item .env.example .env
+   notepad .env
+   ```
+5. In `.env` set at least these (leave `NODE_ENV=development`):
+   ```
+   DB_USER=root
+   DB_PASSWORD=your MySQL root password
+   DB_NAME=aqdi
+   SMS_PROVIDER=console
+   PLATFORM_ADMIN_PHONE=05XXXXXXXX
+   ```
+   and generate `JWT_SECRET` and `SECRET_BOX_KEY` with this command (run it
+   twice, one value each):
+   ```powershell
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+6. Start it with `npm start` and open http://localhost:3000. The self-check
+   block in the PowerShell window tells you if anything is missing.
+7. Sign in at http://localhost:3000/login: the login code appears in the same
+   PowerShell window on a line starting with `[SMS-CONSOLE]`.
+8. Stop the server with Ctrl + C.
+
+## Deploy to cPanel
+
+Step-by-step guide in Arabic: [`deploy/DEPLOY-CPANEL.md`](deploy/DEPLOY-CPANEL.md).
+Pushes to `main` are tested by `.github/workflows/ci.yml` and, when the tests
+pass, uploaded over FTPS by `.github/workflows/deploy.yml`.
+
 ## Project layout
 
 | Path | Purpose |
 |---|---|
-| `server.js` | Express app: security headers, static files, routes, error handlers |
+| `server.js` | Startup file (Passenger/cPanel): runs the self-check, then listens |
+| `app.js` | Express app: security headers, parsers, static files, maintenance guard, routes, error handlers |
 | `config/db.js` | MySQL pool and `ensureSchema()`, run at startup |
 | `database/` | `schema.js` (all tables, in creation order) and `seed.js` (default rows) |
 | `routes/` | HTTP routes |
-| `middleware/` | 404 and error handlers |
-| `services/` | Business logic: `scopeToOffice.js` (office isolation), `audit.js`, `inviteCode.js`, `assetVersion.js` |
+| `middleware/` | Auth, permissions, maintenance guard, security headers, 404 and error handlers |
+| `services/` | Business logic: auth, OTP, TOTP, SMS drivers, self-check, office scoping, audit |
+| `deploy/` | cPanel guide (Arabic) and `restart.js` (`npm run restart`) |
 | `utils/` | Logger and time helpers |
 | `views/` | EJS layout, partials, pages and error pages |
 | `public/` | Static CSS/JS served with fingerprinted URLs |
