@@ -1,6 +1,6 @@
 <section class="error-page card">
   <p class="error-page__code">403</p>
-  <h1>هذا القسم غير متاح لنوع حسابك</h1>
-  <p class="lead">إذا كنت تعتقد أن هذا خطأ، تواصل مع مكتب العقار أو مع الدعم.</p>
+  <h1><%= locals.heading || 'هذا القسم غير متاح لنوع حسابك' %></h1>
+  <p class="lead"><%= locals.message || 'إذا كنت تعتقد أن هذا خطأ، تواصل مع مكتب العقار أو مع الدعم.' %></p>
   <a href="/" class="btn btn--primary">العودة للرئيسية</a>
 </section>

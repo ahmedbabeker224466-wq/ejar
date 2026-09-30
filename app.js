@@ -14,6 +14,7 @@ const { createAssetVersion } = require('./services/assetVersion');
 const routes = require('./routes');
 const authRoutes = require('./routes/auth');
 const areaRoutes = require('./routes/areas');
+const officeRoutes = require('./routes/office');
 const { loadUser } = require('./middleware/auth');
 const maintenance = require('./middleware/maintenance');
 const notFound = require('./middleware/notFound');
@@ -91,6 +92,7 @@ app.use(loadUser());
 
 app.use(routes);
 app.use(authRoutes);
+app.use(officeRoutes);
 app.use(areaRoutes);
 
 app.use(notFound);

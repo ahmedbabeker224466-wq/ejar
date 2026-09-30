@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= title %> | <%= office.name %> | عقدي</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="<%= assetUrl('/css/main.css') %>">
+  <script src="<%= assetUrl('/js/office.js') %>" defer></script>
+</head>
+<body class="office-body">
+  <header class="office-top">
+    <button type="button" class="office-menu-btn" id="office-menu-toggle" aria-controls="office-nav" aria-expanded="false">
+      <span class="office-menu-btn__bars" aria-hidden="true"></span>
+      <span class="visually-hidden">القائمة</span>
+    </button>
+    <div class="office-top__title">
+      <a href="/office" class="office-top__name"><%= office.name %></a>
+      <div class="office-top__user">
+        <span class="office-top__user-name" dir="auto"><%= userDisplay %></span>
+        <span class="badge badge--role"><%= roleLabel %></span>
+      </div>
+    </div>
+    <a href="/logout" class="btn btn--secondary btn--small">خروج</a>
+  </header>
+
+  <% if (access.onTrial) { %>
+    <div class="office-banner office-banner--info" role="status">
+      <%= access.trialDaysLeft === 0 ? 'تجربتك المجانية تنتهي اليوم' : `تجربتك المجانية تنتهي بعد ${access.trialDaysLeft} يوم` %>
+      <% if (can('billing')) { %><a href="/office/billing">اشترك الآن</a><% } %>
+    </div>
+  <% } else if (access.pastDue) { %>
+    <div class="office-banner office-banner--danger" role="alert">
+      لم يُسدَّد اشتراك المكتب. سدّد الاشتراك حتى لا يتوقف الحساب.
+      <% if (can('billing')) { %><a href="/office/billing">سداد الاشتراك</a><% } %>
+    </div>
+  <% } %>
+
+  <div class="office-shell">
+    <nav id="office-nav" class="office-nav" aria-label="قائمة المكتب">
+      <ul>
+        <% officeNav.forEach(function (item) { %>
+          <li><a href="<%= item.href %>" <%- item.current ? 'aria-current="page"' : '' %>><%= item.label %></a></li>
+        <% }) %>
+      </ul>
+    </nav>
+    <div class="office-backdrop" id="office-backdrop" hidden></div>
+    <main class="office-main">
+      <%- include('../partials/flash') %>
+      <%- body %>
+    </main>
+  </div>
+
+  <footer class="office-footer">
+    <p class="disclaimer">تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط</p>
+  </footer>
+</body>
+</html>

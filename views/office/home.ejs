@@ -1,0 +1,50 @@
+<h1 class="office-title">أهلاً بك في <%= office.name %></h1>
+
+<section class="stats" aria-label="أرقام المكتب">
+  <div class="stat card">
+    <p class="stat__value"><%= counts.activeContracts %></p>
+    <p class="stat__label">عقود سارية</p>
+  </div>
+  <div class="stat card">
+    <p class="stat__value"><%= counts.expiring90 %></p>
+    <p class="stat__label">تنتهي خلال 90 يوماً</p>
+  </div>
+  <div class="stat card">
+    <p class="stat__value"><%= counts.overduePayments %></p>
+    <p class="stat__label">دفعات متأخرة</p>
+  </div>
+  <div class="stat card">
+    <p class="stat__value"><%= counts.openMaintenance %></p>
+    <p class="stat__label">طلبات صيانة مفتوحة</p>
+  </div>
+</section>
+
+<section class="card office-section">
+  <h2>يحتاج إجراء</h2>
+  <% if (needsAction.length) { %>
+    <ul class="action-list">
+      <% needsAction.forEach(function (item) { %>
+        <li><a href="<%= item.href %>"><strong><%= item.count %></strong> <%= item.text %></a></li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p class="empty-state">لا يوجد ما يحتاج إجراءً الآن. سنعرض هنا العقود التي تقترب مواعيدها والدفعات المتأخرة.</p>
+  <% } %>
+</section>
+
+<% if (setupSteps.length) { %>
+  <section class="card office-section">
+    <h2>ابدأ تجهيز مكتبك</h2>
+    <ul class="checklist">
+      <% setupSteps.forEach(function (step) { %>
+        <li>
+          <a href="<%= step.href %>">
+            <span class="checklist__box" aria-hidden="true"></span>
+            <span><%= step.label %></span>
+            <span class="visually-hidden">(لم يكتمل)</span>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+<% } %>

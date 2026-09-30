@@ -2,7 +2,10 @@
   <div class="container site-header__inner">
     <a href="/" class="logo" aria-label="عقدي - الصفحة الرئيسية">عقدي</a>
     <nav class="site-nav" aria-label="القائمة الرئيسية">
-      <a href="/" <%- currentPath === '/' ? 'aria-current="page"' : '' %>>الرئيسية</a>
+      <a href="/" class="site-nav__home" <%- currentPath === '/' ? 'aria-current="page"' : '' %>>الرئيسية</a>
+      <% if (!currentUser) { %>
+        <a href="/register" <%- currentPath === '/register' ? 'aria-current="page"' : '' %>>سجّل مكتبك</a>
+      <% } %>
     </nav>
     <% if (currentUser) { %>
       <a href="/logout" class="btn btn--secondary btn--small">تسجيل الخروج</a>

@@ -1,12 +1,13 @@
 <section class="auth card">
-  <h1>تسجيل الدخول</h1>
-  <p class="lead">أدخل رقم جوالك وسنرسل لك رمز دخول برسالة نصية.</p>
+  <h1><%= heading %></h1>
+  <p class="lead"><%= lead %></p>
 
   <% if (error) { %>
     <div class="flash flash--danger" role="alert"><%= error %></div>
   <% } %>
 
   <form method="post" action="/login" novalidate>
+    <input type="hidden" name="intent" value="<%= intent %>">
     <div class="field">
       <label for="phone">رقم الجوال</label>
       <div class="phone-field" dir="ltr">
@@ -31,4 +32,12 @@
     </div>
     <button type="submit" class="btn btn--primary btn--block btn--large">أرسل رمز الدخول</button>
   </form>
+
+  <p class="auth__link">
+    <% if (intent === 'register') { %>
+      لديك حساب؟ <a href="/login">سجّل الدخول</a>
+    <% } else { %>
+      مكتب عقار جديد؟ <a href="/register">سجّل مكتبك</a>
+    <% } %>
+  </p>
 </section>

@@ -91,7 +91,11 @@ function checkSession(payload, row) {
 }
 
 function createAuthService({ pool = db.pool } = {}) {
-  /** Finds the user for a verified phone, creating a placeholder account if new. */
+  /**
+   * Finds the user for a verified phone. A new phone becomes a user with no
+   * role (NULL) until they create an office or accept an invite; only the
+   * PLATFORM_ADMIN_PHONE ever becomes platform_admin.
+   */
   async function findOrCreateUser(phone) {
     const adminPhone = normalizeSaudi(process.env.PLATFORM_ADMIN_PHONE || '');
     const isAdmin = adminPhone !== null && adminPhone === phone;
@@ -101,7 +105,7 @@ function createAuthService({ pool = db.pool } = {}) {
       try {
         await pool.query('INSERT INTO users (phone, role, phone_verified) VALUES (?, ?, 1)', [
           phone,
-          isAdmin ? 'platform_admin' : 'tenant', // placeholder until they join or create an office
+          isAdmin ? 'platform_admin' : null,
         ]);
       } catch (err) {
         if (err.code !== 'ER_DUP_ENTRY') throw err; // created by a parallel request
@@ -194,12 +198,13 @@ function createAuthService({ pool = db.pool } = {}) {
   return { findOrCreateUser, issueSession, userFromToken, revokeSession, logoutAll };
 }
 
-/** Where each role lands after signing in. */
+/** Where each role lands after signing in. No role yet: create an office. */
 function homeFor(role) {
   if (role === 'platform_admin') return '/platform';
   if (['office_owner', 'office_manager', 'office_staff'].includes(role)) return '/office';
   if (role === 'landlord') return '/landlord';
-  return '/tenant';
+  if (role === 'tenant') return '/tenant';
+  return '/office/new';
 }
 
 /**

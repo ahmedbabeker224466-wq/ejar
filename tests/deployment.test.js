@@ -160,7 +160,7 @@ test('middleware runs in the required order', () => {
     last = index;
   }
   assert.equal(names.at(-1), 'errorHandler', 'the error handler is last');
-  assert.equal(names.filter((n) => n === 'router').length, 3, 'index, auth and area routers are mounted');
+  assert.equal(names.filter((n) => n === 'router').length, 4, 'index, auth, office and area routers are mounted');
 });
 
 test('forwarding headers are trusted only from a local proxy', () => {

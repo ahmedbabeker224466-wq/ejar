@@ -33,6 +33,7 @@ test('each role lands in its own area', () => {
   for (const role of ['office_owner', 'office_manager', 'office_staff']) assert.equal(homeFor(role), '/office');
   assert.equal(homeFor('landlord'), '/landlord');
   assert.equal(homeFor('tenant'), '/tenant');
+  assert.equal(homeFor(null), '/office/new', 'no role yet: create an office');
 });
 
 test('two-factor is mandatory for platform_admin and optional for office_owner', () => {
@@ -96,10 +97,10 @@ test.after(async () => {
   }
 });
 
-test('new phones get a tenant placeholder; the admin phone gets platform_admin', { skip }, async () => {
+test('new phones get no role until they create an office; the admin phone gets platform_admin', { skip }, async () => {
   delete process.env.PLATFORM_ADMIN_PHONE;
   const user = await authService.findOrCreateUser(PHONE);
-  assert.equal(user.role, 'tenant');
+  assert.equal(user.role, null);
 
   process.env.PLATFORM_ADMIN_PHONE = '0500000072';
   const again = await authService.findOrCreateUser(PHONE);

@@ -1,0 +1,47 @@
+<%# The office details form fields, shared by /office/new and /office/settings. %>
+<div class="field">
+  <label for="name">اسم المكتب</label>
+  <input id="name" name="name" class="input" type="text" maxlength="150" required
+         value="<%= values.name %>" <%- errors.name ? 'aria-invalid="true" aria-describedby="name-error"' : '' %>>
+  <% if (errors.name) { %><p id="name-error" class="field-error"><%= errors.name %></p><% } %>
+</div>
+
+<div class="field">
+  <label for="city">المدينة</label>
+  <select id="city" name="city" class="select" required <%- errors.city ? 'aria-invalid="true" aria-describedby="city-error"' : '' %>>
+    <% cities.forEach(function (city) { %>
+      <option value="<%= city %>" <%= values.city === city ? 'selected' : '' %>><%= city %></option>
+    <% }) %>
+  </select>
+  <% if (errors.city) { %><p id="city-error" class="field-error"><%= errors.city %></p><% } %>
+</div>
+
+<div class="field">
+  <label for="phone">هاتف المكتب</label>
+  <input id="phone" name="phone" class="input" type="tel" inputmode="tel" dir="ltr" maxlength="20" required
+         value="<%= values.phone %>" <%- errors.phone ? 'aria-invalid="true" aria-describedby="phone-error"' : 'aria-describedby="phone-hint"' %>>
+  <% if (errors.phone) { %><p id="phone-error" class="field-error"><%= errors.phone %></p><% } else { %>
+    <p id="phone-hint" class="field-hint">جوال أو هاتف ثابت، مثال: 0512345678</p>
+  <% } %>
+</div>
+
+<div class="field">
+  <label for="email">البريد الإلكتروني <span class="muted">(اختياري)</span></label>
+  <input id="email" name="email" class="input" type="email" dir="ltr" maxlength="190"
+         value="<%= values.email %>" <%- errors.email ? 'aria-invalid="true" aria-describedby="email-error"' : '' %>>
+  <% if (errors.email) { %><p id="email-error" class="field-error"><%= errors.email %></p><% } %>
+</div>
+
+<div class="field">
+  <label for="cr_number">رقم السجل التجاري <span class="muted">(اختياري)</span></label>
+  <input id="cr_number" name="cr_number" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="20"
+         value="<%= values.cr_number %>" <%- errors.cr_number ? 'aria-invalid="true" aria-describedby="cr-error"' : '' %>>
+  <% if (errors.cr_number) { %><p id="cr-error" class="field-error"><%= errors.cr_number %></p><% } %>
+</div>
+
+<div class="field">
+  <label for="rega_license">رقم ترخيص فال من الهيئة العامة للعقار <span class="muted">(اختياري)</span></label>
+  <input id="rega_license" name="rega_license" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="20"
+         value="<%= values.rega_license %>" <%- errors.rega_license ? 'aria-invalid="true" aria-describedby="rega-error"' : '' %>>
+  <% if (errors.rega_license) { %><p id="rega-error" class="field-error"><%= errors.rega_license %></p><% } %>
+</div>

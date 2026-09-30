@@ -30,37 +30,45 @@ function redact(value) {
 
 function createAudit(pool) {
   /**
+   * Inserts the audit row and throws on failure. Use it inside a transaction
+   * (pass the connection as pool) when the action must not happen unaudited.
+   */
+  async function write(actorId, officeId, action, entityType, entityId, before, after, ip) {
+    if (SKIPPED_ACTIONS.has(action)) return false;
+    const b = redact(before);
+    const a = redact(after);
+    await pool.query(
+      `INSERT INTO audit_logs
+         (office_id, actor_id, action, entity_type, entity_id, before_json, after_json, ip)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        officeId || null,
+        actorId || null,
+        action,
+        entityType,
+        entityId || null,
+        b === null ? null : JSON.stringify(b),
+        a === null ? null : JSON.stringify(a),
+        ip || null,
+      ],
+    );
+    return true;
+  }
+
+  /**
    * Records who did what. Never throws: a failed audit write is logged and the
    * user's action continues.
    */
-  async function log(actorId, officeId, action, entityType, entityId, before, after, ip) {
-    if (SKIPPED_ACTIONS.has(action)) return false;
+  async function log(...args) {
     try {
-      const b = redact(before);
-      const a = redact(after);
-      await pool.query(
-        `INSERT INTO audit_logs
-           (office_id, actor_id, action, entity_type, entity_id, before_json, after_json, ip)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          officeId || null,
-          actorId || null,
-          action,
-          entityType,
-          entityId || null,
-          b === null ? null : JSON.stringify(b),
-          a === null ? null : JSON.stringify(a),
-          ip || null,
-        ],
-      );
-      return true;
+      return await write(...args);
     } catch (err) {
-      logger.error(`Audit write failed for ${action}: ${err.code || err.message}`);
+      logger.error(`Audit write failed for ${args[2]}: ${err.code || err.message}`);
       return false;
     }
   }
 
-  return { log };
+  return { log, write };
 }
 
 module.exports = { ...createAudit(db.pool), createAudit, SKIPPED_ACTIONS };

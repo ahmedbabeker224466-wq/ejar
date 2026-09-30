@@ -78,6 +78,14 @@ function can(role, capability) {
 }
 
 /**
+ * The role that counts for this request. Inside /office, loadOffice sets
+ * req.memberRole from the user's office_members row, and that role wins.
+ */
+function effectiveRole(req) {
+  return req.memberRole || (req.user && req.user.role);
+}
+
+/**
  * Route guard: signed-in users whose role has the capability pass. Others get
  * 401/redirect (signed out) or 403 JSON / an Arabic page (signed in).
  */
@@ -90,7 +98,7 @@ function requirePerm(capability) {
       if (wantsJson(req)) return res.status(401).json({ error: 'يجب تسجيل الدخول أولاً' });
       return res.redirect('/login');
     }
-    if (can(req.user.role, capability)) return next();
+    if (can(effectiveRole(req), capability)) return next();
     if (wantsJson(req)) {
       return res.status(403).json({ error: 'هذا القسم غير متاح لنوع حسابك' });
     }
@@ -98,4 +106,4 @@ function requirePerm(capability) {
   };
 }
 
-module.exports = { CAPABILITIES, can, requirePerm };
+module.exports = { CAPABILITIES, can, requirePerm, effectiveRole };

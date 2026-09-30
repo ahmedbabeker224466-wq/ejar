@@ -1,0 +1,26 @@
+<section class="card form-card">
+  <h1>الإعدادات</h1>
+
+  <% if (saved) { %>
+    <div class="flash flash--success" role="status">تم حفظ بيانات المكتب.</div>
+  <% } %>
+
+  <h2>بيانات المكتب</h2>
+  <% if (canEditOffice) { %>
+    <% if (Object.keys(errors).length) { %>
+      <div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div>
+    <% } %>
+    <form method="post" action="/office/settings" novalidate>
+      <%- include('../partials/office-fields') %>
+      <button type="submit" class="btn btn--primary btn--block btn--large">حفظ</button>
+    </form>
+  <% } else { %>
+    <dl class="details">
+      <dt>اسم المكتب</dt><dd><%= values.name %></dd>
+      <dt>المدينة</dt><dd><%= values.city %></dd>
+      <dt>هاتف المكتب</dt><dd dir="ltr"><%= values.phone %></dd>
+      <% if (values.email) { %><dt>البريد الإلكتروني</dt><dd dir="ltr"><%= values.email %></dd><% } %>
+    </dl>
+    <p class="muted">تعديل بيانات المكتب متاح لمالك المكتب ومديره فقط.</p>
+  <% } %>
+</section>

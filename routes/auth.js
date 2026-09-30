@@ -80,32 +80,44 @@ async function finishLogin(req, res, user) {
 }
 
 // '/login' also covers '/login/verify', '/login/2fa' and the other steps.
-router.use(['/login', '/logout', '/logout-all'], noStore, sameOrigin);
+router.use(['/login', '/logout', '/logout-all', '/register'], noStore, sameOrigin);
+
+// The phone page, as "sign in" or as "register your office". Both use the same
+// phone code flow; a new phone ends up at /office/new (auth.homeFor).
+const PHONE_PAGES = {
+  login: { title: 'تسجيل الدخول', heading: 'تسجيل الدخول', lead: 'أدخل رقم جوالك وسنرسل لك رمز دخول برسالة نصية.' },
+  register: {
+    title: 'سجّل مكتبك',
+    heading: 'سجّل مكتبك',
+    lead: 'أدخل رقم جوالك وسنرسل لك رمزاً برسالة نصية، ثم تكتب بيانات مكتبك. التجربة مجانية 14 يوماً.',
+  },
+};
+
+function renderPhonePage(res, intent, phone, error, status = 200) {
+  const mode = intent === 'register' ? 'register' : 'login';
+  return res.status(status).render('pages/login', { ...PHONE_PAGES[mode], intent: mode, phone, error });
+}
 
 // Step 1: phone number
 router.get('/login', (req, res) => {
   if (req.user) return res.redirect(auth.homeFor(req.user.role));
-  res.render('pages/login', { title: 'تسجيل الدخول', phone: '', error: null });
+  return renderPhonePage(res, 'login', '', null);
+});
+
+router.get('/register', (req, res) => {
+  if (req.user) return res.redirect(auth.homeFor(req.user.role));
+  return renderPhonePage(res, 'register', '', null);
 });
 
 router.post('/login', async (req, res, next) => {
   try {
     const raw = String(req.body.phone || '');
+    const intent = req.body.intent === 'register' ? 'register' : 'login';
     const phone = normalizeSaudi(raw);
-    if (!phone) {
-      return res.status(422).render('pages/login', {
-        title: 'تسجيل الدخول',
-        phone: raw.slice(0, 20),
-        error: MESSAGES.invalid_phone,
-      });
-    }
+    if (!phone) return renderPhonePage(res, intent, raw.slice(0, 20), MESSAGES.invalid_phone, 422);
     const result = await otp.request(phone, 'login', req.ip);
     if (!result.ok) {
-      return res.status(result.error === 'send_failed' ? 503 : 429).render('pages/login', {
-        title: 'تسجيل الدخول',
-        phone: toLocal(phone),
-        error: messageFor(result),
-      });
+      return renderPhonePage(res, intent, toLocal(phone), messageFor(result), result.error === 'send_failed' ? 503 : 429);
     }
     stepCookie(res, LOGIN_COOKIE, auth.signStepToken({ phone, sentAt: Date.now() }, 'login-phone', STEP_SECONDS));
     return res.redirect('/login/verify');
@@ -149,7 +161,7 @@ router.post('/login/verify', async (req, res, next) => {
     clearStep(res, LOGIN_COOKIE);
     const user = await auth.findOrCreateUser(result.phone);
     if (!user.is_active) {
-      return res.status(403).render('pages/login', { title: 'تسجيل الدخول', phone: '', error: MESSAGES.inactive });
+      return renderPhonePage(res, 'login', '', MESSAGES.inactive, 403);
     }
 
     if (auth.needsTwoFactor(user)) {

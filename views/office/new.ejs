@@ -1,0 +1,15 @@
+<section class="card form-card">
+  <h1>أنشئ مكتبك</h1>
+  <p class="lead">اكتب بيانات مكتبك. تبدأ تجربة مجانية لمدة 14 يوماً، دون بطاقة دفع.</p>
+
+  <% if (errors.form) { %>
+    <div class="flash flash--danger" role="alert"><%= errors.form %></div>
+  <% } else if (Object.keys(errors).length) { %>
+    <div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div>
+  <% } %>
+
+  <form method="post" action="/office/new" novalidate>
+    <%- include('../partials/office-fields') %>
+    <button type="submit" class="btn btn--primary btn--block btn--large">أنشئ المكتب</button>
+  </form>
+</section>
