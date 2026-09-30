@@ -52,6 +52,26 @@
 3. ادخل المجلد، واضغط **Upload** وارفع ملف ZIP، ثم اضغط عليه بالزر الأيمن واختر **Extract**.
 4. تأكد أن `server.js` و `package.json` موجودان **مباشرة** داخل `aqdi`، وليسا داخل مجلد فرعي.
 
+**الطريقة (ج): من داخل cPanel عبر Git Version Control**
+
+في هذه الطريقة يسحب cPanel المستودع من GitHub بنفسه، ثم ينسخ الملفات إلى مجلد التطبيق حسب ملف `.cpanel.yml`.
+
+1. في cPanel، في قسم **Files**، افتح **Git™ Version Control** واضغط **Create**.
+2. املأ النموذج:
+   - **Clone URL**: رابط المستودع من GitHub. إذا كان المستودع خاصاً (Private) فيحتاج cPanel إلى مفتاح SSH تضيفه في GitHub كـ Deploy key.
+   - **Repository Path**: يجب أن يكون مجلداً **منفصلاً** عن مجلد التطبيق، مثل `/home/phillryi/aqdi-src`. لا تكتب هنا `/home/phillryi/aqdi`.
+   - **Repository Name**: أي اسم، مثل `aqdi`.
+3. اضغط **Create** وانتظر حتى ينتهي النسخ.
+4. **مجلد التطبيق `aqdi` لا تملؤه بيدك.** تملؤه مهمة **Deploy HEAD Commit**:
+   1. من قائمة المستودعات اضغط **Manage** بجانب المستودع، ثم افتح تبويب **Pull or Deploy**.
+   2. اضغط **Update from Remote** لسحب آخر التحديثات من GitHub.
+   3. اضغط **Deploy HEAD Commit**.
+   4. عندها يقرأ cPanel ملف `.cpanel.yml` وينسخ الملفات من `/home/phillryi/aqdi-src` إلى `/home/phillryi/aqdi`، ثم يعيد تشغيل التطبيق عبر `tmp/restart.txt`.
+   5. النسخ لا يحذف ولا يغيّر ملف `.env` ولا مجلدي `uploads` و `backups` في `aqdi`.
+5. عند كل تحديث لاحق: كرر **Update from Remote** ثم **Deploy HEAD Commit**.
+
+> **لماذا مجلدان؟** مجلد المستودع (`aqdi-src`) يحتوي نسخة Git الكاملة. أما مجلد التطبيق (`aqdi`) فهو ما يشغّله Node.js، وفيه ملف `.env` ومجلد `node_modules` الخاصان بالسيرفر. لو كانا نفس المجلد، لكانت ملفات Git والإعدادات السرية مختلطة، ولتعارض `node_modules` مع أداة **Setup Node.js App**.
+
 > **مهم:** لا ترفع مجلد `node_modules` أبداً. cPanel يرفض إنشاء التطبيق إذا وجده، لأنه ينشئه بنفسه في الخطوة 5.
 
 ---

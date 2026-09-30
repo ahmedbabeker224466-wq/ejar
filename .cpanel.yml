@@ -5,7 +5,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/CPANEL_USERNAME/aqdi
+    - export DEPLOYPATH=/home/phillryi/aqdi
     - /bin/mkdir -p $DEPLOYPATH/tmp
     # No --delete: .env, uploads/ and backups/ on the server must survive.
     - /usr/bin/rsync -a --exclude='.git' --exclude='.github' --exclude='.env' --exclude='node_modules' --exclude='uploads' --exclude='backups' --exclude='tests' --exclude='reference' --exclude='*.md' ./ $DEPLOYPATH/
