@@ -1,0 +1,47 @@
+<section class="card form-card">
+  <h1><%= landlord ? 'تعديل بيانات المالك' : 'إضافة مالك' %></h1>
+
+  <% if (Object.keys(errors).length) { %>
+    <div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div>
+  <% } %>
+
+  <form method="post" action="<%= landlord ? `/office/landlords/${landlord.id}` : '/office/landlords' %>" novalidate>
+    <div class="field">
+      <label for="label">اسم المالك المختصر</label>
+      <input id="label" name="label" class="input" type="text" maxlength="120" required value="<%= values.label %>"
+             aria-describedby="label-hint<%= errors.label ? ' label-error' : '' %>" <%- errors.label ? 'aria-invalid="true"' : '' %>>
+      <p id="label-hint" class="field-hint">اكتب اسماً مختصراً للتعريف فقط، لا تكتب الهوية أو الحساب البنكي</p>
+      <% if (errors.label) { %><p id="label-error" class="field-error"><%= errors.label %></p><% } %>
+    </div>
+
+    <div class="field">
+      <label for="city">المدينة <span class="muted">(اختياري)</span></label>
+      <select id="city" name="city" class="select" <%- errors.city ? 'aria-invalid="true"' : '' %>>
+        <option value="">اختر المدينة</option>
+        <% cities.forEach(function (city) { %>
+          <option value="<%= city %>" <%= values.city === city ? 'selected' : '' %>><%= city %></option>
+        <% }) %>
+      </select>
+      <% if (errors.city) { %><p class="field-error"><%= errors.city %></p><% } %>
+    </div>
+
+    <div class="field">
+      <label for="phone">جوال المالك <span class="muted">(اختياري)</span></label>
+      <input id="phone" name="phone" class="input" type="tel" inputmode="tel" dir="ltr" maxlength="20" value="<%= values.phone %>"
+             <%- errors.phone ? 'aria-invalid="true" aria-describedby="phone-error"' : '' %>>
+      <% if (errors.phone) { %><p id="phone-error" class="field-error"><%= errors.phone %></p><% } else { %>
+        <p class="field-hint">نستخدمه لإرسال رمز الدعوة عبر واتساب. مثال: 0512345678</p>
+      <% } %>
+    </div>
+
+    <div class="field">
+      <label for="notes">ملاحظات <span class="muted">(اختياري)</span></label>
+      <textarea id="notes" name="notes" class="textarea" maxlength="1000"
+                <%- errors.notes ? 'aria-invalid="true" aria-describedby="notes-error"' : '' %>><%= values.notes %></textarea>
+      <% if (errors.notes) { %><p id="notes-error" class="field-error"><%= errors.notes %></p><% } %>
+    </div>
+
+    <button type="submit" class="btn btn--primary btn--block btn--large">حفظ</button>
+    <a href="<%= landlord ? `/office/landlords/${landlord.id}` : '/office/landlords' %>" class="btn btn--secondary btn--block form-cancel">إلغاء</a>
+  </form>
+</section>

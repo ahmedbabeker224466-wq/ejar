@@ -4,6 +4,7 @@
 
 const { scopeToOffice } = require('./scopeToOffice');
 const { createAudit } = require('./audit');
+const { withTransaction } = require('./transaction');
 const contractDates = require('./contractDates');
 const { normalizeSaudi, toWesternDigits } = require('../utils/phone');
 
@@ -138,14 +139,11 @@ async function membershipsFor(pool, userId) {
 /**
  * Creates the office and makes the user its owner, all in one transaction:
  * office, users.role, office_members, office_settings, audit_logs. Anything
- * failing rolls every step back. Only a user with no role and no office may
+ * failing rolls every step back (a deadlock is retried, see services/transaction.js). Only a user with no role and no office may
  * create one, so this can never grant platform_admin or a second office.
  */
 async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
-  const conn = await pool.getConnection();
-  try {
-    await conn.beginTransaction();
-
+  return withTransaction(pool, async (conn) => {
     // Locks the user row, so a double submit cannot create two offices.
     const [[user]] = await conn.query('SELECT id, role FROM users WHERE id = ? FOR UPDATE', [userId]);
     if (!user) throw new OfficeCreateError('no_user');
@@ -192,14 +190,8 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
       plan_id: plan ? plan.id : null,
     }, ip);
 
-    await conn.commit();
     return officeId;
-  } catch (err) {
-    await conn.rollback().catch(() => {});
-    throw err;
-  } finally {
-    conn.release();
-  }
+  });
 }
 
 /**
@@ -223,7 +215,7 @@ function officeAccess(office, now = new Date()) {
 
 const LIVE_CONTRACT = "status IN ('calm','soon','urgent','deadline_passed')";
 
-/** The four dashboard numbers, counted inside this office only. */
+/** The dashboard numbers, counted inside this office only. */
 async function dashboardCounts(pool, officeId, now = new Date()) {
   const scoped = scopeToOffice(pool, officeId);
   const today = contractDates.riyadhDate(now);
@@ -236,7 +228,9 @@ async function dashboardCounts(pool, officeId, now = new Date()) {
        (SELECT COUNT(*) FROM contract_payments
          WHERE office_id = :office_id AND status IN ('due','late') AND due_date < ?) AS overdue_payments,
        (SELECT COUNT(*) FROM maintenance_requests
-         WHERE office_id = :office_id AND status IN ('open','assigned','in_progress')) AS open_maintenance`,
+         WHERE office_id = :office_id AND status IN ('open','assigned','in_progress')) AS open_maintenance,
+       (SELECT COUNT(*) FROM landlords WHERE office_id = :office_id) AS landlords_total,
+       (SELECT COUNT(*) FROM landlords WHERE office_id = :office_id AND is_active = 1) AS landlords_active`,
     [today, contractDates.addDays(today, 90), today],
   );
   return {
@@ -244,6 +238,8 @@ async function dashboardCounts(pool, officeId, now = new Date()) {
     expiring90: Number(row.expiring_90),
     overduePayments: Number(row.overdue_payments),
     openMaintenance: Number(row.open_maintenance),
+    landlordsTotal: Number(row.landlords_total),
+    landlordsActive: Number(row.landlords_active),
   };
 }
 

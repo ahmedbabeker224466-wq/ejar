@@ -15,6 +15,7 @@ const { requirePerm, can } = require('../middleware/permissions');
 const { noStore, sameOrigin } = require('../middleware/security');
 const { rateLimit } = require('../middleware/rateLimit');
 const { loadOffice, officeGate, OFFICE_NAV } = require('../middleware/loadOffice');
+const landlordRoutes = require('./landlords');
 
 const router = express.Router();
 
@@ -91,8 +92,9 @@ router.post('/office/new', requireAuth, createOfficeLimit, onlyWithoutOffice, as
 
 router.use('/office', requireAuth, loadOffice(), officeGate);
 
+// done(counts) ticks a step once the office has done it.
 const SETUP_STEPS = [
-  { label: 'أضف أول مالك', href: '/office/landlords', capability: 'landlords' },
+  { label: 'أضف أول مالك', href: '/office/landlords', capability: 'landlords', done: (c) => c.landlordsTotal > 0 },
   { label: 'أضف أول عقار أو وحدة', href: '/office/units', capability: 'units' },
   { label: 'أضف أول عقد', href: '/office/contracts', capability: 'contracts' },
   { label: 'ادعُ أحد أعضاء فريقك', href: '/office/team', capability: 'team' },
@@ -111,16 +113,22 @@ router.get('/office', requirePerm('contracts'), async (req, res, next) => {
       title: 'الرئيسية',
       counts,
       needsAction,
-      setupSteps: SETUP_STEPS.filter((step) => can(req.memberRole, step.capability)),
+      setupSteps: SETUP_STEPS.filter((step) => can(req.memberRole, step.capability)).map((step) => ({
+        label: step.label,
+        href: step.href,
+        done: Boolean(step.done && step.done(counts)),
+      })),
     });
   } catch (err) {
     return next(err);
   }
 });
 
+router.use(landlordRoutes);
+
 // One placeholder page per navigation item, each behind its own capability.
-// Settings is a real page, below.
-for (const item of OFFICE_NAV.filter((i) => !['home', 'settings'].includes(i.key))) {
+// Landlords (routes/landlords.js) and settings (below) are real pages.
+for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'settings'].includes(i.key))) {
   router.get(item.href, requirePerm(item.capability), (req, res) => {
     res.render('office/placeholder', { title: item.label });
   });

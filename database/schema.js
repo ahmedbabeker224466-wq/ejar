@@ -374,6 +374,7 @@ const TABLES = [
     `created_by ${REF} NULL`,
     `used_by ${REF} NULL`,
     'used_at DATETIME NULL',
+    'revoked_at DATETIME NULL', // set when the office revokes or replaces the code
     'expires_at DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 30 DAY)',
     'UNIQUE KEY uq_invites_code (code)',
     'KEY idx_invites_office_kind (office_id, kind)',
@@ -772,6 +773,7 @@ const TABLES = [
 const COLUMN_ADDITIONS = [
   { table: 'users', column: 'twofa_backup_codes', definition: 'JSON NULL AFTER twofa_enabled' },
   { table: 'otp_codes', column: 'ip', definition: 'VARCHAR(45) NULL AFTER consumed_at' },
+  { table: 'invites', column: 'revoked_at', definition: 'DATETIME NULL AFTER used_at' },
 ];
 
 const INDEX_ADDITIONS = [

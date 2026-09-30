@@ -37,4 +37,11 @@ function toLocal(canonical) {
   return `0${canonical.slice(3)}`;
 }
 
-module.exports = { normalizeSaudi, toWesternDigits, toE164, toLocal };
+/** '9665XXXXXXXX' -> '050****567': enough to recognise, not enough to call. */
+function maskPhone(canonical) {
+  if (!canonical || String(canonical).length < 8) return '****';
+  const local = toLocal(String(canonical));
+  return `${local.slice(0, 3)}****${local.slice(-3)}`;
+}
+
+module.exports = { normalizeSaudi, toWesternDigits, toE164, toLocal, maskPhone };

@@ -6,6 +6,7 @@
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TRIAL_DAYS = 14;
+const INVITE_DAYS = 30;
 const YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /** The calendar date in Riyadh at a point in time, as 'YYYY-MM-DD'. */
@@ -34,9 +35,19 @@ function daysBetween(fromYmd, toYmd) {
   return Math.round((parseYmd(toYmd) - parseYmd(fromYmd)) / DAY_MS);
 }
 
+/** The point in time exactly n days (of 24 hours) after another. */
+function daysAfter(at, n) {
+  return new Date(at.getTime() + n * DAY_MS);
+}
+
 /** When a trial that starts now ends: exactly TRIAL_DAYS later, in UTC. */
 function trialEndsAt(now) {
-  return new Date(now.getTime() + TRIAL_DAYS * DAY_MS);
+  return daysAfter(now, TRIAL_DAYS);
+}
+
+/** When an invite created now stops working: exactly INVITE_DAYS later, in UTC. */
+function inviteExpiresAt(now) {
+  return daysAfter(now, INVITE_DAYS);
 }
 
 /** A trial is over once its end time has passed. No end time counts as over. */
@@ -54,4 +65,15 @@ function trialDaysLeft(endsAt, now) {
   return Math.max(0, daysBetween(riyadhDate(now), riyadhDate(new Date(endsAt))));
 }
 
-module.exports = { TRIAL_DAYS, riyadhDate, addDays, daysBetween, trialEndsAt, isTrialExpired, trialDaysLeft };
+module.exports = {
+  TRIAL_DAYS,
+  INVITE_DAYS,
+  riyadhDate,
+  addDays,
+  daysBetween,
+  daysAfter,
+  trialEndsAt,
+  inviteExpiresAt,
+  isTrialExpired,
+  trialDaysLeft,
+};

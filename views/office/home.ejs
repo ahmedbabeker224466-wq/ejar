@@ -17,6 +17,12 @@
     <p class="stat__value"><%= counts.openMaintenance %></p>
     <p class="stat__label">طلبات صيانة مفتوحة</p>
   </div>
+  <% if (can('landlords')) { %>
+    <a class="stat card stat--link" href="/office/landlords">
+      <p class="stat__value"><%= counts.landlordsActive %></p>
+      <p class="stat__label">الملّاك</p>
+    </a>
+  <% } %>
 </section>
 
 <section class="card office-section">
@@ -38,10 +44,10 @@
     <ul class="checklist">
       <% setupSteps.forEach(function (step) { %>
         <li>
-          <a href="<%= step.href %>">
-            <span class="checklist__box" aria-hidden="true"></span>
+          <a href="<%= step.href %>"<%- step.done ? ' class="is-done"' : '' %>>
+            <span class="checklist__box" aria-hidden="true"><%= step.done ? '✓' : '' %></span>
             <span><%= step.label %></span>
-            <span class="visually-hidden">(لم يكتمل)</span>
+            <span class="visually-hidden"><%= step.done ? '(مكتمل)' : '(لم يكتمل)' %></span>
           </a>
         </li>
       <% }) %>

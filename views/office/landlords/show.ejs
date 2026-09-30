@@ -1,0 +1,95 @@
+<p class="back-link"><a href="/office/landlords">→ كل الملاك</a></p>
+
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card detail-card">
+  <div class="page-head">
+    <h1><%= landlord.label %></h1>
+    <div class="item__badges">
+      <span class="badge badge--link-<%= landlord.status %>"><%= statusLabel %></span>
+      <% if (!landlord.is_active) { %><span class="badge badge--ended">موقوف</span><% } %>
+    </div>
+  </div>
+  <dl class="details">
+    <dt>المدينة</dt><dd><%= landlord.city || '—' %></dd>
+    <dt>الجوال</dt><dd dir="ltr"><%= landlord.phoneLocal || '—' %></dd>
+    <dt>الوحدات</dt><dd><%= landlord.units_count %></dd>
+    <% if (landlord.notes) { %><dt>ملاحظات</dt><dd class="pre-line"><%= landlord.notes %></dd><% } %>
+  </dl>
+  <div class="button-row">
+    <a href="/office/landlords/<%= landlord.id %>/edit" class="btn btn--secondary">تعديل</a>
+    <% if (landlord.is_active) { %>
+      <form method="post" action="/office/landlords/<%= landlord.id %>/deactivate">
+        <button type="submit" class="btn btn--secondary">إيقاف المالك</button>
+      </form>
+    <% } else { %>
+      <form method="post" action="/office/landlords/<%= landlord.id %>/activate">
+        <button type="submit" class="btn btn--secondary">إعادة التفعيل</button>
+      </form>
+    <% } %>
+  </div>
+  <% if (canDelete) { %>
+    <details class="danger-zone">
+      <summary>حذف المالك</summary>
+      <p>الحذف نهائي ولا يمكن التراجع عنه. إن أردت إخفاءه فقط فاستخدم "إيقاف المالك".</p>
+      <form method="post" action="/office/landlords/<%= landlord.id %>/delete">
+        <button type="submit" class="btn btn--danger btn--block">نعم، احذف المالك نهائياً</button>
+      </form>
+    </details>
+  <% } %>
+</section>
+
+<section class="card detail-card" id="invite">
+  <h2>رمز الدعوة</h2>
+  <% if (landlord.user_id) { %>
+    <p class="lead">انضم المالك إلى التطبيق، ولا يحتاج إلى رمز دعوة.</p>
+  <% } else { %>
+    <% if (invite && invite.code) { %>
+      <p class="muted">أرسل هذا الرمز للمالك ليدخل به إلى التطبيق. يُستخدم مرة واحدة فقط.</p>
+      <div class="invite-code">
+        <output id="invite-code" dir="ltr"><%= invite.code %></output>
+        <button type="button" class="btn btn--secondary" data-copy="#invite-code" data-copied="تم النسخ">نسخ الرمز</button>
+      </div>
+      <p class="muted">الحالة: <span class="badge badge--calm"><%= invite.label %></span> · صالح حتى <span dir="ltr"><%= invite.expiresOn %></span></p>
+      <div class="button-row">
+        <a href="<%= invite.shareLink %>" class="btn btn--primary" target="_blank" rel="noopener noreferrer">إرسال عبر واتساب</a>
+        <form method="post" action="/office/landlords/<%= landlord.id %>/invite/revoke">
+          <button type="submit" class="btn btn--secondary">إلغاء الرمز</button>
+        </form>
+        <% if (landlord.is_active) { %>
+          <form method="post" action="/office/landlords/<%= landlord.id %>/invite">
+            <button type="submit" class="btn btn--secondary">إنشاء رمز جديد</button>
+          </form>
+        <% } %>
+      </div>
+    <% } else { %>
+      <% if (invite) { %>
+        <p>آخر رمز: <span class="badge badge--ended"><%= invite.label %></span>
+          <% if (invite.usedBy) { %> بواسطة <span dir="ltr"><%= invite.usedBy %></span><% } %>
+        </p>
+      <% } else { %>
+        <p class="muted">لم يُنشأ رمز دعوة لهذا المالك بعد.</p>
+      <% } %>
+      <% if (landlord.is_active) { %>
+        <form method="post" action="/office/landlords/<%= landlord.id %>/invite">
+          <button type="submit" class="btn btn--primary btn--large btn--block">إنشاء رمز دعوة</button>
+        </form>
+      <% } else { %>
+        <p class="muted">أعد تفعيل المالك لإنشاء رمز دعوة.</p>
+      <% } %>
+    <% } %>
+  <% } %>
+</section>
+
+<section class="card detail-card">
+  <h2>العقارات والوحدات</h2>
+  <p class="muted">هذه الصفحة قيد البناء</p>
+</section>
+
+<section class="card detail-card">
+  <h2>العقود</h2>
+  <p class="muted">هذه الصفحة قيد البناء</p>
+</section>
+
+<script src="<%= assetUrl('/js/copy.js') %>" defer></script>

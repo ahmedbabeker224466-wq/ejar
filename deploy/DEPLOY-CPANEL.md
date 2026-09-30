@@ -214,6 +214,19 @@ SMS_PROVIDER=console
 
 ---
 
+## ملاحظة: تغييرات قاعدة البيانات التي تُطبَّق تلقائياً
+
+عند كل تشغيل يفحص التطبيق الجداول، ويضيف أي عمود ناقص فقط (لا يحذف ولا يغيّر بيانات).
+لا تحتاج تنفيذ شيء بيدك. هذه قائمة ما قد يُنفَّذ على الخادم، لتعرفه إن رأيته في السجل:
+
+| منذ | الأمر | يظهر في السجل |
+|---|---|---|
+| المصادقة | `ALTER TABLE users ADD COLUMN twofa_backup_codes JSON NULL AFTER twofa_enabled` | `Added column users.twofa_backup_codes` |
+| المصادقة | `ALTER TABLE otp_codes ADD COLUMN ip VARCHAR(45) NULL AFTER consumed_at` | `Added column otp_codes.ip` |
+| الملّاك ورموز الدعوة | `ALTER TABLE invites ADD COLUMN revoked_at DATETIME NULL AFTER used_at` | `Added column invites.revoked_at` |
+
+كل أمر يُنفَّذ مرة واحدة فقط، وفقط إذا كان العمود غير موجود.
+
 ## ملاحظة: HTTPS
 
 ملف تعريف الدخول (Cookie) يعمل عبر `https://` فقط في وضع Production. إذا فتحت الموقع عبر `http://` فلن يكتمل تسجيل الدخول.

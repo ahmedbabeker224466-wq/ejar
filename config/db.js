@@ -65,8 +65,10 @@ async function ensureSchema(targetPool = pool) {
         [table, column],
       );
       if (found.length === 0) {
-        await targetPool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
-        logger.info(`Added column ${table}.${column}`);
+        // Another process starting at the same moment may add it first.
+        if (await alterUnlessDone(targetPool, `ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`, 'ER_DUP_FIELDNAME')) {
+          logger.info(`Added column ${table}.${column}`);
+        }
       }
     }
     for (const { table, index, columns } of INDEX_ADDITIONS) {
@@ -77,8 +79,9 @@ async function ensureSchema(targetPool = pool) {
         [table, index],
       );
       if (found.length === 0) {
-        await targetPool.query(`ALTER TABLE \`${table}\` ADD INDEX \`${index}\` (${columns})`);
-        logger.info(`Added index ${table}.${index}`);
+        if (await alterUnlessDone(targetPool, `ALTER TABLE \`${table}\` ADD INDEX \`${index}\` (${columns})`, 'ER_DUP_KEYNAME')) {
+          logger.info(`Added index ${table}.${index}`);
+        }
       }
     }
     result.created = (await countTables(targetPool)) - result.found;
@@ -89,6 +92,20 @@ async function ensureSchema(targetPool = pool) {
     const where = current ? ` at ${current}` : '';
     logger.error(`Database schema check failed${where}: ${result.error}`);
     return result;
+  }
+}
+
+/**
+ * Runs an ALTER; returns false instead of failing when the change already
+ * exists (errorCode), which happens when two workers start together.
+ */
+async function alterUnlessDone(targetPool, sql, errorCode) {
+  try {
+    await targetPool.query(sql);
+    return true;
+  } catch (err) {
+    if (err.code === errorCode) return false;
+    throw err;
   }
 }
 
