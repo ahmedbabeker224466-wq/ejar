@@ -45,6 +45,19 @@ test('checkEnv warns about SMS settings the chosen provider needs', () => {
   assert.ok(result.warnings.some((w) => w.startsWith('SMS_SENDER')));
 });
 
+test('REQUIRE_ADMIN_2FA=false in production is reported as ignored', () => {
+  const prod = checkEnv({ ...GOOD_ENV, NODE_ENV: 'production', REQUIRE_ADMIN_2FA: 'false' });
+  assert.equal(prod.ignored.length, 1);
+  assert.match(prod.ignored[0], /REQUIRE_ADMIN_2FA=false was ignored/);
+  assert.ok(!prod.warnings.some((w) => w.includes('REQUIRE_ADMIN_2FA')));
+
+  const dev = checkEnv({ ...GOOD_ENV, NODE_ENV: 'development', REQUIRE_ADMIN_2FA: 'false' });
+  assert.deepEqual(dev.ignored, []);
+  assert.ok(dev.warnings.some((w) => w.includes('testing only')));
+
+  assert.deepEqual(checkEnv({ ...GOOD_ENV, NODE_ENV: 'production' }).ignored, []);
+});
+
 test('the self-check says whether SMS is console or a real provider', () => {
   assert.equal(describeSms({ SMS_PROVIDER: 'console' }).driver, 'console');
   assert.equal(describeSms({ SMS_PROVIDER: 'unifonic' }).real, true);

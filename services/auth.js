@@ -202,9 +202,21 @@ function homeFor(role) {
   return '/tenant';
 }
 
+/**
+ * Whether platform_admin must use 2FA. REQUIRE_ADMIN_2FA=false turns it off
+ * for testing, but only outside production; production ignores the flag.
+ */
+function adminTwoFactorRequired(env = process.env) {
+  const skipRequested = String(env.REQUIRE_ADMIN_2FA ?? 'true').trim().toLowerCase() === 'false';
+  return !(skipRequested && env.NODE_ENV !== 'production');
+}
+
 /** Whether signing in needs the authenticator step after the phone code. */
-function needsTwoFactor(user) {
-  return user.role === 'platform_admin' || (user.role === 'office_owner' && Boolean(user.twofa_enabled));
+function needsTwoFactor(user, env = process.env) {
+  const enabled = Boolean(user.twofa_enabled);
+  if (user.role === 'platform_admin') return enabled || adminTwoFactorRequired(env);
+  // Anyone who already turned 2FA on is always asked for their code.
+  return user.role === 'office_owner' && enabled;
 }
 
 module.exports = {
@@ -213,6 +225,7 @@ module.exports = {
   checkSession,
   homeFor,
   needsTwoFactor,
+  adminTwoFactorRequired,
   signStepToken,
   verifyStepToken,
   deviceFingerprint,

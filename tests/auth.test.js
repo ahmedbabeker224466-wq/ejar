@@ -36,10 +36,34 @@ test('each role lands in its own area', () => {
 });
 
 test('two-factor is mandatory for platform_admin and optional for office_owner', () => {
-  assert.equal(needsTwoFactor({ role: 'platform_admin', twofa_enabled: 0 }), true);
-  assert.equal(needsTwoFactor({ role: 'office_owner', twofa_enabled: 0 }), false);
-  assert.equal(needsTwoFactor({ role: 'office_owner', twofa_enabled: 1 }), true);
-  assert.equal(needsTwoFactor({ role: 'tenant', twofa_enabled: 1 }), false);
+  const env = {};
+  assert.equal(needsTwoFactor({ role: 'platform_admin', twofa_enabled: 0 }, env), true);
+  assert.equal(needsTwoFactor({ role: 'office_owner', twofa_enabled: 0 }, env), false);
+  assert.equal(needsTwoFactor({ role: 'office_owner', twofa_enabled: 1 }, env), true);
+  assert.equal(needsTwoFactor({ role: 'tenant', twofa_enabled: 1 }, env), false);
+});
+
+test('REQUIRE_ADMIN_2FA=false outside production lets platform_admin skip 2FA', () => {
+  const admin = { role: 'platform_admin', twofa_enabled: 0 };
+  assert.equal(needsTwoFactor(admin, { REQUIRE_ADMIN_2FA: 'false', NODE_ENV: 'development' }), false);
+  assert.equal(needsTwoFactor(admin, { REQUIRE_ADMIN_2FA: 'FALSE' }), false, 'NODE_ENV unset is not production');
+});
+
+test('REQUIRE_ADMIN_2FA=false is ignored in production', () => {
+  const admin = { role: 'platform_admin', twofa_enabled: 0 };
+  assert.equal(needsTwoFactor(admin, { REQUIRE_ADMIN_2FA: 'false', NODE_ENV: 'production' }), true);
+});
+
+test('REQUIRE_ADMIN_2FA unset or any value other than false keeps 2FA required', () => {
+  const admin = { role: 'platform_admin', twofa_enabled: 0 };
+  for (const env of [{}, { NODE_ENV: 'development' }, { REQUIRE_ADMIN_2FA: 'true' }, { REQUIRE_ADMIN_2FA: 'no' }, { REQUIRE_ADMIN_2FA: '' }]) {
+    assert.equal(needsTwoFactor(admin, env), true, JSON.stringify(env));
+  }
+});
+
+test('an admin who already enabled 2FA is still asked for the code when the flag is false', () => {
+  const admin = { role: 'platform_admin', twofa_enabled: 1 };
+  assert.equal(needsTwoFactor(admin, { REQUIRE_ADMIN_2FA: 'false', NODE_ENV: 'development' }), true);
 });
 
 // ---------------------------------------------------------------- with MySQL

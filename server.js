@@ -39,6 +39,7 @@ async function start() {
   }
   setReport(report);
   if (report.node) logger.info(`\n${selfCheck.formatReport(report)}`);
+  for (const message of (report.env && report.env.ignored) || []) logger.error(message);
 
   // Only the database can recover on its own; missing settings need a restart.
   const envOk = report.env && report.env.ok;

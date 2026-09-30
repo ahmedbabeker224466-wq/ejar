@@ -5,6 +5,7 @@
 
 const db = require('../config/db');
 const { selectDriver } = require('./sms');
+const { adminTwoFactorRequired } = require('./auth');
 
 /** The app cannot serve safely without these. */
 const REQUIRED = [
@@ -41,7 +42,21 @@ function checkEnv(env = process.env) {
   if (provider && !['console', ...Object.keys(SMS_NEEDS)].includes(provider)) {
     warnings.push(`SMS_PROVIDER=${provider} is not a known driver`);
   }
-  return { ok: missing.length === 0 && invalid.length === 0, missing, invalid, warnings };
+  const ignored = ignoredSettings(env);
+  if (!ignored.length && !adminTwoFactorRequired(env)) {
+    warnings.push('REQUIRE_ADMIN_2FA=false: platform_admin signs in without 2FA (testing only)');
+  }
+  return { ok: missing.length === 0 && invalid.length === 0, missing, invalid, warnings, ignored };
+}
+
+/** Pure: settings that were set but deliberately ignored, with the reason. */
+function ignoredSettings(env = process.env) {
+  const ignored = [];
+  const skip = String(env.REQUIRE_ADMIN_2FA ?? '').trim().toLowerCase() === 'false';
+  if (skip && env.NODE_ENV === 'production') {
+    ignored.push('REQUIRE_ADMIN_2FA=false was ignored because NODE_ENV=production: platform_admin 2FA stays mandatory');
+  }
+  return ignored;
 }
 
 /** Pure: describes the SMS driver that will be used. */
@@ -125,4 +140,4 @@ function formatReport(r) {
   return lines.join('\n');
 }
 
-module.exports = { run, checkEnv, describeSms, formatReport, REQUIRED, RECOMMENDED };
+module.exports = { run, checkEnv, ignoredSettings, describeSms, formatReport, REQUIRED, RECOMMENDED };
