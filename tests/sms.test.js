@@ -25,7 +25,17 @@ test('production never falls back to the console driver silently', async () => {
 test('SMS_PROVIDER picks the driver', () => {
   assert.equal(selectDriver({ SMS_PROVIDER: 'unifonic' }).name, 'unifonic');
   assert.equal(selectDriver({ SMS_PROVIDER: 'MSEGAT' }).name, 'msegat');
-  assert.equal(selectDriver({ SMS_PROVIDER: 'console', NODE_ENV: 'production' }).name, 'console');
+});
+
+test('production refuses the console driver even when SMS_PROVIDER=console', async () => {
+  const driver = selectDriver({ SMS_PROVIDER: 'console', NODE_ENV: 'production' });
+  assert.equal(driver.name, 'none');
+  assert.equal((await driver.send('+966512345678', 'x')).error, 'not_configured');
+});
+
+test('development still gets the console driver when SMS_PROVIDER=console', () => {
+  assert.equal(selectDriver({ SMS_PROVIDER: 'console', NODE_ENV: 'development' }).name, 'console');
+  assert.equal(selectDriver({ SMS_PROVIDER: 'console' }).name, 'console');
 });
 
 test('real drivers report missing settings instead of throwing', async () => {

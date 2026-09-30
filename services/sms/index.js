@@ -8,20 +8,30 @@ const DRIVERS = {
   msegat: () => require('./msegat'),
 };
 
+const NOT_CONFIGURED = {
+  name: 'none',
+  async send() {
+    return { ok: false, providerRef: null, error: 'not_configured' };
+  },
+};
+
 /**
  * The driver named by SMS_PROVIDER. Without one, development uses the console
- * driver; production refuses to send rather than silently logging codes.
+ * driver. Production never uses the console driver, even when asked, because
+ * it writes login codes to the log; it gets the not-configured driver instead.
  */
 function selectDriver(env = process.env) {
   const name = (env.SMS_PROVIDER || '').trim().toLowerCase();
+  if (env.NODE_ENV === 'production' && name === 'console') {
+    logger.error(
+      'SMS_PROVIDER=console cannot be used in production (it writes login codes to the log); ' +
+        'no SMS will be sent until a real provider is configured',
+    );
+    return NOT_CONFIGURED;
+  }
   if (DRIVERS[name]) return DRIVERS[name]();
   if (!name && env.NODE_ENV !== 'production') return DRIVERS.console();
-  return {
-    name: 'none',
-    async send() {
-      return { ok: false, providerRef: null, error: 'not_configured' };
-    },
-  };
+  return NOT_CONFIGURED;
 }
 
 /**
