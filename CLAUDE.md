@@ -16,7 +16,7 @@ Everything else is written with Node's built-in modules: TOTP with crypto, Whats
 4. Privacy: never store from a contract the party names, national ID or iqama numbers, IBAN, meter or account numbers, or full addresses. Never log contract contents. Never persist the uploaded contract file.
 5. Secrets live only in environment variables or encrypted in the database. .env is gitignored. Never print a secret.
 6. Every table that belongs to an office carries office_id, and every query goes through scopeToOffice(). One office must never read another office's row, even through a coding mistake.
-7. Dates: store Gregorian (YYYY-MM-DD) and UTC timestamps; display in Asia/Riyadh. Hijri is display-only text. All date math lives in services/contractDates.js, pure functions covered by tests.
+7. Dates: store Gregorian (YYYY-MM-DD) and UTC timestamps; display in Asia/Riyadh. Hijri is display-only text. All date math lives in services/contractDates.js (date primitives) and services/contractEngine.js (contract rules), pure functions covered by tests.
 8. Money: DECIMAL(12,2) with a separate currency column, SAR by default.
 9. Security on the server, never only in the UI: every protected route uses requirePerm. Hiding a button is decoration.
 10. After every task: run the tests, fix failures, commit with a clear message, push to main, then tell me in simple Arabic what to check in the browser.
@@ -45,6 +45,19 @@ Everything else is written with Node's built-in modules: TOTP with crypto, Whats
 - Plan limits: services/planLimits.js. checkLimit({ limit, current, adding }) is pure (limit NULL = unlimited). Any create that counts against a limit runs in a transaction whose FIRST statement is unitUsage(scoped, { lock: true }): it locks the office row and counts with a locking read, so parallel creates cannot pass the limit. Use the same pattern for contracts and members.
 - Amenities are fixed keys (services/units.js AMENITIES) stored in unit_amenities and shown in Arabic.
 - Transactions go through services/transaction.js withTransaction (retries a deadlock victim).
+
+# Date rules (config/ejarRules.js, services/contractEngine.js)
+- The Ejar rules exist once, in config/ejarRules.js (frozen). VERIFY every one against the official Ejar/REGA source before launch:
+  - NON_RENEWAL_NOTICE_DAYS = 60: notice not to renew is due at least 60 days before end_date.
+  - RENT_CHANGE_NOTICE_DAYS = 90: a rent change must be requested at least 90 days before end_date.
+  - AUTO_RENEW_DEFAULT = true: without timely notice the contract renews for a term equal to the previous one.
+  - RIYADH_RENT_FREEZE = { city: 'riyadh', from: '2025-09-25', years: 5 }: no rent increase in Riyadh when the new rent would take effect (end_date + 1) from 2025-09-25 up to 2030-09-24; a reduction is always allowed.
+  - STAGE_THRESHOLDS = { soonDays: 30, urgentDays: 7 }, counted in days left to the notice deadline.
+- Stages (classifyContract): terminated > renewed > ended (today after end_date; the end day itself is still running) > deadline_passed (after the notice deadline) > urgent (0..7 days left; the deadline day is urgent) > soon (8..30) > calm (more than 30). A contract that has not started is classified the same way and flagged notStarted.
+- "today" is always passed in as riyadhDate(now). Dates are strict 'YYYY-MM-DD' (years 1900-2200; impossible dates throw ContractDateError 'invalid_date'). Months add with clamping to the month end; a term of n months ends on addMonths(start, n) minus one day.
+- Money in the engine is integer halalas; schedules put the rounding remainder on the last installment.
+- Hijri (formatHijri) is display only, labelled "تقريبي", never used in math.
+- Never do date math outside services/contractDates.js and services/contractEngine.js, and never write a rule number anywhere but config/ejarRules.js.
 
 # Fixed table names
 users, otp_codes, user_sessions, user_devices, notification_prefs, offices, office_members, office_branches, office_settings, office_secrets, landlords, buildings, units, unit_photos, unit_amenities, contracts, contract_members, contract_payments, contract_events, contract_notices, contract_renewals, contract_documents, extraction_jobs, invites, maintenance_requests, maintenance_messages, maintenance_photos, vendors, listings, listing_inquiries, listing_views, plans, subscriptions, subscription_invoices, platform_payments, promo_codes, promo_usages, reminders, notifications, notification_log, message_templates, conversations, messages, tickets, ticket_messages, contact_messages, waitlist, audit_logs, staff_activity, office_tasks, internal_notes, blog_posts, testimonials, faqs, settings, page_views, cron_runs, backups, feature_flags

@@ -9,39 +9,7 @@ const contractDates = require('./contractDates');
 const { normalizeSaudi, toWesternDigits } = require('../utils/phone');
 
 // Riyadh first, then the other large cities, then a catch-all.
-const SAUDI_CITIES = [
-  'الرياض',
-  'جدة',
-  'مكة المكرمة',
-  'المدينة المنورة',
-  'الدمام',
-  'الخبر',
-  'الظهران',
-  'الأحساء',
-  'الجبيل',
-  'القطيف',
-  'الطائف',
-  'تبوك',
-  'بريدة',
-  'عنيزة',
-  'الرس',
-  'حائل',
-  'أبها',
-  'خميس مشيط',
-  'جازان',
-  'نجران',
-  'الباحة',
-  'بيشة',
-  'ينبع',
-  'حفر الباطن',
-  'الخرج',
-  'المجمعة',
-  'الدوادمي',
-  'عرعر',
-  'سكاكا',
-  'القريات',
-  'مدينة أخرى',
-];
+const { SAUDI_CITIES } = require('../config/saudiCities');
 
 // Reminder channels for a new office: site and email on, the rest off.
 const DEFAULT_SETTINGS = {

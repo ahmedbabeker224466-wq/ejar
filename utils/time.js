@@ -1,6 +1,7 @@
 'use strict';
 
-// Display helpers only. Contract date math belongs in services/contractDates.js.
+// Display helpers only. Date math belongs in services/contractDates.js and
+// services/contractEngine.js.
 
 /** Current time in Asia/Riyadh as "YYYY-MM-DD HH:mm:ss". */
 function riyadhNow(now = new Date()) {
