@@ -1,0 +1,140 @@
+<div class="page-head">
+  <h1>العقارات والوحدات</h1>
+  <% if (counts.usageText) { %><span class="badge badge--calm usage"><%= counts.usageText %></span><% } %>
+</div>
+
+<nav class="tabs" aria-label="أقسام الصفحة">
+  <a href="/office/units" <%- tab === 'units' ? 'aria-current="page"' : '' %>>الوحدات (<%= counts.total %>)</a>
+  <a href="/office/units?tab=buildings" <%- tab === 'buildings' ? 'aria-current="page"' : '' %>>المباني (<%= counts.buildings %>)</a>
+</nav>
+
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+
+<% if (landlords.length === 0 && counts.total === 0 && counts.buildings === 0) { %>
+  <section class="card empty-card">
+    <h2>أضف مالكاً أولاً</h2>
+    <p class="lead">كل مبنى وكل وحدة تتبع مالكاً. أضف أول مالك ثم ارجع هنا.</p>
+    <a href="/office/landlords/new" class="btn btn--primary btn--large btn--block">إضافة مالك</a>
+  </section>
+<% } else if (tab === 'buildings') { %>
+  <div class="button-row">
+    <a href="/office/units/buildings/new" class="btn btn--primary">إضافة مبنى</a>
+  </div>
+
+  <form class="card filter-bar" method="get" action="/office/units" role="search">
+    <input type="hidden" name="tab" value="buildings">
+    <div class="field">
+      <label for="q">بحث باسم المبنى أو الحي</label>
+      <input id="q" name="q" class="input" type="search" maxlength="60" value="<%= q %>">
+    </div>
+    <div class="field">
+      <label for="landlord">المالك</label>
+      <select id="landlord" name="landlord" class="select">
+        <option value="">الكل</option>
+        <% landlords.forEach(function (l) { %><option value="<%= l.id %>" <%= landlordId === l.id ? 'selected' : '' %>><%= l.label %></option><% }) %>
+      </select>
+    </div>
+    <button type="submit" class="btn btn--secondary btn--block">عرض</button>
+  </form>
+
+  <% if (rows.length === 0) { %>
+    <section class="card empty-card">
+      <p class="lead"><%= filtered ? 'لا توجد نتائج تطابق البحث.' : 'لا توجد مبانٍ بعد. المبنى اختياري، ويمكنك إضافة وحدات بدون مبنى.' %></p>
+    </section>
+  <% } else { %>
+    <ul class="item-list">
+      <% rows.forEach(function (b) { %>
+        <li class="card item">
+          <a class="item__title" href="/office/units/buildings/<%= b.id %>/edit"><%= b.name %></a>
+          <p class="item__meta">
+            <span><%= b.city %><%= b.district ? ` · ${b.district}` : '' %></span>
+            <span>المالك: <%= b.landlord_label %></span>
+          </p>
+          <p class="item__meta"><a href="/office/units?building=<%= b.id %>"><%= b.units_count %> وحدة</a></p>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+<% } else { %>
+  <section class="unit-stats" aria-label="أرقام الوحدات">
+    <a class="card mini-stat" href="/office/units?status=vacant"><strong><%= counts.vacant %></strong> شاغرة</a>
+    <a class="card mini-stat" href="/office/units?status=rented"><strong><%= counts.rented %></strong> مؤجرة</a>
+    <a class="card mini-stat" href="/office/units?status=maintenance"><strong><%= counts.maintenance %></strong> تحت الصيانة</a>
+  </section>
+
+  <div class="button-row">
+    <a href="/office/units/new" class="btn btn--primary">إضافة وحدة</a>
+    <a href="/office/units/bulk" class="btn btn--secondary">إضافة عدة وحدات</a>
+  </div>
+
+  <form class="card filter-bar" method="get" action="/office/units" role="search">
+    <div class="field">
+      <label for="q">بحث باسم الوحدة</label>
+      <input id="q" name="q" class="input" type="search" maxlength="60" value="<%= q %>">
+    </div>
+    <div class="filter-grid">
+      <div class="field">
+        <label for="landlord">المالك</label>
+        <select id="landlord" name="landlord" class="select">
+          <option value="">الكل</option>
+          <% landlords.forEach(function (l) { %><option value="<%= l.id %>" <%= landlordId === l.id ? 'selected' : '' %>><%= l.label %></option><% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="building">المبنى</label>
+        <select id="building" name="building" class="select">
+          <option value="">الكل</option>
+          <% buildingOptions.forEach(function (b) { %><option value="<%= b.id %>" <%= buildingId === b.id ? 'selected' : '' %>><%= b.name %></option><% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="status">الحالة</label>
+        <select id="status" name="status" class="select">
+          <option value="">الكل</option>
+          <% Object.entries(statusLabels).forEach(function ([key, label]) { %><option value="<%= key %>" <%= status === key ? 'selected' : '' %>><%= label %></option><% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="type">النوع</label>
+        <select id="type" name="type" class="select">
+          <option value="">الكل</option>
+          <% Object.entries(unitTypes).forEach(function ([key, label]) { %><option value="<%= key %>" <%= unitType === key ? 'selected' : '' %>><%= label %></option><% }) %>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn--secondary btn--block">عرض</button>
+  </form>
+
+  <% if (rows.length === 0) { %>
+    <section class="card empty-card">
+      <p class="lead"><%= filtered ? 'لا توجد نتائج تطابق البحث.' : 'لا توجد وحدات بعد.' %></p>
+    </section>
+  <% } else { %>
+    <p class="muted"><%= total %> وحدة</p>
+    <ul class="item-list">
+      <% rows.forEach(function (u) { %>
+        <li class="card item">
+          <a class="item__title" href="/office/units/<%= u.id %>"><%= u.label %></a>
+          <div class="item__badges">
+            <span class="badge badge--unit-<%= u.status %>"><%= statusLabels[u.status] %></span>
+            <span class="badge badge--calm"><%= unitTypes[u.unit_type] %></span>
+          </div>
+          <p class="item__meta">
+            <span>المالك: <%= u.landlord_label %></span>
+            <% if (u.building_name) { %><span><%= u.building_name %></span><% } %>
+            <span><%= u.city %></span>
+            <% if (u.base_rent !== null) { %><span><%= Number(u.base_rent).toLocaleString('en-US') %> ريال</span><% } %>
+          </p>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+<% } %>
+
+<% if (typeof pages !== 'undefined' && pages > 1) { %>
+  <nav class="pager" aria-label="الصفحات">
+    <% if (prevUrl) { %><a class="btn btn--secondary" href="<%= prevUrl %>">السابق</a><% } else { %><span></span><% } %>
+    <span>صفحة <%= page %> من <%= pages %></span>
+    <% if (nextUrl) { %><a class="btn btn--secondary" href="<%= nextUrl %>">التالي</a><% } else { %><span></span><% } %>
+  </nav>
+<% } %>

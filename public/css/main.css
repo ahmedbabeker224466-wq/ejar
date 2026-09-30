@@ -1149,6 +1149,127 @@ img {
   text-decoration: line-through;
 }
 
+/* Units and buildings */
+.tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  padding-inline: var(--space-4);
+  margin-bottom: -2px;
+  border-bottom: 3px solid transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tabs a[aria-current='page'] {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.unit-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-3) var(--space-2);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.mini-stat strong {
+  color: var(--color-text);
+  font-size: var(--text-xl);
+}
+
+.filter-grid,
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--space-3);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-lg);
+}
+
+.check input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--color-primary);
+}
+
+.checks {
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.checks legend {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.checks__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--space-3);
+}
+
+.checks__grid .check {
+  margin-bottom: 0;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.tag-list li {
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  font-weight: 600;
+}
+
+.badge--unit-vacant { background: var(--color-success-soft); color: var(--color-success); }
+.badge--unit-rented { background: var(--color-info-soft); color: var(--color-info); }
+.badge--unit-maintenance { background: var(--stage-urgent-soft); color: var(--stage-urgent); }
+
+.units-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
 /* Wider screens */
 @media (min-width: 768px) {
   h1 { font-size: var(--text-3xl); }

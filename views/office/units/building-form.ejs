@@ -1,0 +1,67 @@
+<p class="back-link"><a href="/office/units?tab=buildings">→ كل المباني</a></p>
+<section class="card form-card">
+  <h1><%= building ? 'تعديل المبنى' : 'إضافة مبنى' %></h1>
+
+  <% if (errors.form) { %>
+    <div class="flash flash--danger" role="alert"><%= errors.form %></div>
+  <% } else if (Object.keys(errors).length) { %>
+    <div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div>
+  <% } %>
+
+  <form method="post" action="<%= building ? `/office/units/buildings/${building.id}` : '/office/units/buildings' %>" novalidate>
+    <div class="field">
+      <label for="landlord_id">المالك</label>
+      <select id="landlord_id" name="landlord_id" class="select" required <%- errors.landlord_id ? 'aria-invalid="true"' : '' %>>
+        <option value="">اختر المالك</option>
+        <% landlords.forEach(function (l) { %>
+          <option value="<%= l.id %>" <%= Number(values.landlord_id) === l.id ? 'selected' : '' %>><%= l.label %><%= l.is_active ? '' : ' (موقوف)' %></option>
+        <% }) %>
+      </select>
+      <% if (errors.landlord_id) { %><p class="field-error"><%= errors.landlord_id %></p><% } %>
+      <% if (building && building.units_count > 0) { %><p class="field-hint">لا يمكن نقل المبنى إلى مالك آخر لأن فيه وحدات.</p><% } %>
+    </div>
+
+    <div class="field">
+      <label for="name">اسم المبنى</label>
+      <input id="name" name="name" class="input" type="text" maxlength="120" required value="<%= values.name %>"
+             aria-describedby="name-hint" <%- errors.name ? 'aria-invalid="true"' : '' %>>
+      <p id="name-hint" class="field-hint">اكتب اسماً مختصراً للتعريف، لا تكتب العنوان التفصيلي أو أرقام العدادات</p>
+      <% if (errors.name) { %><p class="field-error"><%= errors.name %></p><% } %>
+    </div>
+
+    <div class="field">
+      <label for="city">المدينة</label>
+      <select id="city" name="city" class="select" required <%- errors.city ? 'aria-invalid="true"' : '' %>>
+        <% cities.forEach(function (city) { %><option value="<%= city %>" <%= values.city === city ? 'selected' : '' %>><%= city %></option><% }) %>
+      </select>
+      <% if (errors.city) { %><p class="field-error"><%= errors.city %></p><% } %>
+    </div>
+
+    <div class="field">
+      <label for="district">الحي <span class="muted">(اختياري)</span></label>
+      <input id="district" name="district" class="input" type="text" maxlength="80" value="<%= values.district || '' %>" <%- errors.district ? 'aria-invalid="true"' : '' %>>
+      <% if (errors.district) { %><p class="field-error"><%= errors.district %></p><% } %>
+    </div>
+
+    <div class="field">
+      <label for="notes">ملاحظات <span class="muted">(اختياري)</span></label>
+      <textarea id="notes" name="notes" class="textarea" maxlength="1000" <%- errors.notes ? 'aria-invalid="true"' : '' %>><%= values.notes || '' %></textarea>
+      <% if (errors.notes) { %><p class="field-error"><%= errors.notes %></p><% } %>
+    </div>
+
+    <button type="submit" class="btn btn--primary btn--block btn--large">حفظ</button>
+  </form>
+
+  <% if (building) { %>
+    <p class="muted"><a href="/office/units?building=<%= building.id %>"><%= building.units_count %> وحدة في هذا المبنى</a></p>
+    <% if (can('contracts.delete') && building.units_count === 0) { %>
+      <details class="danger-zone">
+        <summary>حذف المبنى</summary>
+        <p>الحذف نهائي ولا يمكن التراجع عنه.</p>
+        <form method="post" action="/office/units/buildings/<%= building.id %>/delete">
+          <button type="submit" class="btn btn--danger btn--block">نعم، احذف المبنى</button>
+        </form>
+      </details>
+    <% } %>
+  <% } %>
+</section>

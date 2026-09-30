@@ -9,6 +9,7 @@ const express = require('express');
 const db = require('../config/db');
 const landlords = require('../services/landlords');
 const invites = require('../services/invites');
+const unitsService = require('../services/units');
 const { scopeToOffice } = require('../services/scopeToOffice');
 const { withTransaction } = require('../services/transaction');
 const { SAUDI_CITIES } = require('../services/offices');
@@ -90,6 +91,8 @@ async function renderDetail(req, res, { status = 200, error = null } = {}) {
     landlord: { ...landlord, phoneLocal: landlord.phone ? toLocal(landlord.phone) : null },
     statusLabel: STATUS_LABELS[landlord.status],
     invite: await inviteView(req, landlord),
+    units: await unitsService.listUnits(db.pool, req.office.id, { landlordId: landlord.id, pageSize: 50 }),
+    unitStatusLabels: unitsService.STATUS_LABELS,
     message: MESSAGES[req.query.done] || null,
     error,
     canDelete:

@@ -8,6 +8,7 @@ const express = require('express');
 const db = require('../config/db');
 const auth = require('../services/auth');
 const offices = require('../services/offices');
+const unitsService = require('../services/units');
 const logger = require('../utils/logger');
 const { toLocal } = require('../utils/phone');
 const { requireAuth } = require('../middleware/auth');
@@ -16,6 +17,7 @@ const { noStore, sameOrigin } = require('../middleware/security');
 const { rateLimit } = require('../middleware/rateLimit');
 const { loadOffice, officeGate, OFFICE_NAV } = require('../middleware/loadOffice');
 const landlordRoutes = require('./landlords');
+const unitRoutes = require('./units');
 
 const router = express.Router();
 
@@ -95,7 +97,7 @@ router.use('/office', requireAuth, loadOffice(), officeGate);
 // done(counts) ticks a step once the office has done it.
 const SETUP_STEPS = [
   { label: 'أضف أول مالك', href: '/office/landlords', capability: 'landlords', done: (c) => c.landlordsTotal > 0 },
-  { label: 'أضف أول عقار أو وحدة', href: '/office/units', capability: 'units' },
+  { label: 'أضف أول عقار أو وحدة', href: '/office/units', capability: 'units', done: (c) => c.units.total + c.units.buildings > 0 },
   { label: 'أضف أول عقد', href: '/office/contracts', capability: 'contracts' },
   { label: 'ادعُ أحد أعضاء فريقك', href: '/office/team', capability: 'team' },
   { label: 'اربط واتساب لإرسال التذكيرات', href: '/office/settings', capability: 'settings.basic' },
@@ -104,6 +106,7 @@ const SETUP_STEPS = [
 router.get('/office', requirePerm('contracts'), async (req, res, next) => {
   try {
     const counts = await offices.dashboardCounts(db.pool, req.office.id);
+    counts.units = await unitsService.unitCounts(db.pool, req.office.id);
     const needsAction = [
       { count: counts.expiring90, text: 'عقود تنتهي خلال 90 يوماً', href: '/office/contracts', capability: 'contracts' },
       { count: counts.overduePayments, text: 'دفعات متأخرة', href: '/office/payments', capability: 'payments.read' },
@@ -125,10 +128,11 @@ router.get('/office', requirePerm('contracts'), async (req, res, next) => {
 });
 
 router.use(landlordRoutes);
+router.use(unitRoutes);
 
 // One placeholder page per navigation item, each behind its own capability.
-// Landlords (routes/landlords.js) and settings (below) are real pages.
-for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'settings'].includes(i.key))) {
+// Landlords, units (routes/landlords.js, routes/units.js) and settings (below) are real pages.
+for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'settings'].includes(i.key))) {
   router.get(item.href, requirePerm(item.capability), (req, res) => {
     res.render('office/placeholder', { title: item.label });
   });

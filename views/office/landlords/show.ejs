@@ -82,9 +82,31 @@
   <% } %>
 </section>
 
-<section class="card detail-card">
-  <h2>العقارات والوحدات</h2>
-  <p class="muted">هذه الصفحة قيد البناء</p>
+<section class="card detail-card" id="units">
+  <h2>الوحدات (<%= units.total %>)</h2>
+  <% if (units.rows.length) { %>
+    <ul class="action-list">
+      <% units.rows.forEach(function (u) { %>
+        <li>
+          <a href="/office/units/<%= u.id %>">
+            <span><%= u.label %><%= u.building_name ? ` · ${u.building_name}` : '' %></span>
+            <span class="badge badge--unit-<%= u.status %>"><%= unitStatusLabels[u.status] %></span>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+    <% if (units.total > units.rows.length) { %>
+      <p><a href="/office/units?landlord=<%= landlord.id %>">عرض كل الوحدات</a></p>
+    <% } %>
+  <% } else { %>
+    <p class="muted">لا توجد وحدات لهذا المالك بعد.</p>
+  <% } %>
+  <% if (landlord.is_active) { %>
+    <div class="button-row">
+      <a href="/office/units/new?landlord=<%= landlord.id %>" class="btn btn--primary">إضافة وحدة</a>
+      <a href="/office/units/bulk?landlord=<%= landlord.id %>" class="btn btn--secondary">إضافة عدة وحدات</a>
+    </div>
+  <% } %>
 </section>
 
 <section class="card detail-card">

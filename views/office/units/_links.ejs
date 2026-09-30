@@ -1,0 +1,34 @@
+<%# Landlord and building selects shared by the unit form and the bulk form. %>
+<div class="field">
+  <label for="landlord_id">المالك</label>
+  <select id="landlord_id" name="landlord_id" class="select" required data-landlord-select <%- errors.landlord_id ? 'aria-invalid="true"' : '' %>>
+    <option value="">اختر المالك</option>
+    <% landlords.forEach(function (l) { %>
+      <option value="<%= l.id %>" <%= Number(values.landlord_id) === l.id ? 'selected' : '' %>><%= l.label %><%= l.is_active ? '' : ' (موقوف)' %></option>
+    <% }) %>
+  </select>
+  <% if (errors.landlord_id) { %><p class="field-error"><%= errors.landlord_id %></p><% } %>
+  <% if (landlords.length === 0) { %><p class="field-hint">لا يوجد ملاك بعد. <a href="/office/landlords/new">أضف مالكاً أولاً</a>.</p><% } %>
+</div>
+
+<div class="field">
+  <label for="building_id">المبنى <span class="muted">(اختياري)</span></label>
+  <select id="building_id" name="building_id" class="select" data-building-select <%- errors.building_id ? 'aria-invalid="true"' : '' %>>
+    <option value="">بدون مبنى</option>
+    <% buildingOptions.forEach(function (b) { %>
+      <option value="<%= b.id %>" data-landlord="<%= b.landlord_id %>" data-city="<%= b.city %>" <%= Number(values.building_id) === b.id ? 'selected' : '' %>><%= b.name %></option>
+    <% }) %>
+  </select>
+  <% if (errors.building_id) { %><p class="field-error"><%= errors.building_id %></p><% } else { %>
+    <p class="field-hint">تظهر مباني المالك المختار فقط. عند اختيار مبنى تُؤخذ مدينته.</p>
+  <% } %>
+</div>
+
+<div class="field">
+  <label for="city">المدينة</label>
+  <select id="city" name="city" class="select" data-city-select <%- errors.city ? 'aria-invalid="true"' : '' %>>
+    <option value="">مدينة المبنى</option>
+    <% cities.forEach(function (city) { %><option value="<%= city %>" <%= values.city === city ? 'selected' : '' %>><%= city %></option><% }) %>
+  </select>
+  <% if (errors.city) { %><p class="field-error"><%= errors.city %></p><% } %>
+</div>

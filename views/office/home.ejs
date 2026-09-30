@@ -25,6 +25,19 @@
   <% } %>
 </section>
 
+<% if (can('units')) { %>
+  <section class="card office-section">
+    <h2><a href="/office/units">الوحدات</a></h2>
+    <div class="units-summary">
+      <div class="mini-stat"><strong class="stat__units-total"><%= counts.units.total %></strong> كل الوحدات</div>
+      <div class="mini-stat"><strong><%= counts.units.vacant %></strong> شاغرة</div>
+      <div class="mini-stat"><strong><%= counts.units.rented %></strong> مؤجرة</div>
+      <div class="mini-stat"><strong><%= counts.units.maintenance %></strong> تحت الصيانة</div>
+    </div>
+    <% if (counts.units.usageText) { %><p class="muted">حد الباقة: <%= counts.units.usageText %></p><% } %>
+  </section>
+<% } %>
+
 <section class="card office-section">
   <h2>يحتاج إجراء</h2>
   <% if (needsAction.length) { %>

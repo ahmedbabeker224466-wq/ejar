@@ -27,7 +27,11 @@ function createOfficeHttp(db) {
     let body;
     if (form) {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      body = new URLSearchParams(form).toString();
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(form)) {
+        for (const item of Array.isArray(value) ? value : [value]) params.append(key, item);
+      }
+      body = params.toString();
     }
     const response = await fetch(`${base}${path}`, { method, headers, body, redirect: 'manual' });
     return { status: response.status, location: response.headers.get('location'), text: await response.text(), response };

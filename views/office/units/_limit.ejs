@@ -1,0 +1,8 @@
+<% if (limit) { %>
+  <div class="flash flash--danger" role="alert">
+    <%= limit %>
+    <a href="/office/billing">الاشتراك والباقات</a>
+  </div>
+<% } else if (Object.keys(errors).length) { %>
+  <div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div>
+<% } %>

@@ -1,0 +1,45 @@
+<p class="back-link"><a href="/office/units">→ رجوع</a></p>
+<section class="card form-card">
+  <h1>إضافة عدة وحدات</h1>
+  <p class="lead">أنشئ حتى <%= bulkMax %> وحدة مرة واحدة بنفس النوع والمبنى والإيجار. مثال: "شقة" و12 تبدأ من 1 تنشئ "شقة 1" حتى "شقة 12".</p>
+  <%- include('_limit') %>
+
+  <form method="post" action="/office/units/bulk" novalidate>
+    <%- include('_links') %>
+
+    <div class="field">
+      <label for="prefix">بداية الاسم</label>
+      <input id="prefix" name="prefix" class="input" type="text" maxlength="100" required value="<%= values.prefix %>" <%- errors.prefix ? 'aria-invalid="true"' : '' %>>
+      <% if (errors.prefix) { %><p class="field-error"><%= errors.prefix %></p><% } %>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="count">عدد الوحدات</label>
+        <input id="count" name="count" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="3" required value="<%= values.count %>" <%- errors.count ? 'aria-invalid="true"' : '' %>>
+        <% if (errors.count) { %><p class="field-error"><%= errors.count %></p><% } %>
+      </div>
+      <div class="field">
+        <label for="start">يبدأ الترقيم من</label>
+        <input id="start" name="start" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="6" value="<%= values.start %>" <%- errors.start ? 'aria-invalid="true"' : '' %>>
+        <% if (errors.start) { %><p class="field-error"><%= errors.start %></p><% } %>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="unit_type">نوع الوحدات</label>
+      <select id="unit_type" name="unit_type" class="select" <%- errors.unit_type ? 'aria-invalid="true"' : '' %>>
+        <% Object.entries(unitTypes).forEach(function ([key, label]) { %><option value="<%= key %>" <%= values.unit_type === key ? 'selected' : '' %>><%= label %></option><% }) %>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="base_rent">الإيجار السنوي لكل وحدة (ريال) <span class="muted">(اختياري)</span></label>
+      <input id="base_rent" name="base_rent" class="input" type="text" inputmode="decimal" dir="ltr" maxlength="20" value="<%= values.base_rent %>" <%- errors.base_rent ? 'aria-invalid="true"' : '' %>>
+      <% if (errors.base_rent) { %><p class="field-error"><%= errors.base_rent %></p><% } %>
+    </div>
+
+    <button type="submit" class="btn btn--primary btn--block btn--large">أنشئ الوحدات</button>
+  </form>
+</section>
+<script src="<%= assetUrl('/js/unitForm.js') %>" defer></script>

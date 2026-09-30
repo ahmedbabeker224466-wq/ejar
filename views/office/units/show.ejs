@@ -1,0 +1,70 @@
+<p class="back-link"><a href="/office/units">→ كل الوحدات</a></p>
+
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card detail-card">
+  <div class="page-head">
+    <h1><%= unit.label %></h1>
+    <div class="item__badges">
+      <span class="badge badge--unit-<%= unit.status %>"><%= statusLabels[unit.status] %></span>
+      <span class="badge badge--calm"><%= unitTypes[unit.unit_type] %></span>
+    </div>
+  </div>
+  <dl class="details">
+    <dt>المالك</dt><dd><a href="/office/landlords/<%= unit.landlord_id %>"><%= unit.landlord_label %></a></dd>
+    <dt>المبنى</dt><dd><%= unit.building_name || '—' %></dd>
+    <dt>المدينة</dt><dd><%= unit.city %><%= unit.district ? ` · ${unit.district}` : '' %></dd>
+    <% if (unit.rooms !== null) { %><dt>الغرف</dt><dd><%= unit.rooms %></dd><% } %>
+    <% if (unit.bathrooms !== null) { %><dt>دورات المياه</dt><dd><%= unit.bathrooms %></dd><% } %>
+    <% if (unit.area_sqm !== null) { %><dt>المساحة</dt><dd><%= Number(unit.area_sqm) %> م²</dd><% } %>
+    <% if (unit.floor_no !== null) { %><dt>الدور</dt><dd><%= unit.floor_no %></dd><% } %>
+    <dt>مفروشة</dt><dd><%= unit.is_furnished ? 'نعم' : 'لا' %></dd>
+    <% if (unit.base_rent !== null) { %><dt>الإيجار السنوي</dt><dd><%= Number(unit.base_rent).toLocaleString('en-US') %> <%= unit.currency === 'SAR' ? 'ريال' : unit.currency %></dd><% } %>
+    <% if (unit.notes) { %><dt>ملاحظات</dt><dd class="pre-line"><%= unit.notes %></dd><% } %>
+  </dl>
+
+  <% if (unit.amenities.length) { %>
+    <h2>المزايا</h2>
+    <ul class="tag-list">
+      <% unit.amenities.forEach(function (a) { %><li><%= amenityLabels[a] || a %></li><% }) %>
+    </ul>
+  <% } %>
+
+  <div class="button-row">
+    <a href="/office/units/<%= unit.id %>/edit" class="btn btn--secondary">تعديل</a>
+  </div>
+</section>
+
+<section class="card detail-card">
+  <h2>حالة الوحدة</h2>
+  <% if (unit.status === 'rented') { %>
+    <p>الوحدة مؤجرة. تعود شاغرة تلقائياً عند انتهاء العقد.</p>
+  <% } else { %>
+    <form method="post" action="/office/units/<%= unit.id %>/status">
+      <% if (unit.status === 'vacant') { %>
+        <input type="hidden" name="status" value="maintenance">
+        <button type="submit" class="btn btn--secondary btn--block">تحويل إلى "تحت الصيانة"</button>
+      <% } else { %>
+        <input type="hidden" name="status" value="vacant">
+        <button type="submit" class="btn btn--secondary btn--block">انتهت الصيانة، الوحدة شاغرة</button>
+      <% } %>
+    </form>
+  <% } %>
+</section>
+
+<section class="card detail-card"><h2>العقود</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
+<section class="card detail-card"><h2>الصيانة</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
+<section class="card detail-card"><h2>الصور</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
+
+<% if (canDelete) { %>
+  <section class="card detail-card">
+    <details class="danger-zone">
+      <summary>حذف الوحدة</summary>
+      <p>الحذف نهائي ولا يمكن التراجع عنه.</p>
+      <form method="post" action="/office/units/<%= unit.id %>/delete">
+        <button type="submit" class="btn btn--danger btn--block">نعم، احذف الوحدة</button>
+      </form>
+    </details>
+  </section>
+<% } %>
