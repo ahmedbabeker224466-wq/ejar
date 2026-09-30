@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aqdi (عقدي)
 
-## Getting Started
+A Saudi SaaS platform that helps real-estate offices manage rental contracts.
+Offices upload the contract file they downloaded from Ejar; the app reads only
+dates and amounts, tracks deadlines and reminds landlords and tenants. The app
+never connects to Ejar and is not affiliated with it.
 
-First, run the development server:
+The UI is Arabic and right-to-left. Code, comments and commits are in English.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Stack
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Node.js 20 + Express 4 + EJS templates + MySQL (`mysql2`) + `node-cron`.
+No frontend framework, no build step, no ORM. The app is deployed to shared
+cPanel hosting, so the dependency list is fixed; see `CLAUDE.md` before adding one.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Run locally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Install Node.js 20.9 or newer and MySQL 8.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Copy the environment file and fill in at least the `DB_*` values:
+   ```bash
+   cp .env.example .env
+   ```
+4. Start the server:
+   ```bash
+   npm start
+   ```
+   Open http://localhost:3000. The app still starts if the database is
+   unreachable; `/health` reports the database status.
+5. Run the tests:
+   ```bash
+   npm test
+   ```
 
-## Learn More
+## Project layout
 
-To learn more about Next.js, take a look at the following resources:
+| Path | Purpose |
+|---|---|
+| `server.js` | Express app: security headers, static files, routes, error handlers |
+| `config/db.js` | MySQL pool and `ensureSchema()`, run at startup |
+| `routes/` | HTTP routes |
+| `middleware/` | 404 and error handlers |
+| `services/` | Business logic (e.g. `assetVersion.js` for cache-busting URLs) |
+| `utils/` | Logger and time helpers |
+| `views/` | EJS layout, partials, pages and error pages |
+| `public/` | Static CSS/JS served with fingerprinted URLs |
+| `tests/` | `node --test` test files |
+| `reference/` | Schema and security tests from an earlier prototype, for reference only |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Blueprint
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The project rules, roles, stack constraints and the fixed list of table names
+live in [`CLAUDE.md`](CLAUDE.md). Read it before making changes.
