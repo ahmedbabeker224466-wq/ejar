@@ -21,7 +21,8 @@ jobs:
     steps:
       - name: Skip until the FTP secrets are added
         if: env.HAS_FTP != 'true'
-        run: echo "::notice::Deployment skipped: add FTP_HOST, FTP_USER and FTP_PASSWORD in Settings > Secrets and variables > Actions."
+        run: |
+          echo "::notice::Deployment skipped. Add FTP_HOST, FTP_USER and FTP_PASSWORD in Settings > Secrets and variables > Actions."
 
       - uses: actions/checkout@v4
         if: env.HAS_FTP == 'true'
