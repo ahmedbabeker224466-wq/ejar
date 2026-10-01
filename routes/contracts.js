@@ -21,6 +21,9 @@ const { riyadhNow } = require('../utils/time');
 const { maskPhone } = require('../utils/phone');
 const { requirePerm, can } = require('../middleware/permissions');
 const { rateLimit } = require('../middleware/rateLimit');
+const fileUpload = require('express-fileupload');
+const ai = require('../services/aiContractReader');
+const aiUsage = require('../services/aiUsage');
 
 const router = express.Router();
 
@@ -159,10 +162,11 @@ function formValues(body = {}) {
     city: pick('city'),
     auto_renew: body.auto_renew === undefined ? engine.RULES.AUTO_RENEW_DEFAULT : ['1', 'on', 'true'].includes(String(body.auto_renew)),
     ack_warnings: ['1', 'on', 'true'].includes(String(body.ack_warnings)),
+    source: body.source === 'ai' ? 'ai' : 'manual',
   };
 }
 
-async function renderForm(req, res, { values, errors = {}, preview = null, warnings = [], needsAck = false, limit = null, status = 200 }) {
+async function renderForm(req, res, { values, errors = {}, preview = null, warnings = [], needsAck = false, limit = null, status = 200, aiFields = [] }) {
   return res.status(status).render('office/contracts/form', {
     title: 'إضافة عقد',
     values,
@@ -171,6 +175,8 @@ async function renderForm(req, res, { values, errors = {}, preview = null, warni
     warnings,
     needsAck,
     limit,
+    aiFields,
+    fromAi: values.source === 'ai',
     stageLabels: contracts.STAGE_LABELS,
     ...(await formOptions(req)),
   });
@@ -202,6 +208,92 @@ router.post('/office/contracts', requirePerm('contracts'), wrap(async (req, res)
   if (result.limit) return renderForm(req, res, { ...common, limit: result.limit, status: 409 });
   if (!result.ok) return renderForm(req, res, { ...common, errors: result.errors || {}, status: result.status || 422 });
   return res.redirect(`/office/contracts/${result.id}?done=created`);
+}));
+
+// ------------------------------------------------------------ reading a contract file with AI
+
+// At most 5 reads per office per minute (in memory; the monthly plan
+// allowance is counted in the database by services/aiUsage.js).
+const aiLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  keyFor: (req) => `ai-read:${req.office.id}`,
+  onLimit: (req, res, next) => renderAiUpload(req, res, { status: 429, error: 'طلبات قراءة كثيرة خلال دقيقة. انتظر قليلاً ثم حاول مرة أخرى.' }).catch(next),
+});
+
+// The file stays in memory (useTempFiles: false) and is never stored.
+// Over 8 MB busboy stops reading and marks the file as truncated.
+const aiUpload = fileUpload({
+  useTempFiles: false,
+  abortOnLimit: false,
+  limits: { fileSize: ai.settings.maxBytes, files: 1, fields: 10, fieldSize: 1024 },
+  uploadTimeout: 60 * 1000,
+  debug: false,
+});
+
+async function renderAiUpload(req, res, { status = 200, error = null } = {}) {
+  const config = ai.aiConfig();
+  return res.status(status).render('office/contracts/ai-upload', {
+    title: 'قراءة العقد من ملف',
+    enabled: config.enabled,
+    disabledMessage: ai.MESSAGES.not_configured,
+    usage: config.enabled ? await aiUsage.usageFor(db.pool, req.office.id) : null,
+    error,
+  });
+}
+
+router.get('/office/contracts/new/ai', requirePerm('contracts.ai'), wrap((req, res) => renderAiUpload(req, res)));
+
+/** Without CLAUDE_API_KEY the feature is off: answer before reading the upload. */
+function aiEnabled(req, res, next) {
+  if (ai.aiConfig().enabled) return next();
+  return renderAiUpload(req, res, { status: 503, error: ai.MESSAGES.not_configured }).catch(next);
+}
+
+router.post('/office/contracts/new/ai', requirePerm('contracts.ai'), aiEnabled, aiLimit, aiUpload, wrap(async (req, res) => {
+  const file = req.files && req.files.contract;
+  req.files = null; // keep no reference to the upload beyond this handler
+  const upload = ai.checkUpload(file);
+  if (!upload.ok) return renderAiUpload(req, res, { status: 422, error: ai.MESSAGES[upload.code] });
+
+  const reservation = await aiUsage.reserveRead(db.pool, req.office.id);
+  if (!reservation.ok) {
+    return renderAiUpload(req, res, {
+      status: 429,
+      error: `استخدمت كل قراءات الذكاء الاصطناعي في باقتك لهذا الشهر (${reservation.limit}). أدخل البيانات يدوياً أو رقِّ اشتراكك.`,
+    });
+  }
+  const day = today();
+  let result;
+  try {
+    result = await ai.readContract({ buffer: upload.buffer, mime: upload.mime, today: day });
+  } catch (err) {
+    await aiUsage.releaseRead(db.pool, req.office.id, reservation.month);
+    if (err instanceof ai.AiReadError) return renderAiUpload(req, res, { status: 502, error: err.messageAr });
+    throw err;
+  }
+
+  // The same form as manual entry, filled with what was read. Landlord, unit
+  // and tenant nickname are always chosen by the person. Nothing is saved yet.
+  const f = result.fields;
+  const values = formValues({
+    start_date: f.start_date || '',
+    end_date: f.end_date || '',
+    annual_rent: f.annual_rent || '',
+    payment_frequency: f.payment_frequency || 'monthly',
+    city: f.city || '',
+    contract_number: f.ejar_contract_number || '',
+    source: 'ai',
+  });
+  values.auto_renew = engine.RULES.AUTO_RENEW_DEFAULT;
+  const aiFields = [
+    ['start_date', f.start_date], ['end_date', f.end_date], ['annual_rent', f.annual_rent],
+    ['payment_frequency', f.payment_frequency], ['city', f.city], ['contract_number', f.ejar_contract_number],
+  ].filter(([, v]) => v).map(([k]) => k);
+  const previewed = contracts.previewContract(values, day);
+  const seen = new Set();
+  const warnings = [...result.warnings, ...previewed.warnings].filter((w) => !seen.has(w.code) && seen.add(w.code));
+  return renderForm(req, res, { values, preview: previewed.preview, warnings, needsAck: previewed.needsAck, aiFields });
 }));
 
 // ------------------------------------------------------------ detail

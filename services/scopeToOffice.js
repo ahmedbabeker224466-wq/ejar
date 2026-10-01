@@ -29,6 +29,7 @@ const OFFICE_TABLES = new Set([
   'contract_payments',
   'contract_documents',
   'extraction_jobs',
+  'ai_reads_usage',
   'invites',
   'vendors',
   'maintenance_requests',

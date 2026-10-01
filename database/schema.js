@@ -357,6 +357,16 @@ const TABLES = [
   ]),
 
   // Metrics about AI reads only. Never a column holding contract content.
+  // AI contract reads per office and Riyadh calendar month ('YYYY-MM'),
+  // counted only for successful reads. Never holds file contents.
+  table('ai_reads_usage', [
+    `office_id ${REF} NOT NULL`,
+    'month CHAR(7) NOT NULL',
+    'count INT UNSIGNED NOT NULL DEFAULT 0',
+    'UNIQUE KEY uq_ai_reads_usage (office_id, month)',
+    fk('ai_reads_usage', 'office_id', 'offices', 'CASCADE'),
+  ]),
+
   table('extraction_jobs', [
     `office_id ${REF} NOT NULL`,
     `user_id ${REF} NULL`,

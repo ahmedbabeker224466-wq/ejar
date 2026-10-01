@@ -1,7 +1,15 @@
 <p class="back-link"><a href="/office/contracts">→ كل العقود</a></p>
+<% const isAi = (name) => aiFields.includes(name); %>
 <section class="card form-card form-card--wide">
-  <h1>إضافة عقد</h1>
+  <div class="page-head">
+    <h1>إضافة عقد</h1>
+    <% if (can('contracts.ai')) { %><a href="/office/contracts/new/ai" class="btn btn--secondary">قراءة من ملف</a><% } %>
+  </div>
   <p class="muted">أدخل بيانات العقد كما في منصة إيجار. هذا التطبيق خاص ولا يتصل بمنصة إيجار.</p>
+  <% if (fromAi) { %>
+    <div class="flash flash--warning" role="status">تمت القراءة بالذكاء الاصطناعي، راجع كل رقم قبل الحفظ</div>
+    <p class="muted">اختر المالك والوحدة واكتب اسماً مختصراً للمستأجر بنفسك. الحقول المقروءة آلياً عليها علامة "مقروء آلياً".</p>
+  <% } %>
 
   <% if (limit) { %>
     <div class="flash flash--danger" role="alert"><%= limit %> <a href="/office/billing">الاشتراك والباقات</a></div>
@@ -13,6 +21,7 @@
   <% } %>
 
   <form method="post" action="/office/contracts" novalidate id="contract-form">
+    <% if (fromAi) { %><input type="hidden" name="source" value="ai"><% } %>
     <fieldset class="form-group">
       <legend>المالك والوحدة</legend>
       <div class="field">
@@ -43,7 +52,7 @@
         <% if (errors.tenant_label) { %><p class="field-error"><%= errors.tenant_label %></p><% } %>
       </div>
       <div class="field">
-        <label for="contract_number">رقم العقد في إيجار <span class="muted">(اختياري)</span></label>
+        <label for="contract_number">رقم العقد في إيجار <span class="muted">(اختياري)</span><% if (isAi('contract_number')) { %> <span class="badge badge--ai">مقروء آلياً</span><% } %></label>
         <input id="contract_number" name="contract_number" class="input" type="text" dir="ltr" maxlength="40" value="<%= values.contract_number %>" <%- errors.contract_number ? 'aria-invalid="true"' : '' %>>
         <% if (errors.contract_number) { %><p class="field-error"><%= errors.contract_number %></p><% } %>
       </div>
@@ -53,12 +62,12 @@
       <legend>مدة العقد</legend>
       <div class="form-grid">
         <div class="field">
-          <label for="start_date">تاريخ البداية (ميلادي)</label>
+          <label for="start_date">تاريخ البداية (ميلادي)<% if (isAi('start_date')) { %> <span class="badge badge--ai">مقروء آلياً</span><% } %></label>
           <input id="start_date" name="start_date" class="input" type="date" required value="<%= values.start_date %>" data-preview-input <%- errors.start_date ? 'aria-invalid="true"' : '' %>>
           <% if (errors.start_date) { %><p class="field-error"><%= errors.start_date %></p><% } %>
         </div>
         <div class="field">
-          <label for="end_date">تاريخ النهاية (ميلادي)</label>
+          <label for="end_date">تاريخ النهاية (ميلادي)<% if (isAi('end_date')) { %> <span class="badge badge--ai">مقروء آلياً</span><% } %></label>
           <input id="end_date" name="end_date" class="input" type="date" required value="<%= values.end_date %>" data-preview-input <%- errors.end_date ? 'aria-invalid="true"' : '' %>>
           <% if (errors.end_date) { %><p class="field-error"><%= errors.end_date %></p><% } %>
         </div>
@@ -68,12 +77,12 @@
     <fieldset class="form-group">
       <legend>المبالغ</legend>
       <div class="field">
-        <label for="annual_rent">الإيجار السنوي (ريال)</label>
+        <label for="annual_rent">الإيجار السنوي (ريال)<% if (isAi('annual_rent')) { %> <span class="badge badge--ai">مقروء آلياً</span><% } %></label>
         <input id="annual_rent" name="annual_rent" class="input" type="text" inputmode="decimal" dir="ltr" maxlength="20" required value="<%= values.annual_rent %>" data-preview-input <%- errors.annual_rent ? 'aria-invalid="true"' : '' %>>
         <% if (errors.annual_rent) { %><p class="field-error"><%= errors.annual_rent %></p><% } %>
       </div>
       <div class="field">
-        <label for="payment_frequency">طريقة الدفع</label>
+        <label for="payment_frequency">طريقة الدفع<% if (isAi('payment_frequency')) { %> <span class="badge badge--ai">مقروء آلياً</span><% } %></label>
         <select id="payment_frequency" name="payment_frequency" class="select" data-preview-input <%- errors.payment_frequency ? 'aria-invalid="true"' : '' %>>
           <% Object.entries(frequencies).forEach(function ([key, label]) { %><option value="<%= key %>" <%= values.payment_frequency === key ? 'selected' : '' %>><%= label %></option><% }) %>
         </select>
@@ -92,7 +101,7 @@
         </div>
       </div>
       <div class="field">
-        <label for="city">المدينة</label>
+        <label for="city">المدينة<% if (isAi('city')) { %> <span class="badge badge--ai">مقروء آلياً</span><% } %></label>
         <select id="city" name="city" class="select" data-city-select data-preview-input <%- errors.city ? 'aria-invalid="true"' : '' %>>
           <option value="">مدينة الوحدة</option>
           <% cities.forEach(function (city) { %><option value="<%= city %>" <%= values.city === city ? 'selected' : '' %>><%= city %></option><% }) %>

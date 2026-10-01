@@ -1271,6 +1271,17 @@ img {
 }
 
 /* Contracts */
+.badge--ai {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+  font-size: 0.875rem;
+}
+
+.input--file {
+  padding: var(--space-3);
+  font-size: var(--text-base);
+}
+
 .details [dir='ltr'],
 .deadlines [dir='ltr'],
 .schedule [dir='ltr'],

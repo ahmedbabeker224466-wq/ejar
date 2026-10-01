@@ -32,6 +32,11 @@ function riyadhDate(at) {
   }).format(at);
 }
 
+/** The calendar month in Riyadh at a point in time, as 'YYYY-MM'. */
+function riyadhMonth(at) {
+  return riyadhDate(at).slice(0, 7);
+}
+
 /** Days in a month (month 1-12), leap years included. */
 function daysInMonth(year, month) {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
@@ -142,6 +147,7 @@ module.exports = {
   isValidYmd,
   compareYmd,
   riyadhDate,
+  riyadhMonth,
   addDays,
   addMonths,
   daysBetween,

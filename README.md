@@ -74,6 +74,9 @@ cPanel hosting, so the dependency list is fixed; see `CLAUDE.md` before adding o
    ```powershell
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
+   Optional, for reading uploaded contracts with AI: set `CLAUDE_API_KEY`
+   (and `CLAUDE_MODEL`, default `claude-sonnet-4-5`). Without a key the app
+   still runs and contracts are entered by hand.
 6. Start it with `npm start` and open http://localhost:3000. The self-check
    block in the PowerShell window tells you if anything is missing.
 7. Sign in at http://localhost:3000/login: the login code appears in the same

@@ -127,6 +127,9 @@ function validateContractFields(body = {}) {
 
   values.auto_renew = checkbox(body.auto_renew) ? 1 : 0;
   values.acknowledged = checkbox(body.ack_warnings);
+  // Where the numbers came from: typed by hand, or read by AI and then
+  // reviewed in this same form. Either way they are validated the same way.
+  values.source = body.source === 'ai' ? 'ai' : 'manual';
   return { values, errors };
 }
 
@@ -263,7 +266,7 @@ async function insertContract(scoped, { values, unit, evaluated, actorId, today,
     notice_deadline: evaluated.result.noticeDeadline,
     rent_change_deadline: evaluated.result.rentChangeDeadline,
     renewed_from_id: renewedFromId,
-    source: 'manual',
+    source: values.source === 'ai' ? 'ai' : 'manual',
     warnings: evaluated.warnings.length ? JSON.stringify(evaluated.warnings.map((w) => w.code)) : null,
     created_by: actorId,
   });
@@ -323,7 +326,7 @@ async function createContract(pool, officeId, { fields, actorId, ip, today }) {
     const { id, status } = await insertContract(scoped, { values, unit, evaluated, actorId, today });
     await invites.createTenantInvite(scoped, { contractId: id, createdBy: actorId, ip });
     await addEvent(scoped, id, actorId, 'contract_created', {
-      source: 'manual', months: evaluated.result.termMonths, payments: evaluated.result.schedule.length, stage: status,
+      source: values.source === 'ai' ? 'ai' : 'manual', months: evaluated.result.termMonths, payments: evaluated.result.schedule.length, stage: status,
     });
     await auditLog(scoped, actorId, officeId, 'contract.create', 'contract', id, null, {
       landlord_id: values.landlord_id, unit_id: values.unit_id, start_date: values.start_date,

@@ -1,0 +1,26 @@
+<p class="back-link"><a href="/office/contracts/new">→ الإدخال اليدوي</a></p>
+<section class="card form-card">
+  <h1>قراءة العقد من ملف</h1>
+  <p class="flash flash--info">لا نحتفظ بالملف ولا بأسماء الأطراف، نقرأ التواريخ والمبالغ فقط</p>
+
+  <% if (!enabled) { %>
+    <div class="flash flash--warning" role="status"><%= disabledMessage %></div>
+    <a href="/office/contracts/new" class="btn btn--primary btn--large btn--block">الإدخال اليدوي</a>
+  <% } else { %>
+    <% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+    <p class="lead">ارفع ملف العقد الذي حمّلته من منصة إيجار (PDF) أو صورة واضحة له. سنملأ لك نموذج العقد لتراجعه قبل الحفظ.</p>
+    <form method="post" action="/office/contracts/new/ai" enctype="multipart/form-data">
+      <div class="field">
+        <label for="contract">ملف العقد</label>
+        <input id="contract" name="contract" class="input input--file" type="file" required
+               accept="application/pdf,image/jpeg,image/png,image/webp" aria-describedby="contract-hint">
+        <p id="contract-hint" class="field-hint">PDF أو JPG أو PNG أو WebP، حتى 8 ميجابايت.</p>
+      </div>
+      <button type="submit" class="btn btn--primary btn--large btn--block">قراءة العقد</button>
+    </form>
+    <% if (usage && usage.limit !== null) { %>
+      <p class="muted">قراءات هذا الشهر: <%= usage.used %> من <%= usage.limit %></p>
+    <% } %>
+    <p class="muted">القراءة الآلية قد تخطئ. راجع كل رقم قبل الحفظ.</p>
+  <% } %>
+</section>

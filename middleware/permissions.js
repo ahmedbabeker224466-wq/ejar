@@ -8,6 +8,7 @@ const { wantsJson } = require('./auth');
 
 const OFFICE_OWNER = [
   'contracts',
+  'contracts.ai',
   'contracts.terminate',
   'contracts.delete',
   'landlords',
@@ -58,6 +59,7 @@ const CAPABILITIES = {
   office_manager: OFFICE_OWNER.filter((c) => !OWNER_ONLY.includes(c)),
   office_staff: [
     'contracts',
+    'contracts.ai',
     'landlords',
     'units',
     'tenants',

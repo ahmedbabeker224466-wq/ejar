@@ -16,7 +16,7 @@ const PLANS = [
     max_contracts: 20,
     max_units: 20,
     max_members: 2,
-    max_ai_reads_monthly: 20,
+    max_ai_reads_monthly: 10,
     features: ['contracts', 'reminders', 'ai_read'],
     sort_order: 1,
   },
