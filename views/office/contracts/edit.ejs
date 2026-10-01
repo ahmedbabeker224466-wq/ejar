@@ -1,0 +1,33 @@
+<p class="back-link"><a href="/office/contracts/<%= contract.id %>">→ رجوع للعقد</a></p>
+<section class="card form-card">
+  <h1>تعديل العقد</h1>
+  <p class="flash flash--info">لا يمكن تغيير التواريخ أو الإيجار أو الوحدة أو المالك بعد الحفظ، حتى تبقى المواعيد وجدول الدفعات صحيحة. لتغييرها أنهِ هذا العقد وأضف عقداً جديداً.</p>
+  <% if (Object.keys(errors).length) { %><div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div><% } %>
+  <form method="post" action="/office/contracts/<%= contract.id %>/edit" novalidate>
+    <div class="field">
+      <label for="tenant_label">اسم مختصر للمستأجر</label>
+      <input id="tenant_label" name="tenant_label" class="input" type="text" maxlength="120" value="<%= values.tenant_label %>" <%- errors.tenant_label ? 'aria-invalid="true"' : '' %>>
+      <p class="field-hint">اسم للتعريف فقط. لا تكتب الاسم الكامل أو رقم الهوية أو الحساب البنكي.</p>
+      <% if (errors.tenant_label) { %><p class="field-error"><%= errors.tenant_label %></p><% } %>
+    </div>
+    <div class="field">
+      <label for="contract_number">رقم العقد في إيجار</label>
+      <input id="contract_number" name="contract_number" class="input" type="text" dir="ltr" maxlength="40" value="<%= values.contract_number %>" <%- errors.contract_number ? 'aria-invalid="true"' : '' %>>
+      <% if (errors.contract_number) { %><p class="field-error"><%= errors.contract_number %></p><% } %>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="deposit">التأمين (ريال)</label>
+        <input id="deposit" name="deposit" class="input" type="text" inputmode="decimal" dir="ltr" maxlength="20" value="<%= values.deposit %>" <%- errors.deposit ? 'aria-invalid="true"' : '' %>>
+        <% if (errors.deposit) { %><p class="field-error"><%= errors.deposit %></p><% } %>
+      </div>
+      <div class="field">
+        <label for="commission">العمولة (ريال)</label>
+        <input id="commission" name="commission" class="input" type="text" inputmode="decimal" dir="ltr" maxlength="20" value="<%= values.commission %>" <%- errors.commission ? 'aria-invalid="true"' : '' %>>
+        <% if (errors.commission) { %><p class="field-error"><%= errors.commission %></p><% } %>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" name="auto_renew" value="1" <%= values.auto_renew ? 'checked' : '' %>><span>يتجدد تلقائياً</span></label>
+    <button type="submit" class="btn btn--primary btn--block btn--large">حفظ</button>
+  </form>
+</section>

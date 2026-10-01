@@ -1,0 +1,83 @@
+<div class="page-head">
+  <h1>العقود</h1>
+  <a href="/office/contracts/new" class="btn btn--primary">إضافة عقد</a>
+</div>
+
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+
+<% if (total === 0 && !filtered) { %>
+  <section class="card empty-card">
+    <h2>لا توجد عقود بعد</h2>
+    <p class="lead">أدخل بيانات عقد إيجار من منصة إيجار، وسنحسب لك مواعيد القرار وجدول الدفعات.</p>
+    <a href="/office/contracts/new" class="btn btn--primary btn--large btn--block">إضافة عقد</a>
+  </section>
+<% } else { %>
+  <form class="card filter-bar" method="get" action="/office/contracts" role="search">
+    <div class="field">
+      <label for="q">بحث برقم العقد أو الوحدة أو المستأجر</label>
+      <input id="q" name="q" class="input" type="search" maxlength="60" value="<%= filters.q %>">
+    </div>
+    <div class="filter-grid">
+      <div class="field">
+        <label for="stage">المرحلة</label>
+        <select id="stage" name="stage" class="select">
+          <option value="">الكل</option>
+          <option value="action" <%= filters.stage === 'action' ? 'selected' : '' %>>تحتاج إجراء</option>
+          <% Object.entries(stageLabels).forEach(function ([key, label]) { %><option value="<%= key %>" <%= filters.stage === key ? 'selected' : '' %>><%= label %></option><% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="landlord">المالك</label>
+        <select id="landlord" name="landlord" class="select">
+          <option value="">الكل</option>
+          <% landlords.forEach(function (l) { %><option value="<%= l.id %>" <%= filters.landlordId === l.id ? 'selected' : '' %>><%= l.label %></option><% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="ends">ينتهي خلال</label>
+        <select id="ends" name="ends" class="select">
+          <option value="">أي وقت</option>
+          <% endsWithin.forEach(function (days) { %><option value="<%= days %>" <%= filters.endsWithin === days ? 'selected' : '' %>><%= days %> يوماً</option><% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sort">الترتيب</label>
+        <select id="sort" name="sort" class="select">
+          <option value="deadline" <%= filters.sort === 'deadline' ? 'selected' : '' %>>الأقرب موعداً للقرار</option>
+          <option value="end" <%= filters.sort === 'end' ? 'selected' : '' %>>تاريخ النهاية</option>
+          <option value="created" <%= filters.sort === 'created' ? 'selected' : '' %>>الأحدث إضافة</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn--secondary btn--block">عرض</button>
+  </form>
+
+  <% if (rows.length === 0) { %>
+    <section class="card empty-card"><p class="lead">لا توجد عقود تطابق البحث.</p><a href="/office/contracts" class="btn btn--secondary">عرض كل العقود</a></section>
+  <% } else { %>
+    <p class="muted"><%= total %> عقد</p>
+    <ul class="item-list">
+      <% rows.forEach(function (c) { %>
+        <li class="card item">
+          <a class="item__title" href="/office/contracts/<%= c.id %>"><%= c.unit_label || 'وحدة محذوفة' %><%= c.tenant_label ? ` · ${c.tenant_label}` : '' %></a>
+          <div class="item__badges"><span class="badge badge--stage-<%= c.status %>"><%= stageLabels[c.status] %></span></div>
+          <p class="item__meta">
+            <span>المالك: <%= c.landlord_label || '—' %></span>
+            <span>ينتهي <span dir="ltr"><%= c.end_date %></span></span>
+            <span><%= Number(c.annual_rent).toLocaleString('en-US') %> ريال سنوياً</span>
+          </p>
+          <% if (c.daysToNotice !== null) { %>
+            <p class="item__meta"><strong><%= c.daysToNotice >= 0 ? `باقي ${c.daysToNotice} يوم على موعد القرار` : `فات موعد القرار منذ ${-c.daysToNotice} يوم` %></strong></p>
+          <% } %>
+        </li>
+      <% }) %>
+    </ul>
+    <% if (pages > 1) { %>
+      <nav class="pager" aria-label="الصفحات">
+        <% if (prevUrl) { %><a class="btn btn--secondary" href="<%= prevUrl %>">السابق</a><% } else { %><span></span><% } %>
+        <span>صفحة <%= page %> من <%= pages %></span>
+        <% if (nextUrl) { %><a class="btn btn--secondary" href="<%= nextUrl %>">التالي</a><% } else { %><span></span><% } %>
+      </nav>
+    <% } %>
+  <% } %>
+<% } %>

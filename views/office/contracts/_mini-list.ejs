@@ -1,0 +1,15 @@
+<% if (list.rows.length) { %>
+  <ul class="action-list">
+    <% list.rows.forEach(function (c) { %>
+      <li>
+        <a href="/office/contracts/<%= c.id %>">
+          <span><%= c.unit_label || 'وحدة' %><%= c.tenant_label ? ` · ${c.tenant_label}` : '' %> · <span dir="ltr"><%= c.start_date %></span> إلى <span dir="ltr"><%= c.end_date %></span></span>
+          <span class="badge badge--stage-<%= c.status %>"><%= stageLabels[c.status] %></span>
+        </a>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (list.total > list.rows.length) { %><p><a href="<%= more %>">عرض كل العقود</a></p><% } %>
+<% } else { %>
+  <p class="muted">لا توجد عقود بعد.</p>
+<% } %>

@@ -109,9 +109,9 @@
   <% } %>
 </section>
 
-<section class="card detail-card">
-  <h2>العقود</h2>
-  <p class="muted">هذه الصفحة قيد البناء</p>
+<section class="card detail-card" id="contracts">
+  <h2>العقود (<%= contracts.total %>)</h2>
+  <%- include('../contracts/_mini-list', { list: contracts, stageLabels, more: `/office/contracts?landlord=${landlord.id}` }) %>
 </section>
 
 <script src="<%= assetUrl('/js/copy.js') %>" defer></script>

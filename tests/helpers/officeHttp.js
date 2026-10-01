@@ -76,7 +76,7 @@ function createOfficeHttp(db) {
     return (await login(phone)).cookie;
   }
 
-  return { start, stop, request, login, userByPhone, registerOffice, addMember };
+  return { start, stop, request, login, userByPhone, registerOffice, addMember, base: () => base };
 }
 
 module.exports = { createOfficeHttp };

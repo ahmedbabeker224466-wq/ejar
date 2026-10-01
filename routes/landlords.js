@@ -10,6 +10,8 @@ const db = require('../config/db');
 const landlords = require('../services/landlords');
 const invites = require('../services/invites');
 const unitsService = require('../services/units');
+const contractsService = require('../services/contracts');
+const { riyadhDate: riyadhToday } = require('../services/contractDates');
 const { scopeToOffice } = require('../services/scopeToOffice');
 const { withTransaction } = require('../services/transaction');
 const { SAUDI_CITIES } = require('../services/offices');
@@ -93,6 +95,8 @@ async function renderDetail(req, res, { status = 200, error = null } = {}) {
     invite: await inviteView(req, landlord),
     units: await unitsService.listUnits(db.pool, req.office.id, { landlordId: landlord.id, pageSize: 50 }),
     unitStatusLabels: unitsService.STATUS_LABELS,
+    contracts: await contractsService.listContracts(db.pool, req.office.id, { landlordId: landlord.id, pageSize: 20 }, riyadhToday(new Date())),
+    stageLabels: contractsService.STAGE_LABELS,
     message: MESSAGES[req.query.done] || null,
     error,
     canDelete:

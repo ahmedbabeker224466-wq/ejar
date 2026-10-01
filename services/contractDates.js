@@ -103,6 +103,11 @@ function daysAfter(at, n) {
   return new Date(at.getTime() + n * DAY_MS);
 }
 
+/** The point in time exactly n hours after another (n may be negative). */
+function hoursAfter(at, n) {
+  return new Date(at.getTime() + n * 60 * 60 * 1000);
+}
+
 /** When a trial that starts now ends: exactly TRIAL_DAYS later, in UTC. */
 function trialEndsAt(now) {
   return daysAfter(now, TRIAL_DAYS);
@@ -141,6 +146,7 @@ module.exports = {
   addMonths,
   daysBetween,
   daysAfter,
+  hoursAfter,
   trialEndsAt,
   inviteExpiresAt,
   isTrialExpired,

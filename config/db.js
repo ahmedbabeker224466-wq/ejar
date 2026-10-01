@@ -57,33 +57,10 @@ async function ensureSchema(targetPool = pool) {
       current = table.name;
       await targetPool.query(table.sql);
     }
-    for (const { table, column, definition } of COLUMN_ADDITIONS) {
-      current = `${table}.${column}`;
-      const [found] = await targetPool.query(
-        `SELECT 1 FROM information_schema.columns
-          WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
-        [table, column],
-      );
-      if (found.length === 0) {
-        // Another process starting at the same moment may add it first.
-        if (await alterUnlessDone(targetPool, `ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`, 'ER_DUP_FIELDNAME')) {
-          logger.info(`Added column ${table}.${column}`);
-        }
-      }
-    }
-    for (const { table, index, columns } of INDEX_ADDITIONS) {
-      current = `${table}.${index}`;
-      const [found] = await targetPool.query(
-        `SELECT 1 FROM information_schema.statistics
-          WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?`,
-        [table, index],
-      );
-      if (found.length === 0) {
-        if (await alterUnlessDone(targetPool, `ALTER TABLE \`${table}\` ADD INDEX \`${index}\` (${columns})`, 'ER_DUP_KEYNAME')) {
-          logger.info(`Added index ${table}.${index}`);
-        }
-      }
-    }
+    current = 'column additions';
+    await addMissingColumns(targetPool, COLUMN_ADDITIONS);
+    current = 'index additions';
+    await addMissingIndexes(targetPool, INDEX_ADDITIONS);
     result.created = (await countTables(targetPool)) - result.found;
     result.ok = true;
     return result;
@@ -93,6 +70,46 @@ async function ensureSchema(targetPool = pool) {
     logger.error(`Database schema check failed${where}: ${result.error}`);
     return result;
   }
+}
+
+/**
+ * Adds each { table, column, definition } that is missing. Safe to run from
+ * several processes at once. Returns the "table.column" names it added.
+ */
+async function addMissingColumns(targetPool, additions) {
+  const added = [];
+  for (const { table, column, definition } of additions) {
+    const [found] = await targetPool.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+      [table, column],
+    );
+    // Another process starting at the same moment may add it first.
+    if (found.length === 0
+      && (await alterUnlessDone(targetPool, `ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`, 'ER_DUP_FIELDNAME'))) {
+      logger.info(`Added column ${table}.${column}`);
+      added.push(`${table}.${column}`);
+    }
+  }
+  return added;
+}
+
+/** Adds each { table, index, columns } that is missing. Returns the names it added. */
+async function addMissingIndexes(targetPool, additions) {
+  const added = [];
+  for (const { table, index, columns } of additions) {
+    const [found] = await targetPool.query(
+      `SELECT 1 FROM information_schema.statistics
+        WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?`,
+      [table, index],
+    );
+    if (found.length === 0
+      && (await alterUnlessDone(targetPool, `ALTER TABLE \`${table}\` ADD INDEX \`${index}\` (${columns})`, 'ER_DUP_KEYNAME'))) {
+      logger.info(`Added index ${table}.${index}`);
+      added.push(`${table}.${index}`);
+    }
+  }
+  return added;
 }
 
 /**
@@ -109,4 +126,4 @@ async function alterUnlessDone(targetPool, sql, errorCode) {
   }
 }
 
-module.exports = { pool, ping, ensureSchema, countTables };
+module.exports = { pool, ping, ensureSchema, countTables, addMissingColumns, addMissingIndexes };

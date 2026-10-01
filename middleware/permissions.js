@@ -8,6 +8,7 @@ const { wantsJson } = require('./auth');
 
 const OFFICE_OWNER = [
   'contracts',
+  'contracts.terminate',
   'contracts.delete',
   'landlords',
   'units',
@@ -61,6 +62,7 @@ const CAPABILITIES = {
     'units',
     'tenants',
     'payments.read',
+    'payments.write',
     'maintenance',
     'messages',
     'settings.basic',

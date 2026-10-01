@@ -1,0 +1,16 @@
+<p class="back-link"><a href="/office/contracts/<%= contract.id %>">→ رجوع للعقد</a></p>
+<section class="card form-card">
+  <h1>إنهاء العقد</h1>
+  <p class="lead">عند الإنهاء: تتوقف الدفعات القادمة، ويُلغى رمز دعوة المستأجر، وتعود الوحدة شاغرة إذا لم يكن عليها عقد آخر. لا يمكن التراجع عن الإنهاء.</p>
+  <form method="post" action="/office/contracts/<%= contract.id %>/terminate" novalidate>
+    <div class="field">
+      <label for="reason">سبب الإنهاء</label>
+      <textarea id="reason" name="reason" class="textarea" maxlength="255" required aria-describedby="reason-hint" <%- errors.reason ? 'aria-invalid="true"' : '' %>><%= values.reason %></textarea>
+      <p id="reason-hint" class="field-hint">لا تكتب أسماء أو أرقام هوية</p>
+      <% if (errors.reason) { %><p class="field-error"><%= errors.reason %></p><% } %>
+    </div>
+    <label class="check"><input type="checkbox" name="confirm" value="1" <%- errors.confirm ? 'aria-invalid="true"' : '' %>><span>أؤكد إنهاء هذا العقد</span></label>
+    <% if (errors.confirm) { %><p class="field-error"><%= errors.confirm %></p><% } %>
+    <button type="submit" class="btn btn--danger btn--block btn--large">إنهاء العقد</button>
+  </form>
+</section>

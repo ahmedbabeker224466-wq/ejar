@@ -249,6 +249,8 @@ const TABLES = [
     `office_id ${REF} NOT NULL`,
     `landlord_id ${REF} NULL`,
     `unit_id ${REF} NULL`,
+    // A nickname typed by the office, never a legal name, ID, iqama, IBAN or address.
+    'tenant_label VARCHAR(120) NULL',
     'contract_number VARCHAR(40) NULL',
     'ejar_ref VARCHAR(40) NULL',
     'start_date DATE NOT NULL',
@@ -265,6 +267,11 @@ const TABLES = [
     'auto_renew TINYINT(1) NOT NULL DEFAULT 1',
     'notice_deadline DATE NULL',
     'rent_change_deadline DATE NULL',
+    'terminated_at DATETIME NULL',
+    'terminated_reason VARCHAR(255) NULL',
+    'renewed_at DATETIME NULL',
+    `renewed_to_id ${REF} NULL`, // the contract that replaced this one
+    `renewed_from_id ${REF} NULL`, // the contract this one renews
     "source ENUM('ai','manual') NOT NULL DEFAULT 'manual'",
     'ai_confidence VARCHAR(20) NULL',
     'warnings JSON NULL',
@@ -774,6 +781,12 @@ const COLUMN_ADDITIONS = [
   { table: 'users', column: 'twofa_backup_codes', definition: 'JSON NULL AFTER twofa_enabled' },
   { table: 'otp_codes', column: 'ip', definition: 'VARCHAR(45) NULL AFTER consumed_at' },
   { table: 'invites', column: 'revoked_at', definition: 'DATETIME NULL AFTER used_at' },
+  { table: 'contracts', column: 'tenant_label', definition: 'VARCHAR(120) NULL AFTER unit_id' },
+  { table: 'contracts', column: 'terminated_at', definition: 'DATETIME NULL AFTER rent_change_deadline' },
+  { table: 'contracts', column: 'terminated_reason', definition: 'VARCHAR(255) NULL AFTER terminated_at' },
+  { table: 'contracts', column: 'renewed_at', definition: 'DATETIME NULL AFTER terminated_reason' },
+  { table: 'contracts', column: 'renewed_to_id', definition: 'BIGINT UNSIGNED NULL AFTER renewed_at' },
+  { table: 'contracts', column: 'renewed_from_id', definition: 'BIGINT UNSIGNED NULL AFTER renewed_to_id' },
 ];
 
 const INDEX_ADDITIONS = [

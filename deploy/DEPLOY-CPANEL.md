@@ -224,10 +224,16 @@ SMS_PROVIDER=console
 | المصادقة | `ALTER TABLE users ADD COLUMN twofa_backup_codes JSON NULL AFTER twofa_enabled` | `Added column users.twofa_backup_codes` |
 | المصادقة | `ALTER TABLE otp_codes ADD COLUMN ip VARCHAR(45) NULL AFTER consumed_at` | `Added column otp_codes.ip` |
 | الملّاك ورموز الدعوة | `ALTER TABLE invites ADD COLUMN revoked_at DATETIME NULL AFTER used_at` | `Added column invites.revoked_at` |
+| العقود | `ALTER TABLE contracts ADD COLUMN tenant_label VARCHAR(120) NULL AFTER unit_id` | `Added column contracts.tenant_label` |
+| العقود | `ALTER TABLE contracts ADD COLUMN terminated_at DATETIME NULL AFTER rent_change_deadline` | `Added column contracts.terminated_at` |
+| العقود | `ALTER TABLE contracts ADD COLUMN terminated_reason VARCHAR(255) NULL AFTER terminated_at` | `Added column contracts.terminated_reason` |
+| العقود | `ALTER TABLE contracts ADD COLUMN renewed_at DATETIME NULL AFTER terminated_reason` | `Added column contracts.renewed_at` |
+| العقود | `ALTER TABLE contracts ADD COLUMN renewed_to_id BIGINT UNSIGNED NULL AFTER renewed_at` | `Added column contracts.renewed_to_id` |
+| العقود | `ALTER TABLE contracts ADD COLUMN renewed_from_id BIGINT UNSIGNED NULL AFTER renewed_to_id` | `Added column contracts.renewed_from_id` |
 
 كل أمر يُنفَّذ مرة واحدة فقط، وفقط إذا كان العمود غير موجود.
 
-تحديث المباني والوحدات لم يضف أي تغيير على قاعدة البيانات.
+تحديث المباني والوحدات لم يضف أي تغيير على قاعدة البيانات. تحديث العقود أضاف الأعمدة الستة أعلاه، ولم يضف جداول جديدة (ما زالت 59 جدولاً).
 
 ## ملاحظة: HTTPS
 

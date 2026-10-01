@@ -18,6 +18,10 @@ const { rateLimit } = require('../middleware/rateLimit');
 const { loadOffice, officeGate, OFFICE_NAV } = require('../middleware/loadOffice');
 const landlordRoutes = require('./landlords');
 const unitRoutes = require('./units');
+const contractRoutes = require('./contracts');
+const contractsService = require('../services/contracts');
+const contractStatus = require('../services/contractStatus');
+const { riyadhDate } = require('../services/contractDates');
 
 const router = express.Router();
 
@@ -98,24 +102,24 @@ router.use('/office', requireAuth, loadOffice(), officeGate);
 const SETUP_STEPS = [
   { label: 'أضف أول مالك', href: '/office/landlords', capability: 'landlords', done: (c) => c.landlordsTotal > 0 },
   { label: 'أضف أول عقار أو وحدة', href: '/office/units', capability: 'units', done: (c) => c.units.total + c.units.buildings > 0 },
-  { label: 'أضف أول عقد', href: '/office/contracts', capability: 'contracts' },
+  { label: 'أضف أول عقد', href: '/office/contracts', capability: 'contracts', done: (c) => c.contractsTotal > 0 },
   { label: 'ادعُ أحد أعضاء فريقك', href: '/office/team', capability: 'team' },
   { label: 'اربط واتساب لإرسال التذكيرات', href: '/office/settings', capability: 'settings.basic' },
 ];
 
 router.get('/office', requirePerm('contracts'), async (req, res, next) => {
   try {
-    const counts = await offices.dashboardCounts(db.pool, req.office.id);
+    const now = new Date();
+    const today = riyadhDate(now);
+    // No cron yet: keep this office's stages fresh, at most once an hour.
+    await contractStatus.maybeRecompute({ pool: db.pool, officeId: req.office.id, now, today });
+    const counts = await offices.dashboardCounts(db.pool, req.office.id, now);
     counts.units = await unitsService.unitCounts(db.pool, req.office.id);
-    const needsAction = [
-      { count: counts.expiring90, text: 'عقود تنتهي خلال 90 يوماً', href: '/office/contracts', capability: 'contracts' },
-      { count: counts.overduePayments, text: 'دفعات متأخرة', href: '/office/payments', capability: 'payments.read' },
-      { count: counts.openMaintenance, text: 'طلبات صيانة مفتوحة', href: '/office/maintenance', capability: 'maintenance' },
-    ].filter((item) => item.count > 0 && can(req.memberRole, item.capability));
     return res.render('office/home', {
       title: 'الرئيسية',
       counts,
-      needsAction,
+      board: await contractsService.needsActionContracts(db.pool, req.office.id, today, 10),
+      stageLabels: contractsService.STAGE_LABELS,
       setupSteps: SETUP_STEPS.filter((step) => can(req.memberRole, step.capability)).map((step) => ({
         label: step.label,
         href: step.href,
@@ -129,10 +133,11 @@ router.get('/office', requirePerm('contracts'), async (req, res, next) => {
 
 router.use(landlordRoutes);
 router.use(unitRoutes);
+router.use(contractRoutes);
 
 // One placeholder page per navigation item, each behind its own capability.
-// Landlords, units (routes/landlords.js, routes/units.js) and settings (below) are real pages.
-for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'settings'].includes(i.key))) {
+// Landlords, units, contracts (routes/landlords.js, units.js, contracts.js) and settings (below) are real pages.
+for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'contracts', 'settings'].includes(i.key))) {
   router.get(item.href, requirePerm(item.capability), (req, res) => {
     res.render('office/placeholder', { title: item.label });
   });

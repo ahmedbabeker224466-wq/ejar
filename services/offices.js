@@ -6,6 +6,7 @@ const { scopeToOffice } = require('./scopeToOffice');
 const { createAudit } = require('./audit');
 const { withTransaction } = require('./transaction');
 const contractDates = require('./contractDates');
+const engine = require('./contractEngine');
 const { normalizeSaudi, toWesternDigits } = require('../utils/phone');
 
 // Riyadh first, then the other large cities, then a catch-all.
@@ -183,28 +184,38 @@ function officeAccess(office, now = new Date()) {
 
 const LIVE_CONTRACT = "status IN ('calm','soon','urgent','deadline_passed')";
 
-/** The dashboard numbers, counted inside this office only. */
+/**
+ * The dashboard numbers, counted inside this office only. "Decision within
+ * 90 days" is a display window, not an Ejar rule. A payment is late when it
+ * is marked late, or still due after its due date.
+ */
 async function dashboardCounts(pool, officeId, now = new Date()) {
   const scoped = scopeToOffice(pool, officeId);
   const today = contractDates.riyadhDate(now);
+  const window = engine.dateWindow(today, 90);
   const [row] = await scoped.query(
     `SELECT
+       (SELECT COUNT(*) FROM contracts WHERE office_id = :office_id) AS contracts_total,
        (SELECT COUNT(*) FROM contracts
          WHERE office_id = :office_id AND ${LIVE_CONTRACT}) AS active_contracts,
        (SELECT COUNT(*) FROM contracts
-         WHERE office_id = :office_id AND ${LIVE_CONTRACT} AND end_date BETWEEN ? AND ?) AS expiring_90,
+         WHERE office_id = :office_id AND ${LIVE_CONTRACT} AND notice_deadline BETWEEN ? AND ?) AS deadline_90,
        (SELECT COUNT(*) FROM contract_payments
-         WHERE office_id = :office_id AND status IN ('due','late') AND due_date < ?) AS overdue_payments,
+         WHERE office_id = :office_id AND (status = 'late' OR (status = 'due' AND due_date < ?))) AS late_payments,
+       (SELECT COALESCE(SUM(amount), 0) FROM contract_payments
+         WHERE office_id = :office_id AND (status = 'late' OR (status = 'due' AND due_date < ?))) AS late_total,
        (SELECT COUNT(*) FROM maintenance_requests
          WHERE office_id = :office_id AND status IN ('open','assigned','in_progress')) AS open_maintenance,
        (SELECT COUNT(*) FROM landlords WHERE office_id = :office_id) AS landlords_total,
        (SELECT COUNT(*) FROM landlords WHERE office_id = :office_id AND is_active = 1) AS landlords_active`,
-    [today, contractDates.addDays(today, 90), today],
+    [window.from, window.to, today, today],
   );
   return {
+    contractsTotal: Number(row.contracts_total),
     activeContracts: Number(row.active_contracts),
-    expiring90: Number(row.expiring_90),
-    overduePayments: Number(row.overdue_payments),
+    deadline90: Number(row.deadline_90),
+    latePayments: Number(row.late_payments),
+    lateTotal: String(row.late_total),
     openMaintenance: Number(row.open_maintenance),
     landlordsTotal: Number(row.landlords_total),
     landlordsActive: Number(row.landlords_active),

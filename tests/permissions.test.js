@@ -6,17 +6,17 @@ const { CAPABILITIES, can, requirePerm } = require('../middleware/permissions');
 
 const EXPECTED = {
   office_owner: [
-    'contracts', 'contracts.delete', 'landlords', 'units', 'tenants', 'payments.read',
+    'contracts', 'contracts.terminate', 'contracts.delete', 'landlords', 'units', 'tenants', 'payments.read',
     'payments.write', 'maintenance', 'listings', 'reports', 'messages', 'team', 'audit',
     'settings.basic', 'settings.office', 'settings.secure', 'billing', 'office.delete',
   ],
   office_manager: [
-    'contracts', 'contracts.delete', 'landlords', 'units', 'tenants', 'payments.read',
+    'contracts', 'contracts.terminate', 'contracts.delete', 'landlords', 'units', 'tenants', 'payments.read',
     'payments.write', 'maintenance', 'listings', 'reports', 'messages', 'audit',
     'settings.basic', 'settings.office',
   ],
   office_staff: [
-    'contracts', 'landlords', 'units', 'tenants', 'payments.read', 'maintenance', 'messages',
+    'contracts', 'landlords', 'units', 'tenants', 'payments.read', 'payments.write', 'maintenance', 'messages',
     'settings.basic',
   ],
   landlord: [

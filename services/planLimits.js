@@ -1,6 +1,6 @@
 'use strict';
 
-// Plan limits (plans.max_units, and later max_contracts / max_members).
+// Plan limits (plans.max_units, plans.max_contracts, later max_members).
 // The decision is pure; the database side reads the office's plan while
 // locking the office row, so parallel creates inside one office queue up and
 // cannot pass the limit together.
@@ -23,6 +23,11 @@ function unitLimitMessage({ limit, current, remaining }) {
     return `وصلت إلى حد باقتك: ${limit} وحدة (لديك ${current}). رقِّ اشتراكك لإضافة وحدات أكثر.`;
   }
   return `باقتك تسمح بـ ${limit} وحدة، لديك ${current}، ويمكنك إضافة ${remaining} فقط. رقِّ اشتراكك لإضافة المزيد.`;
+}
+
+/** Arabic refusal for the contract limit. */
+function contractLimitMessage({ limit, current }) {
+  return `وصلت إلى حد باقتك: ${limit} عقداً سارياً (لديك ${current}). رقِّ اشتراكك لإضافة عقود أكثر.`;
 }
 
 /** "N من M وحدة", or null when the plan has no limit. */
@@ -51,4 +56,23 @@ async function unitUsage(scoped, { lock = false } = {}) {
   return { limit: office && office.max_units !== null ? Number(office.max_units) : null, current: Number(n) };
 }
 
-module.exports = { checkLimit, unitLimitMessage, usageText, unitUsage };
+// Contracts that count against max_contracts: the running ones. Ended,
+// terminated and renewed contracts do not (a renewal replaces its contract).
+const LIVE_SQL = "status IN ('calm','soon','urgent','deadline_passed')";
+
+/**
+ * Like unitUsage, for contracts: max_contracts and the running contracts.
+ * With { lock: true } it must be the FIRST statement of the transaction.
+ */
+async function contractUsage(scoped, { lock = false } = {}) {
+  const [office] = await scoped.query(
+    `SELECT o.id, p.max_contracts FROM offices o LEFT JOIN plans p ON p.id = o.plan_id
+      WHERE o.id = :office_id${lock ? ' FOR UPDATE' : ''}`,
+  );
+  const [{ n }] = await scoped.query(
+    `SELECT COUNT(*) AS n FROM contracts WHERE office_id = :office_id AND ${LIVE_SQL}${lock ? ' LOCK IN SHARE MODE' : ''}`,
+  );
+  return { limit: office && office.max_contracts !== null ? Number(office.max_contracts) : null, current: Number(n) };
+}
+
+module.exports = { checkLimit, unitLimitMessage, contractLimitMessage, usageText, unitUsage, contractUsage };

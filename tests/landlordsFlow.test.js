@@ -80,17 +80,37 @@ function createInviteFor(officeId, landlordId, createdBy) {
 
 // ------------------------------------------------------------ schema
 
-test('ensureSchema adds invites.revoked_at to a database that lacks it, even from parallel starts', { skip }, async () => {
-  await db.pool.query('ALTER TABLE invites DROP COLUMN revoked_at');
-  // Several workers starting together all succeed; one of them adds the column.
-  const results = await Promise.all([db.ensureSchema(), db.ensureSchema(), db.ensureSchema()]);
-  assert.deepEqual(results.map((r) => r.ok), [true, true, true]);
+test('invites.revoked_at is a registered migration and exists after ensureSchema', { skip }, async () => {
+  // Never drop a shared column here: other test files use the same database at
+  // the same time. The migration mechanism itself is tested on a scratch table.
+  const { COLUMN_ADDITIONS } = require('../database/schema');
+  assert.ok(COLUMN_ADDITIONS.some((c) => c.table === 'invites' && c.column === 'revoked_at'));
+  assert.equal((await db.ensureSchema()).ok, true);
   const [cols] = await db.pool.query(
-    `SELECT column_name AS name, is_nullable AS nullable, data_type AS type FROM information_schema.columns
+    `SELECT is_nullable AS nullable, data_type AS type FROM information_schema.columns
       WHERE table_schema = DATABASE() AND table_name = 'invites' AND column_name = 'revoked_at'`,
   );
-  assert.deepEqual(cols.map((c) => [c.name, c.nullable, c.type]), [['revoked_at', 'YES', 'datetime']]);
-  assert.equal((await db.ensureSchema()).ok, true, 'running again changes nothing');
+  assert.deepEqual(cols.map((c) => [c.nullable, c.type]), [['YES', 'datetime']]);
+});
+
+test('missing columns are added once, even when several workers start together', { skip }, async () => {
+  const table = 'zz_test_migration_landlords';
+  await db.pool.query(`DROP TABLE IF EXISTS ${table}`);
+  await db.pool.query(`CREATE TABLE ${table} (id INT PRIMARY KEY, used_at DATETIME NULL)`);
+  try {
+    const additions = [{ table, column: 'revoked_at', definition: 'DATETIME NULL AFTER used_at' }];
+    const results = await Promise.all([1, 2, 3].map(() => db.addMissingColumns(db.pool, additions)));
+    assert.deepEqual(results.flat(), [`${table}.revoked_at`], 'exactly one worker added it; none failed');
+    const [cols] = await db.pool.query(
+      `SELECT column_name AS name FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = ? ORDER BY ordinal_position`,
+      [table],
+    );
+    assert.deepEqual(cols.map((c) => c.name), ['id', 'used_at', 'revoked_at']);
+    assert.deepEqual(await db.addMissingColumns(db.pool, additions), [], 'running again adds nothing');
+  } finally {
+    await db.pool.query(`DROP TABLE IF EXISTS ${table}`);
+  }
 });
 
 // ------------------------------------------------------------ CRUD

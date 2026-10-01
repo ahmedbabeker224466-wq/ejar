@@ -27,4 +27,18 @@ async function withTransaction(pool, fn, { retries = 2 } = {}) {
   }
 }
 
-module.exports = { withTransaction };
+/**
+ * Runs fn() again when the database picked it as a deadlock victim. Only for
+ * work that is safe to repeat (idempotent), outside a transaction.
+ */
+async function retryOnDeadlock(fn, { retries = 2 } = {}) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (!RETRYABLE.has(err.code) || attempt >= retries) throw err;
+    }
+  }
+}
+
+module.exports = { withTransaction, retryOnDeadlock };

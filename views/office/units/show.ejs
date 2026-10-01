@@ -53,7 +53,13 @@
   <% } %>
 </section>
 
-<section class="card detail-card"><h2>العقود</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
+<section class="card detail-card" id="contracts">
+  <h2>العقود (<%= contracts.total %>)</h2>
+  <%- include('../contracts/_mini-list', { list: contracts, stageLabels, more: `/office/contracts?q=${encodeURIComponent(unit.label)}` }) %>
+  <% if (unit.status === 'vacant') { %>
+    <a href="/office/contracts/new?landlord=<%= unit.landlord_id %>&amp;unit=<%= unit.id %>" class="btn btn--primary">إضافة عقد لهذه الوحدة</a>
+  <% } %>
+</section>
 <section class="card detail-card"><h2>الصيانة</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
 <section class="card detail-card"><h2>الصور</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
 

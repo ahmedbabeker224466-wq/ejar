@@ -1270,6 +1270,125 @@ img {
   margin: 0 0 var(--space-3);
 }
 
+/* Contracts */
+.details [dir='ltr'],
+.deadlines [dir='ltr'],
+.schedule [dir='ltr'],
+.payment [dir='ltr'],
+.item__meta [dir='ltr'],
+.flash [dir='ltr'] {
+  white-space: nowrap;
+}
+
+.badge--stage-calm { background: var(--color-success-soft); color: var(--color-success); }
+.badge--stage-soon { background: var(--stage-soon-soft); color: var(--stage-soon); }
+.badge--stage-urgent { background: var(--stage-urgent-soft); color: var(--stage-urgent); }
+.badge--stage-deadline_passed { background: var(--stage-passed-soft); color: var(--stage-passed); }
+.badge--stage-ended { background: var(--stage-ended-soft); color: var(--stage-calm); }
+.badge--stage-renewed { background: var(--color-info-soft); color: var(--color-info); }
+.badge--stage-terminated { background: #e2e5e5; color: #2f3a39; }
+
+.badge--pay-due { background: var(--stage-calm-soft); color: var(--stage-calm); }
+.badge--pay-paid { background: var(--color-success-soft); color: var(--color-success); }
+.badge--pay-late { background: var(--stage-passed-soft); color: var(--stage-passed); }
+.badge--pay-waived { background: var(--stage-ended-soft); color: var(--stage-ended); }
+
+.form-card--wide {
+  max-width: 720px;
+}
+
+.form-group {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4) 0 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+.form-group legend {
+  padding-inline-end: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.preview {
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  background: var(--color-bg);
+  text-align: start;
+}
+
+.preview[hidden],
+.ack[hidden],
+#contract-warnings[hidden] {
+  display: none;
+}
+
+.schedule,
+.deadlines,
+.payments,
+.board,
+.timeline {
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.schedule li,
+.deadlines li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.payment {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.payment__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.payment__edit summary {
+  min-height: var(--tap-min);
+  padding-top: var(--space-2);
+  color: var(--color-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.board__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.board__days {
+  margin: var(--space-1) 0 0;
+}
+
+.timeline li {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.stat__sub {
+  margin: 0;
+  color: var(--stage-passed);
+  font-weight: 700;
+}
+
 /* Wider screens */
 @media (min-width: 768px) {
   h1 { font-size: var(--text-3xl); }

@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { withTransaction } = require('../services/transaction');
+const { withTransaction, retryOnDeadlock } = require('../services/transaction');
 
 function fakePool() {
   const log = [];
@@ -48,5 +48,17 @@ test('gives up after the retries, and never retries other errors', async () => {
 
   calls = 0;
   await assert.rejects(withTransaction(fakePool(), async () => { calls += 1; throw new Error('boom'); }), /boom/);
+  assert.equal(calls, 1);
+});
+
+test('retryOnDeadlock repeats only deadlocked work, a limited number of times', async () => {
+  let calls = 0;
+  assert.equal(await retryOnDeadlock(async () => { calls += 1; if (calls < 3) throw deadlock(); return 'done'; }, { retries: 3 }), 'done');
+  assert.equal(calls, 3);
+  calls = 0;
+  await assert.rejects(retryOnDeadlock(async () => { calls += 1; throw deadlock(); }, { retries: 2 }), /Deadlock/);
+  assert.equal(calls, 3);
+  calls = 0;
+  await assert.rejects(retryOnDeadlock(async () => { calls += 1; throw new Error('other'); }), /other/);
   assert.equal(calls, 1);
 });

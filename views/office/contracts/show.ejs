@@ -1,0 +1,162 @@
+<p class="back-link"><a href="/office/contracts">→ كل العقود</a></p>
+
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card detail-card">
+  <div class="page-head">
+    <h1><%= contract.unit_label || 'وحدة محذوفة' %><%= contract.tenant_label ? ` · ${contract.tenant_label}` : '' %></h1>
+    <span class="badge badge--stage-<%= stage %>"><%= stageLabels[stage] %></span>
+  </div>
+  <dl class="details">
+    <dt>المالك</dt><dd><% if (contract.landlord_id) { %><a href="/office/landlords/<%= contract.landlord_id %>"><%= contract.landlord_label %></a><% } else { %>—<% } %></dd>
+    <dt>الوحدة</dt><dd><% if (contract.unit_id) { %><a href="/office/units/<%= contract.unit_id %>"><%= contract.unit_label %></a><% } else { %>—<% } %><%= contract.building_name ? ` · ${contract.building_name}` : '' %></dd>
+    <% if (contract.contract_number) { %><dt>رقم العقد في إيجار</dt><dd dir="ltr"><%= contract.contract_number %></dd><% } %>
+    <dt>البداية</dt><dd><span dir="ltr"><%= contract.start_date %></span> <span class="muted nowrap">(<%= hijri.start %> تقريبي)</span></dd>
+    <dt>النهاية</dt><dd><span dir="ltr"><%= contract.end_date %></span> <span class="muted nowrap">(<%= hijri.end %> تقريبي)</span></dd>
+    <dt>التجديد التلقائي</dt><dd><%= described.autoRenew ? 'نعم' : 'لا' %></dd>
+    <% if (contract.renewed_from_id) { %><dt>تجديد لعقد</dt><dd><a href="/office/contracts/<%= contract.renewed_from_id %>">العقد السابق</a></dd><% } %>
+    <% if (contract.renewed_to_id) { %><dt>جُدِّد إلى</dt><dd><a href="/office/contracts/<%= contract.renewed_to_id %>">العقد الجديد</a></dd><% } %>
+  </dl>
+  <% if (described.notStarted) { %><p class="muted">لم يبدأ العقد بعد.</p><% } %>
+  <div class="button-row">
+    <a href="/office/contracts/<%= contract.id %>/edit" class="btn btn--secondary">تعديل</a>
+    <% if (canRenew) { %><a href="/office/contracts/<%= contract.id %>/renew" class="btn btn--secondary">تجديد</a><% } %>
+    <% if (canTerminate) { %><a href="/office/contracts/<%= contract.id %>/terminate" class="btn btn--secondary">إنهاء العقد</a><% } %>
+  </div>
+</section>
+
+<section class="card detail-card">
+  <h2>المواعيد</h2>
+  <ul class="deadlines">
+    <li>
+      <span>آخر موعد لإشعار عدم التجديد</span>
+      <strong dir="ltr"><%= described.noticeDeadline %></strong>
+      <span class="muted"><%= running ? (described.daysToNotice >= 0 ? `باقي ${described.daysToNotice} يوم` : `فات منذ ${-described.daysToNotice} يوم`) : '' %></span>
+    </li>
+    <li>
+      <span>آخر موعد لطلب تغيير الإيجار</span>
+      <strong dir="ltr"><%= described.rentChangeDeadline %></strong>
+      <span class="muted"><%= running ? (described.daysToRentChange >= 0 ? `باقي ${described.daysToRentChange} يوم` : `فات منذ ${-described.daysToRentChange} يوم`) : '' %></span>
+    </li>
+    <li>
+      <span>نهاية العقد</span>
+      <strong dir="ltr"><%= contract.end_date %></strong>
+      <span class="muted"><%= described.daysToEnd >= 0 ? `باقي ${described.daysToEnd} يوم` : 'انتهى' %></span>
+    </li>
+  </ul>
+  <% if (rentPolicy.reason === 'riyadh_freeze') { %>
+    <p class="flash flash--warning">الإيجار مجمّد في الرياض حتى <span dir="ltr"><%= rentPolicy.freezeUntil %></span>: لا يمكن رفع الإيجار عند التجديد، ويمكن فقط طلب تخفيضه.</p>
+  <% } else if (rentPolicy.reason === 'unknown_city') { %>
+    <p class="muted">لم نتعرف على المدينة، فلم نتحقق من قيود رفع الإيجار.</p>
+  <% } %>
+</section>
+
+<section class="card detail-card">
+  <h2>المبالغ</h2>
+  <dl class="details">
+    <dt>الإيجار السنوي</dt><dd><%= Number(contract.annual_rent).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd>
+    <dt>طريقة الدفع</dt><dd><%= frequencyLabels[contract.payment_frequency] || '—' %></dd>
+    <% if (contract.deposit !== null) { %><dt>التأمين</dt><dd><%= Number(contract.deposit).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd><% } %>
+    <% if (contract.commission !== null) { %><dt>العمولة</dt><dd><%= Number(contract.commission).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd><% } %>
+    <dt>مجموع الدفعات</dt><dd><%= Number(totals.schedule).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd>
+    <dt>المدفوع</dt><dd><%= Number(totals.paid).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd>
+    <dt>المتبقي</dt><dd><%= Number(totals.open).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd>
+  </dl>
+</section>
+
+<section class="card detail-card" id="payments">
+  <h2>الدفعات (<%= payments.length %>)</h2>
+  <ul class="payments">
+    <% payments.forEach(function (p, i) { %>
+      <li class="payment">
+        <div class="payment__head">
+          <span>دفعة <%= i + 1 %> · <span dir="ltr"><%= p.due_date %></span></span>
+          <strong><%= Number(p.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</strong>
+          <span class="badge badge--pay-<%= p.shownStatus %>"><%= paymentLabels[p.shownStatus] %></span>
+        </div>
+        <% if (p.paidOn) { %><p class="muted">دُفعت في <span dir="ltr"><%= p.paidOn %></span><%= p.method ? ` · ${paymentMethods[p.method] || ''}` : '' %><%= p.receipt_no ? ` · إيصال ${p.receipt_no}` : '' %></p><% } %>
+        <% if (canPay) { %>
+          <details class="payment__edit">
+            <summary>تغيير الحالة</summary>
+            <form method="post" action="/office/contracts/<%= contract.id %>/payments/<%= p.id %>">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="status-<%= p.id %>">الحالة</label>
+                  <select id="status-<%= p.id %>" name="status" class="select">
+                    <% Object.entries(paymentLabels).forEach(function ([key, label]) { %><option value="<%= key %>" <%= p.status === key ? 'selected' : '' %>><%= label %></option><% }) %>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="paid-<%= p.id %>">تاريخ الدفع</label>
+                  <input id="paid-<%= p.id %>" name="paid_on" class="input" type="date" max="<%= today %>" value="<%= p.paidOn || today %>">
+                </div>
+                <div class="field">
+                  <label for="method-<%= p.id %>">الطريقة</label>
+                  <select id="method-<%= p.id %>" name="method" class="select">
+                    <option value="">—</option>
+                    <% Object.entries(paymentMethods).forEach(function ([key, label]) { %><option value="<%= key %>" <%= p.method === key ? 'selected' : '' %>><%= label %></option><% }) %>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="receipt-<%= p.id %>">رقم الإيصال</label>
+                  <input id="receipt-<%= p.id %>" name="receipt_no" class="input" type="text" dir="ltr" maxlength="40" value="<%= p.receipt_no || '' %>">
+                </div>
+              </div>
+              <button type="submit" class="btn btn--primary btn--block">حفظ</button>
+            </form>
+          </details>
+        <% } %>
+      </li>
+    <% }) %>
+  </ul>
+</section>
+
+<section class="card detail-card" id="invite">
+  <h2>رمز دعوة المستأجر</h2>
+  <% if (invite && invite.code) { %>
+    <p class="muted">أرسل هذا الرمز للمستأجر ليتابع عقده ودفعاته. يُستخدم مرة واحدة فقط.</p>
+    <div class="invite-code">
+      <output id="invite-code" dir="ltr"><%= invite.code %></output>
+      <button type="button" class="btn btn--secondary" data-copy="#invite-code" data-copied="تم النسخ">نسخ الرمز</button>
+    </div>
+    <p class="muted">الحالة: <span class="badge badge--calm"><%= invite.label %></span> · صالح حتى <span dir="ltr"><%= invite.expiresOn %></span></p>
+    <div class="button-row">
+      <a href="<%= invite.shareLink %>" class="btn btn--primary" target="_blank" rel="noopener noreferrer">إرسال عبر واتساب</a>
+      <form method="post" action="/office/contracts/<%= contract.id %>/invite/revoke"><button type="submit" class="btn btn--secondary">إلغاء الرمز</button></form>
+      <form method="post" action="/office/contracts/<%= contract.id %>/invite"><button type="submit" class="btn btn--secondary">إنشاء رمز جديد</button></form>
+    </div>
+  <% } else { %>
+    <% if (invite) { %>
+      <p>آخر رمز: <span class="badge badge--ended"><%= invite.label %></span><% if (invite.usedBy) { %> بواسطة <span dir="ltr"><%= invite.usedBy %></span><% } %></p>
+    <% } %>
+    <% if (canRenew) { %>
+      <form method="post" action="/office/contracts/<%= contract.id %>/invite"><button type="submit" class="btn btn--primary btn--block">إنشاء رمز دعوة</button></form>
+    <% } %>
+  <% } %>
+</section>
+
+<section class="card detail-card">
+  <h2>سجل العقد</h2>
+  <% if (timeline.length) { %>
+    <ol class="timeline">
+      <% timeline.forEach(function (t) { %><li><span dir="ltr" class="muted"><%= t.at %></span> <%= t.text %></li><% }) %>
+    </ol>
+  <% } else { %><p class="muted">لا توجد أحداث بعد.</p><% } %>
+</section>
+
+<section class="card detail-card"><h2>المستندات</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
+<section class="card detail-card"><h2>الصيانة</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
+<section class="card detail-card"><h2>الرسائل</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
+
+<% if (canDelete) { %>
+  <section class="card detail-card">
+    <details class="danger-zone">
+      <summary>حذف العقد</summary>
+      <p>استخدم الحذف فقط لعقد أُدخل بالخطأ. لإيقاف عقد حقيقي استخدم "إنهاء العقد".</p>
+      <form method="post" action="/office/contracts/<%= contract.id %>/delete"><button type="submit" class="btn btn--danger btn--block">نعم، احذف العقد</button></form>
+    </details>
+  </section>
+<% } %>
+
+<script src="<%= assetUrl('/js/copy.js') %>" defer></script>

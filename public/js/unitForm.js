@@ -1,5 +1,6 @@
-// Unit forms: show only the chosen landlord's buildings, and take the city
-// from the building. The server checks both again.
+// Linked selects (unit and contract forms): show only the options of the
+// chosen landlord (buildings, or vacant units), and take the city from the
+// chosen option. The server checks both again.
 (function () {
   'use strict';
   document.addEventListener('DOMContentLoaded', function () {

@@ -66,22 +66,30 @@ async function createLandlordInvite(scoped, { landlordId, createdBy, ip = null, 
   if (landlord.user_id) return { ok: false, reason: 'joined' };
 
   const revoked = await revokeActiveInvites(scoped, { landlordId });
-  const expiresAt = inviteExpiresAt(now);
+  return insertInvite(scoped, { kind: 'landlord', landlordId, createdBy, ip, now, generate, revoked });
+}
 
-  // The UNIQUE key on invites.code is the collision check: retry on a duplicate.
+/**
+ * Inserts one invite row with a fresh code. The UNIQUE key on invites.code is
+ * the collision check: a duplicate is retried with a new code.
+ */
+async function insertInvite(scoped, { kind, landlordId = null, contractId = null, createdBy, ip, now, generate, revoked }) {
+  const expiresAt = inviteExpiresAt(now);
   for (let attempt = 1; attempt <= MAX_CODE_ATTEMPTS; attempt += 1) {
     const code = generate();
     try {
       const id = await scoped.insert('invites', {
         code,
-        kind: 'landlord',
+        kind,
         landlord_id: landlordId,
+        contract_id: contractId,
         created_by: createdBy,
         expires_at: expiresAt,
       });
       await auditWrite(scoped, createdBy, 'invite.create', id, null, {
-        landlord_id: landlordId,
-        kind: 'landlord',
+        ...(landlordId ? { landlord_id: landlordId } : {}),
+        ...(contractId ? { contract_id: contractId } : {}),
+        kind,
         expires_at: expiresAt.toISOString(),
         replaced: revoked,
       }, ip);
@@ -91,6 +99,56 @@ async function createLandlordInvite(scoped, { landlordId, createdBy, ip = null, 
     }
   }
   throw new Error('unreachable');
+}
+
+/**
+ * Creates the tenant invite of a contract, revoking its previous active one.
+ * Same rules as landlord invites: `scoped` is scopeToOffice() on a connection
+ * inside a transaction; the contract row lock keeps one active code per
+ * contract. Returns { ok, invite } or { ok: false, reason } with reason
+ * 'not_found' | 'closed' (terminated or renewed contracts get no code).
+ */
+async function createTenantInvite(scoped, { contractId, createdBy, ip = null, now = new Date(), generate = generateInviteCode }) {
+  const [contract] = await scoped.query(
+    'SELECT id, status FROM contracts WHERE id = ? AND office_id = :office_id FOR UPDATE',
+    [contractId],
+  );
+  if (!contract) return { ok: false, reason: 'not_found' };
+  if (['terminated', 'renewed'].includes(contract.status)) return { ok: false, reason: 'closed' };
+  const revoked = await revokeActiveTenantInvites(scoped, { contractId });
+  return insertInvite(scoped, { kind: 'tenant', contractId, createdBy, ip, now, generate, revoked });
+}
+
+/** Revokes the contract's active tenant invites. Returns how many. */
+async function revokeActiveTenantInvites(scoped, { contractId }) {
+  const result = await scoped.query(
+    `UPDATE invites SET revoked_at = UTC_TIMESTAMP()
+      WHERE contract_id = ? AND kind = 'tenant' AND used_at IS NULL AND revoked_at IS NULL
+        AND expires_at > UTC_TIMESTAMP() AND office_id = :office_id`,
+    [contractId],
+  );
+  return result.affectedRows;
+}
+
+/** Revoke button on a contract: ends its active tenant invite. True when one was revoked. */
+async function revokeTenantInvite(scoped, { contractId, actorId, ip = null }) {
+  const count = await revokeActiveTenantInvites(scoped, { contractId });
+  if (count > 0) {
+    await auditWrite(scoped, actorId, 'invite.revoke', null, null, { contract_id: contractId, kind: 'tenant' }, ip);
+  }
+  return count > 0;
+}
+
+/** The contract's most recent tenant invite with who used it, or null. */
+async function latestTenantInvite(scoped, contractId) {
+  const [row] = await scoped.query(
+    `SELECT i.id, i.code, i.used_at, i.revoked_at, i.expires_at, i.created_at, u.phone AS used_by_phone
+       FROM invites i LEFT JOIN users u ON u.id = i.used_by
+      WHERE i.contract_id = ? AND i.kind = 'tenant' AND i.office_id = :office_id
+      ORDER BY i.id DESC LIMIT 1`,
+    [contractId],
+  );
+  return row || null;
 }
 
 /** Audit rows for invites never contain the code. */
@@ -186,9 +244,10 @@ async function markInviteUsed(pool, input, userId) {
  * With the landlord's mobile it opens that chat; without it, WhatsApp asks
  * whom to send it to.
  */
-function inviteShareLink({ code, officeName, baseUrl, phone = null }) {
+function inviteShareLink({ code, officeName, baseUrl, phone = null, kind = 'landlord' }) {
+  const what = kind === 'tenant' ? 'لمتابعة عقد إيجارك ومواعيد الدفعات' : 'لمتابعة عقاراتك وعقودها';
   const text = [
-    `مرحباً، يدعوك ${officeName} لمتابعة عقاراتك وعقودها في تطبيق عقدي.`,
+    `مرحباً، يدعوك ${officeName} ${what} في تطبيق عقدي.`,
     `رمز الدعوة: ${code}`,
     `ادخل من هنا واكتب الرمز: ${baseUrl}/join`,
   ].join('\n');
@@ -234,6 +293,10 @@ module.exports = {
   revokeInvite,
   revokeActiveInvites,
   latestLandlordInvite,
+  createTenantInvite,
+  revokeTenantInvite,
+  revokeActiveTenantInvites,
+  latestTenantInvite,
   validateInviteCode,
   markInviteUsed,
   inviteShareLink,

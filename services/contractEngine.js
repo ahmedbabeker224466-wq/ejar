@@ -20,6 +20,14 @@ const { toWesternDigits } = require('../utils/phone');
 
 const STAGES = Object.freeze(['calm', 'soon', 'urgent', 'deadline_passed', 'ended', 'renewed', 'terminated']);
 
+// Stages of a contract that is still running (counts for plan limits, keeps
+// its unit occupied, gets recomputed).
+const LIVE_STAGES = Object.freeze(['calm', 'soon', 'urgent', 'deadline_passed']);
+
+// App policy, not an Ejar rule: a unit is marked rented once its contract has
+// started or starts within this many days.
+const APP = Object.freeze({ rentedLeadDays: 30 });
+
 // Months between installments.
 const FREQUENCIES = Object.freeze({ monthly: 1, quarterly: 3, semiannual: 6, annual: 12 });
 
@@ -308,6 +316,42 @@ function sanityWarnings(fields, today, rules = RULES) {
   return out;
 }
 
+// ------------------------------------------------------------ helpers for the contract system
+
+/** True when two inclusive date ranges share at least one day (back to back is fine). */
+function rangesOverlap(aStart, aEnd, bStart, bEnd) {
+  return compareYmd(aStart, bEnd) <= 0 && compareYmd(bStart, aEnd) <= 0;
+}
+
+/**
+ * Whether the contract's unit should be marked rented today: the contract has
+ * started (or starts within APP.rentedLeadDays) and has not ended.
+ */
+function unitShouldBeRented(contract, today, app = APP) {
+  checkTerm(contract);
+  requireDate(today, 'today');
+  return compareYmd(contract.start_date, addDays(today, app.rentedLeadDays)) <= 0
+    && compareYmd(today, contract.end_date) <= 0;
+}
+
+/** A payment still 'due' after its due date reads as 'late'. */
+function paymentDisplayStatus(payment, today) {
+  requireDate(today, 'today');
+  if (payment.status === 'due' && compareYmd(requireDate(payment.due_date, 'due_date'), today) < 0) return 'late';
+  return payment.status;
+}
+
+/** { from: today, to: today + days } for "within N days" filters. */
+function dateWindow(today, days) {
+  requireDate(today, 'today');
+  return { from: today, to: addDays(today, days) };
+}
+
+/** True when a date is after today (for "not in the future" checks). */
+function isAfter(date, today) {
+  return compareYmd(requireDate(date, 'date'), requireDate(today, 'today')) > 0;
+}
+
 // ------------------------------------------------------------ display (Hijri is display only)
 
 // Hijri here is for display ONLY and must never feed a calculation. The ICU
@@ -334,6 +378,8 @@ function formatGregorianAr(ymd) {
 module.exports = {
   RULES,
   STAGES,
+  LIVE_STAGES,
+  APP,
   FREQUENCIES,
   SANITY,
   ContractDateError,
@@ -349,6 +395,13 @@ module.exports = {
   toHalalas,
   buildSchedule,
   sanityWarnings,
+  rangesOverlap,
+  unitShouldBeRented,
+  paymentDisplayStatus,
+  dateWindow,
+  isAfter,
+  isValidDate: isValidYmd,
+  compareDates: compareYmd,
   formatHijri,
   formatGregorianAr,
 };

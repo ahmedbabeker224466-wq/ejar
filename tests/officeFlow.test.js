@@ -200,7 +200,7 @@ test('register end to end: new phone -> code -> /office/new -> office, owner, me
   assert.match(home.text, /مكتب اختبار التسجيل/);
   assert.match(home.text, /تجربتك المجانية تنتهي بعد 14 يوم/);
   assert.match(home.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
-  assert.equal((home.text.match(/class="stat__value">0</g) || []).length, 5, 'five stats (with landlords), all zero');
+  assert.equal((home.text.match(/class="stat__value">0</g) || []).length, 6, 'six stats, all zero');
   assert.match(home.text, /يحتاج إجراء/);
   for (const href of ['/office/landlords', '/office/units', '/office/contracts', '/office/team', '/office/settings']) {
     assert.ok(home.text.includes(`<a href="${href}">`), `checklist links ${href}`);
@@ -337,7 +337,7 @@ test('office A cannot see or change anything of office B, even by guessing ids',
   );
 
   const homeA = await request('/office', { cookie: a.cookie });
-  assert.equal((homeA.text.match(/class="stat__value">0</g) || []).length, 5, 'A sees none of B\'s numbers');
+  assert.equal((homeA.text.match(/class="stat__value">0</g) || []).length, 6, 'A sees none of B\'s numbers');
   assert.ok(!homeA.text.includes('مكتب ب'));
   const homeB = await request('/office', { cookie: b.cookie });
   assert.match(homeB.text, /class="stat__value">1</, 'B sees its own contract');
@@ -381,7 +381,7 @@ test('staff and managers cannot open pages their capabilities do not allow', { s
     const page = await request(path, { cookie: staff });
     assert.equal(page.status, 200, `staff ${path}`);
   }
-  assert.match((await request('/office/contracts', { cookie: staff })).text, /هذه الصفحة قيد البناء/);
+  assert.match((await request('/office/tenants', { cookie: staff })).text, /هذه الصفحة قيد البناء/);
 
   // Staff sees settings read-only and cannot save.
   const settings = await request('/office/settings', { cookie: staff });

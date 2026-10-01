@@ -1,0 +1,30 @@
+<%# The preview panel. Rendered by the server after a submit, and refilled by
+    contractForm.js from POST /office/contracts/preview. Same markup both ways. %>
+<section class="card preview" id="contract-preview" aria-live="polite" <%- preview ? '' : 'hidden' %>>
+  <h2>ملخص العقد</h2>
+  <dl class="details">
+    <dt>المدة</dt><dd data-preview="termMonths"><%= preview ? `${preview.termMonths} شهراً` : '' %></dd>
+    <dt>البداية (هجري تقريبي)</dt><dd class="nowrap" data-preview="startHijri"><%= preview ? preview.startHijri : '' %></dd>
+    <dt>النهاية (هجري تقريبي)</dt><dd class="nowrap" data-preview="endHijri"><%= preview ? preview.endHijri : '' %></dd>
+    <dt>آخر موعد لإشعار عدم التجديد</dt><dd><span dir="ltr" data-preview="noticeDeadline"><%= preview ? preview.noticeDeadline : '' %></span></dd>
+    <dt>آخر موعد لطلب تغيير الإيجار</dt><dd><span dir="ltr" data-preview="rentChangeDeadline"><%= preview ? preview.rentChangeDeadline : '' %></span></dd>
+    <dt>المرحلة الآن</dt><dd data-preview="stageLabel"><%= preview ? preview.stageLabel : '' %></dd>
+  </dl>
+  <p class="flash flash--warning" data-preview="freeze" <%- preview && preview.rentPolicy.reason === 'riyadh_freeze' ? '' : 'hidden' %>>
+    الإيجار مجمّد في الرياض حتى <span dir="ltr" data-preview="freezeUntil"><%= preview && preview.rentPolicy.freezeUntil ? preview.rentPolicy.freezeUntil : '' %></span>: عند التجديد لا يمكن رفع الإيجار، ويمكن فقط طلب تخفيضه.
+  </p>
+  <h3>أول الدفعات</h3>
+  <ul class="schedule" data-preview="schedule">
+    <% if (preview) { preview.schedule.forEach(function (p) { %>
+      <li><span dir="ltr"><%= p.due_date %></span><strong><%= p.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</strong></li>
+    <% }) } %>
+  </ul>
+  <p class="muted" data-preview="scheduleSummary"><%= preview ? `${preview.scheduleCount} دفعة، المجموع ${Number(preview.scheduleTotal).toLocaleString('en-US', { minimumFractionDigits: 2 })} ريال` : '' %></p>
+</section>
+
+<div class="flash flash--warning" id="contract-warnings" <%- warnings.length ? '' : 'hidden' %>>
+  <strong>تنبيهات للمراجعة:</strong>
+  <ul data-preview="warnings">
+    <% warnings.forEach(function (w) { %><li><%= w.message_ar %></li><% }) %>
+  </ul>
+</div>

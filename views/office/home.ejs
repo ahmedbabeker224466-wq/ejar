@@ -1,18 +1,23 @@
 <h1 class="office-title">أهلاً بك في <%= office.name %></h1>
 
 <section class="stats" aria-label="أرقام المكتب">
-  <div class="stat card">
+  <a class="stat card stat--link" href="/office/contracts">
     <p class="stat__value"><%= counts.activeContracts %></p>
     <p class="stat__label">عقود سارية</p>
-  </div>
+  </a>
+  <a class="stat card stat--link" href="/office/contracts?stage=action">
+    <p class="stat__value"><%= counts.deadline90 %></p>
+    <p class="stat__label">موعد القرار خلال 90 يوماً</p>
+  </a>
   <div class="stat card">
-    <p class="stat__value"><%= counts.expiring90 %></p>
-    <p class="stat__label">تنتهي خلال 90 يوماً</p>
-  </div>
-  <div class="stat card">
-    <p class="stat__value"><%= counts.overduePayments %></p>
+    <p class="stat__value"><%= counts.latePayments %></p>
     <p class="stat__label">دفعات متأخرة</p>
+    <% if (counts.latePayments > 0) { %><p class="stat__sub"><%= Number(counts.lateTotal).toLocaleString('en-US') %> ريال</p><% } %>
   </div>
+  <a class="stat card stat--link" href="/office/units?status=vacant">
+    <p class="stat__value"><%= counts.units.vacant %></p>
+    <p class="stat__label">وحدات شاغرة</p>
+  </a>
   <div class="stat card">
     <p class="stat__value"><%= counts.openMaintenance %></p>
     <p class="stat__label">طلبات صيانة مفتوحة</p>
@@ -40,14 +45,22 @@
 
 <section class="card office-section">
   <h2>يحتاج إجراء</h2>
-  <% if (needsAction.length) { %>
-    <ul class="action-list">
-      <% needsAction.forEach(function (item) { %>
-        <li><a href="<%= item.href %>"><strong><%= item.count %></strong> <%= item.text %></a></li>
+  <% if (board.length) { %>
+    <ul class="board">
+      <% board.forEach(function (c) { %>
+        <li class="board__row">
+          <div>
+            <strong><%= c.unit_label || 'وحدة' %></strong>
+            <span class="badge badge--stage-<%= c.status %>"><%= stageLabels[c.status] %></span>
+            <p class="muted board__days"><%= c.daysToNotice >= 0 ? `باقي ${c.daysToNotice} يوم على موعد القرار` : `فات موعد القرار منذ ${-c.daysToNotice} يوم` %></p>
+          </div>
+          <a class="btn btn--secondary btn--small" href="/office/contracts/<%= c.id %>">فتح العقد</a>
+        </li>
       <% }) %>
     </ul>
+    <p><a href="/office/contracts?stage=action">عرض كل العقود التي تحتاج إجراء</a></p>
   <% } else { %>
-    <p class="empty-state">لا يوجد ما يحتاج إجراءً الآن. سنعرض هنا العقود التي تقترب مواعيدها والدفعات المتأخرة.</p>
+    <p class="empty-state">لا يوجد ما يحتاج إجراءً الآن. سنعرض هنا العقود التي يقترب موعد قرارها.</p>
   <% } %>
 </section>
 

@@ -1,0 +1,123 @@
+<p class="back-link"><a href="/office/contracts">→ كل العقود</a></p>
+<section class="card form-card form-card--wide">
+  <h1>إضافة عقد</h1>
+  <p class="muted">أدخل بيانات العقد كما في منصة إيجار. هذا التطبيق خاص ولا يتصل بمنصة إيجار.</p>
+
+  <% if (limit) { %>
+    <div class="flash flash--danger" role="alert"><%= limit %> <a href="/office/billing">الاشتراك والباقات</a></div>
+  <% } else if (Object.keys(errors).length) { %>
+    <div class="flash flash--danger" role="alert">
+      <% const general = Object.entries(errors).filter(([k]) => !['landlord_id','unit_id','contract_number','tenant_label','start_date','end_date','annual_rent','payment_frequency','deposit','commission','city','ack_warnings'].includes(k)); %>
+      <%= general.length ? general.map(([, m]) => m).join(' ') : 'راجع الحقول المظللة بالأحمر.' %>
+    </div>
+  <% } %>
+
+  <form method="post" action="/office/contracts" novalidate id="contract-form">
+    <fieldset class="form-group">
+      <legend>المالك والوحدة</legend>
+      <div class="field">
+        <label for="landlord_id">المالك</label>
+        <select id="landlord_id" name="landlord_id" class="select" required data-landlord-select <%- errors.landlord_id ? 'aria-invalid="true"' : '' %>>
+          <option value="">اختر المالك</option>
+          <% landlords.forEach(function (l) { %><option value="<%= l.id %>" <%= values.landlord_id === l.id ? 'selected' : '' %>><%= l.label %></option><% }) %>
+        </select>
+        <% if (errors.landlord_id) { %><p class="field-error"><%= errors.landlord_id %></p><% } %>
+      </div>
+      <div class="field">
+        <label for="unit_id">الوحدة (الشاغرة فقط)</label>
+        <select id="unit_id" name="unit_id" class="select" required data-building-select <%- errors.unit_id ? 'aria-invalid="true"' : '' %>>
+          <option value="">اختر الوحدة</option>
+          <% landlords.forEach(function (l) { const mine = units.filter((u) => u.landlord_id === l.id); if (!mine.length) return; %>
+            <optgroup label="<%= l.label %>">
+              <% mine.forEach(function (u) { %><option value="<%= u.id %>" data-landlord="<%= u.landlord_id %>" data-city="<%= u.city %>" <%= values.unit_id === u.id ? 'selected' : '' %>><%= u.label %></option><% }) %>
+            </optgroup>
+          <% }) %>
+        </select>
+        <% if (errors.unit_id) { %><p class="field-error"><%= errors.unit_id %></p><% } %>
+        <% if (!units.length) { %><p class="field-hint">لا توجد وحدات شاغرة. <a href="/office/units/new">أضف وحدة</a>.</p><% } %>
+      </div>
+      <div class="field">
+        <label for="tenant_label">اسم مختصر للمستأجر <span class="muted">(اختياري)</span></label>
+        <input id="tenant_label" name="tenant_label" class="input" type="text" maxlength="120" value="<%= values.tenant_label %>" aria-describedby="tenant-hint" <%- errors.tenant_label ? 'aria-invalid="true"' : '' %>>
+        <p id="tenant-hint" class="field-hint">اسم للتعريف فقط، مثل "مستأجر شقة 3". لا تكتب الاسم الكامل أو رقم الهوية أو الحساب البنكي.</p>
+        <% if (errors.tenant_label) { %><p class="field-error"><%= errors.tenant_label %></p><% } %>
+      </div>
+      <div class="field">
+        <label for="contract_number">رقم العقد في إيجار <span class="muted">(اختياري)</span></label>
+        <input id="contract_number" name="contract_number" class="input" type="text" dir="ltr" maxlength="40" value="<%= values.contract_number %>" <%- errors.contract_number ? 'aria-invalid="true"' : '' %>>
+        <% if (errors.contract_number) { %><p class="field-error"><%= errors.contract_number %></p><% } %>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-group">
+      <legend>مدة العقد</legend>
+      <div class="form-grid">
+        <div class="field">
+          <label for="start_date">تاريخ البداية (ميلادي)</label>
+          <input id="start_date" name="start_date" class="input" type="date" required value="<%= values.start_date %>" data-preview-input <%- errors.start_date ? 'aria-invalid="true"' : '' %>>
+          <% if (errors.start_date) { %><p class="field-error"><%= errors.start_date %></p><% } %>
+        </div>
+        <div class="field">
+          <label for="end_date">تاريخ النهاية (ميلادي)</label>
+          <input id="end_date" name="end_date" class="input" type="date" required value="<%= values.end_date %>" data-preview-input <%- errors.end_date ? 'aria-invalid="true"' : '' %>>
+          <% if (errors.end_date) { %><p class="field-error"><%= errors.end_date %></p><% } %>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-group">
+      <legend>المبالغ</legend>
+      <div class="field">
+        <label for="annual_rent">الإيجار السنوي (ريال)</label>
+        <input id="annual_rent" name="annual_rent" class="input" type="text" inputmode="decimal" dir="ltr" maxlength="20" required value="<%= values.annual_rent %>" data-preview-input <%- errors.annual_rent ? 'aria-invalid="true"' : '' %>>
+        <% if (errors.annual_rent) { %><p class="field-error"><%= errors.annual_rent %></p><% } %>
+      </div>
+      <div class="field">
+        <label for="payment_frequency">طريقة الدفع</label>
+        <select id="payment_frequency" name="payment_frequency" class="select" data-preview-input <%- errors.payment_frequency ? 'aria-invalid="true"' : '' %>>
+          <% Object.entries(frequencies).forEach(function ([key, label]) { %><option value="<%= key %>" <%= values.payment_frequency === key ? 'selected' : '' %>><%= label %></option><% }) %>
+        </select>
+        <% if (errors.payment_frequency) { %><p class="field-error"><%= errors.payment_frequency %></p><% } %>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="deposit">التأمين <span class="muted">(اختياري)</span></label>
+          <input id="deposit" name="deposit" class="input" type="text" inputmode="decimal" dir="ltr" maxlength="20" value="<%= values.deposit %>" data-preview-input <%- errors.deposit ? 'aria-invalid="true"' : '' %>>
+          <% if (errors.deposit) { %><p class="field-error"><%= errors.deposit %></p><% } %>
+        </div>
+        <div class="field">
+          <label for="commission">العمولة <span class="muted">(اختياري)</span></label>
+          <input id="commission" name="commission" class="input" type="text" inputmode="decimal" dir="ltr" maxlength="20" value="<%= values.commission %>" <%- errors.commission ? 'aria-invalid="true"' : '' %>>
+          <% if (errors.commission) { %><p class="field-error"><%= errors.commission %></p><% } %>
+        </div>
+      </div>
+      <div class="field">
+        <label for="city">المدينة</label>
+        <select id="city" name="city" class="select" data-city-select data-preview-input <%- errors.city ? 'aria-invalid="true"' : '' %>>
+          <option value="">مدينة الوحدة</option>
+          <% cities.forEach(function (city) { %><option value="<%= city %>" <%= values.city === city ? 'selected' : '' %>><%= city %></option><% }) %>
+        </select>
+        <% if (errors.city) { %><p class="field-error"><%= errors.city %></p><% } %>
+      </div>
+      <label class="check">
+        <input type="checkbox" name="auto_renew" value="1" <%= values.auto_renew ? 'checked' : '' %>>
+        <span>يتجدد تلقائياً إذا لم يُرسل إشعار عدم التجديد</span>
+      </label>
+    </fieldset>
+
+    <%- include('_preview') %>
+
+    <label class="check ack" id="ack-box" <%- needsAck ? '' : 'hidden' %>>
+      <input type="checkbox" name="ack_warnings" value="1" <%= values.ack_warnings ? 'checked' : '' %> <%- errors.ack_warnings ? 'aria-invalid="true"' : '' %>>
+      <span>راجعت التنبيهات وأريد المتابعة</span>
+    </label>
+    <% if (errors.ack_warnings) { %><p class="field-error"><%= errors.ack_warnings %></p><% } %>
+
+    <div class="button-row">
+      <button type="submit" class="btn btn--primary btn--large">حفظ العقد</button>
+      <button type="submit" name="intent" value="preview" class="btn btn--secondary" data-preview-button>معاينة المواعيد</button>
+    </div>
+      </form>
+</section>
+<script src="<%= assetUrl('/js/unitForm.js') %>" defer></script>
+<script src="<%= assetUrl('/js/contractForm.js') %>" defer></script>
