@@ -45,6 +45,23 @@
 
 <section class="card office-section">
   <h2>يحتاج إجراء</h2>
+  <div class="units-summary">
+    <div class="mini-stat"><strong class="pending-requests"><%= pending.requests %></strong> طلبات جديدة من المستأجرين</div>
+    <div class="mini-stat"><strong class="pending-reported"><%= pending.reported %></strong> دفعات أبلغ عنها المستأجر بانتظار التأكيد</div>
+  </div>
+  <% if (pendingContracts.length) { %>
+    <ul class="board">
+      <% pendingContracts.forEach(function (c) { %>
+        <li class="board__row">
+          <div>
+            <strong><%= c.unit_label || 'وحدة' %></strong>
+            <p class="muted board__days"><%= [Number(c.requests) ? `${c.requests} طلب جديد` : '', Number(c.reported) ? `${c.reported} دفعة بانتظار التأكيد` : ''].filter(Boolean).join(' · ') %></p>
+          </div>
+          <a class="btn btn--secondary btn--small" href="/office/contracts/<%= c.id %>#feedback">فتح العقد</a>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
   <% if (board.length) { %>
     <ul class="board">
       <% board.forEach(function (c) { %>

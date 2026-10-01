@@ -2,7 +2,7 @@
 
 const mysql = require('mysql2/promise');
 const logger = require('../utils/logger');
-const { TABLES, COLUMN_ADDITIONS, INDEX_ADDITIONS } = require('../database/schema');
+const { TABLES, COLUMN_ADDITIONS, INDEX_ADDITIONS, ENUM_ADDITIONS } = require('../database/schema');
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -61,6 +61,8 @@ async function ensureSchema(targetPool = pool) {
     await addMissingColumns(targetPool, COLUMN_ADDITIONS);
     current = 'index additions';
     await addMissingIndexes(targetPool, INDEX_ADDITIONS);
+    current = 'enum additions';
+    await addMissingEnumValues(targetPool, ENUM_ADDITIONS);
     result.created = (await countTables(targetPool)) - result.found;
     result.ok = true;
     return result;
@@ -89,6 +91,28 @@ async function addMissingColumns(targetPool, additions) {
       && (await alterUnlessDone(targetPool, `ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`, 'ER_DUP_FIELDNAME'))) {
       logger.info(`Added column ${table}.${column}`);
       added.push(`${table}.${column}`);
+    }
+  }
+  return added;
+}
+
+/**
+ * Widens an ENUM column when a value is missing: { table, column, value,
+ * definition } with the full new column definition. Repeating it is harmless.
+ * Returns the "table.column=value" entries it changed.
+ */
+async function addMissingEnumValues(targetPool, additions) {
+  const added = [];
+  for (const { table, column, value, definition } of additions) {
+    const [[row]] = await targetPool.query(
+      `SELECT column_type AS type FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+      [table, column],
+    );
+    if (row && !String(row.type).includes(`'${value}'`)) {
+      await targetPool.query(`ALTER TABLE \`${table}\` MODIFY COLUMN \`${column}\` ${definition}`);
+      logger.info(`Added ${value} to ${table}.${column}`);
+      added.push(`${table}.${column}=${value}`);
     }
   }
   return added;
@@ -126,4 +150,4 @@ async function alterUnlessDone(targetPool, sql, errorCode) {
   }
 }
 
-module.exports = { pool, ping, ensureSchema, countTables, addMissingColumns, addMissingIndexes };
+module.exports = { pool, ping, ensureSchema, countTables, addMissingColumns, addMissingIndexes, addMissingEnumValues };

@@ -24,6 +24,7 @@ const { rateLimit } = require('../middleware/rateLimit');
 const fileUpload = require('express-fileupload');
 const ai = require('../services/aiContractReader');
 const aiUsage = require('../services/aiUsage');
+const feedback = require('../services/feedback');
 
 const router = express.Router();
 
@@ -36,6 +37,10 @@ const MESSAGES = {
   deleted: 'تم حذف العقد.',
   invite_created: 'تم إنشاء رمز دعوة جديد للمستأجر.',
   invite_revoked: 'تم إلغاء رمز الدعوة.',
+  confirmed: 'تم تأكيد الدفعة وأصبحت مدفوعة.',
+  rejected: 'تم رفض بلاغ الدفع وعادت الدفعة مستحقة.',
+  request_handled: 'تم تحديث حالة الطلب.',
+  unchanged: 'لم يتغير شيء: ربما تم التعامل مع هذا من قبل.',
 };
 const INVITE_LABELS = { active: 'فعّال', used: 'مستخدم', expired: 'منتهي', revoked: 'ملغى' };
 const EVENT_LABELS = {
@@ -50,6 +55,13 @@ const EVENT_LABELS = {
   renewal_deleted: 'حُذف عقد التجديد وعاد هذا العقد',
   tenant_invite_created: 'تم إنشاء رمز دعوة للمستأجر',
   tenant_invite_revoked: 'تم إلغاء رمز دعوة المستأجر',
+  tenant_joined: 'انضم المستأجر بالرمز',
+  landlord_decision: 'سجّل المالك قراره',
+  tenant_request: 'أرسل المستأجر طلب تخفيض الإيجار',
+  request_handled: 'تم الرد على طلب المستأجر',
+  payment_reported: 'أبلغ المستأجر بدفع دفعة',
+  payment_confirmed: 'تم تأكيد دفعة أبلغ عنها المستأجر',
+  payment_rejected: 'تم رفض بلاغ دفع من المستأجر',
 };
 
 const today = () => riyadhDate(new Date());
@@ -322,7 +334,15 @@ function eventText(event) {
     return `${label} (${d.due_date}) إلى: ${contracts.PAYMENT_LABELS[d.to] || d.to}`;
   }
   if (event.event_type === 'unit_rent_pending') return `${label} (${d.start_date})`;
+  if (event.event_type === 'landlord_decision') return `${label}: ${feedback.DECISIONS[d.decision] || ''}`;
+  if (event.event_type === 'request_handled') return `${label}: ${feedback.REQUEST_STATUSES[d.status] || ''}`;
   return label;
+}
+
+async function feedbackView(req, contract) {
+  const view = await feedback.contractFeedback(db.pool, req.office.id, contract);
+  const day = (row) => ({ ...row, createdOn: riyadhDate(new Date(row.created_at)) });
+  return { ...view, decisions: view.decisions.map(day), requests: view.requests.map(day) };
 }
 
 async function renderDetail(req, res, { status = 200, error = null } = {}) {
@@ -333,6 +353,7 @@ async function renderDetail(req, res, { status = 200, error = null } = {}) {
     ...p,
     shownStatus: engine.paymentDisplayStatus(p, day),
     paidOn: p.paid_at ? new Date(p.paid_at).toISOString().slice(0, 10) : null,
+    reportedOn: p.reported_at ? riyadhDate(new Date(p.reported_at)) : null,
   }));
   const sum = (list) => (list.reduce((total, p) => total + engine.toHalalas(String(p.amount)), 0) / 100).toFixed(2);
   const events = await contracts.eventsFor(db.pool, req.office.id, contract.id);
@@ -345,14 +366,19 @@ async function renderDetail(req, res, { status = 200, error = null } = {}) {
     stageLabels: contracts.STAGE_LABELS,
     frequencyLabels: contracts.FREQUENCY_LABELS,
     paymentLabels: contracts.PAYMENT_LABELS,
+    officePaymentLabels: contracts.OFFICE_PAYMENT_LABELS,
     paymentMethods: contracts.PAYMENT_METHODS,
+    feedback: await feedbackView(req, contract),
+    decisionLabels: feedback.DECISIONS,
+    requestTypes: feedback.REQUEST_TYPES,
+    requestStatuses: feedback.REQUEST_STATUSES,
     hijri: { start: engine.formatHijri(contract.start_date), end: engine.formatHijri(contract.end_date) },
     rentPolicy: engine.rentChangePolicy({ city: contract.city, today: day, endDate: contract.end_date }),
     payments,
     totals: {
       schedule: sum(payments.filter((p) => p.status !== 'waived')),
       paid: sum(payments.filter((p) => p.status === 'paid')),
-      open: sum(payments.filter((p) => ['due', 'late'].includes(p.status))),
+      open: sum(payments.filter((p) => ['due', 'late', 'tenant_reported'].includes(p.status))),
     },
     today: day,
     timeline: events.map((e) => ({ text: eventText(e), at: riyadhNow(new Date(e.created_at)).slice(0, 16) })),
@@ -406,6 +432,30 @@ router.post('/office/contracts/:id/payments/:paymentId', requirePerm('payments.w
   const done = await contracts.setPaymentStatus(db.pool, req.office.id, req.contract.id, paymentId, { values, actorId: req.user.id, ip: req.ip });
   if (!done) return notFound(res);
   return res.redirect(`/office/contracts/${req.contract.id}?done=payment#payments`);
+}));
+
+// The tenant said "I paid": the office confirms (paid) or rejects (back to due).
+for (const action of ['confirm', 'reject']) {
+  router.post(`/office/contracts/:id/payments/:paymentId/${action}`, requirePerm('payments.write'), loadContract, wrap(async (req, res) => {
+    const paymentId = parseId(req.params.paymentId);
+    if (!paymentId) return notFound(res);
+    const changed = await feedback.answerReportedPayment(db.pool, req.office.id, {
+      contractId: req.contract.id, paymentId, confirm: action === 'confirm', actorId: req.user.id, by: 'office', ip: req.ip,
+    });
+    const done = changed ? (action === 'confirm' ? 'confirmed' : 'rejected') : 'unchanged';
+    return res.redirect(`/office/contracts/${req.contract.id}?done=${done}#payments`);
+  }));
+}
+
+// ------------------------------------------------------------ tenant requests
+
+router.post('/office/contracts/:id/requests/:requestId', requirePerm('contracts'), loadContract, wrap(async (req, res) => {
+  const requestId = parseId(req.params.requestId);
+  if (!requestId) return notFound(res);
+  const changed = await feedback.handleRequest(db.pool, req.office.id, {
+    contractId: req.contract.id, requestId, status: String(req.body.status || ''), actorId: req.user.id, ip: req.ip,
+  });
+  return res.redirect(`/office/contracts/${req.contract.id}?done=${changed ? 'request_handled' : 'unchanged'}#feedback`);
 }));
 
 // ------------------------------------------------------------ terminate

@@ -1,0 +1,82 @@
+<h1>صفحة المالك</h1>
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+
+<section class="card detail-card">
+  <h2>يحتاج إجراء</h2>
+  <% if (actions.length) { %>
+    <ul class="board">
+      <% actions.forEach(function (a) { %>
+        <li class="board__row">
+          <div>
+            <strong><%= a.contract.unit_label || 'وحدة' %></strong>
+            <% if (a.type === 'decision') { %>
+              <span class="badge badge--stage-<%= a.contract.described.stage %>"><%= stageLabels[a.contract.described.stage] %></span>
+              <p class="muted board__days"><%= a.days >= 0 ? `باقي ${a.days} يوم على آخر موعد لقرار التجديد` : `فات موعد قرار التجديد منذ ${-a.days} يوم` %></p>
+            <% } else if (a.type === 'reported') { %>
+              <span class="badge badge--pay-tenant_reported"><%= paymentLabels.tenant_reported %></span>
+              <p class="muted board__days">دفعة <span dir="ltr"><%= a.payment.due_date %></span>: أكّد الاستلام أو ارفضه</p>
+            <% } else { %>
+              <span class="badge badge--pay-late"><%= paymentLabels.late %></span>
+              <p class="muted board__days">دفعة <span dir="ltr"><%= a.payment.due_date %></span> متأخرة منذ <%= -a.days %> يوم</p>
+            <% } %>
+            <p class="muted">المكتب: <%= a.office.office_name %></p>
+          </div>
+          <a class="btn btn--secondary btn--small" href="/landlord/contracts/<%= a.contract.id %>">فتح العقد</a>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p class="empty-state">لا يوجد ما يحتاج قراراً منك الآن. سنعرض هنا العقود التي يقترب موعد قرارها والدفعات التي تحتاج تأكيدك.</p>
+  <% } %>
+</section>
+
+<% offices.forEach(function (office) { %>
+  <section class="card detail-card">
+    <h2>عقاراتك مع <%= office.office_name %></h2>
+    <p class="muted">اسمك لدى المكتب: <%= office.label %></p>
+
+    <h3>العقود السارية (<%= office.contracts.length %>)</h3>
+    <% if (office.contracts.length) { %>
+      <ul class="item-list">
+        <% office.contracts.forEach(function (c) { const d = c.described; %>
+          <li class="item">
+            <div class="item__title">
+              <a href="/landlord/contracts/<%= c.id %>"><%= c.unit_label || 'وحدة' %></a>
+              <span class="badge badge--stage-<%= d.stage %>"><%= stageLabels[d.stage] %></span>
+            </div>
+            <ul class="deadlines">
+              <li><span>نهاية العقد</span><strong dir="ltr"><%= c.end_date %></strong><span class="muted"><%= d.daysToEnd >= 0 ? `باقي ${d.daysToEnd} يوم` : 'انتهى' %> · <%= d.hijri.end %> تقريبي</span></li>
+              <li><span>آخر موعد لقرار التجديد</span><strong dir="ltr"><%= d.noticeDeadline %></strong><span class="muted"><%= d.daysToNotice >= 0 ? `باقي ${d.daysToNotice} يوم` : `فات منذ ${-d.daysToNotice} يوم` %></span></li>
+              <li><span>آخر موعد لطلب تغيير الإيجار</span><strong dir="ltr"><%= d.rentChangeDeadline %></strong><span class="muted"><%= d.daysToRentChange >= 0 ? `باقي ${d.daysToRentChange} يوم` : `فات منذ ${-d.daysToRentChange} يوم` %></span></li>
+            </ul>
+            <% if (d.policy.reason === 'riyadh_freeze') { %>
+              <p class="flash flash--warning">الإيجار مجمّد في الرياض حتى <span dir="ltr"><%= d.policy.freezeUntil %></span>: لا يمكن رفع الإيجار عند التجديد.</p>
+            <% } %>
+            <p class="item__meta">
+              الدفعات: <%= c.payments.counts.paid %> مدفوعة · <%= c.payments.counts.due %> مستحقة · <%= c.payments.counts.late %> متأخرة<% if (c.payments.counts.tenant_reported) { %> · <%= c.payments.counts.tenant_reported %> بانتظار تأكيدك<% } %>
+            </p>
+            <p class="item__meta">قرارك: <%= c.decision ? decisionLabels[c.decision.decision] : 'لم تسجل قراراً بعد' %></p>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p class="empty-state">لا توجد عقود سارية الآن.</p>
+    <% } %>
+
+    <h3>الوحدات (<%= office.units.length %>)</h3>
+    <% if (office.units.length) { %>
+      <ul class="item-list">
+        <% office.units.forEach(function (u) { %>
+          <li class="item">
+            <div class="item__title"><%= u.label %> <span class="badge badge--unit-<%= u.status %>"><%= unitStatusLabels[u.status] %></span></div>
+            <p class="item__meta"><%= u.building_name ? `${u.building_name} · ` : '' %><%= u.city %></p>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p class="empty-state">لم يضف المكتب وحدات باسمك بعد.</p>
+    <% } %>
+  </section>
+<% }) %>
+
+<p class="muted">هذه الصفحة للاطلاع فقط. لأي تعديل تواصل مع المكتب.</p>

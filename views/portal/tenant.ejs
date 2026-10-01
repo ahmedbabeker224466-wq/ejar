@@ -1,0 +1,82 @@
+<h1>صفحة المستأجر</h1>
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+
+<% if (!contracts.length) { %>
+  <section class="card detail-card">
+    <p class="empty-state">لا يوجد عقد مرتبط بحسابك الآن. إذا وصلك رمز جديد من المكتب، أدخله من <a href="/join">صفحة الانضمام</a>.</p>
+  </section>
+<% } %>
+
+<% contracts.forEach(function (view) { const c = view.contract; const d = view.described; %>
+  <section class="card detail-card" id="contract-<%= c.id %>">
+    <div class="page-head">
+      <h2><%= c.unit_label || 'عقد الإيجار' %></h2>
+      <span class="badge badge--stage-<%= d.stage %>"><%= stageLabels[d.stage] %></span>
+    </div>
+    <p class="muted">المكتب: <%= view.link.office_name %></p>
+
+    <% if (d.live) { %>
+      <p class="lead"><%= d.daysToEnd >= 0 ? `باقي ${d.daysToEnd} يوم على نهاية العقد` : 'انتهى العقد' %></p>
+    <% } %>
+    <% if (d.notStarted) { %><p class="muted">لم يبدأ العقد بعد.</p><% } %>
+
+    <dl class="details">
+      <dt>البداية</dt><dd><span dir="ltr"><%= c.start_date %></span> <span class="muted nowrap">(<%= d.hijri.start %> تقريبي)</span></dd>
+      <dt>النهاية</dt><dd><span dir="ltr"><%= c.end_date %></span> <span class="muted nowrap">(<%= d.hijri.end %> تقريبي)</span></dd>
+      <dt>الإيجار السنوي</dt><dd><%= Number(c.annual_rent).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd>
+      <dt>طريقة الدفع</dt><dd><%= frequencyLabels[c.payment_frequency] || '—' %></dd>
+    </dl>
+
+    <% if (d.live) { %>
+      <ul class="deadlines">
+        <li><span>آخر موعد لإبلاغ المكتب بقرار التجديد</span><strong dir="ltr"><%= d.noticeDeadline %></strong><span class="muted"><%= d.daysToNotice >= 0 ? `باقي ${d.daysToNotice} يوم` : `فات منذ ${-d.daysToNotice} يوم` %></span></li>
+      </ul>
+      <% if (d.policy.reason === 'riyadh_freeze') { %>
+        <p class="flash flash--info">الإيجار مجمّد في الرياض حتى <span dir="ltr"><%= d.policy.freezeUntil %></span>: لا يمكن رفع إيجارك عند التجديد.</p>
+      <% } %>
+    <% } %>
+
+    <h3>الدفعات</h3>
+    <% if (view.upcoming.length) { %>
+      <ul class="payments">
+        <% view.upcoming.forEach(function (p, i) { %>
+          <li class="payment">
+            <%- include('_payment', { p: p, index: i, paymentLabels: paymentLabels }) %>
+            <% if (['due', 'late'].includes(p.status)) { %>
+              <form method="post" action="/tenant/contracts/<%= c.id %>/payments/<%= p.id %>/report">
+                <button type="submit" class="btn btn--secondary btn--small">دفعت هذه الدفعة</button>
+              </form>
+            <% } else if (p.status === 'tenant_reported') { %>
+              <p class="muted">بانتظار تأكيد المكتب أو المالك.</p>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p class="empty-state">لا توجد دفعات مسجلة لهذا العقد.</p>
+    <% } %>
+
+    <% if (view.reduction.allowed && !view.pendingRequest) { %>
+      <details class="payment__edit">
+        <summary>طلب تخفيض الإيجار عند التجديد</summary>
+        <form method="post" action="/tenant/contracts/<%= c.id %>/requests">
+          <input type="hidden" name="request_type" value="rent_reduction">
+          <div class="field">
+            <label for="note-<%= c.id %>">سبب الطلب (اختياري)</label>
+            <textarea id="note-<%= c.id %>" name="note" class="textarea" rows="3" maxlength="<%= noteMax %>"></textarea>
+            <p class="field-hint">حتى <%= noteMax %> حرف. يصل الطلب للمكتب ليتواصل معك.</p>
+          </div>
+          <button type="submit" class="btn btn--primary btn--block">إرسال الطلب</button>
+        </form>
+      </details>
+    <% } %>
+    <% if (view.requests.length) { %>
+      <h3>طلباتك</h3>
+      <ul class="item-list">
+        <% view.requests.forEach(function (r) { %>
+          <li class="item"><%= requestTypes[r.request_type] %> · <span class="badge badge--calm"><%= requestStatuses[r.status] %></span> <span class="muted" dir="ltr"><%= r.createdOn %></span></li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </section>
+<% }) %>

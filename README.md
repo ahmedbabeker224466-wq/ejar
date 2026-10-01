@@ -89,6 +89,22 @@ Step-by-step guide in Arabic: [`deploy/DEPLOY-CPANEL.md`](deploy/DEPLOY-CPANEL.m
 Pushes to `main` are tested by `.github/workflows/ci.yml` and, when the tests
 pass, uploaded over FTPS by `.github/workflows/deploy.yml`.
 
+## Landlord and tenant areas
+
+| Route | What it does |
+|---|---|
+| `GET/POST /join` | Join with an invite code after the phone-code login (`/login?next=/join`) |
+| `GET /landlord` | Landlord dashboard: units, running contracts, deadlines, payments, needs action |
+| `GET /landlord/contracts/:id` | One contract; `POST .../decision` saves renew / not renew / undecided |
+| `POST /landlord/contracts/:id/payments/:pid/confirm` or `/reject` | Answer a tenant's "I paid" |
+| `GET /tenant` | Tenant dashboard: contract, countdown, decision deadline, payments |
+| `POST /tenant/contracts/:id/payments/:pid/report` | "I paid": the installment becomes `tenant_reported`, never `paid` |
+| `POST /tenant/contracts/:id/requests` | Rent-reduction request, only while the engine allows it |
+| `POST /office/contracts/:id/payments/:pid/confirm` or `/reject` | The office answers a reported payment |
+| `POST /office/contracts/:id/requests/:rid` | The office accepts or rejects a tenant request |
+
+No new environment variables.
+
 ## Project layout
 
 | Path | Purpose |

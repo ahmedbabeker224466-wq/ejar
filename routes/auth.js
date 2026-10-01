@@ -74,9 +74,17 @@ function renderVerify(res, pending, error, status = 200) {
   });
 }
 
-async function finishLogin(req, res, user) {
+// Where a login may continue instead of the role's home page. Only these
+// exact paths are honoured, so ?next= can never redirect anywhere else.
+const NEXT_PATHS = new Set(['/join']);
+
+function safeNext(value) {
+  return NEXT_PATHS.has(String(value || '')) ? String(value) : null;
+}
+
+async function finishLogin(req, res, user, next = null) {
   await auth.issueSession(req, res, user);
-  return res.redirect(auth.homeFor(user.role));
+  return res.redirect(safeNext(next) || auth.homeFor(user.role));
 }
 
 // '/login' also covers '/login/verify', '/login/2fa' and the other steps.
@@ -93,15 +101,15 @@ const PHONE_PAGES = {
   },
 };
 
-function renderPhonePage(res, intent, phone, error, status = 200) {
+function renderPhonePage(res, intent, phone, error, status = 200, next = null) {
   const mode = intent === 'register' ? 'register' : 'login';
-  return res.status(status).render('pages/login', { ...PHONE_PAGES[mode], intent: mode, phone, error });
+  return res.status(status).render('pages/login', { ...PHONE_PAGES[mode], intent: mode, phone, error, next: safeNext(next) });
 }
 
 // Step 1: phone number
 router.get('/login', (req, res) => {
-  if (req.user) return res.redirect(auth.homeFor(req.user.role));
-  return renderPhonePage(res, 'login', '', null);
+  if (req.user) return res.redirect(safeNext(req.query.next) || auth.homeFor(req.user.role));
+  return renderPhonePage(res, 'login', '', null, 200, req.query.next);
 });
 
 router.get('/register', (req, res) => {
@@ -113,13 +121,14 @@ router.post('/login', async (req, res, next) => {
   try {
     const raw = String(req.body.phone || '');
     const intent = req.body.intent === 'register' ? 'register' : 'login';
+    const nextPath = safeNext(req.body.next);
     const phone = normalizeSaudi(raw);
-    if (!phone) return renderPhonePage(res, intent, raw.slice(0, 20), MESSAGES.invalid_phone, 422);
+    if (!phone) return renderPhonePage(res, intent, raw.slice(0, 20), MESSAGES.invalid_phone, 422, nextPath);
     const result = await otp.request(phone, 'login', req.ip);
     if (!result.ok) {
-      return renderPhonePage(res, intent, toLocal(phone), messageFor(result), result.error === 'send_failed' ? 503 : 429);
+      return renderPhonePage(res, intent, toLocal(phone), messageFor(result), result.error === 'send_failed' ? 503 : 429, nextPath);
     }
-    stepCookie(res, LOGIN_COOKIE, auth.signStepToken({ phone, sentAt: Date.now() }, 'login-phone', STEP_SECONDS));
+    stepCookie(res, LOGIN_COOKIE, auth.signStepToken({ phone, sentAt: Date.now(), next: nextPath }, 'login-phone', STEP_SECONDS));
     return res.redirect('/login/verify');
   } catch (err) {
     return next(err);
@@ -139,7 +148,7 @@ router.post('/login/resend', async (req, res, next) => {
     if (!pending) return res.redirect('/login');
     const result = await otp.request(pending.phone, 'login', req.ip);
     if (!result.ok) return renderVerify(res, pending, messageFor(result), 429);
-    const fresh = { phone: pending.phone, sentAt: Date.now() };
+    const fresh = { phone: pending.phone, sentAt: Date.now(), next: safeNext(pending.next) };
     stepCookie(res, LOGIN_COOKIE, auth.signStepToken(fresh, 'login-phone', STEP_SECONDS));
     return res.redirect('/login/verify');
   } catch (err) {
@@ -169,7 +178,7 @@ router.post('/login/verify', async (req, res, next) => {
       const mustSetUp = user.role === 'platform_admin' && !user.twofa_enabled;
       return res.redirect(mustSetUp ? '/login/2fa/setup' : '/login/2fa');
     }
-    return finishLogin(req, res, user);
+    return finishLogin(req, res, user, pending.next);
   } catch (err) {
     return next(err);
   }

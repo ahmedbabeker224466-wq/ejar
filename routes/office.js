@@ -22,6 +22,7 @@ const contractRoutes = require('./contracts');
 const contractsService = require('../services/contracts');
 const contractStatus = require('../services/contractStatus');
 const { riyadhDate } = require('../services/contractDates');
+const feedback = require('../services/feedback');
 
 const router = express.Router();
 
@@ -119,6 +120,8 @@ router.get('/office', requirePerm('contracts'), async (req, res, next) => {
       title: 'الرئيسية',
       counts,
       board: await contractsService.needsActionContracts(db.pool, req.office.id, today, 10),
+      pending: await feedback.pendingCounts(db.pool, req.office.id),
+      pendingContracts: await feedback.pendingContracts(db.pool, req.office.id, 10),
       stageLabels: contractsService.STAGE_LABELS,
       setupSteps: SETUP_STEPS.filter((step) => can(req.memberRole, step.capability)).map((step) => ({
         label: step.label,

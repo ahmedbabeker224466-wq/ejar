@@ -1,0 +1,23 @@
+<section class="auth card">
+  <h1>الانضمام برمز الدعوة</h1>
+  <% if (!signedIn) { %>
+    <p class="lead">أرسل لك مكتب العقار رمزاً من 8 خانات لتتابع عقارك أو عقد إيجارك. سجّل الدخول برقم جوالك أولاً، ثم أدخل الرمز.</p>
+    <a href="/login?next=/join" class="btn btn--primary btn--block btn--large">سجّل الدخول برقم الجوال</a>
+  <% } else if (refused) { %>
+    <div class="flash flash--warning" role="alert"><%= refusedMessage %></div>
+    <a href="/" class="btn btn--secondary btn--block">العودة للرئيسية</a>
+  <% } else { %>
+    <p class="lead">أدخل الرمز الذي وصلك من مكتب العقار.</p>
+    <% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+    <form method="post" action="/join" novalidate>
+      <div class="field">
+        <label for="code">رمز الدعوة</label>
+        <input id="code" name="code" class="input input--code" type="text" dir="ltr" autocomplete="off" autocapitalize="characters"
+          spellcheck="false" maxlength="20" placeholder="XXXXXXXX" value="<%= code %>" aria-describedby="code-hint"
+          <%= error ? 'aria-invalid=true' : '' %> autofocus required>
+        <p id="code-hint" class="field-hint">8 خانات من حروف إنجليزية وأرقام، كما وصلتك.</p>
+      </div>
+      <button type="submit" class="btn btn--primary btn--block btn--large">انضم</button>
+    </form>
+  <% } %>
+</section>

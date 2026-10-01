@@ -303,8 +303,10 @@ const TABLES = [
     'due_date DATE NOT NULL',
     `amount ${MONEY} NOT NULL`,
     CURRENCY,
-    "status ENUM('due','paid','late','waived') NOT NULL DEFAULT 'due'",
+    "status ENUM('due','paid','late','waived','tenant_reported') NOT NULL DEFAULT 'due'",
     'paid_at DATETIME NULL',
+    'reported_at DATETIME NULL', // the tenant said "I paid"; the office or landlord confirms
+    `reported_by ${REF} NULL`,
     'method VARCHAR(30) NULL',
     'receipt_no VARCHAR(40) NULL',
     'note VARCHAR(255) NULL',
@@ -321,6 +323,39 @@ const TABLES = [
     'details JSON NULL',
     fk('contract_events', 'contract_id', 'contracts', 'CASCADE'),
     fk('contract_events', 'actor_id', 'users', 'SET NULL'),
+  ]),
+
+  // A landlord's renew / not renew / undecided note on a contract, visible to
+  // the office. Every save is a new row; the latest one counts.
+  table('contract_decisions', [
+    `office_id ${REF} NOT NULL`,
+    `contract_id ${REF} NOT NULL`,
+    `landlord_id ${REF} NOT NULL`,
+    `user_id ${REF} NULL`,
+    "decision ENUM('renew','not_renew','undecided') NOT NULL",
+    'note VARCHAR(280) NULL',
+    'KEY idx_contract_decisions_contract (contract_id, id)',
+    fk('contract_decisions', 'office_id', 'offices', 'CASCADE'),
+    fk('contract_decisions', 'contract_id', 'contracts', 'CASCADE'),
+    fk('contract_decisions', 'landlord_id', 'landlords', 'CASCADE'),
+    fk('contract_decisions', 'user_id', 'users', 'SET NULL'),
+  ]),
+
+  // A tenant's request on a contract (only rent reduction for now), handled by the office.
+  table('contract_requests', [
+    `office_id ${REF} NOT NULL`,
+    `contract_id ${REF} NOT NULL`,
+    `user_id ${REF} NULL`,
+    "request_type ENUM('rent_reduction') NOT NULL",
+    'note VARCHAR(500) NULL',
+    "status ENUM('pending','accepted','rejected') NOT NULL DEFAULT 'pending'",
+    `handled_by ${REF} NULL`,
+    'handled_at DATETIME NULL',
+    'KEY idx_contract_requests_office_status (office_id, status)',
+    fk('contract_requests', 'office_id', 'offices', 'CASCADE'),
+    fk('contract_requests', 'contract_id', 'contracts', 'CASCADE'),
+    fk('contract_requests', 'user_id', 'users', 'SET NULL'),
+    fk('contract_requests', 'handled_by', 'users', 'SET NULL'),
   ]),
 
   table('contract_notices', [
@@ -797,6 +832,19 @@ const COLUMN_ADDITIONS = [
   { table: 'contracts', column: 'renewed_at', definition: 'DATETIME NULL AFTER terminated_reason' },
   { table: 'contracts', column: 'renewed_to_id', definition: 'BIGINT UNSIGNED NULL AFTER renewed_at' },
   { table: 'contracts', column: 'renewed_from_id', definition: 'BIGINT UNSIGNED NULL AFTER renewed_to_id' },
+  { table: 'contract_payments', column: 'reported_at', definition: 'DATETIME NULL AFTER paid_at' },
+  { table: 'contract_payments', column: 'reported_by', definition: 'BIGINT UNSIGNED NULL AFTER reported_at' },
+];
+
+// ENUM values added after a table first shipped: MODIFY COLUMN runs only when
+// the value is missing from the column type (safe to repeat, never drops data).
+const ENUM_ADDITIONS = [
+  {
+    table: 'contract_payments',
+    column: 'status',
+    value: 'tenant_reported',
+    definition: "ENUM('due','paid','late','waived','tenant_reported') NOT NULL DEFAULT 'due'",
+  },
 ];
 
 const INDEX_ADDITIONS = [
@@ -807,6 +855,7 @@ module.exports = {
   TABLES,
   COLUMN_ADDITIONS,
   INDEX_ADDITIONS,
+  ENUM_ADDITIONS,
   statements: TABLES.map((t) => t.sql),
   tableNames: TABLES.map((t) => t.name),
 };

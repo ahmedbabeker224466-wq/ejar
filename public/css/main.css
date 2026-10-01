@@ -1303,6 +1303,18 @@ img {
 .badge--pay-paid { background: var(--color-success-soft); color: var(--color-success); }
 .badge--pay-late { background: var(--stage-passed-soft); color: var(--stage-passed); }
 .badge--pay-waived { background: var(--stage-ended-soft); color: var(--stage-ended); }
+.badge--pay-tenant_reported { background: var(--stage-soon-soft); color: var(--stage-soon); }
+
+/* Landlord / tenant switcher: its own row under the header bar. */
+.site-header__inner { flex-wrap: wrap; }
+.area-switch {
+  order: 10;
+  flex-basis: 100%;
+  display: flex;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+}
+.area-switch .btn { flex: 1; }
 
 .form-card--wide {
   max-width: 720px;

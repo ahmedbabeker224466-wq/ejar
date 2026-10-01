@@ -7,6 +7,13 @@
         <a href="/register" <%- currentPath === '/register' ? 'aria-current="page"' : '' %>>سجّل مكتبك</a>
       <% } %>
     </nav>
+    <% if (locals.areas && areas.length > 1) { %>
+      <nav class="area-switch" aria-label="التبديل بين الصفحات">
+        <% areas.forEach(function (a) { %>
+          <a href="<%= a.href %>" class="btn btn--small <%= a.key === locals.currentArea ? 'btn--primary' : 'btn--secondary' %>" <%- a.key === locals.currentArea ? 'aria-current="page"' : '' %>><%= a.label %></a>
+        <% }) %>
+      </nav>
+    <% } %>
     <% if (currentUser) { %>
       <a href="/logout" class="btn btn--secondary btn--small">تسجيل الخروج</a>
     <% } else { %>

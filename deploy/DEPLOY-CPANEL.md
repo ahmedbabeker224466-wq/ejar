@@ -23,7 +23,7 @@
 
 الآن معك ثلاث قيم ستحتاجها لاحقاً: اسم القاعدة الكامل، واسم المستخدم الكامل، وكلمة المرور.
 
-> لا تحتاج إنشاء الجداول بيدك. التطبيق ينشئ الجداول الـ 60 تلقائياً عند أول تشغيل.
+> لا تحتاج إنشاء الجداول بيدك. التطبيق ينشئ الجداول الـ 62 تلقائياً عند أول تشغيل.
 
 ---
 
@@ -173,7 +173,7 @@ CLAUDE_MODEL=claude-sonnet-4-5
 2. **ملف السجل:** افتح `aqdi/logs/app.log` (أو `stderr.log` داخل مجلد `aqdi` في بعض الاستضافات). ستجد في أعلاه مربعاً بعنوان `Aqdi self-check` يوضح:
    - `Environment`: هل هناك متغير ناقص؟ يكتب اسمه، مثل `MISSING JWT_SECRET`.
    - `Database`: هل الاتصال بقاعدة البيانات ناجح؟
-   - `Schema`: عدد الجداول، ويجب أن يكون `60/60`.
+   - `Schema`: عدد الجداول، ويجب أن يكون `62/62`.
    - `SMS driver`: يكتب `console` أثناء التجربة.
    - `Status`: `SERVING` تعني أن الموقع يعمل. `MAINTENANCE PAGE` تعني أن الزوار يرون صفحة صيانة، ويكتب السبب بجانبها.
 3. **الصفحة الرئيسية:** افتح `https://yourdomain.sa`. يجب أن تظهر «منصة عقدي قيد الإنشاء».
@@ -241,10 +241,13 @@ CLAUDE_MODEL=claude-sonnet-4-5
 | العقود | `ALTER TABLE contracts ADD COLUMN renewed_at DATETIME NULL AFTER terminated_reason` | `Added column contracts.renewed_at` |
 | العقود | `ALTER TABLE contracts ADD COLUMN renewed_to_id BIGINT UNSIGNED NULL AFTER renewed_at` | `Added column contracts.renewed_to_id` |
 | العقود | `ALTER TABLE contracts ADD COLUMN renewed_from_id BIGINT UNSIGNED NULL AFTER renewed_to_id` | `Added column contracts.renewed_from_id` |
+| صفحات المالك والمستأجر | `ALTER TABLE contract_payments ADD COLUMN reported_at DATETIME NULL AFTER paid_at` | `Added column contract_payments.reported_at` |
+| صفحات المالك والمستأجر | `ALTER TABLE contract_payments ADD COLUMN reported_by BIGINT UNSIGNED NULL AFTER reported_at` | `Added column contract_payments.reported_by` |
+| صفحات المالك والمستأجر | `ALTER TABLE contract_payments MODIFY COLUMN status ENUM('due','paid','late','waived','tenant_reported') NOT NULL DEFAULT 'due'` | `Added tenant_reported to contract_payments.status` |
 
-كل أمر يُنفَّذ مرة واحدة فقط، وفقط إذا كان العمود غير موجود.
+كل أمر يُنفَّذ مرة واحدة فقط، وفقط إذا كان العمود (أو القيمة الجديدة في القائمة) غير موجود. أمر `MODIFY COLUMN` يضيف قيمة جديدة لقائمة الحالات، ولا يغيّر أي صف موجود.
 
-تحديث المباني والوحدات لم يضف أي تغيير على قاعدة البيانات. تحديث العقود أضاف الأعمدة الستة أعلاه، ولم يضف جداول جديدة. تحديث قراءة العقود بالذكاء الاصطناعي أضاف جدولاً واحداً جديداً: `ai_reads_usage` (عدد القراءات لكل مكتب في كل شهر)، فأصبحت الجداول 60. يُنشأ تلقائياً بأمر `CREATE TABLE IF NOT EXISTS` عند التشغيل.
+تحديث المباني والوحدات لم يضف أي تغيير على قاعدة البيانات. تحديث العقود أضاف الأعمدة الستة أعلاه، ولم يضف جداول جديدة. تحديث قراءة العقود بالذكاء الاصطناعي أضاف جدولاً واحداً جديداً: `ai_reads_usage` (عدد القراءات لكل مكتب في كل شهر)، فأصبحت الجداول 60. يُنشأ تلقائياً بأمر `CREATE TABLE IF NOT EXISTS` عند التشغيل. تحديث صفحات المالك والمستأجر أضاف جدولين: `contract_decisions` (قرار المالك بشأن التجديد) و`contract_requests` (طلبات المستأجر، مثل تخفيض الإيجار)، فأصبحت الجداول 62، إضافة إلى العمودين والقيمة الجديدة أعلاه.
 
 ## ملاحظة: HTTPS
 

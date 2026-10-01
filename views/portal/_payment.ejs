@@ -1,0 +1,5 @@
+<div class="payment__head">
+  <span>دفعة <%= index + 1 %> · <span dir="ltr"><%= p.due_date %></span></span>
+  <strong><%= Number(p.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</strong>
+  <span class="badge badge--pay-<%= p.shownStatus %>"><%= paymentLabels[p.shownStatus] %></span>
+</div>

@@ -76,6 +76,15 @@
           <span class="badge badge--pay-<%= p.shownStatus %>"><%= paymentLabels[p.shownStatus] %></span>
         </div>
         <% if (p.paidOn) { %><p class="muted">دُفعت في <span dir="ltr"><%= p.paidOn %></span><%= p.method ? ` · ${paymentMethods[p.method] || ''}` : '' %><%= p.receipt_no ? ` · إيصال ${p.receipt_no}` : '' %></p><% } %>
+        <% if (p.status === 'tenant_reported') { %>
+          <p class="muted">أبلغ المستأجر أنه دفع<%= p.reportedOn ? ` في ${p.reportedOn}` : '' %>. تأكّد من وصول المبلغ.</p>
+          <% if (canPay) { %>
+            <div class="button-row">
+              <form method="post" action="/office/contracts/<%= contract.id %>/payments/<%= p.id %>/confirm"><button type="submit" class="btn btn--primary">تأكيد الدفع</button></form>
+              <form method="post" action="/office/contracts/<%= contract.id %>/payments/<%= p.id %>/reject"><button type="submit" class="btn btn--secondary">رفض البلاغ</button></form>
+            </div>
+          <% } %>
+        <% } %>
         <% if (canPay) { %>
           <details class="payment__edit">
             <summary>تغيير الحالة</summary>
@@ -84,7 +93,7 @@
                 <div class="field">
                   <label for="status-<%= p.id %>">الحالة</label>
                   <select id="status-<%= p.id %>" name="status" class="select">
-                    <% Object.entries(paymentLabels).forEach(function ([key, label]) { %><option value="<%= key %>" <%= p.status === key ? 'selected' : '' %>><%= label %></option><% }) %>
+                    <% Object.entries(officePaymentLabels).forEach(function ([key, label]) { %><option value="<%= key %>" <%= p.status === key ? 'selected' : '' %>><%= label %></option><% }) %>
                   </select>
                 </div>
                 <div class="field">
@@ -110,6 +119,44 @@
       </li>
     <% }) %>
   </ul>
+</section>
+
+<section class="card detail-card" id="feedback">
+  <h2>المالك والمستأجر</h2>
+  <dl class="details">
+    <dt>المالك</dt><dd><span class="badge badge--link-<%= feedback.landlordJoined ? 'joined' : 'not_invited' %>"><%= feedback.landlordJoined ? 'منضم' : 'لم ينضم بعد' %></span></dd>
+    <dt>المستأجر</dt><dd><span class="badge badge--link-<%= feedback.tenantJoined ? 'joined' : 'not_invited' %>"><%= feedback.tenantJoined ? 'منضم' : 'لم ينضم بعد' %></span></dd>
+  </dl>
+  <h3>قرار المالك</h3>
+  <% if (feedback.decisions.length) { %>
+    <ul class="item-list">
+      <% feedback.decisions.forEach(function (d, i) { %>
+        <li class="item<%= i ? ' item--inactive' : '' %>">
+          <strong><%= decisionLabels[d.decision] %></strong> <span class="muted" dir="ltr"><%= d.createdOn %></span>
+          <% if (d.note) { %><p class="pre-line"><%= d.note %></p><% } %>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %><p class="muted">لم يسجل المالك قراراً بعد.</p><% } %>
+  <h3>طلبات المستأجر</h3>
+  <% if (feedback.requests.length) { %>
+    <ul class="item-list">
+      <% feedback.requests.forEach(function (r) { %>
+        <li class="item">
+          <strong><%= requestTypes[r.request_type] %></strong>
+          <span class="badge badge--<%= r.status === 'pending' ? 'soon' : 'calm' %>"><%= requestStatuses[r.status] %></span>
+          <span class="muted" dir="ltr"><%= r.createdOn %></span>
+          <% if (r.note) { %><p class="pre-line"><%= r.note %></p><% } %>
+          <% if (r.status === 'pending') { %>
+            <div class="button-row">
+              <form method="post" action="/office/contracts/<%= contract.id %>/requests/<%= r.id %>"><input type="hidden" name="status" value="accepted"><button type="submit" class="btn btn--primary btn--small">قبول</button></form>
+              <form method="post" action="/office/contracts/<%= contract.id %>/requests/<%= r.id %>"><input type="hidden" name="status" value="rejected"><button type="submit" class="btn btn--secondary btn--small">رفض</button></form>
+            </div>
+          <% } %>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %><p class="muted">لا توجد طلبات من المستأجر.</p><% } %>
 </section>
 
 <section class="card detail-card" id="invite">

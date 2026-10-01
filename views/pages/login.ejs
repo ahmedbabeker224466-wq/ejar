@@ -8,6 +8,7 @@
 
   <form method="post" action="/login" novalidate>
     <input type="hidden" name="intent" value="<%= intent %>">
+    <% if (locals.next) { %><input type="hidden" name="next" value="<%= next %>"><% } %>
     <div class="field">
       <label for="phone">رقم الجوال</label>
       <div class="phone-field" dir="ltr">

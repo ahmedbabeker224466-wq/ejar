@@ -40,7 +40,10 @@ const STAGE_LABELS = {
   terminated: 'مُنهى',
 };
 const FREQUENCY_LABELS = { monthly: 'شهري', quarterly: 'كل 3 أشهر', semiannual: 'كل 6 أشهر', annual: 'سنوي' };
-const PAYMENT_LABELS = { due: 'مستحقة', paid: 'مدفوعة', late: 'متأخرة', waived: 'ملغاة' };
+const PAYMENT_LABELS = { due: 'مستحقة', paid: 'مدفوعة', late: 'متأخرة', waived: 'ملغاة', tenant_reported: 'أبلغ المستأجر بالدفع' };
+// Statuses the office sets by hand. 'tenant_reported' is set only by the
+// tenant's "I paid" and answered with confirm / reject (services/feedback.js).
+const OFFICE_PAYMENT_LABELS = Object.fromEntries(Object.entries(PAYMENT_LABELS).filter(([k]) => k !== 'tenant_reported'));
 const PAYMENT_METHODS = { cash: 'نقداً', transfer: 'تحويل بنكي', cheque: 'شيك', card: 'بطاقة', other: 'أخرى' };
 
 // Engine error codes -> the form field and the Arabic message.
@@ -474,7 +477,7 @@ async function editContract(pool, officeId, id, { fields, actorId, ip }) {
 function validatePaymentChange(body = {}, today) {
   const errors = {};
   const values = { status: String(body.status || '') };
-  if (!has(PAYMENT_LABELS, values.status)) errors.status = 'اختر حالة صحيحة.';
+  if (!has(OFFICE_PAYMENT_LABELS, values.status)) errors.status = 'اختر حالة صحيحة.';
   if (values.status === 'paid') {
     values.paid_on = clean(body.paid_on, 20) || today;
     if (!engine.isValidDate(values.paid_on)) errors.paid_on = 'اختر تاريخ الدفع.';
@@ -500,6 +503,7 @@ async function setPaymentStatus(pool, officeId, contractId, paymentId, { values,
     paid_at: paid ? `${values.paid_on} 00:00:00` : null,
     method: paid ? values.method : null,
     receipt_no: paid ? values.receipt_no : null,
+    ...(paid ? {} : { reported_at: null, reported_by: null }),
   });
   await addEvent(scoped, contractId, actorId, 'payment_status', {
     payment_id: paymentId, due_date: payment.due_date, from: payment.status, to: values.status,
@@ -622,6 +626,13 @@ async function renewContract(pool, officeId, id, { fields, actorId, ip, today })
         WHERE id = ? AND office_id = :office_id`,
       [created.id, old.id],
     );
+    // The same tenants carry on into the new term.
+    await scoped.query(
+      `INSERT IGNORE INTO contract_members (contract_id, user_id, role)
+       SELECT ?, cm.user_id, cm.role FROM contract_members cm
+        WHERE cm.contract_id = ? AND cm.contract_id IN (SELECT id FROM contracts WHERE office_id = :office_id)`,
+      [created.id, old.id],
+    );
     await addEvent(scoped, old.id, actorId, 'contract_renewed', { to_id: created.id });
     await addEvent(scoped, created.id, actorId, 'contract_created', {
       source: 'renewal', from_id: old.id, months: evaluated.result.termMonths, payments: evaluated.result.schedule.length, stage: created.status,
@@ -702,6 +713,7 @@ module.exports = {
   STAGE_LABELS,
   FREQUENCY_LABELS,
   PAYMENT_LABELS,
+  OFFICE_PAYMENT_LABELS,
   PAYMENT_METHODS,
   EDITABLE,
   validateContractFields,
