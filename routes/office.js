@@ -19,10 +19,14 @@ const { loadOffice, officeGate, OFFICE_NAV } = require('../middleware/loadOffice
 const landlordRoutes = require('./landlords');
 const unitRoutes = require('./units');
 const contractRoutes = require('./contracts');
+const reminderRoutes = require('./officeReminders');
 const contractsService = require('../services/contracts');
 const contractStatus = require('../services/contractStatus');
 const { riyadhDate } = require('../services/contractDates');
 const feedback = require('../services/feedback');
+const delivery = require('../services/delivery');
+const { KIND_LABELS } = require('../services/notifications');
+const { riyadhNow } = require('../utils/time');
 
 const router = express.Router();
 
@@ -122,6 +126,9 @@ router.get('/office', requirePerm('contracts'), async (req, res, next) => {
       board: await contractsService.needsActionContracts(db.pool, req.office.id, today, 10),
       pending: await feedback.pendingCounts(db.pool, req.office.id),
       pendingContracts: await feedback.pendingContracts(db.pool, req.office.id, 10),
+      sent: await delivery.officeDeliverySummary(db.pool, req.office.id),
+      kindLabels: KIND_LABELS,
+      riyadhTime: (at) => riyadhNow(new Date(at)).slice(0, 16),
       stageLabels: contractsService.STAGE_LABELS,
       setupSteps: SETUP_STEPS.filter((step) => can(req.memberRole, step.capability)).map((step) => ({
         label: step.label,
@@ -185,5 +192,7 @@ router.post('/office/settings', requirePerm('settings.office'), async (req, res,
     return next(err);
   }
 });
+
+router.use(reminderRoutes);
 
 module.exports = router;

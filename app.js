@@ -15,7 +15,7 @@ const routes = require('./routes');
 const authRoutes = require('./routes/auth');
 const areaRoutes = require('./routes/areas');
 const officeRoutes = require('./routes/office');
-const { loadUser } = require('./middleware/auth');
+const { loadUser, loadUnreadCount } = require('./middleware/auth');
 const maintenance = require('./middleware/maintenance');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
@@ -70,6 +70,7 @@ app.use((req, res, next) => {
   res.locals.flash = [];
   res.locals.currentUser = null;
   res.locals.title = 'عقدي';
+  res.locals.unreadCount = 0;
   next();
 });
 
@@ -89,6 +90,7 @@ app.use(maintenance);
 
 // After static files, so serving CSS/JS never touches the database.
 app.use(loadUser());
+app.use(loadUnreadCount());
 
 app.use(routes);
 app.use(authRoutes);

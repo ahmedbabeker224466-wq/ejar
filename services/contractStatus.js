@@ -183,4 +183,19 @@ async function maybeRecompute({ pool = db.pool, officeId, now = new Date(), toda
   }
 }
 
-module.exports = { planStatusChanges, planDeadlineFixes, recomputeStatuses, maybeRecompute, SETTING_KEY };
+/** Marks every 'due' installment past its date as 'late', office by office. Returns the count. */
+async function markLatePayments({ pool = db.pool, today }) {
+  engine.dateWindow(today, 0); // validates today
+  const [offices] = await pool.query('SELECT id FROM offices ORDER BY id');
+  let marked = 0;
+  for (const { id } of offices) {
+    const result = await scopeToOffice(pool, id).query(
+      "UPDATE contract_payments SET status = 'late' WHERE status = 'due' AND due_date < ? AND office_id = :office_id",
+      [today],
+    );
+    marked += result.affectedRows;
+  }
+  return marked;
+}
+
+module.exports = { planStatusChanges, planDeadlineFixes, recomputeStatuses, maybeRecompute, markLatePayments, SETTING_KEY };

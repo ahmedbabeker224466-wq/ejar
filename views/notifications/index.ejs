@@ -1,0 +1,55 @@
+<p class="back-link"><a href="<%= home %>">→ الرجوع</a></p>
+<section class="card detail-card">
+  <div class="page-head">
+    <h1>الإشعارات</h1>
+    <a href="/settings/notifications" class="btn btn--secondary btn--small">الإعدادات</a>
+  </div>
+
+  <form method="get" action="/notifications" class="filter-bar">
+    <label for="kind" class="visually-hidden">نوع الإشعار</label>
+    <select id="kind" name="kind" class="select">
+      <option value="">كل الأنواع</option>
+      <% Object.entries(kindLabels).forEach(function ([key, label]) { %><option value="<%= key %>" <%= kind === key ? 'selected' : '' %>><%= label %></option><% }) %>
+    </select>
+    <button type="submit" class="btn btn--secondary">عرض</button>
+  </form>
+
+  <% if (rows.some(function (n) { return !n.read_at; })) { %>
+    <form method="post" action="/notifications/read-all">
+      <input type="hidden" name="back" value="<%= back %>">
+      <button type="submit" class="btn btn--secondary btn--block">تعليم الكل كمقروء</button>
+    </form>
+  <% } %>
+
+  <% if (rows.length) { %>
+    <ul class="item-list">
+      <% rows.forEach(function (n) { %>
+        <li class="note<%= n.read_at ? '' : ' note--unread' %>" id="n-<%= n.id %>">
+          <p class="note__title"><%= n.title %><% if (!n.read_at) { %> <span class="badge badge--soon">جديد</span><% } %></p>
+          <p class="note__body"><%= n.body %></p>
+          <div class="note__actions">
+            <span class="muted" dir="ltr"><%= n.at %></span>
+            <% if (n.link) { %>
+              <form method="post" action="/notifications/<%= n.id %>/open"><button type="submit" class="btn btn--primary btn--small">فتح</button></form>
+            <% } %>
+            <% if (!n.read_at) { %>
+              <form method="post" action="/notifications/<%= n.id %>/read">
+                <input type="hidden" name="back" value="<%= back %>">
+                <button type="submit" class="btn btn--secondary btn--small">تعليم كمقروء</button>
+              </form>
+            <% } %>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+    <% if (pages > 1) { %>
+      <nav class="pager" aria-label="الصفحات">
+        <% if (prevUrl) { %><a href="<%= prevUrl %>" class="btn btn--secondary">السابق</a><% } %>
+        <span>صفحة <%= page %> من <%= pages %></span>
+        <% if (nextUrl) { %><a href="<%= nextUrl %>" class="btn btn--secondary">التالي</a><% } %>
+      </nav>
+    <% } %>
+  <% } else { %>
+    <p class="empty-state"><%= kind ? 'لا توجد إشعارات من هذا النوع.' : 'لا توجد إشعارات بعد. ستظهر هنا تذكيرات المواعيد والدفعات.' %></p>
+  <% } %>
+</section>

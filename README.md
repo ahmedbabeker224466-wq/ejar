@@ -105,6 +105,36 @@ pass, uploaded over FTPS by `.github/workflows/deploy.yml`.
 
 No new environment variables.
 
+## Reminders and notifications
+
+| Route | What it does |
+|---|---|
+| `GET /notifications` | Notification center (all roles): filter by kind, 20 per page |
+| `POST /notifications/:id/read`, `/:id/open`, `/read-all` | Mark read (only your own notifications) |
+| `GET/POST /settings/notifications` | Channels, quiet hours, email, WhatsApp number (login phone or SMS code), Telegram link code |
+| `GET /office/settings/reminders` | Reminder rules, WhatsApp / Telegram settings (secrets write-only), test message (owner, manager) |
+| `POST /webhooks/telegram/:secret` | Telegram bot updates (random per-office secret) |
+| `POST /cron/run/:job` | Run a job now; header `X-Cron-Secret: $CRON_SECRET`; answers `{ ok, processed }` |
+
+Environment:
+
+| Variable | Meaning |
+|---|---|
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | Email reminders. Without `SMTP_HOST` or `MAIL_FROM` emails are skipped. (`SMTP_PASSWORD` / `SMTP_FROM` still work.) |
+| `RUN_CRON` | `false` turns the in-process scheduler off (use cPanel Cron Jobs instead) |
+| `CRON_SECRET` | Required by `POST /cron/run/:job` (and `/health/detail`) |
+
+WhatsApp (Meta Cloud API, template messages) and Telegram (Bot API) settings are entered per office in the app and stored encrypted with `SECRET_BOX_KEY`.
+
+cPanel Cron Jobs fallback (with `RUN_CRON=false`):
+
+```
+*/5 * * * * curl -s -X POST -H "X-Cron-Secret: YOUR_CRON_SECRET" https://yourdomain.sa/cron/run/deliver
+0 4 * * * curl -s -X POST -H "X-Cron-Secret: YOUR_CRON_SECRET" https://yourdomain.sa/cron/run/reminders
+```
+
+Jobs: reminders, deliver, recompute, late_payments, digest, expire_invites, trial_check, purge_notifications, purge_auth (plus disabled placeholders: backup, plan_renewal, sms_balance, health_ping, reports).
+
 ## Project layout
 
 | Path | Purpose |

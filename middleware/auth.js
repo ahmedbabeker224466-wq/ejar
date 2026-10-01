@@ -24,6 +24,21 @@ function loadUser(authService = auth) {
   };
 }
 
+/** Unread notifications for the header bell (signed-in pages only). */
+function loadUnreadCount(countFor = (userId) => require('../services/notifications').unreadCount(require('../config/db').pool, userId)) {
+  return async function loadUnreadCountMiddleware(req, res, next) {
+    res.locals.unreadCount = 0;
+    if (req.user && req.method === 'GET') {
+      try {
+        res.locals.unreadCount = await countFor(req.user.id);
+      } catch (err) {
+        logger.error(`Unread count failed: ${err.code || err.message}`);
+      }
+    }
+    next();
+  };
+}
+
 function wantsJson(req) {
   return req.path.startsWith('/api/') || (req.xhr || (req.get('accept') || '').includes('application/json'));
 }
@@ -35,4 +50,4 @@ function requireAuth(req, res, next) {
   return res.redirect('/login');
 }
 
-module.exports = { loadUser, requireAuth, wantsJson };
+module.exports = { loadUser, loadUnreadCount, requireAuth, wantsJson };

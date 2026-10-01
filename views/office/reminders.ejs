@@ -1,0 +1,84 @@
+<p class="back-link"><a href="/office/settings">→ الإعدادات</a></p>
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (warning) { %><div class="flash flash--warning" role="alert"><%= warning %></div><% } %>
+<% if (test) { %><div class="flash flash--<%= test.ok ? 'success' : 'danger' %>" role="status"><%= test.text %></div><% } %>
+
+<section class="card form-card">
+  <h1>قواعد التذكير</h1>
+  <p class="muted">اكتب الأيام مفصولة بفواصل. مواعيد القرار وتغيير الإيجار تُعد قبل الموعد، والتأخر وانتهاء العقد بعد التاريخ.</p>
+  <% if (Object.keys(errors).some(function (k) { return kinds[k]; })) { %><div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div><% } %>
+  <form method="post" action="/office/settings/reminders/rules" novalidate>
+    <% Object.entries(kinds).forEach(function ([kind, rule]) { %>
+      <fieldset class="field">
+        <legend><%= rule.label %></legend>
+        <label class="check"><input type="checkbox" name="<%= kind %>_enabled" value="1" <%= values[kind].enabled ? 'checked' : '' %>> مفعّل</label>
+        <label for="<%= kind %>_days"><%= rule.direction === 'after' ? 'بعد التاريخ بـ (أيام)' : 'قبل الموعد بـ (أيام)' %></label>
+        <input id="<%= kind %>_days" name="<%= kind %>_days" class="input" type="text" dir="ltr" inputmode="numeric" maxlength="60" value="<%= values[kind].days %>" <%= errors[kind] ? 'aria-invalid=true' : '' %>>
+        <% if (errors[kind]) { %><p class="field-error"><%= errors[kind] %></p><% } %>
+      </fieldset>
+    <% }) %>
+    <button type="submit" class="btn btn--primary btn--block btn--large">حفظ القواعد</button>
+  </form>
+</section>
+
+<section class="card form-card" id="whatsapp">
+  <h2>واتساب (Meta WhatsApp Cloud API)</h2>
+  <% if (channels.whatsapp.configured) { %><p><span class="badge badge--link-joined">مضبوط ✓</span> القالب: <span dir="ltr"><%= channels.whatsapp.settings.template_name %></span></p><% } %>
+  <% const wa = (errors.whatsapp || {}); %>
+  <form method="post" action="/office/settings/reminders/whatsapp" novalidate autocomplete="off">
+    <div class="field">
+      <label for="wa-id">معرّف رقم الهاتف (Phone number ID)</label>
+      <input id="wa-id" name="phone_number_id" class="input" type="text" dir="ltr" inputmode="numeric" maxlength="30" placeholder="<%= channels.whatsapp.configured ? 'محفوظ، اتركه فارغاً لعدم التغيير' : '' %>" <%= wa.phone_number_id ? 'aria-invalid=true' : '' %>>
+      <% if (wa.phone_number_id) { %><p class="field-error"><%= wa.phone_number_id %></p><% } %>
+    </div>
+    <div class="field">
+      <label for="wa-token">رمز الوصول (Access token)</label>
+      <input id="wa-token" name="token" class="input" type="password" dir="ltr" maxlength="1000" autocomplete="new-password" placeholder="<%= channels.whatsapp.configured ? 'محفوظ، اتركه فارغاً لعدم التغيير' : '' %>" <%= wa.token ? 'aria-invalid=true' : '' %>>
+      <% if (wa.token) { %><p class="field-error"><%= wa.token %></p><% } %>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="wa-template">اسم القالب المعتمد</label>
+        <input id="wa-template" name="template_name" class="input" type="text" dir="ltr" maxlength="100" value="<%= channels.whatsapp.settings.template_name || 'aqdi_reminder' %>">
+        <% if (wa.template_name) { %><p class="field-error"><%= wa.template_name %></p><% } %>
+      </div>
+      <div class="field">
+        <label for="wa-lang">لغة القالب</label>
+        <input id="wa-lang" name="language" class="input" type="text" dir="ltr" maxlength="10" value="<%= channels.whatsapp.settings.language || 'ar' %>">
+        <% if (wa.language) { %><p class="field-error"><%= wa.language %></p><% } %>
+      </div>
+    </div>
+    <p class="field-hint">القالب نص فيه متغيران: {{1}} العنوان و {{2}} نص التذكير.</p>
+    <button type="submit" class="btn btn--primary btn--block">حفظ إعدادات واتساب</button>
+  </form>
+  <% if (channels.whatsapp.configured) { %>
+    <form method="post" action="/office/settings/reminders/whatsapp/remove"><button type="submit" class="btn btn--secondary btn--block">حذف إعدادات واتساب</button></form>
+  <% } %>
+</section>
+
+<section class="card form-card" id="telegram">
+  <h2>تيليجرام</h2>
+  <% if (channels.telegram.configured) { %><p><span class="badge badge--link-joined">مضبوط ✓</span><% if (channels.telegram.settings.bot_username) { %> البوت: <span dir="ltr">@<%= channels.telegram.settings.bot_username %></span><% } %></p><% } %>
+  <% const tg = (errors.telegram || {}); %>
+  <form method="post" action="/office/settings/reminders/telegram" novalidate autocomplete="off">
+    <div class="field">
+      <label for="tg-token">رمز البوت (من BotFather)</label>
+      <input id="tg-token" name="token" class="input" type="password" dir="ltr" maxlength="100" autocomplete="new-password" placeholder="<%= channels.telegram.configured ? 'محفوظ، اتركه فارغاً لإعادة ربط نفس البوت' : '' %>" <%= tg.token ? 'aria-invalid=true' : '' %>>
+      <% if (tg.token) { %><p class="field-error"><%= tg.token %></p><% } %>
+    </div>
+    <button type="submit" class="btn btn--primary btn--block">حفظ وربط البوت</button>
+  </form>
+  <% if (channels.telegram.configured) { %>
+    <form method="post" action="/office/settings/reminders/telegram/remove"><button type="submit" class="btn btn--secondary btn--block">حذف إعدادات تيليجرام</button></form>
+  <% } %>
+</section>
+
+<section class="card form-card">
+  <h2>رسالة تجربة إليّ</h2>
+  <p class="muted">تصلك على عنوانك المؤكد في <a href="/settings/notifications">إعدادات الإشعارات</a>.</p>
+  <div class="button-row">
+    <% Object.entries(channelLabels).forEach(function ([key, label]) { %>
+      <form method="post" action="/office/settings/reminders/test/<%= key %>"><button type="submit" class="btn btn--secondary"><%= label %></button></form>
+    <% }) %>
+  </div>
+</section>

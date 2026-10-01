@@ -23,7 +23,7 @@
 
 الآن معك ثلاث قيم ستحتاجها لاحقاً: اسم القاعدة الكامل، واسم المستخدم الكامل، وكلمة المرور.
 
-> لا تحتاج إنشاء الجداول بيدك. التطبيق ينشئ الجداول الـ 62 تلقائياً عند أول تشغيل.
+> لا تحتاج إنشاء الجداول بيدك. التطبيق ينشئ الجداول الـ 66 تلقائياً عند أول تشغيل.
 
 ---
 
@@ -119,6 +119,12 @@ PLATFORM_ADMIN_PHONE=05XXXXXXXX
 SMS_PROVIDER=console
 CLAUDE_API_KEY=
 CLAUDE_MODEL=claude-sonnet-4-5
+SMTP_HOST=
+SMTP_PORT=465
+SMTP_USER=
+SMTP_PASS=
+MAIL_FROM=
+RUN_CRON=
 ```
 
 **الطريقة الثانية: من صفحة التطبيق**
@@ -173,7 +179,7 @@ CLAUDE_MODEL=claude-sonnet-4-5
 2. **ملف السجل:** افتح `aqdi/logs/app.log` (أو `stderr.log` داخل مجلد `aqdi` في بعض الاستضافات). ستجد في أعلاه مربعاً بعنوان `Aqdi self-check` يوضح:
    - `Environment`: هل هناك متغير ناقص؟ يكتب اسمه، مثل `MISSING JWT_SECRET`.
    - `Database`: هل الاتصال بقاعدة البيانات ناجح؟
-   - `Schema`: عدد الجداول، ويجب أن يكون `62/62`.
+   - `Schema`: عدد الجداول، ويجب أن يكون `66/66`.
    - `SMS driver`: يكتب `console` أثناء التجربة.
    - `Status`: `SERVING` تعني أن الموقع يعمل. `MAINTENANCE PAGE` تعني أن الزوار يرون صفحة صيانة، ويكتب السبب بجانبها.
 3. **الصفحة الرئيسية:** افتح `https://yourdomain.sa`. يجب أن تظهر «منصة عقدي قيد الإنشاء».
@@ -223,6 +229,41 @@ CLAUDE_MODEL=claude-sonnet-4-5
   `UPDATE plans SET max_ai_reads_monthly = 10 WHERE code = 'trial';`
 - بعد إضافة المفتاح أعد تشغيل التطبيق (الخطوة 6).
 
+## الخطوة 11: التذكيرات والإشعارات
+
+**ما الذي يعمل تلقائياً؟** داخل التطبيق جدول مهام (cron) يبدأ مع التطبيق نفسه، بتوقيت الرياض:
+
+| المهمة | الوقت | ماذا تفعل |
+|---|---|---|
+| `reminders` | كل يوم 07:00 | تنشئ تذكيرات المواعيد والدفعات |
+| `deliver` | كل 5 دقائق | ترسل الرسائل المعلقة (بريد، واتساب، تيليجرام) وتعيد المحاولة عند الفشل |
+| `recompute` | كل يوم 00:10 | تحدّث حالات العقود |
+| `late_payments` | كل يوم 00:20 | تعلّم الدفعات المتأخرة |
+| `digest` | كل يوم 08:00 | ملخص يومي لصاحب المكتب (أرقام فقط) |
+| `expire_invites` | كل ساعة | تحذف رموز الدعوة غير المستخدمة التي انتهت قبل أكثر من 30 يوماً |
+| `trial_check` | كل يوم 09:30 | تنبّه صاحب المكتب عند انتهاء التجربة |
+| `purge_notifications` | كل جمعة 03:00 | تحذف الإشعارات الأقدم من 180 يوماً وسجل الإرسال الأقدم من 90 يوماً |
+| `purge_auth` | كل 10 دقائق | تحذف رموز الدخول والجلسات المنتهية |
+
+كل مهمة تأخذ قفلاً في قاعدة البيانات، فلا تعمل مرتين في نفس الوقت حتى لو كان للتطبيق أكثر من نسخة. وتشغيلها مرتين لا يرسل التذكير مرتين.
+
+**إذا لم يكن الجدول الداخلي موثوقاً على استضافتك** (Passenger يوقف التطبيق إذا لم يزره أحد): ضع `RUN_CRON=false` في `.env`، ثم من cPanel افتح **Cron Jobs** وأضف هذه الأوامر (غيّر الرابط والسر):
+
+```
+*/5 * * * * curl -s -X POST -H "X-Cron-Secret: قيمة CRON_SECRET" https://yourdomain.sa/cron/run/deliver
+0 4 * * * curl -s -X POST -H "X-Cron-Secret: قيمة CRON_SECRET" https://yourdomain.sa/cron/run/reminders
+```
+
+- توقيت cPanel غالباً UTC: الساعة `4` بتوقيت UTC هي 07:00 في الرياض.
+- أضف بنفس الطريقة باقي المهام من الجدول أعلاه إن أردت (`recompute`، `late_payments`، `digest`، ...).
+- الرد يكون فقط `{"ok":true,"processed":5}`. بدون السر الصحيح يكون الرد `403`.
+
+**البريد الإلكتروني:** املأ `SMTP_HOST` و `SMTP_PORT` و `SMTP_USER` و `SMTP_PASS` و `MAIL_FROM` (من cPanel ← Email Accounts ← Connect Devices). إذا تركت `SMTP_HOST` أو `MAIL_FROM` فارغاً لا يُرسل بريد، ويُسجَّل الإرسال "لم يُرسل" دون أي خطأ.
+
+**واتساب وتيليجرام:** لا يوضعان في `.env`. كل مكتب يدخل إعداداته من **الإعدادات ← إعدادات التذكيرات والقنوات**، وتُحفظ مشفرة بـ `SECRET_BOX_KEY` ولا تظهر بعد الحفظ.
+- واتساب: من Meta (WhatsApp Cloud API) خذ **Phone number ID** و **Access token**، وأنشئ قالب رسالة باللغة العربية اسمه `aqdi_reminder` (أو أي اسم تكتبه في الإعدادات)، نصه فيه متغيران: `{{1}}` للعنوان و `{{2}}` لنص التذكير.
+- تيليجرام: أنشئ بوتاً من **@BotFather** والصق رمزه. التطبيق يربط البوت بالموقع تلقائياً (يحتاج `APP_URL` يبدأ بـ `https`). يربط كل شخص حسابه من **إعدادات الإشعارات** بإرسال الرمز الظاهر له إلى البوت.
+
 ---
 
 ## ملاحظة: تغييرات قاعدة البيانات التي تُطبَّق تلقائياً
@@ -244,10 +285,18 @@ CLAUDE_MODEL=claude-sonnet-4-5
 | صفحات المالك والمستأجر | `ALTER TABLE contract_payments ADD COLUMN reported_at DATETIME NULL AFTER paid_at` | `Added column contract_payments.reported_at` |
 | صفحات المالك والمستأجر | `ALTER TABLE contract_payments ADD COLUMN reported_by BIGINT UNSIGNED NULL AFTER reported_at` | `Added column contract_payments.reported_by` |
 | صفحات المالك والمستأجر | `ALTER TABLE contract_payments MODIFY COLUMN status ENUM('due','paid','late','waived','tenant_reported') NOT NULL DEFAULT 'due'` | `Added tenant_reported to contract_payments.status` |
+| التذكيرات | `ALTER TABLE notification_prefs ADD COLUMN quiet_start CHAR(5) NULL AFTER enabled` | `Added column notification_prefs.quiet_start` |
+| التذكيرات | `ALTER TABLE notification_prefs ADD COLUMN quiet_end CHAR(5) NULL AFTER quiet_start` | `Added column notification_prefs.quiet_end` |
+| التذكيرات | `ALTER TABLE notifications ADD COLUMN office_id BIGINT UNSIGNED NULL AFTER user_id` | `Added column notifications.office_id` |
+| التذكيرات | `ALTER TABLE notifications ADD COLUMN kind VARCHAR(40) NULL AFTER office_id` | `Added column notifications.kind` |
+| التذكيرات | `ALTER TABLE notifications ADD COLUMN contract_id BIGINT UNSIGNED NULL AFTER link` | `Added column notifications.contract_id` |
+| التذكيرات | `ALTER TABLE notifications ADD COLUMN dedupe_key VARCHAR(190) NULL AFTER contract_id` | `Added column notifications.dedupe_key` |
+| التذكيرات | `ALTER TABLE notifications ADD UNIQUE INDEX uq_notifications_dedupe (dedupe_key)` | `Added index notifications.uq_notifications_dedupe` |
+| التذكيرات | `ALTER TABLE notifications ADD INDEX idx_notifications_office_created (office_id, created_at)` | `Added index notifications.idx_notifications_office_created` |
 
 كل أمر يُنفَّذ مرة واحدة فقط، وفقط إذا كان العمود (أو القيمة الجديدة في القائمة) غير موجود. أمر `MODIFY COLUMN` يضيف قيمة جديدة لقائمة الحالات، ولا يغيّر أي صف موجود.
 
-تحديث المباني والوحدات لم يضف أي تغيير على قاعدة البيانات. تحديث العقود أضاف الأعمدة الستة أعلاه، ولم يضف جداول جديدة. تحديث قراءة العقود بالذكاء الاصطناعي أضاف جدولاً واحداً جديداً: `ai_reads_usage` (عدد القراءات لكل مكتب في كل شهر)، فأصبحت الجداول 60. يُنشأ تلقائياً بأمر `CREATE TABLE IF NOT EXISTS` عند التشغيل. تحديث صفحات المالك والمستأجر أضاف جدولين: `contract_decisions` (قرار المالك بشأن التجديد) و`contract_requests` (طلبات المستأجر، مثل تخفيض الإيجار)، فأصبحت الجداول 62، إضافة إلى العمودين والقيمة الجديدة أعلاه.
+تحديث المباني والوحدات لم يضف أي تغيير على قاعدة البيانات. تحديث العقود أضاف الأعمدة الستة أعلاه، ولم يضف جداول جديدة. تحديث قراءة العقود بالذكاء الاصطناعي أضاف جدولاً واحداً جديداً: `ai_reads_usage` (عدد القراءات لكل مكتب في كل شهر)، فأصبحت الجداول 60. يُنشأ تلقائياً بأمر `CREATE TABLE IF NOT EXISTS` عند التشغيل. تحديث صفحات المالك والمستأجر أضاف جدولين: `contract_decisions` (قرار المالك بشأن التجديد) و`contract_requests` (طلبات المستأجر، مثل تخفيض الإيجار)، فأصبحت الجداول 62، إضافة إلى العمودين والقيمة الجديدة أعلاه. تحديث التذكيرات أضاف أربعة جداول: `delivery_log` (حالة الإرسال لكل قناة، بلا نص ولا عناوين)، `reminder_rules` (قواعد التذكير لكل مكتب)، `channel_settings` (إعدادات واتساب وتيليجرام مشفرة)، `user_contacts` (رقم واتساب وحساب تيليجرام المؤكدان)، فأصبحت الجداول 66، إضافة إلى أعمدة `notifications` و `notification_prefs` أعلاه.
 
 ## ملاحظة: HTTPS
 

@@ -81,6 +81,35 @@
   <% } %>
 </section>
 
+<section class="card office-section" id="sent">
+  <h2>آخر الإشعارات المرسلة</h2>
+  <div class="units-summary">
+    <div class="mini-stat"><strong class="delivery-sent"><%= sent.counts.sent %></strong> أُرسلت</div>
+    <div class="mini-stat"><strong class="delivery-pending"><%= sent.counts.pending %></strong> بالانتظار</div>
+    <div class="mini-stat"><strong class="delivery-failed"><%= sent.counts.failed %></strong> فشلت</div>
+    <div class="mini-stat"><strong class="delivery-skipped"><%= sent.counts.skipped %></strong> لم تُرسل (قناة غير مضبوطة)</div>
+  </div>
+  <p class="muted">آخر 7 أيام، عبر البريد وواتساب وتيليجرام. التذكيرات تظهر دائماً داخل الموقع.</p>
+  <% if (sent.latest.length) { %>
+    <ul class="item-list">
+      <% sent.latest.forEach(function (n) { %>
+        <li class="item">
+          <p class="item__title"><%= n.title %></p>
+          <p class="item__meta"><%= kindLabels[n.kind] || '' %> · <span dir="ltr"><%= riyadhTime(n.created_at) %></span></p>
+          <% if (n.deliveries.length) { %>
+            <div class="delivery-dots">
+              <% n.deliveries.forEach(function (d) { %><span class="badge badge--delivery-<%= d.status %>"><%= { email: 'بريد', whatsapp: 'واتساب', telegram: 'تيليجرام' }[d.channel] %>: <%= { sent: 'أُرسل', failed: 'فشل', skipped: 'لم يُرسل', pending: 'بالانتظار' }[d.status] %></span><% }) %>
+            </div>
+          <% } %>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p class="empty-state">لم تُرسل إشعارات بعد. تبدأ التذكيرات تلقائياً كل صباح الساعة 7.</p>
+  <% } %>
+  <% if (can('settings.office')) { %><p><a href="/office/settings/reminders">إعدادات التذكيرات والقنوات</a></p><% } %>
+</section>
+
 <% if (setupSteps.length) { %>
   <section class="card office-section">
     <h2>ابدأ تجهيز مكتبك</h2>

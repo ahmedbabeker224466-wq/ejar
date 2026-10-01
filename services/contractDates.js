@@ -92,6 +92,59 @@ function addMonths(ymd, n) {
   return formatUtc(Date.UTC(targetYear, targetMonth - 1, Math.min(day, daysInMonth(targetYear, targetMonth))));
 }
 
+// Saudi Arabia keeps UTC+3 all year (no daylight saving), so a Riyadh clock
+// time is a fixed offset from UTC.
+const RIYADH_OFFSET_MS = 3 * 60 * 60 * 1000;
+const CLOCK = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** True for a 'HH:MM' 24-hour clock time. */
+function isValidClock(value) {
+  return typeof value === 'string' && CLOCK.test(value);
+}
+
+function clockMinutes(value) {
+  const [, h, m] = CLOCK.exec(value);
+  return Number(h) * 60 + Number(m);
+}
+
+/** Minutes since midnight on the Riyadh clock at a point in time. */
+function riyadhMinutes(at) {
+  const shifted = new Date(at.getTime() + RIYADH_OFFSET_MS);
+  return shifted.getUTCHours() * 60 + shifted.getUTCMinutes();
+}
+
+/** The Riyadh clock time at a point in time, as 'HH:MM'. */
+function riyadhClock(at) {
+  const minutes = riyadhMinutes(at);
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+/**
+ * Whether a point in time falls inside quiet hours [start, end) on the Riyadh
+ * clock. A window may cross midnight (21:00-08:00). start === end means none.
+ */
+function inQuietHours(at, start, end) {
+  if (!isValidClock(start) || !isValidClock(end) || start === end) return false;
+  const now = riyadhMinutes(at);
+  const from = clockMinutes(start);
+  const to = clockMinutes(end);
+  return from < to ? now >= from && now < to : now >= from || now < to;
+}
+
+/** The first point in time at or after `at` when the Riyadh clock shows 'HH:MM'. */
+function nextRiyadhClock(at, clock) {
+  const shifted = new Date(at.getTime() + RIYADH_OFFSET_MS);
+  const target = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()) + clockMinutes(clock) * 60000;
+  const atLocal = shifted.getTime() - shifted.getUTCSeconds() * 1000 - shifted.getUTCMilliseconds();
+  const next = target >= atLocal ? target : target + DAY_MS;
+  return new Date(next - RIYADH_OFFSET_MS);
+}
+
+/** When a message may go out: now, or the end of quiet hours if now is inside them. */
+function afterQuietHours(at, start, end) {
+  return inQuietHours(at, start, end) ? nextRiyadhClock(at, end) : at;
+}
+
 /** -1, 0 or 1, comparing two valid dates. */
 function compareYmd(a, b) {
   const diff = parseYmd(a) - parseYmd(b);
@@ -157,4 +210,9 @@ module.exports = {
   inviteExpiresAt,
   isTrialExpired,
   trialDaysLeft,
+  isValidClock,
+  riyadhClock,
+  inQuietHours,
+  nextRiyadhClock,
+  afterQuietHours,
 };

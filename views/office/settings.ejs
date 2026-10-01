@@ -5,6 +5,11 @@
     <div class="flash flash--success" role="status">تم حفظ بيانات المكتب.</div>
   <% } %>
 
+  <div class="button-row">
+    <% if (canEditOffice) { %><a href="/office/settings/reminders" class="btn btn--secondary">إعدادات التذكيرات والقنوات</a><% } %>
+    <a href="/settings/notifications" class="btn btn--secondary">إشعاراتي</a>
+  </div>
+
   <h2>بيانات المكتب</h2>
   <% if (canEditOffice) { %>
     <% if (Object.keys(errors).length) { %>

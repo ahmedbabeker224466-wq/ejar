@@ -121,14 +121,14 @@ async function addMissingEnumValues(targetPool, additions) {
 /** Adds each { table, index, columns } that is missing. Returns the names it added. */
 async function addMissingIndexes(targetPool, additions) {
   const added = [];
-  for (const { table, index, columns } of additions) {
+  for (const { table, index, columns, unique = false } of additions) {
     const [found] = await targetPool.query(
       `SELECT 1 FROM information_schema.statistics
         WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?`,
       [table, index],
     );
     if (found.length === 0
-      && (await alterUnlessDone(targetPool, `ALTER TABLE \`${table}\` ADD INDEX \`${index}\` (${columns})`, 'ER_DUP_KEYNAME'))) {
+      && (await alterUnlessDone(targetPool, `ALTER TABLE \`${table}\` ADD ${unique ? 'UNIQUE ' : ''}INDEX \`${index}\` (${columns})`, 'ER_DUP_KEYNAME'))) {
       logger.info(`Added index ${table}.${index}`);
       added.push(`${table}.${index}`);
     }

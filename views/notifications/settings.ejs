@@ -1,0 +1,90 @@
+<p class="back-link"><a href="/notifications">→ الإشعارات</a></p>
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (errors.contact) { %><div class="flash flash--danger" role="alert"><%= errors.contact %></div><% } %>
+
+<section class="card form-card">
+  <h1>إعدادات الإشعارات</h1>
+  <p class="muted">تصلك التذكيرات دائماً هنا في الموقع. اختر القنوات الأخرى التي تريدها.</p>
+  <form method="post" action="/settings/notifications" novalidate>
+    <fieldset class="field">
+      <legend>القنوات</legend>
+      <label class="check"><input type="checkbox" checked disabled> الموقع (دائماً)</label>
+      <label class="check"><input type="checkbox" name="email" value="1" <%= values.channels.email ? 'checked' : '' %>> البريد الإلكتروني</label>
+      <label class="check"><input type="checkbox" name="whatsapp" value="1" <%= values.channels.whatsapp ? 'checked' : '' %>> واتساب</label>
+      <label class="check"><input type="checkbox" name="telegram" value="1" <%= values.channels.telegram ? 'checked' : '' %>> تيليجرام</label>
+    </fieldset>
+    <div class="field">
+      <label for="email">البريد الإلكتروني (اختياري)</label>
+      <input id="email" name="email" class="input" type="email" dir="ltr" maxlength="190" value="<%= values.email %>" <%= errors.email ? 'aria-invalid=true' : '' %>>
+      <% if (errors.email) { %><p class="field-error"><%= errors.email %></p><% } %>
+    </div>
+    <fieldset class="field">
+      <legend>أوقات الهدوء (بتوقيت الرياض)</legend>
+      <p class="field-hint">لا نرسل رسائل غير عاجلة في هذه الأوقات، وتصلك عند انتهائها.</p>
+      <div class="form-grid">
+        <div class="field">
+          <label for="quiet_start">من</label>
+          <select id="quiet_start" name="quiet_start" class="select" dir="ltr">
+            <% hours.forEach(function (h) { %><option value="<%= h %>" <%= values.quietStart === h ? 'selected' : '' %>><%= h %></option><% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label for="quiet_end">إلى</label>
+          <select id="quiet_end" name="quiet_end" class="select" dir="ltr">
+            <% hours.forEach(function (h) { %><option value="<%= h %>" <%= values.quietEnd === h ? 'selected' : '' %>><%= h %></option><% }) %>
+          </select>
+        </div>
+      </div>
+      <% if (errors.quiet) { %><p class="field-error"><%= errors.quiet %></p><% } %>
+    </fieldset>
+    <button type="submit" class="btn btn--primary btn--block btn--large">حفظ</button>
+  </form>
+</section>
+
+<section class="card form-card" id="whatsapp">
+  <h2>رقم واتساب</h2>
+  <% if (errors.whatsapp) { %><div class="flash flash--danger" role="alert"><%= errors.whatsapp %></div><% } %>
+  <% if (contacts.whatsapp) { %>
+    <p>الرقم المؤكد: <strong dir="ltr"><%= contacts.whatsapp %></strong> <span class="badge badge--link-joined">مؤكد ✓</span></p>
+    <form method="post" action="/settings/notifications/whatsapp/remove"><button type="submit" class="btn btn--secondary btn--block">حذف الرقم</button></form>
+  <% } else { %>
+    <p>رقم دخولك: <strong dir="ltr"><%= contacts.loginPhone %></strong></p>
+    <form method="post" action="/settings/notifications/whatsapp/login-phone"><button type="submit" class="btn btn--primary btn--block">استخدم رقم الدخول لواتساب</button></form>
+  <% } %>
+  <% if (whatsappStep) { %>
+    <form method="post" action="/settings/notifications/whatsapp/verify" novalidate>
+      <div class="field">
+        <label for="wa-code">رمز التأكيد المرسل إلى <span dir="ltr"><%= contacts.whatsappPending %></span></label>
+        <input id="wa-code" name="code" class="input input--code" type="text" inputmode="numeric" dir="ltr" maxlength="6" autocomplete="one-time-code" autofocus>
+      </div>
+      <button type="submit" class="btn btn--primary btn--block">تأكيد الرقم</button>
+    </form>
+  <% } else { %>
+    <details class="payment__edit">
+      <summary>استخدام رقم آخر</summary>
+      <form method="post" action="/settings/notifications/whatsapp/change" novalidate>
+        <div class="field">
+          <label for="wa-phone">رقم الجوال</label>
+          <input id="wa-phone" name="phone" class="input" type="tel" inputmode="numeric" dir="ltr" maxlength="14" placeholder="05XXXXXXXX">
+          <p class="field-hint">نرسل رمز تأكيد برسالة نصية إلى هذا الرقم.</p>
+        </div>
+        <button type="submit" class="btn btn--secondary btn--block">أرسل رمز التأكيد</button>
+      </form>
+    </details>
+  <% } %>
+</section>
+
+<section class="card form-card" id="telegram">
+  <h2>تيليجرام</h2>
+  <% if (contacts.telegramLinked) { %>
+    <p><span class="badge badge--link-joined">مربوط ✓</span></p>
+    <form method="post" action="/settings/notifications/telegram/unlink"><button type="submit" class="btn btn--secondary btn--block">إلغاء الربط</button></form>
+  <% } else if (telegramCode) { %>
+    <p>أرسل هذا الرمز في محادثة بوت مكتبك<% if (bots.length) { %> (<% bots.forEach(function (b, i) { %><span dir="ltr">@<%= b %></span><%= i < bots.length - 1 ? '، ' : '' %><% }) %>)<% } %>. صالح لمدة <%= codeMinutes %> دقيقة.</p>
+    <div class="invite-code"><output id="tg-code" dir="ltr"><%= telegramCode %></output></div>
+    <p class="muted">بعد الإرسال حدّث هذه الصفحة.</p>
+  <% } else { %>
+    <% if (!bots.length) { %><p class="muted">لم يضبط مكتبك بوت تيليجرام بعد.</p><% } %>
+    <form method="post" action="/settings/notifications/telegram/code"><button type="submit" class="btn btn--primary btn--block">أظهر رمز الربط</button></form>
+  <% } %>
+</section>

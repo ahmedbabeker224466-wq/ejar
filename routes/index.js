@@ -6,6 +6,8 @@ const db = require('../config/db');
 const selfCheck = require('../services/selfCheck');
 const { state } = require('../services/runtimeState');
 const { riyadhNow } = require('../utils/time');
+const cronJobs = require('../services/cron');
+const { rateLimit } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
@@ -48,6 +50,32 @@ router.get('/health/detail', async (req, res, next) => {
       startup: state.report,
       live,
     });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// cPanel Cron Jobs fallback: curl -X POST -H "X-Cron-Secret: ..." <APP_URL>/cron/run/<job>.
+// Answers only { ok, processed }.
+const cronLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  keyFor: (req) => `cron:${req.ip}`,
+  onLimit: (req, res) => res.status(429).json({ ok: false, processed: 0 }),
+});
+
+router.post('/cron/run/:job', cronLimit, async (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    const expected = process.env.CRON_SECRET;
+    if (!expected || !secretMatches(req.get('x-cron-secret'), expected)) {
+      return res.status(403).json({ ok: false, processed: 0 });
+    }
+    const job = String(req.params.job || '');
+    if (!Object.hasOwn(cronJobs.JOBS, job)) return res.status(404).json({ ok: false, processed: 0 });
+    const result = await cronJobs.runJob(job);
+    const status = result.error === 'not_implemented' ? 501 : result.ok ? 200 : 500;
+    return res.status(status).json({ ok: Boolean(result.ok), processed: Number(result.processed) || 0 });
   } catch (err) {
     return next(err);
   }

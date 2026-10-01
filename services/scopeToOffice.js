@@ -32,6 +32,8 @@ const OFFICE_TABLES = new Set([
   'ai_reads_usage',
   'contract_decisions',
   'contract_requests',
+  'reminder_rules',
+  'channel_settings',
   'invites',
   'vendors',
   'maintenance_requests',

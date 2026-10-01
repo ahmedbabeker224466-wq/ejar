@@ -26,7 +26,8 @@ const LIVE_STAGES = Object.freeze(['calm', 'soon', 'urgent', 'deadline_passed'])
 
 // App policy, not an Ejar rule: a unit is marked rented once its contract has
 // started or starts within this many days.
-const APP = Object.freeze({ rentedLeadDays: 30 });
+// Reminders: a missed run catches up at most this many past days.
+const APP = Object.freeze({ rentedLeadDays: 30, reminderCatchUpDays: 3 });
 
 // Months between installments.
 const FREQUENCIES = Object.freeze({ monthly: 1, quarterly: 3, semiannual: 6, annual: 12 });
@@ -347,6 +348,41 @@ function dateWindow(today, days) {
   return { from: today, to: addDays(today, days) };
 }
 
+// ------------------------------------------------------------ reminders
+
+/**
+ * Which reminder threshold, if any, falls on `day`. direction 'before': day is
+ * exactly n days before the anchor date (n = 0 is the anchor day itself);
+ * 'after': exactly n days after it. Returns n or null.
+ */
+function thresholdOn(day, anchor, offsets, direction = 'before') {
+  requireDate(day, 'day');
+  requireDate(anchor, 'anchor');
+  const gap = direction === 'after' ? daysBetween(anchor, day) : daysBetween(day, anchor);
+  return offsets.some((n) => Number(n) === gap) ? gap : null;
+}
+
+/** The date a threshold falls on: n days before (or after) the anchor. */
+function thresholdDate(anchor, n, direction = 'before') {
+  return addDays(requireDate(anchor, 'anchor'), direction === 'after' ? n : -n);
+}
+
+/**
+ * The days a reminder run covers: today, plus the days a missed run skipped
+ * (marked late), at most APP.reminderCatchUpDays back. lastRun is the last
+ * date that was fully processed, or null on a first run (no catch-up).
+ */
+function reminderDays(today, lastRun, app = APP) {
+  requireDate(today, 'today');
+  const days = [{ day: today, late: false }];
+  if (!lastRun || !isValidYmd(lastRun)) return days;
+  const missed = daysBetween(lastRun, today) - 1;
+  for (let back = Math.min(missed, app.reminderCatchUpDays); back >= 1; back -= 1) {
+    days.push({ day: addDays(today, -back), late: true });
+  }
+  return days;
+}
+
 /** True when a date is after today (for "not in the future" checks). */
 function isAfter(date, today) {
   return compareYmd(requireDate(date, 'date'), requireDate(today, 'today')) > 0;
@@ -399,6 +435,9 @@ module.exports = {
   unitShouldBeRented,
   paymentDisplayStatus,
   dateWindow,
+  thresholdOn,
+  thresholdDate,
+  reminderDays,
   isAfter,
   isValidDate: isValidYmd,
   compareDates: compareYmd,

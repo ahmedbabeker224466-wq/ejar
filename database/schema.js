@@ -103,6 +103,9 @@ const TABLES = [
     "channel ENUM('site','email','whatsapp','telegram') NOT NULL",
     'event_type VARCHAR(50) NOT NULL',
     'enabled TINYINT(1) NOT NULL DEFAULT 1',
+    // Quiet hours ('HH:MM', Asia/Riyadh) live on the user's ('site', 'all') row.
+    'quiet_start CHAR(5) NULL',
+    'quiet_end CHAR(5) NULL',
     'UNIQUE KEY uq_notification_prefs (user_id, channel, event_type)',
     fk('notification_prefs', 'user_id', 'users', 'CASCADE'),
   ]),
@@ -603,16 +606,85 @@ const TABLES = [
     fk('reminders', 'user_id', 'users', 'CASCADE'),
   ]),
 
+  // One row per person per reminder. Text holds nicknames, dates and amounts
+  // only. dedupe_key makes the reminder job safe to run twice.
   table('notifications', [
     `user_id ${REF} NOT NULL`,
+    `office_id ${REF} NULL`,
+    'kind VARCHAR(40) NULL',
     'title VARCHAR(160) NOT NULL',
     'body TEXT NOT NULL',
     'link VARCHAR(255) NULL',
+    `contract_id ${REF} NULL`,
+    'dedupe_key VARCHAR(190) NULL',
     'entity_type VARCHAR(50) NULL',
     'entity_id BIGINT UNSIGNED NULL',
     'read_at DATETIME NULL',
     'KEY idx_notifications_user_read (user_id, read_at)',
+    'UNIQUE KEY uq_notifications_dedupe (dedupe_key)',
+    'KEY idx_notifications_office_created (office_id, created_at)',
     fk('notifications', 'user_id', 'users', 'CASCADE'),
+  ]),
+
+  // Sending one notification on one outside channel (email, WhatsApp,
+  // Telegram). Never holds the message text, an address or a secret.
+  table('delivery_log', [
+    `notification_id ${REF} NOT NULL`,
+    `office_id ${REF} NULL`,
+    "channel ENUM('email','whatsapp','telegram') NOT NULL",
+    "status ENUM('pending','sent','failed','skipped') NOT NULL DEFAULT 'pending'",
+    'error_code VARCHAR(40) NULL',
+    'attempts TINYINT UNSIGNED NOT NULL DEFAULT 0',
+    'next_retry_at DATETIME NULL',
+    'sent_at DATETIME NULL',
+    'UNIQUE KEY uq_delivery_log (notification_id, channel)',
+    'KEY idx_delivery_log_due (status, next_retry_at)',
+    'KEY idx_delivery_log_office (office_id, created_at)',
+    fk('delivery_log', 'notification_id', 'notifications', 'CASCADE'),
+  ]),
+
+  // Per office: which reminders go out and how many days before (or after).
+  table('reminder_rules', [
+    `office_id ${REF} NOT NULL`,
+    "kind ENUM('decision_60','rent_change_90','payment_due','payment_late','contract_ended') NOT NULL",
+    'days_before JSON NOT NULL',
+    'enabled TINYINT(1) NOT NULL DEFAULT 1',
+    `updated_by ${REF} NULL`,
+    'UNIQUE KEY uq_reminder_rules (office_id, kind)',
+    fk('reminder_rules', 'office_id', 'offices', 'CASCADE'),
+    fk('reminder_rules', 'updated_by', 'users', 'SET NULL'),
+  ]),
+
+  // Per office WhatsApp / Telegram credentials, sealed with SECRET_BOX_KEY.
+  // public_json holds non-secret settings (template name, bot user name).
+  table('channel_settings', [
+    `office_id ${REF} NOT NULL`,
+    "channel ENUM('whatsapp','telegram') NOT NULL",
+    "provider VARCHAR(30) NOT NULL DEFAULT 'meta'",
+    'config_sealed VARBINARY(4096) NOT NULL',
+    'public_json JSON NULL',
+    'webhook_secret_hash CHAR(64) NULL', // sha256 of the Telegram webhook path secret
+    'enabled TINYINT(1) NOT NULL DEFAULT 1',
+    `updated_by ${REF} NULL`,
+    'UNIQUE KEY uq_channel_settings (office_id, channel)',
+    'KEY idx_channel_settings_webhook (webhook_secret_hash)',
+    fk('channel_settings', 'office_id', 'offices', 'CASCADE'),
+    fk('channel_settings', 'updated_by', 'users', 'SET NULL'),
+  ]),
+
+  // A person's verified addresses for outside channels.
+  table('user_contacts', [
+    `user_id ${REF} NOT NULL`,
+    'whatsapp_e164 VARCHAR(20) NULL',
+    'whatsapp_verified_at DATETIME NULL',
+    'whatsapp_pending VARCHAR(20) NULL', // a new number waiting for its SMS code
+    'telegram_chat_id VARCHAR(32) NULL',
+    'telegram_verified_at DATETIME NULL',
+    'telegram_code_hash CHAR(64) NULL', // sha256 of the one-time link code
+    'telegram_code_expires_at DATETIME NULL',
+    'UNIQUE KEY uq_user_contacts_user (user_id)',
+    'KEY idx_user_contacts_tg_code (telegram_code_hash)',
+    fk('user_contacts', 'user_id', 'users', 'CASCADE'),
   ]),
 
   table('notification_log', [
@@ -834,6 +906,12 @@ const COLUMN_ADDITIONS = [
   { table: 'contracts', column: 'renewed_from_id', definition: 'BIGINT UNSIGNED NULL AFTER renewed_to_id' },
   { table: 'contract_payments', column: 'reported_at', definition: 'DATETIME NULL AFTER paid_at' },
   { table: 'contract_payments', column: 'reported_by', definition: 'BIGINT UNSIGNED NULL AFTER reported_at' },
+  { table: 'notification_prefs', column: 'quiet_start', definition: 'CHAR(5) NULL AFTER enabled' },
+  { table: 'notification_prefs', column: 'quiet_end', definition: 'CHAR(5) NULL AFTER quiet_start' },
+  { table: 'notifications', column: 'office_id', definition: 'BIGINT UNSIGNED NULL AFTER user_id' },
+  { table: 'notifications', column: 'kind', definition: 'VARCHAR(40) NULL AFTER office_id' },
+  { table: 'notifications', column: 'contract_id', definition: 'BIGINT UNSIGNED NULL AFTER link' },
+  { table: 'notifications', column: 'dedupe_key', definition: 'VARCHAR(190) NULL AFTER contract_id' },
 ];
 
 // ENUM values added after a table first shipped: MODIFY COLUMN runs only when
@@ -849,6 +927,8 @@ const ENUM_ADDITIONS = [
 
 const INDEX_ADDITIONS = [
   { table: 'otp_codes', index: 'idx_otp_codes_ip_created', columns: 'ip, created_at' },
+  { table: 'notifications', index: 'uq_notifications_dedupe', columns: 'dedupe_key', unique: true },
+  { table: 'notifications', index: 'idx_notifications_office_created', columns: 'office_id, created_at' },
 ];
 
 module.exports = {

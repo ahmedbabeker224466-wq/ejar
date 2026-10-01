@@ -1,7 +1,7 @@
 'use strict';
 
 // The platform area placeholder, plus join by code and the landlord and
-// tenant areas (routes/portal.js). The office area lives in routes/office.js.
+// tenant areas (routes/portal.js) and notifications (routes/notifications.js). The office area lives in routes/office.js.
 // Each page is guarded by a capability, so a user can only open the areas
 // their role (or, for landlords and tenants, their links) allows.
 
@@ -9,6 +9,7 @@ const express = require('express');
 const { requirePerm } = require('../middleware/permissions');
 const { noStore } = require('../middleware/security');
 const portalRoutes = require('./portal');
+const notificationRoutes = require('./notifications');
 
 const router = express.Router();
 
@@ -23,5 +24,6 @@ for (const area of AREAS) {
 }
 
 router.use(portalRoutes);
+router.use(notificationRoutes);
 
 module.exports = router;
