@@ -41,6 +41,8 @@ const OFFICE_TABLES = new Set([
   'listings',
   'listing_inquiries',
   'subscriptions',
+  'orders',
+  'bank_transfers',
   'subscription_invoices',
   'platform_payments',
   'promo_usages',

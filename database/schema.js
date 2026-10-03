@@ -122,6 +122,7 @@ const TABLES = [
     'max_members INT UNSIGNED NULL',
     'max_ai_reads_monthly INT UNSIGNED NULL',
     'max_photos INT UNSIGNED NULL', // maintenance photos stored per office (NULL = unlimited)
+    'is_public TINYINT(1) NOT NULL DEFAULT 1', // shown to offices on the billing page
     'features JSON NULL',
     'is_active TINYINT(1) NOT NULL DEFAULT 1',
     'sort_order INT NOT NULL DEFAULT 0',
@@ -567,69 +568,167 @@ const TABLES = [
   ]),
 
   // ------------------------------------------------------------------- MONEY
-  table('subscriptions', [
-    `office_id ${REF} NOT NULL`,
-    `plan_id ${REF} NULL`,
-    "status ENUM('trialing','active','past_due','cancelled','expired') NOT NULL",
-    "billing_cycle ENUM('monthly','yearly') NOT NULL",
-    `price ${MONEY} NOT NULL`,
+  // Promo codes: percent (basis points) or a fixed amount, valid window, max
+  // redemptions, applicable plans (JSON list of plan ids, NULL = all).
+  table('promo_codes', [
+    'code VARCHAR(30) NOT NULL',
+    "discount_type ENUM('percent','fixed') NOT NULL",
+    'percent_bp INT UNSIGNED NULL', // 1000 = 10.00%
+    `fixed_amount ${MONEY} NULL`,
     CURRENCY,
-    'started_at DATETIME NOT NULL',
-    'ends_at DATETIME NULL',
-    'auto_renew TINYINT(1) NOT NULL DEFAULT 1',
-    fk('subscriptions', 'office_id', 'offices', 'CASCADE'),
-    fk('subscriptions', 'plan_id', 'plans', 'SET NULL'),
+    'valid_from DATETIME NULL',
+    'valid_to DATETIME NULL',
+    'max_redemptions INT UNSIGNED NULL',
+    'plan_ids JSON NULL',
+    'is_active TINYINT(1) NOT NULL DEFAULT 1',
+    'note VARCHAR(200) NULL',
+    `created_by ${REF} NULL`,
+    'UNIQUE KEY uq_promo_codes_code (code)',
+    fk('promo_codes', 'created_by', 'users', 'SET NULL'),
   ]),
 
-  table('subscription_invoices', [
+  // Every activation traces to a paid order. Amounts are the snapshot shown
+  // before payment (VAT-exclusive subtotal, discount, VAT, total).
+  table('orders', [
     `office_id ${REF} NOT NULL`,
-    `subscription_id ${REF} NULL`,
-    'invoice_no VARCHAR(30) NOT NULL',
+    `plan_id ${REF} NULL`,
+    'plan_code VARCHAR(30) NOT NULL',
+    "billing_interval ENUM('monthly','yearly') NOT NULL",
+    "method ENUM('moyasar','bank_transfer') NOT NULL",
+    "status ENUM('pending','paid','failed','expired') NOT NULL DEFAULT 'pending'",
+    'suspicious TINYINT(1) NOT NULL DEFAULT 0', // a payment that did not match the order
+    'fail_reason VARCHAR(40) NULL',
     `subtotal ${MONEY} NOT NULL`,
+    `discount ${MONEY} NOT NULL DEFAULT 0`,
+    'vat_rate_bp SMALLINT UNSIGNED NOT NULL',
     `vat_amount ${MONEY} NOT NULL`,
     `total ${MONEY} NOT NULL`,
     CURRENCY,
-    "status ENUM('unpaid','paid','void') NOT NULL DEFAULT 'unpaid'",
-    'issued_at DATETIME NOT NULL',
+    `promo_id ${REF} NULL`,
+    'promo_code VARCHAR(30) NULL',
+    `created_by ${REF} NULL`,
+    'expires_at DATETIME NOT NULL',
     'paid_at DATETIME NULL',
-    'pdf_path VARCHAR(255) NULL',
-    'UNIQUE KEY uq_subscription_invoices_no (invoice_no)',
-    fk('subscription_invoices', 'office_id', 'offices', 'CASCADE'),
-    fk('subscription_invoices', 'subscription_id', 'subscriptions', 'SET NULL'),
+    `invoice_id ${REF} NULL`,
+    'KEY idx_orders_office_status (office_id, status)',
+    'KEY idx_orders_status_expires (status, expires_at)',
+    fk('orders', 'office_id', 'offices', 'CASCADE'),
+    fk('orders', 'plan_id', 'plans', 'SET NULL'),
+    fk('orders', 'promo_id', 'promo_codes', 'SET NULL'),
+    fk('orders', 'created_by', 'users', 'SET NULL'),
   ]),
 
+  // One row per period an office has (history); the newest row is current.
+  table('subscriptions', [
+    `office_id ${REF} NOT NULL`,
+    `plan_id ${REF} NULL`,
+    "status ENUM('trialing','active','past_due','canceled','expired') NOT NULL",
+    "billing_interval ENUM('monthly','yearly') NOT NULL DEFAULT 'monthly'",
+    'period_start DATETIME NOT NULL',
+    'period_end DATETIME NOT NULL',
+    'cancel_at_period_end TINYINT(1) NOT NULL DEFAULT 0',
+    `price ${MONEY} NOT NULL DEFAULT 0`, // VAT-exclusive plan price of this period
+    CURRENCY,
+    `order_id ${REF} NULL`,
+    'ended_reason VARCHAR(30) NULL',
+    'KEY idx_subscriptions_office (office_id, id)',
+    'KEY idx_subscriptions_status_end (status, period_end)',
+    fk('subscriptions', 'office_id', 'offices', 'CASCADE'),
+    fk('subscriptions', 'plan_id', 'plans', 'SET NULL'),
+    fk('subscriptions', 'order_id', 'orders', 'SET NULL'),
+  ]),
+
+  // Invoices and credit notes: a snapshot (seller, buyer nickname, lines,
+  // discount, VAT, total). Credit notes have negative amounts and their own sequence.
+  table('subscription_invoices', [
+    `office_id ${REF} NOT NULL`,
+    `subscription_id ${REF} NULL`,
+    `order_id ${REF} NULL`,
+    "kind ENUM('invoice','credit_note') NOT NULL DEFAULT 'invoice'",
+    `credit_for_id ${REF} NULL`,
+    'invoice_no VARCHAR(30) NOT NULL',
+    "status ENUM('issued','credited') NOT NULL DEFAULT 'issued'",
+    'doc_title VARCHAR(60) NOT NULL',
+    'seller_json JSON NOT NULL',
+    'buyer_name VARCHAR(150) NOT NULL',
+    'lines_json JSON NOT NULL',
+    `subtotal ${MONEY} NOT NULL`,
+    `discount ${MONEY} NOT NULL DEFAULT 0`,
+    'vat_rate_bp SMALLINT UNSIGNED NOT NULL',
+    `vat_amount ${MONEY} NOT NULL`,
+    `total ${MONEY} NOT NULL`,
+    CURRENCY,
+    'reason VARCHAR(200) NULL',
+    'issued_at DATETIME NOT NULL',
+    `issued_by ${REF} NULL`,
+    'UNIQUE KEY uq_subscription_invoices_no (invoice_no)',
+    'KEY idx_subscription_invoices_office (office_id, id)',
+    fk('subscription_invoices', 'office_id', 'offices', 'CASCADE'),
+    fk('subscription_invoices', 'subscription_id', 'subscriptions', 'SET NULL'),
+    fk('subscription_invoices', 'order_id', 'orders', 'SET NULL'),
+  ]),
+
+  // Gap-free numbering: the counter row is locked inside the issuing transaction.
+  table('invoice_counters', [
+    'series CHAR(3) NOT NULL',
+    'year SMALLINT UNSIGNED NOT NULL',
+    'last_number INT UNSIGNED NOT NULL DEFAULT 0',
+    'UNIQUE KEY uq_invoice_counters (series, year)',
+  ]),
+
+  // What we keep of a payment: its id, status, amount and (if the provider
+  // returns it) the last 4 digits. Never card data, never the raw payload.
   table('platform_payments', [
     `office_id ${REF} NOT NULL`,
+    `order_id ${REF} NULL`,
     `invoice_id ${REF} NULL`,
     "provider ENUM('moyasar','bank_transfer','manual') NOT NULL",
-    'provider_ref VARCHAR(80) NULL',
+    'provider_ref VARCHAR(80) NOT NULL',
     `amount ${MONEY} NOT NULL`,
     CURRENCY,
     "status ENUM('pending','paid','failed','refunded','expired') NOT NULL DEFAULT 'pending'",
-    'raw_payload JSON NULL',
+    'card_last4 CHAR(4) NULL',
     `confirmed_by ${REF} NULL`,
+    'UNIQUE KEY uq_platform_payments_ref (provider, provider_ref)',
+    'KEY idx_platform_payments_office (office_id, id)',
     fk('platform_payments', 'office_id', 'offices', 'CASCADE'),
+    fk('platform_payments', 'order_id', 'orders', 'SET NULL'),
     fk('platform_payments', 'invoice_id', 'subscription_invoices', 'SET NULL'),
     fk('platform_payments', 'confirmed_by', 'users', 'SET NULL'),
   ]),
 
-  table('promo_codes', [
-    'code VARCHAR(30) NOT NULL',
-    'percent TINYINT UNSIGNED NOT NULL',
-    'max_uses INT UNSIGNED NULL',
-    'used_count INT UNSIGNED NOT NULL DEFAULT 0',
-    'expires_at DATETIME NULL',
-    'is_active TINYINT(1) NOT NULL DEFAULT 1',
-    'UNIQUE KEY uq_promo_codes_code (code)',
-  ]),
-
+  // A code is reserved when an order is created (counted at once, so parallel
+  // orders cannot pass the maximum), marked redeemed when the order is paid
+  // and deleted when the order fails or expires. One row per office and code.
   table('promo_usages', [
     `promo_id ${REF} NOT NULL`,
     `office_id ${REF} NOT NULL`,
-    'used_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+    `order_id ${REF} NULL`,
+    "status ENUM('reserved','redeemed') NOT NULL DEFAULT 'reserved'",
     'UNIQUE KEY uq_promo_usages (promo_id, office_id)',
     fk('promo_usages', 'promo_id', 'promo_codes', 'CASCADE'),
     fk('promo_usages', 'office_id', 'offices', 'CASCADE'),
+    fk('promo_usages', 'order_id', 'orders', 'SET NULL'),
+  ]),
+
+  // Bank transfer option: a reference typed by the office and an optional
+  // receipt image; the platform admin approves or rejects.
+  table('bank_transfers', [
+    `office_id ${REF} NOT NULL`,
+    `order_id ${REF} NOT NULL`,
+    'reference VARCHAR(40) NOT NULL',
+    'receipt_path VARCHAR(80) NULL',
+    "status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending'",
+    `submitted_by ${REF} NULL`,
+    `decided_by ${REF} NULL`,
+    'decided_at DATETIME NULL',
+    'decision_note VARCHAR(200) NULL',
+    'KEY idx_bank_transfers_status (status, id)',
+    'UNIQUE KEY uq_bank_transfers_order (order_id)',
+    fk('bank_transfers', 'office_id', 'offices', 'CASCADE'),
+    fk('bank_transfers', 'order_id', 'orders', 'CASCADE'),
+    fk('bank_transfers', 'submitted_by', 'users', 'SET NULL'),
+    fk('bank_transfers', 'decided_by', 'users', 'SET NULL'),
   ]),
 
   // ------------------------------------------------ NOTIFICATIONS AND MESSAGING
@@ -971,6 +1070,7 @@ const COLUMN_ADDITIONS = [
   { table: 'contract_payments', column: 'reported_by', definition: 'BIGINT UNSIGNED NULL AFTER reported_at' },
   { table: 'contract_payments', column: 'paid_amount', definition: 'DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER paid_at' },
   { table: 'plans', column: 'max_photos', definition: 'INT UNSIGNED NULL AFTER max_ai_reads_monthly' },
+  { table: 'plans', column: 'is_public', definition: 'TINYINT(1) NOT NULL DEFAULT 1 AFTER max_photos' },
   { table: 'invites', column: 'phone', definition: 'VARCHAR(20) NULL AFTER role_hint' },
   { table: 'maintenance_requests', column: 'assigned_to', definition: 'BIGINT UNSIGNED NULL AFTER priority' },
   { table: 'maintenance_requests', column: 'seen_at', definition: 'DATETIME NULL AFTER assigned_vendor_id' },
@@ -1019,6 +1119,18 @@ const ENUM_ADDITIONS = [
   },
 ];
 
+// Billing tables that shipped as unused skeletons with another shape. When one
+// is still empty and lacks its marker column it is dropped (dependents first)
+// and created again with the real shape. A skeleton that holds rows is never
+// touched: ensureSchema reports it instead.
+const SKELETON_TABLES = [
+  { table: 'promo_usages', marker: 'order_id' },
+  { table: 'platform_payments', marker: 'order_id' },
+  { table: 'subscription_invoices', marker: 'kind' },
+  { table: 'subscriptions', marker: 'period_start' },
+  { table: 'promo_codes', marker: 'discount_type' },
+];
+
 // A column that was created NOT NULL but must allow NULL now.
 const NULLABLE_CHANGES = [
   { table: 'conversations', column: 'with_user_id', definition: 'BIGINT UNSIGNED NULL' },
@@ -1039,6 +1151,7 @@ module.exports = {
   INDEX_ADDITIONS,
   ENUM_ADDITIONS,
   NULLABLE_CHANGES,
+  SKELETON_TABLES,
   statements: TABLES.map((t) => t.sql),
   tableNames: TABLES.map((t) => t.name),
 };

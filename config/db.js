@@ -2,7 +2,7 @@
 
 const mysql = require('mysql2/promise');
 const logger = require('../utils/logger');
-const { TABLES, COLUMN_ADDITIONS, INDEX_ADDITIONS, ENUM_ADDITIONS, NULLABLE_CHANGES } = require('../database/schema');
+const { TABLES, COLUMN_ADDITIONS, INDEX_ADDITIONS, ENUM_ADDITIONS, NULLABLE_CHANGES, SKELETON_TABLES } = require('../database/schema');
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -53,6 +53,8 @@ async function ensureSchema(targetPool = pool) {
   const result = { ok: false, found: 0, created: 0, total: TABLES.length, error: null };
   try {
     result.found = await countTables(targetPool);
+    current = 'billing skeleton replacement';
+    await replaceSkeletonTables(targetPool, SKELETON_TABLES);
     for (const table of TABLES) {
       current = table.name;
       await targetPool.query(table.sql);
@@ -120,6 +122,47 @@ async function addMissingEnumValues(targetPool, additions) {
     }
   }
   return added;
+}
+
+/**
+ * Replaces billing tables that still have their old, unused shape (see
+ * SKELETON_TABLES). Runs under a MySQL advisory lock and re-checks inside it,
+ * so workers starting together do it once and never drop a new table.
+ */
+async function replaceSkeletonTables(targetPool, skeletons) {
+  const needs = async (conn, { table, marker }) => {
+    const [[exists]] = await conn.query('SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?', [table]);
+    if (!Number(exists.n)) return false;
+    const [[col]] = await conn.query(
+      'SELECT COUNT(*) AS n FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
+      [table, marker],
+    );
+    return !Number(col.n);
+  };
+  const conn = await targetPool.getConnection();
+  const dropped = [];
+  try {
+    let any = false;
+    for (const s of skeletons) if (await needs(conn, s)) any = true;
+    if (!any) return dropped;
+    const [[lock]] = await conn.query("SELECT GET_LOCK('aqdi:schema-replace', 60) AS got");
+    if (Number(lock.got) !== 1) throw new Error('schema replacement lock timeout');
+    try {
+      for (const s of skeletons) {
+        if (!(await needs(conn, s))) continue;
+        const [[rows]] = await conn.query(`SELECT COUNT(*) AS n FROM \`${s.table}\``);
+        if (Number(rows.n) > 0) throw new Error(`${s.table} has rows and an old shape; migrate it by hand`);
+        await conn.query(`DROP TABLE \`${s.table}\``);
+        logger.info(`Replaced unused skeleton table ${s.table}`);
+        dropped.push(s.table);
+      }
+    } finally {
+      await conn.query("SELECT RELEASE_LOCK('aqdi:schema-replace')");
+    }
+  } finally {
+    conn.release();
+  }
+  return dropped;
 }
 
 /** Runs MODIFY COLUMN for each { table, column, definition } that is still NOT NULL. Returns what it changed. */
@@ -190,5 +233,5 @@ async function alterUnlessDone(targetPool, sql, errorCode) {
 }
 
 module.exports = {
-  pool, ping, ensureSchema, countTables, addMissingColumns, addMissingIndexes, addMissingEnumValues, makeColumnsNullable, backfillPaymentEntries,
+  pool, ping, ensureSchema, countTables, addMissingColumns, addMissingIndexes, addMissingEnumValues, makeColumnsNullable, backfillPaymentEntries, replaceSkeletonTables,
 };
