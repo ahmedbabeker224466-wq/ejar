@@ -73,7 +73,7 @@ async function createLandlordInvite(scoped, { landlordId, createdBy, ip = null, 
  * Inserts one invite row with a fresh code. The UNIQUE key on invites.code is
  * the collision check: a duplicate is retried with a new code.
  */
-async function insertInvite(scoped, { kind, landlordId = null, contractId = null, createdBy, ip, now, generate, revoked }) {
+async function insertInvite(scoped, { kind, landlordId = null, contractId = null, roleHint = null, phone = null, createdBy, ip, now, generate, revoked }) {
   const expiresAt = inviteExpiresAt(now);
   for (let attempt = 1; attempt <= MAX_CODE_ATTEMPTS; attempt += 1) {
     const code = generate();
@@ -83,12 +83,15 @@ async function insertInvite(scoped, { kind, landlordId = null, contractId = null
         kind,
         landlord_id: landlordId,
         contract_id: contractId,
+        role_hint: roleHint,
+        phone,
         created_by: createdBy,
         expires_at: expiresAt,
       });
       await auditWrite(scoped, createdBy, 'invite.create', id, null, {
         ...(landlordId ? { landlord_id: landlordId } : {}),
         ...(contractId ? { contract_id: contractId } : {}),
+        ...(roleHint ? { role: roleHint } : {}),
         kind,
         expires_at: expiresAt.toISOString(),
         replaced: revoked,
@@ -117,6 +120,42 @@ async function createTenantInvite(scoped, { contractId, createdBy, ip = null, no
   if (['terminated', 'renewed'].includes(contract.status)) return { ok: false, reason: 'closed' };
   const revoked = await revokeActiveTenantInvites(scoped, { contractId });
   return insertInvite(scoped, { kind: 'tenant', contractId, createdBy, ip, now, generate, revoked });
+}
+
+/**
+ * Creates a staff invite for one phone (canonical 9665XXXXXXXX) and role
+ * ('office_manager' | 'office_staff'), revoking that phone's earlier active
+ * staff invite in this office. `scoped` is scopeToOffice() on a connection
+ * inside a transaction. The code works only for that phone.
+ */
+async function createStaffInvite(scoped, { phone, role, createdBy, ip = null, now = new Date(), generate = generateInviteCode }) {
+  const revoked = await scoped.query(
+    `UPDATE invites SET revoked_at = UTC_TIMESTAMP()
+      WHERE kind = 'staff' AND phone = ? AND used_at IS NULL AND revoked_at IS NULL
+        AND expires_at > UTC_TIMESTAMP() AND office_id = :office_id`,
+    [phone],
+  );
+  return insertInvite(scoped, { kind: 'staff', roleHint: role, phone, createdBy, ip, now, generate, revoked: revoked.affectedRows });
+}
+
+/** The office's active staff invites (unused, unrevoked, unexpired), newest first. */
+async function pendingStaffInvites(scoped) {
+  return scoped.query(
+    `SELECT id, code, phone, role_hint, expires_at, created_at FROM invites
+      WHERE kind = 'staff' AND used_at IS NULL AND revoked_at IS NULL AND expires_at > UTC_TIMESTAMP() AND office_id = :office_id
+      ORDER BY id DESC`,
+  );
+}
+
+/** Revokes one pending staff invite of this office. True when one was revoked. */
+async function revokeStaffInvite(scoped, { inviteId, actorId, ip = null }) {
+  const result = await scoped.query(
+    `UPDATE invites SET revoked_at = UTC_TIMESTAMP()
+      WHERE id = ? AND kind = 'staff' AND used_at IS NULL AND revoked_at IS NULL AND office_id = :office_id`,
+    [inviteId],
+  );
+  if (result.affectedRows === 1) await auditWrite(scoped, actorId, 'invite.revoke', inviteId, null, { kind: 'staff' }, ip);
+  return result.affectedRows === 1;
 }
 
 /** Revokes the contract's active tenant invites. Returns how many. */
@@ -245,7 +284,9 @@ async function markInviteUsed(pool, input, userId) {
  * whom to send it to.
  */
 function inviteShareLink({ code, officeName, baseUrl, phone = null, kind = 'landlord' }) {
-  const what = kind === 'tenant' ? 'لمتابعة عقد إيجارك ومواعيد الدفعات' : 'لمتابعة عقاراتك وعقودها';
+  const what = kind === 'tenant' ? 'لمتابعة عقد إيجارك ومواعيد الدفعات'
+    : kind === 'staff' ? 'للانضمام إلى فريق عمله'
+      : 'لمتابعة عقاراتك وعقودها';
   const text = [
     `مرحباً، يدعوك ${officeName} ${what} في تطبيق عقدي.`,
     `رمز الدعوة: ${code}`,
@@ -294,6 +335,9 @@ module.exports = {
   revokeActiveInvites,
   latestLandlordInvite,
   createTenantInvite,
+  createStaffInvite,
+  pendingStaffInvites,
+  revokeStaffInvite,
   revokeTenantInvite,
   revokeActiveTenantInvites,
   latestTenantInvite,

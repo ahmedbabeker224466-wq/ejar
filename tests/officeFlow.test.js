@@ -391,7 +391,7 @@ test('staff and managers cannot open pages their capabilities do not allow', { s
   const [[row]] = await db.pool.query('SELECT name FROM offices WHERE id = ?', [owner.office.id]);
   assert.equal(row.name, 'مكتب الصلاحيات');
 
-  assert.equal((await request('/office/team', { cookie: manager })).status, 403);
+  assert.equal((await request('/office/team', { cookie: manager })).status, 200, 'managers manage the team (staff only)');
   assert.equal((await request('/office/billing', { cookie: manager })).status, 403);
   assert.equal((await request('/office/audit', { cookie: manager })).status, 200);
   for (const path of ['/office/team', '/office/billing', '/office/audit']) {
@@ -491,16 +491,16 @@ test('the sidebar shows only the items each role may open', { skip }, async () =
   const staff = await addMember(owner.office.id, phone(31), 'office_staff');
   const all = ['/office', '/office/contracts', '/office/landlords', '/office/units', '/office/tenants',
     '/office/payments', '/office/maintenance', '/office/listings', '/office/reports', '/office/messages',
-    '/office/team', '/office/audit', '/office/settings', '/office/billing'];
+    '/office/tasks', '/office/team', '/office/audit', '/office/settings', '/office/billing'];
 
   assert.deepEqual(navHrefs((await request('/office', { cookie: owner.cookie })).text), all);
   assert.deepEqual(
     navHrefs((await request('/office', { cookie: manager })).text),
-    all.filter((h) => !['/office/team', '/office/billing'].includes(h)),
+    all.filter((h) => !['/office/billing'].includes(h)),
   );
   assert.deepEqual(navHrefs((await request('/office', { cookie: staff })).text), [
     '/office', '/office/contracts', '/office/landlords', '/office/units', '/office/tenants',
-    '/office/payments', '/office/maintenance', '/office/messages', '/office/settings',
+    '/office/payments', '/office/maintenance', '/office/messages', '/office/tasks', '/office/settings',
   ]);
 
   const page = await request('/office/payments', { cookie: staff });

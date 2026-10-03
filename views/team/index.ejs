@@ -1,0 +1,74 @@
+<div class="page-head"><h1>الفريق</h1></div>
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card detail-card">
+  <h2>الأعضاء</h2>
+  <% if (usage.limit !== null) { %><p class="muted">حد الباقة: <%= usage.current %> من <%= usage.limit %> عضو فعّال.</p><% } %>
+  <ul class="item-list">
+    <% members.forEach(function (m) { %>
+      <li class="item<%= m.is_active ? '' : ' item--inactive' %>">
+        <div class="item__title">
+          <strong><%= m.display %></strong>
+          <span class="badge badge--role"><%= m.roleLabel %></span>
+          <% if (!m.is_active) { %><span class="badge badge--ended">موقوف</span><% } %>
+        </div>
+        <% if (m.manageable) { %>
+          <div class="button-row">
+            <% if (m.is_active) { %>
+              <% if (canChangeRoles) { %>
+                <form method="post" action="/office/team/<%= m.member_id %>/role" class="inline-form">
+                  <label class="visually-hidden" for="role-<%= m.member_id %>">الدور</label>
+                  <select id="role-<%= m.member_id %>" name="role" class="select">
+                    <% assignable.forEach(function (r) { %><option value="<%= r %>" <%= m.role === r ? 'selected' : '' %>><%= roleLabels[r] %></option><% }) %>
+                  </select>
+                  <button type="submit" class="btn btn--secondary btn--small">تغيير الدور</button>
+                </form>
+              <% } %>
+              <form method="post" action="/office/team/<%= m.member_id %>/deactivate"><button type="submit" class="btn btn--danger btn--small">إيقاف</button></form>
+            <% } else { %>
+              <form method="post" action="/office/team/<%= m.member_id %>/activate"><button type="submit" class="btn btn--primary btn--small">إعادة تفعيل</button></form>
+            <% } %>
+          </div>
+        <% } %>
+      </li>
+    <% }) %>
+  </ul>
+</section>
+
+<section class="card detail-card" id="invites">
+  <h2>دعوة عضو جديد</h2>
+  <p class="muted">اكتب رقم جوال الشخص. نعطيك رمزاً يعمل لهذا الرقم فقط؛ يدخل به من صفحة "الانضمام برمز" بعد تسجيل الدخول.</p>
+  <form method="post" action="/office/team/invite" novalidate>
+    <div class="form-grid">
+      <div class="field">
+        <label for="phone">رقم الجوال</label>
+        <input id="phone" name="phone" class="input" type="tel" inputmode="numeric" dir="ltr" maxlength="14" placeholder="05XXXXXXXX" value="<%= values.phone %>" required>
+      </div>
+      <div class="field">
+        <label for="role">الدور</label>
+        <select id="role" name="role" class="select">
+          <% assignable.forEach(function (r) { %><option value="<%= r %>" <%= values.role === r ? 'selected' : '' %>><%= roleLabels[r] %></option><% }) %>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn--primary btn--block">إنشاء رمز الدعوة</button>
+  </form>
+
+  <% if (pending.length) { %>
+    <h3>دعوات بانتظار القبول</h3>
+    <ul class="item-list">
+      <% pending.forEach(function (i) { %>
+        <li class="item">
+          <div class="item__title"><span dir="ltr"><%= i.phoneLocal %></span> <span class="badge badge--role"><%= i.roleLabel %></span></div>
+          <div class="invite-code"><output id="code-<%= i.id %>" dir="ltr"><%= i.code %></output><button type="button" class="btn btn--secondary" data-copy="#code-<%= i.id %>" data-copied="تم النسخ">نسخ الرمز</button></div>
+          <div class="button-row">
+            <a href="<%= i.shareLink %>" class="btn btn--primary btn--small" target="_blank" rel="noopener noreferrer">إرسال عبر واتساب</a>
+            <form method="post" action="/office/team/invites/<%= i.id %>/revoke"><button type="submit" class="btn btn--secondary btn--small">إلغاء الدعوة</button></form>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+<script src="<%= assetUrl('/js/copy.js') %>" defer></script>

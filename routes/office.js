@@ -20,6 +20,12 @@ const landlordRoutes = require('./landlords');
 const unitRoutes = require('./units');
 const contractRoutes = require('./contracts');
 const reminderRoutes = require('./officeReminders');
+const paymentRoutes = require('./officePayments');
+const maintenanceRoutes = require('./maintenance');
+const messageRoutes = require('./messages');
+const teamRoutes = require('./team');
+const taskRoutes = require('./tasks');
+const reportRoutes = require('./reports');
 const contractsService = require('../services/contracts');
 const contractStatus = require('../services/contractStatus');
 const { riyadhDate } = require('../services/contractDates');
@@ -144,10 +150,16 @@ router.get('/office', requirePerm('contracts'), async (req, res, next) => {
 router.use(landlordRoutes);
 router.use(unitRoutes);
 router.use(contractRoutes);
+router.use(paymentRoutes);
+router.use(maintenanceRoutes.office);
+router.use(messageRoutes.office);
+router.use(teamRoutes);
+router.use(taskRoutes);
+router.use(reportRoutes.office);
 
 // One placeholder page per navigation item, each behind its own capability.
 // Landlords, units, contracts (routes/landlords.js, units.js, contracts.js) and settings (below) are real pages.
-for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'contracts', 'settings'].includes(i.key))) {
+for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'contracts', 'settings', 'payments', 'maintenance', 'messages', 'team', 'tasks', 'reports'].includes(i.key))) {
   router.get(item.href, requirePerm(item.capability), (req, res) => {
     res.render('office/placeholder', { title: item.label });
   });

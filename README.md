@@ -135,6 +135,29 @@ cPanel Cron Jobs fallback (with `RUN_CRON=false`):
 
 Jobs: reminders, deliver, recompute, late_payments, digest, expire_invites, trial_check, purge_notifications, purge_auth (plus disabled placeholders: backup, plan_renewal, sms_balance, health_ping, reports).
 
+## Maintenance, payments, messages, team, tasks, reports
+
+| Route | What it does |
+|---|---|
+| `GET /office/maintenance`, `/:id` | Office board: filters, status flow (new, seen, in_progress, done, rejected), assign, internal notes, public replies |
+| `POST /office/maintenance/:id/status`, `/assign`, `/messages` | Office actions |
+| `GET /tenant/maintenance`, `POST /tenant/contracts/:id/maintenance` | Tenant request (category, 500 chars, priority, up to 3 photos, multipart) |
+| `GET /landlord/maintenance`, `/:id`, `POST /landlord/maintenance/:id/messages` | Landlord follows requests on their units and may comment |
+| `GET /maintenance/photos/:id` | Authenticated photo route (ownership checked, 404 otherwise) |
+| `GET /office/payments`, `/office/payments.csv` | Overdue list with filters and CSV |
+| `POST /office/contracts/:id/payments/:pid/entries`, `/entries/:eid/undo` | Record a (partial) payment; undo within 24 h with a reason |
+| `POST /landlord/contracts/:id/payments/:pid/entries`, `/entries/:eid/undo` | Same for the landlord (undo only their own) |
+| `GET /office\|landlord\|tenant/contracts/:id/receipt` | Printable payment statement of a contract |
+| `GET /office\|landlord\|tenant/messages`, `/messages/:contractId` | Per-contract thread; `POST` sends (10/min), `/delete` (author, 5 min), office `/mute` |
+| `GET /office/team`, `POST /office/team/invite`, `/invites/:id/revoke`, `/:memberId/role\|deactivate\|activate` | Staff invites by phone, roles, deactivation (owner and managers) |
+| `GET /office/tasks`, `/:id`, `POST /office/tasks`, `/:id`, `/:id/status`, `/:id/comments` | Internal Kanban tasks |
+| `GET /office/reports`, `/office/reports/csv/:name` | Reports (occupancy, expiring, overdue, collections, maintenance, workload) and CSV |
+| `GET /landlord/statement`, `/landlord/statement/csv` | Landlord's read-only statement |
+
+Storage: maintenance photos are re-encoded with sharp (JPEG, at most 1600 px, no metadata) and stored in `UPLOAD_DIR` (default `storage/uploads` in the app folder). It must be outside the public folder and writable by the app; back it up with the database. See `deploy/DEPLOY-CPANEL.md` step 12. `plans.max_photos` limits photos per office; `plans.max_members` limits active team members.
+
+CSV: UTF-8 with BOM, cells starting with `= + - @` get a leading quote, 10 downloads per minute per person.
+
 ## Project layout
 
 | Path | Purpose |

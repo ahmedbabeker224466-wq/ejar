@@ -20,6 +20,11 @@ const KIND_LABELS = {
   payment_late: 'دفعة متأخرة',
   contract_ended: 'انتهاء عقد',
   digest: 'ملخص المكتب اليومي',
+  maintenance_new: 'طلب صيانة جديد',
+  maintenance_update: 'تحديث طلب صيانة',
+  message_new: 'رسالة جديدة',
+  task_assigned: 'مهمة مسندة',
+  task_due: 'مهمة تستحق غداً',
   trial_expired: 'انتهاء التجربة',
   test: 'رسالة تجربة',
 };

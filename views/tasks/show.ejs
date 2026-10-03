@@ -1,0 +1,44 @@
+<p class="back-link"><a href="/office/tasks">→ كل المهام</a></p>
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+
+<section class="card detail-card">
+  <div class="page-head">
+    <h1>مهمة رقم <%= task.id %></h1>
+    <span class="badge badge--maint-<%= task.status === 'done' ? 'done' : task.status === 'doing' ? 'in_progress' : 'new' %>"><%= task.statusLabel %></span>
+  </div>
+  <dl class="details">
+    <dt>المسؤول</dt><dd><%= task.assigneeLabel || 'بدون مسؤول' %></dd>
+    <dt>الاستحقاق</dt><dd><% if (task.due) { %><span dir="ltr"><%= task.due %></span><% if (task.overdue) { %> <span class="badge badge--prio-high">متأخرة</span><% } %><% } else { %>—<% } %></dd>
+    <% if (task.linkLabel) { %><dt>مرتبطة بـ</dt><dd><a href="<%= task.linkUrl %>"><%= task.linkLabel %> <%= task.entity_id %></a></dd><% } %>
+    <% if (task.creatorLabel) { %><dt>أنشأها</dt><dd><%= task.creatorLabel %></dd><% } %>
+  </dl>
+  <div class="button-row">
+    <% next[task.status].forEach(function (n) { %>
+      <form method="post" action="/office/tasks/<%= task.id %>/status"><input type="hidden" name="status" value="<%= n[0] %>"><input type="hidden" name="back" value="task"><button type="submit" class="btn btn--secondary"><%= n[1] %></button></form>
+    <% }) %>
+  </div>
+</section>
+
+<section class="card detail-card">
+  <h2>تعديل المهمة</h2>
+  <%- include('../partials/task-form', { action: '/office/tasks/' + task.id, values: values, errors: errors, members: members, linkTypes: linkTypes, limits: limits, submit: 'حفظ التعديلات' }) %>
+</section>
+
+<section class="card detail-card" id="comments">
+  <h2>التعليقات</h2>
+  <% if (comments.length) { %>
+    <ul class="thread">
+      <% comments.forEach(function (c) { %>
+        <li class="thread__item"><p class="thread__head"><strong><%= c.author %></strong> <span class="muted" dir="ltr"><%= c.at %></span></p><p class="pre-line"><%= c.body %></p></li>
+      <% }) %>
+    </ul>
+  <% } else { %><p class="empty-state">لا توجد تعليقات بعد.</p><% } %>
+  <form method="post" action="/office/tasks/<%= task.id %>/comments" novalidate>
+    <div class="field">
+      <label for="body">تعليق</label>
+      <textarea id="body" name="body" class="textarea" rows="3" maxlength="<%= limits.comment %>" required></textarea>
+      <% if (commentError) { %><p class="field-error"><%= commentError %></p><% } %>
+    </div>
+    <button type="submit" class="btn btn--primary btn--block">إضافة التعليق</button>
+  </form>
+</section>

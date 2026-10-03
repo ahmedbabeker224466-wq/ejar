@@ -15,6 +15,8 @@ const db = require('../config/db');
 const contracts = require('../services/contracts');
 const feedback = require('../services/feedback');
 const portal = require('../services/portal');
+const paymentEntries = require('../services/paymentEntries');
+const money = require('../services/money');
 const joins = require('../services/joins');
 const { landlordLinks, tenantLinks } = require('../services/memberships');
 const { parseId } = require('../services/landlords');
@@ -43,6 +45,8 @@ const AREAS = {
 };
 
 const DONE = {
+  recorded: 'تم تسجيل الدفعة.',
+  undone: 'تم التراجع عن الدفعة.',
   joined: 'تم الربط بنجاح. أهلاً بك!',
   decision: 'تم حفظ قرارك وسيراه المكتب.',
   confirmed: 'تم تأكيد استلام الدفعة.',
@@ -113,10 +117,10 @@ router.post('/join', wrap(async (req, res) => {
   }
   const result = await joins.joinWithCode(db.pool, { userId: req.user.id, code: typed, ip: req.ip });
   if (!result.ok) {
-    const status = result.reason === 'office_user' ? 403 : 422;
+    const status = result.reason === 'office_user' ? 403 : result.reason === 'member_limit' ? 409 : 422;
     return renderJoin(req, res, { status, error: joins.MESSAGES[result.reason] || joins.MESSAGES.invalid, code: typed });
   }
-  return res.redirect(`${AREAS[result.kind].href}?done=joined`);
+  return res.redirect(result.kind === 'staff' ? '/office' : `${AREAS[result.kind].href}?done=joined`);
 }));
 
 // ------------------------------------------------------------ landlord
@@ -154,6 +158,10 @@ async function renderLandlordContract(req, res, { status = 200, errors = {}, val
     paymentLabels: contracts.PAYMENT_LABELS,
     decisionLabels: feedback.DECISIONS,
     noteMax: 280,
+    fmt: money.formatHalalas,
+    entryMethods: paymentEntries.METHODS,
+    entryRoleLabels: paymentEntries.ROLE_LABELS,
+    undoable: (e) => e.canUndo && e.recorded_role === 'landlord' && Number(e.recorded_by) === Number(req.user.id),
   });
 }
 
@@ -186,6 +194,73 @@ for (const action of ['confirm', 'reject']) {
   }));
 }
 
+// Record a payment received (full or partial) and undo it within 24 hours.
+const PAY_ERRORS = {
+  closed: 'هذه الدفعة مسددة بالكامل أو ملغاة.',
+  exceeds: 'المبلغ أكبر من المتبقي على هذه الدفعة.',
+  amount: 'اكتب مبلغاً صحيحاً.',
+  expired: 'انتهت مهلة التراجع (24 ساعة).',
+  forbidden: 'يمكنك التراجع فقط عن الدفعات التي سجلتها أنت.',
+};
+
+function payError(res, status, message, back) {
+  return res.status(status).render('payments/error', { title: 'تعذر تنفيذ الطلب', message, back });
+}
+
+router.post('/landlord/contracts/:id/payments/:paymentId/entries', landlordArea, requirePerm('own.payments'), wrap(async (req, res) => {
+  const paymentId = parseId(req.params.paymentId);
+  const view = paymentId && await portal.landlordContract(db.pool, req.links, parseId(req.params.id), today());
+  if (!view || !view.payments.some((p) => Number(p.id) === paymentId)) return notFound(res);
+  const back = `/landlord/contracts/${view.contract.id}#payments`;
+  const { values, errors } = paymentEntries.validateEntry(req.body, today());
+  if (Object.keys(errors).length) return payError(res, 422, Object.values(errors)[0], back);
+  const result = await paymentEntries.recordPayment(db.pool, view.link.office_id, {
+    contractId: view.contract.id, paymentId, values, actor: { id: req.user.id, role: 'landlord' }, ip: req.ip, today: today(),
+  });
+  if (result.error === 'not_found') return notFound(res);
+  if (!result.ok) return payError(res, 409, PAY_ERRORS[result.error] || PAY_ERRORS.amount, back);
+  return res.redirect(`/landlord/contracts/${view.contract.id}?done=recorded#payments`);
+}));
+
+router.post('/landlord/contracts/:id/payments/:paymentId/entries/:entryId/undo', landlordArea, requirePerm('own.payments'), wrap(async (req, res) => {
+  const paymentId = parseId(req.params.paymentId);
+  const entryId = parseId(req.params.entryId);
+  const view = paymentId && entryId && await portal.landlordContract(db.pool, req.links, parseId(req.params.id), today());
+  if (!view || !view.payments.some((p) => Number(p.id) === paymentId)) return notFound(res);
+  const back = `/landlord/contracts/${view.contract.id}#payments`;
+  const reason = paymentEntries.validateReason(req.body.reason);
+  if (reason.error) return payError(res, 422, reason.error, back);
+  const result = await paymentEntries.undoEntry(db.pool, view.link.office_id, {
+    contractId: view.contract.id, paymentId, entryId, reason: reason.value, actor: { id: req.user.id, role: 'landlord' }, ip: req.ip,
+  });
+  if (result.error === 'not_found') return notFound(res);
+  if (!result.ok) return payError(res, 409, PAY_ERRORS[result.error], back);
+  return res.redirect(`/landlord/contracts/${view.contract.id}?done=undone#payments`);
+}));
+
+function renderReceipt(res, { view, officeName, backUrl }) {
+  return res.render('payments/receipt', {
+    title: 'كشف دفعات العقد',
+    officeName,
+    unitLabel: view.contract.unit_label,
+    startDate: view.contract.start_date,
+    endDate: view.contract.end_date,
+    today: today(),
+    history: view.payments,
+    totals: paymentEntries.totalsOf(view.payments),
+    fmt: money.formatHalalas,
+    methods: paymentEntries.METHODS,
+    paymentLabels: contracts.PAYMENT_LABELS,
+    backUrl,
+  });
+}
+
+router.get('/landlord/contracts/:id/receipt', landlordArea, requirePerm('own.contracts'), wrap(async (req, res) => {
+  const view = await portal.landlordContract(db.pool, req.links, parseId(req.params.id), today());
+  if (!view) return notFound(res);
+  return renderReceipt(res, { view, officeName: view.link.office_name, backUrl: `/landlord/contracts/${view.contract.id}#payments` });
+}));
+
 // ------------------------------------------------------------ tenant
 
 const tenantArea = [requireAuth, loadArea('tenant')];
@@ -210,6 +285,13 @@ router.get('/tenant', tenantArea, requirePerm('own.contract'), wrap(async (req, 
 async function tenantView(req) {
   return portal.tenantContract(db.pool, req.links, parseId(req.params.id), today(), req.user.id);
 }
+
+router.get('/tenant/contracts/:id/receipt', tenantArea, requirePerm('own.contract'), wrap(async (req, res) => {
+  const view = await tenantView(req);
+  if (!view) return notFound(res);
+  const history = await paymentEntries.historyFor(db.pool, view.link.office_id, view.contract.id, today());
+  return renderReceipt(res, { view: { ...view, payments: history }, officeName: view.link.office_name, backUrl: `/tenant#contract-${view.contract.id}` });
+}));
 
 router.post('/tenant/contracts/:id/payments/:paymentId/report', tenantArea, requirePerm('own.payments'), wrap(async (req, res) => {
   const paymentId = parseId(req.params.paymentId);

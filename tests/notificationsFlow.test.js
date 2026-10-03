@@ -324,7 +324,7 @@ test('delivery: quiet hours defer, one failing channel never blocks others, retr
   console.log = (...a) => logged.push(a.join(' '));
   console.error = (...a) => logged.push(a.join(' '));
   try {
-    await delivery.deliverPending({ pool: db.pool, now: night });
+    await delivery.deliverPending({ pool: db.pool, now: night, limit: 1000000 });
   } finally {
     Object.assign(console, original);
   }
@@ -345,12 +345,12 @@ test('delivery: quiet hours defer, one failing channel never blocks others, retr
 
   for (const [minutes, expect] of [[2, 10], [13, 60]]) {
     const at = new Date(night.getTime() + minutes * 60000);
-    await delivery.deliverPending({ pool: db.pool, now: at });
+    await delivery.deliverPending({ pool: db.pool, now: at, limit: 1000000 });
     wa = await state('whatsapp');
     assert.equal(wa.status, 'pending');
     assert.equal(new Date(wa.next_retry_at).toISOString(), new Date(at.getTime() + expect * 60000).toISOString());
   }
-  await delivery.deliverPending({ pool: db.pool, now: new Date(night.getTime() + 80 * 60000) });
+  await delivery.deliverPending({ pool: db.pool, now: new Date(night.getTime() + 80 * 60000), limit: 1000000 });
   wa = await state('whatsapp');
   assert.equal(wa.status, 'failed');
   assert.equal(Number(wa.attempts), 4);
@@ -363,7 +363,7 @@ test('delivery: quiet hours defer, one failing channel never blocks others, retr
 
   // Turning a channel off skips what is still queued.
   await notifications.savePrefs(db.pool, o.user.id, { channels: { email: true, whatsapp: true, telegram: false }, quietStart: '21:00', quietEnd: '08:00' });
-  await delivery.deliverPending({ pool: db.pool, now: dates.nextRiyadhClock(night, '08:00') });
+  await delivery.deliverPending({ pool: db.pool, now: dates.nextRiyadhClock(night, '08:00'), limit: 1000000 });
   assert.equal((await db.pool.query("SELECT error_code FROM delivery_log WHERE notification_id = ? AND channel = 'telegram'", [quietId]))[0][0].error_code, 'opted_out');
   transport.setMock(async (url, options) => {
     calls.push({ url, options });
@@ -382,7 +382,7 @@ test('email with SMTP set goes through the mailer (mocked)', { skip }, async () 
     const o = await office(21, 'مكتب البريد');
     await db.pool.query('UPDATE users SET email = ? WHERE id = ?', ['mail@example.sa', o.user.id]);
     const id = await notifications.createNotification(db.pool, { userId: o.user.id, officeId: o.office.id, kind: 'test', title: 'عنوان', body: 'نص', urgent: true });
-    await delivery.deliverPending({ pool: db.pool });
+    await delivery.deliverPending({ pool: db.pool, limit: 1000000 });
     assert.equal((await db.pool.query("SELECT status FROM delivery_log WHERE notification_id = ? AND channel = 'email'", [id]))[0][0].status, 'sent');
     const message = sent.find((m) => m.to === 'mail@example.sa');
     assert.equal(message.subject, 'عنوان');
@@ -628,7 +628,7 @@ test('daily digest and trial check notify the owner once (counts only)', { skip 
 test('office dashboard shows the latest sent notifications with delivery counts', { skip }, async () => {
   const o = await office(80, 'مكتب اللوحة');
   await notifications.createNotification(db.pool, { userId: o.user.id, officeId: o.office.id, kind: 'decision_60', title: 'تذكير اللوحة', body: 'ب', urgent: true });
-  await delivery.deliverPending({ pool: db.pool });
+  await delivery.deliverPending({ pool: db.pool, limit: 1000000 });
   const home = await http.request('/office', { cookie: o.cookie });
   assert.match(home.text, /آخر الإشعارات المرسلة/);
   assert.match(home.text, /تذكير اللوحة/);

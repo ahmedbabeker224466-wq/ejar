@@ -22,6 +22,8 @@ const { withTransaction } = require('./transaction');
 const planLimits = require('./planLimits');
 const invites = require('./invites');
 const unitStatus = require('./unitStatus');
+const paymentEntries = require('./paymentEntries');
+const { riyadhDate } = require('./contractDates');
 const { parseId } = require('./landlords');
 const { SAUDI_CITIES } = require('../config/saudiCities');
 const { toWesternDigits } = require('../utils/phone');
@@ -487,30 +489,48 @@ function validatePaymentChange(body = {}, today) {
     values.receipt_no = clean(body.receipt_no, 100) || null;
     if (values.receipt_no && (values.receipt_no.length > 40 || !/^[A-Za-z0-9\-/]+$/.test(values.receipt_no))) {
       errors.receipt_no = 'رقم الإيصال حروف إنجليزية وأرقام فقط (حتى 40).';
+    } else if (values.receipt_no) {
+      const reference = paymentEntries.validateReference(values.receipt_no);
+      if (reference.error) errors.receipt_no = reference.error;
     }
   }
   return { values, errors };
 }
 
-/** Changes one payment's status. Returns true, or null when the payment is not in this contract and office. */
-async function setPaymentStatus(pool, officeId, contractId, paymentId, { values, actorId, ip }) {
-  const scoped = scopeToOffice(pool, officeId);
-  const payment = await scoped.selectOne('contract_payments', { id: paymentId, contract_id: contractId });
-  if (!payment) return null;
-  const paid = values.status === 'paid';
-  await scoped.update('contract_payments', { id: paymentId, contract_id: contractId }, {
-    status: values.status,
-    paid_at: paid ? `${values.paid_on} 00:00:00` : null,
-    method: paid ? values.method : null,
-    receipt_no: paid ? values.receipt_no : null,
-    ...(paid ? {} : { reported_at: null, reported_by: null }),
+/**
+ * Changes one payment's status by hand (the "advanced" form). The entries of
+ * the installment are voided and, for 'paid', replaced by one entry for the
+ * full amount, so history and reports stay consistent with the status.
+ * Returns true, or null when the payment is not in this contract and office.
+ */
+async function setPaymentStatus(pool, officeId, contractId, paymentId, { values, actorId, ip, today = riyadhDate(new Date()) }) {
+  return withTransaction(pool, async (conn) => {
+    const scoped = scopeToOffice(conn, officeId);
+    const payment = await paymentEntries.lockPayment(scoped, contractId, paymentId);
+    if (!payment) return null;
+    const paid = values.status === 'paid';
+    await paymentEntries.voidEntries(scoped, payment, { actorId, reason: 'تغيير الحالة يدوياً' });
+    await scoped.query(
+      `UPDATE contract_payments SET status = ?, paid_amount = 0, paid_at = NULL, method = NULL, receipt_no = NULL,
+              reported_at = NULL, reported_by = NULL
+        WHERE id = ? AND office_id = :office_id`,
+      [paid ? 'due' : values.status, paymentId],
+    );
+    if (paid) {
+      const fresh = await paymentEntries.lockPayment(scoped, contractId, paymentId);
+      const done = await paymentEntries.applyEntry(scoped, fresh, {
+        amount: null, paidOn: values.paid_on, method: values.method, reference: values.receipt_no, actorId, role: 'office', today, eventType: null,
+      });
+      if (!done.ok) return null;
+      await scoped.query('UPDATE contract_payments SET receipt_no = ? WHERE id = ? AND office_id = :office_id', [values.receipt_no, paymentId]);
+    }
+    await addEvent(scoped, contractId, actorId, 'payment_status', {
+      payment_id: paymentId, due_date: payment.due_date, from: payment.status, to: values.status,
+    });
+    await createAudit(conn).write(actorId, officeId, 'payment.status', 'contract_payment', paymentId,
+      { status: payment.status }, { status: values.status }, ip);
+    return true;
   });
-  await addEvent(scoped, contractId, actorId, 'payment_status', {
-    payment_id: paymentId, due_date: payment.due_date, from: payment.status, to: values.status,
-  });
-  await createAudit(pool).log(actorId, officeId, 'payment.status', 'contract_payment', paymentId,
-    { status: payment.status }, { status: values.status }, ip);
-  return true;
 }
 
 // ------------------------------------------------------------ terminate
@@ -662,7 +682,7 @@ async function deleteContract(pool, officeId, id, { actorId, ip, today }) {
 
     const result = await scoped.query(
       `DELETE FROM contracts WHERE id = ? AND office_id = :office_id
-          AND NOT EXISTS (SELECT 1 FROM contract_payments p WHERE p.contract_id = ? AND p.status = 'paid')`,
+          AND NOT EXISTS (SELECT 1 FROM contract_payments p WHERE p.contract_id = ? AND (p.status = 'paid' OR p.paid_amount > 0))`,
       [id, id],
     );
     if (result.affectedRows !== 1) return 'has_paid';

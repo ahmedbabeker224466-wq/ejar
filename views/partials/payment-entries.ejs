@@ -1,0 +1,56 @@
+<%# One installment's payment entries, the record form and undo. Locals: p, base, canRecord, undoable(e), fmt, methods, roleLabels, today %>
+<% if (p.entries.length) { %>
+  <ul class="entries">
+    <% p.entries.forEach(function (e) { %>
+      <li class="entry<%= e.undone_at ? ' entry--undone' : '' %>">
+        <span><strong><%= fmt(e.halalas) %> ريال</strong> · <span dir="ltr"><%= e.paidOn %></span><%= e.method ? ` · ${methods[e.method] || ''}` : '' %> · <%= roleLabels[e.recorded_role] || '' %><%= e.reference_code ? ` · مرجع: ${e.reference_code}` : '' %></span>
+        <% if (e.undone_at) { %>
+          <span class="muted">مُلغاة: <%= e.undo_reason %></span>
+        <% } else if (undoable(e)) { %>
+          <details class="payment__edit">
+            <summary>تراجع عن هذه الدفعة</summary>
+            <form method="post" action="<%= base %>/entries/<%= e.id %>/undo">
+              <div class="field">
+                <label for="reason-<%= e.id %>">سبب التراجع</label>
+                <input id="reason-<%= e.id %>" name="reason" class="input" type="text" maxlength="200" required>
+                <p class="field-hint">يمكن التراجع خلال 24 ساعة من التسجيل، ويُسجَّل في سجل التدقيق.</p>
+              </div>
+              <button type="submit" class="btn btn--secondary btn--block">تأكيد التراجع</button>
+            </form>
+          </details>
+        <% } %>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>
+<% if (p.partial) { %><p class="muted">المدفوع <%= fmt(p.paidHalalas) %> من <%= fmt(p.totalHalalas) %> ريال، والمتبقي <strong><%= fmt(p.remainingHalalas) %> ريال</strong>.</p><% } %>
+<% if (canRecord && p.remainingHalalas > 0 && p.status !== 'waived') { %>
+  <details class="payment__edit">
+    <summary>تسجيل دفعة</summary>
+    <form method="post" action="<%= base %>/entries">
+      <div class="form-grid">
+        <div class="field">
+          <label for="amount-<%= p.id %>">المبلغ (ريال)</label>
+          <input id="amount-<%= p.id %>" name="amount" class="input" type="text" inputmode="decimal" dir="ltr" value="<%= (p.remainingHalalas / 100).toFixed(2) %>">
+          <p class="field-hint">المتبقي <%= fmt(p.remainingHalalas) %>. اكتب أقل منه لدفعة جزئية.</p>
+        </div>
+        <div class="field">
+          <label for="paid-<%= p.id %>">تاريخ الدفع</label>
+          <input id="paid-<%= p.id %>" name="paid_on" class="input" type="date" max="<%= today %>" value="<%= today %>">
+        </div>
+        <div class="field">
+          <label for="method-<%= p.id %>">الطريقة</label>
+          <select id="method-<%= p.id %>" name="method" class="select">
+            <% Object.entries(methods).forEach(function ([key, label]) { %><option value="<%= key %>"><%= label %></option><% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ref-<%= p.id %>">رمز المرجع (اختياري)</label>
+          <input id="ref-<%= p.id %>" name="reference" class="input" type="text" dir="ltr" maxlength="40" autocomplete="off">
+          <p class="field-hint">مثل رقم الإيصال. لا تكتب رقم حساب أو آيبان.</p>
+        </div>
+      </div>
+      <button type="submit" class="btn btn--primary btn--block">حفظ الدفعة</button>
+    </form>
+  </details>
+<% } %>

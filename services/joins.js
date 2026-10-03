@@ -12,12 +12,14 @@
 const { scopeToOffice } = require('./scopeToOffice');
 const { withTransaction } = require('./transaction');
 const { createAudit } = require('./audit');
+const planLimits = require('./planLimits');
 const { normalizeCode, inviteStatus } = require('./invites');
 const { createCounter } = require('../middleware/rateLimit');
 
 // Office accounts and the platform admin never become landlords or tenants.
 const OFFICE_ROLES = new Set(['platform_admin', 'office_owner', 'office_manager', 'office_staff']);
-const JOINABLE = new Set(['landlord', 'tenant']);
+const JOINABLE = new Set(['landlord', 'tenant', 'staff']);
+const STAFF_ROLES = new Set(['office_manager', 'office_staff']);
 
 // One message for every bad code: never says whether it exists, expired,
 // was used, was revoked or belongs to another kind.
@@ -25,6 +27,7 @@ const MESSAGES = {
   invalid: 'الرمز غير صحيح أو انتهت صلاحيته أو استُخدم من قبل. تأكد منه أو اطلب رمزاً جديداً من المكتب.',
   office_user: 'حسابك حساب مكتب عقار، فلا يمكن ربطه كمالك أو مستأجر. استخدم رقم جوال آخر للانضمام.',
   rate_limited: 'محاولات كثيرة. انتظر قليلاً ثم حاول مرة أخرى.',
+  member_limit: 'لا يمكن الانضمام الآن: وصل المكتب إلى حد باقته من الأعضاء. تواصل مع المكتب.',
 };
 
 // Join attempts: 5 per user per 10 minutes and 20 per IP per hour (in memory,
@@ -65,7 +68,7 @@ async function joinWithCode(pool, { userId, code: input, ip = null, now = new Da
   if (!code) return { ok: false, reason: 'invalid' };
   try {
     return await withTransaction(pool, async (conn) => {
-      const [[user]] = await conn.query('SELECT id, role FROM users WHERE id = ? FOR UPDATE', [userId]);
+      const [[user]] = await conn.query('SELECT id, role, phone FROM users WHERE id = ? FOR UPDATE', [userId]);
       if (!user) throw new JoinRefused('invalid');
       if (OFFICE_ROLES.has(user.role)) throw new JoinRefused('office_user');
 
@@ -75,7 +78,13 @@ async function joinWithCode(pool, { userId, code: input, ip = null, now = new Da
       }
       const scoped = scopeToOffice(conn, invite.office_id);
 
-      if (invite.kind === 'landlord') {
+      if (invite.kind === 'staff') {
+        // A staff code works for one phone, for a person with no role yet, and only while the plan has room.
+        if (!user.phone || user.phone !== invite.phone || user.role !== null || !STAFF_ROLES.has(invite.role_hint)) throw new JoinRefused('invalid');
+        await conn.query('SELECT id FROM offices WHERE id = ? FOR UPDATE', [invite.office_id]);
+        const usage = await planLimits.memberUsage(scoped, { lock: true });
+        if (!planLimits.checkLimit({ ...usage, adding: 1 }).ok) throw new JoinRefused('member_limit');
+      } else if (invite.kind === 'landlord') {
         const [landlord] = await scoped.query(
           'SELECT id, user_id, is_active FROM landlords WHERE id = ? AND office_id = :office_id FOR UPDATE',
           [invite.landlord_id],
@@ -107,7 +116,13 @@ async function joinWithCode(pool, { userId, code: input, ip = null, now = new Da
       );
       if (used.affectedRows !== 1) throw new JoinRefused('invalid');
 
-      if (invite.kind === 'landlord') {
+      if (invite.kind === 'staff') {
+        await scoped.query(
+          `INSERT INTO office_members (office_id, user_id, role, is_active) VALUES (:office_id, ?, ?, 1)
+           ON DUPLICATE KEY UPDATE role = VALUES(role), is_active = 1`,
+          [userId, invite.role_hint],
+        );
+      } else if (invite.kind === 'landlord') {
         await scoped.query('UPDATE landlords SET user_id = ? WHERE id = ? AND office_id = :office_id', [userId, invite.landlord_id]);
       } else {
         await scoped.query(
@@ -122,10 +137,11 @@ async function joinWithCode(pool, { userId, code: input, ip = null, now = new Da
       // A person with no role yet takes the invite's role; someone who is
       // already a landlord or tenant keeps it and gains one more link.
       if (user.role === null) {
-        await conn.query('UPDATE users SET role = ? WHERE id = ? AND role IS NULL', [invite.kind, userId]);
+        await conn.query('UPDATE users SET role = ? WHERE id = ? AND role IS NULL', [invite.kind === 'staff' ? invite.role_hint : invite.kind, userId]);
       }
       await createAudit(conn).write(userId, invite.office_id, 'invite.use', 'invite', invite.id, null, {
         kind: invite.kind,
+        ...(invite.kind === 'staff' ? { role: invite.role_hint } : {}),
         ...(invite.landlord_id ? { landlord_id: invite.landlord_id } : {}),
         ...(invite.contract_id ? { contract_id: invite.contract_id } : {}),
       }, ip);

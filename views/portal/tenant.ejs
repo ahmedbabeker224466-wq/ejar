@@ -1,3 +1,4 @@
+<%- include('../partials/area-nav') %>
 <h1>صفحة المستأجر</h1>
 <% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
 
@@ -36,7 +37,7 @@
       <% } %>
     <% } %>
 
-    <h3>الدفعات</h3>
+    <div class="page-head"><h3>الدفعات</h3><a href="/tenant/contracts/<%= c.id %>/receipt" class="btn btn--secondary btn--small">كشف الدفعات</a></div>
     <% if (view.upcoming.length) { %>
       <ul class="payments">
         <% view.upcoming.forEach(function (p, i) { %>

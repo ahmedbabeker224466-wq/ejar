@@ -75,4 +75,51 @@ async function contractUsage(scoped, { lock = false } = {}) {
   return { limit: office && office.max_contracts !== null ? Number(office.max_contracts) : null, current: Number(n) };
 }
 
-module.exports = { checkLimit, unitLimitMessage, contractLimitMessage, usageText, unitUsage, contractUsage };
+/**
+ * Like unitUsage, for maintenance photos (plans.max_photos, NULL = unlimited):
+ * the photos stored for this office. With { lock: true } it must be the FIRST
+ * statement of the transaction.
+ */
+async function photoUsage(scoped, { lock = false } = {}) {
+  const [office] = await scoped.query(
+    `SELECT o.id, p.max_photos FROM offices o LEFT JOIN plans p ON p.id = o.plan_id
+      WHERE o.id = :office_id${lock ? ' FOR UPDATE' : ''}`,
+  );
+  const [{ n }] = await scoped.query(
+    `SELECT COUNT(*) AS n FROM maintenance_photos ph
+       JOIN maintenance_requests r ON r.id = ph.request_id
+      WHERE r.office_id = :office_id${lock ? ' LOCK IN SHARE MODE' : ''}`,
+  );
+  return { limit: office && office.max_photos !== null && office.max_photos !== undefined ? Number(office.max_photos) : null, current: Number(n) };
+}
+
+/**
+ * Like unitUsage, for team members (plans.max_members, NULL = unlimited): the
+ * active office members, the owner included. With { lock: true } it must be
+ * the FIRST statement of the transaction.
+ */
+async function memberUsage(scoped, { lock = false } = {}) {
+  const [office] = await scoped.query(
+    `SELECT o.id, p.max_members FROM offices o LEFT JOIN plans p ON p.id = o.plan_id
+      WHERE o.id = :office_id${lock ? ' FOR UPDATE' : ''}`,
+  );
+  const [{ n }] = await scoped.query(
+    `SELECT COUNT(*) AS n FROM office_members WHERE office_id = :office_id AND is_active = 1${lock ? ' LOCK IN SHARE MODE' : ''}`,
+  );
+  return { limit: office && office.max_members !== null && office.max_members !== undefined ? Number(office.max_members) : null, current: Number(n) };
+}
+
+/** Arabic refusal for the photo limit. */
+function photoLimitMessage({ limit }) {
+  return `وصل المكتب إلى حد باقته من الصور (${limit} صورة). أرسل الطلب بدون صور أو تواصل مع المكتب.`;
+}
+
+/** Arabic refusal for the team limit. */
+function memberLimitMessage({ limit, current }) {
+  return `وصلت إلى حد باقتك: ${limit} أعضاء فعّالين (لديك ${current}). رقِّ اشتراكك لإضافة أعضاء أكثر.`;
+}
+
+module.exports = {
+  checkLimit, unitLimitMessage, contractLimitMessage, usageText, unitUsage, contractUsage,
+  photoUsage, memberUsage, photoLimitMessage, memberLimitMessage,
+};

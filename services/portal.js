@@ -8,6 +8,7 @@
 
 const engine = require('./contractEngine');
 const feedback = require('./feedback');
+const paymentEntries = require('./paymentEntries');
 const { scopeToOffice } = require('./scopeToOffice');
 const { riyadhDate } = require('./contractDates');
 
@@ -155,7 +156,7 @@ async function landlordContract(pool, links, contractId, today) {
       [contractId, link.landlord_id],
     );
     if (!row) continue;
-    const payments = (await paymentsByContract(scoped, [Number(row.id)], today)).get(Number(row.id));
+    const payments = await paymentEntries.historyFor(pool, link.office_id, row.id, today);
     return {
       link,
       contract: row,

@@ -1,0 +1,91 @@
+<div class="page-head"><h1>التقارير</h1></div>
+<% if (range.error) { %><div class="flash flash--danger" role="alert"><%= range.error %> عرضنا المدة الافتراضية.</div><% } %>
+
+<form class="card filter-bar" method="get" action="/office/reports">
+  <p class="muted">تنطبق المدة على: المتأخرات والمحصّل والصيانة وعبء العمل.</p>
+  <div class="filter-grid">
+    <div class="field"><label for="from">من</label><input id="from" name="from" class="input" type="date" value="<%= range.from %>" max="<%= today %>"></div>
+    <div class="field"><label for="to">إلى</label><input id="to" name="to" class="input" type="date" value="<%= range.to %>"></div>
+  </div>
+  <button type="submit" class="btn btn--secondary btn--block">عرض</button>
+</form>
+
+<%# 1. occupancy %>
+<section class="card detail-card" id="occupancy">
+  <div class="page-head"><h2><%= meta.occupancy.title %></h2><a class="btn btn--secondary btn--small" href="/office/reports/csv/occupancy?<%= csvQuery %>">تصدير CSV</a></div>
+  <% const occ = results.occupancy; %>
+  <% if (occ.data.length === 0) { %><p class="empty-state">لا توجد وحدات بعد.</p><% } else { %>
+    <p class="lead">نسبة الإشغال العامة <strong><%= occ.totals.percent %>%</strong> (<%= occ.totals.rented %> من <%= occ.totals.total %> وحدة)</p>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>المبنى</th><th>الوحدات</th><th>مؤجرة</th><th>شاغرة</th><th>صيانة</th><th>الإشغال</th></tr></thead>
+      <tbody><% occ.data.forEach(function (r) { %><tr><td><%= r.building %></td><td><%= r.total %></td><td><%= r.rented %></td><td><%= r.vacant %></td><td><%= r.maintenance %></td><td><%= r.percent %>%</td></tr><% }) %></tbody>
+    </table></div>
+  <% } %>
+</section>
+
+<%# 2. expiring %>
+<section class="card detail-card" id="expiring">
+  <div class="page-head"><h2><%= meta.expiring.title %></h2><a class="btn btn--secondary btn--small" href="/office/reports/csv/expiring?<%= csvQuery %>">تصدير CSV</a></div>
+  <% const exp = results.expiring; %>
+  <div class="units-summary">
+    <% buckets.forEach(function (b) { %><div class="mini-stat"><strong><%= exp.counts[b.key] %></strong> <%= b.label %></div><% }) %>
+  </div>
+  <% if (exp.data.length === 0) { %><p class="empty-state">لا توجد عقود تنتهي خلال 90 يوماً.</p><% } else { %>
+    <ul class="item-list">
+      <% exp.data.forEach(function (r) { %>
+        <li class="item"><div class="item__title"><a href="/office/contracts/<%= r.id %>"><%= r.unit || 'وحدة' %></a> <span class="badge badge--stage-<%= r.bucket === 30 ? 'urgent' : r.bucket === 60 ? 'soon' : 'calm' %>">باقي <%= r.days %> يوم</span></div><p class="item__meta">المالك: <%= r.landlord || '—' %> · النهاية <span dir="ltr"><%= r.end %></span></p></li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<%# 3. overdue %>
+<section class="card detail-card" id="overdue">
+  <div class="page-head"><h2><%= meta.overdue.title %></h2><a class="btn btn--secondary btn--small" href="/office/reports/csv/overdue?<%= csvQuery %>">تصدير CSV</a></div>
+  <% const od = results.overdue; %>
+  <% if (od.data.length === 0) { %><p class="empty-state">لا توجد دفعات متأخرة في هذه المدة.</p><% } else { %>
+    <p class="lead"><strong><%= od.totals.count %></strong> دفعة متأخرة، المتبقي <strong><%= fmt(od.totals.remaining) %></strong> ريال.</p>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>الوحدة</th><th>الاستحقاق</th><th>التأخر</th><th>المتبقي</th></tr></thead>
+      <tbody><% od.data.slice(0, 20).forEach(function (r) { %><tr><td><%= r.unit_label || '—' %></td><td dir="ltr"><%= String(r.due_date).slice(0, 10) %></td><td><%= r.daysOverdue %> يوم</td><td><%= fmt(r.remainingHalalas) %></td></tr><% }) %></tbody>
+    </table></div>
+    <% if (od.data.length > 20) { %><p class="muted">عرضنا أول 20. <a href="/office/payments">كل المتأخرات</a> أو صدّر الملف.</p><% } %>
+  <% } %>
+</section>
+
+<%# 4. collections %>
+<section class="card detail-card" id="collections">
+  <div class="page-head"><h2><%= meta.collections.title %></h2><a class="btn btn--secondary btn--small" href="/office/reports/csv/collections?<%= csvQuery %>">تصدير CSV</a></div>
+  <% const col = results.collections; %>
+  <% if (col.data.length === 0) { %><p class="empty-state">لا توجد دفعات في هذه المدة.</p><% } else { %>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>الشهر</th><th>المتوقع</th><th>المحصّل</th><th>النسبة</th></tr></thead>
+      <tbody><% col.data.forEach(function (m) { %><tr><td dir="ltr"><%= m.month %></td><td><%= fmt(m.expected) %></td><td><%= fmt(m.collected) %></td><td><%= m.percent === null ? '—' : m.percent + '%' %></td></tr><% }) %></tbody>
+      <tfoot><tr><th>المجموع</th><th><%= fmt(col.totals.expected) %></th><th><%= fmt(col.totals.collected) %></th><th></th></tr></tfoot>
+    </table></div>
+    <p class="muted">المبالغ بالريال. المتوقع حسب تاريخ الاستحقاق، والمحصّل حسب تاريخ الدفع.</p>
+  <% } %>
+</section>
+
+<%# 5. maintenance %>
+<section class="card detail-card" id="maintenance">
+  <div class="page-head"><h2><%= meta.maintenance.title %></h2><a class="btn btn--secondary btn--small" href="/office/reports/csv/maintenance?<%= csvQuery %>">تصدير CSV</a></div>
+  <% const mt = results.maintenance; %>
+  <% if (mt.total === 0) { %><p class="empty-state">لا توجد طلبات صيانة في هذه المدة.</p><% } else { %>
+    <p class="lead"><strong><%= mt.total %></strong> طلب في هذه المدة.</p>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>الحالة</th><% Object.values(categories).forEach(function (c) { %><th><%= c %></th><% }) %></tr></thead>
+      <tbody><% Object.entries(statuses).forEach(function ([status, label]) { %><tr><td><%= label %></td><% Object.keys(categories).forEach(function (c) { %><td><%= mt.data[status][c] %></td><% }) %></tr><% }) %></tbody>
+    </table></div>
+  <% } %>
+</section>
+
+<%# 6. workload %>
+<section class="card detail-card" id="workload">
+  <div class="page-head"><h2><%= meta.workload.title %></h2><a class="btn btn--secondary btn--small" href="/office/reports/csv/workload?<%= csvQuery %>">تصدير CSV</a></div>
+  <% const wl = results.workload; %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>العضو</th><th>صيانة مفتوحة</th><th>صيانة أُنجزت</th><th>مهام مفتوحة</th><th>متأخرة</th><th>أُنجزت</th></tr></thead>
+    <tbody><% wl.data.forEach(function (r) { %><tr><td><%= r.name %> <span class="muted">(<%= r.role %>)</span></td><td><%= r.maintOpen %></td><td><%= r.maintDone %></td><td><%= r.tasksOpen %></td><td><%= r.tasksOverdue %></td><td><%= r.tasksDone %></td></tr><% }) %></tbody>
+  </table></div>
+</section>

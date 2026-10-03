@@ -2,7 +2,7 @@
 
 const mysql = require('mysql2/promise');
 const logger = require('../utils/logger');
-const { TABLES, COLUMN_ADDITIONS, INDEX_ADDITIONS, ENUM_ADDITIONS } = require('../database/schema');
+const { TABLES, COLUMN_ADDITIONS, INDEX_ADDITIONS, ENUM_ADDITIONS, NULLABLE_CHANGES } = require('../database/schema');
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -59,10 +59,14 @@ async function ensureSchema(targetPool = pool) {
     }
     current = 'column additions';
     await addMissingColumns(targetPool, COLUMN_ADDITIONS);
+    current = 'nullable changes';
+    await makeColumnsNullable(targetPool, NULLABLE_CHANGES);
     current = 'index additions';
     await addMissingIndexes(targetPool, INDEX_ADDITIONS);
     current = 'enum additions';
     await addMissingEnumValues(targetPool, ENUM_ADDITIONS);
+    current = 'payment entries backfill';
+    await backfillPaymentEntries(targetPool);
     result.created = (await countTables(targetPool)) - result.found;
     result.ok = true;
     return result;
@@ -118,6 +122,41 @@ async function addMissingEnumValues(targetPool, additions) {
   return added;
 }
 
+/** Runs MODIFY COLUMN for each { table, column, definition } that is still NOT NULL. Returns what it changed. */
+async function makeColumnsNullable(targetPool, changes) {
+  const changed = [];
+  for (const { table, column, definition } of changes) {
+    const [[row]] = await targetPool.query(
+      `SELECT is_nullable AS nullable FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+      [table, column],
+    );
+    if (row && row.nullable === 'NO') {
+      await targetPool.query(`ALTER TABLE \`${table}\` MODIFY COLUMN \`${column}\` ${definition}`);
+      logger.info(`Made ${table}.${column} nullable`);
+      changed.push(`${table}.${column}`);
+    }
+  }
+  return changed;
+}
+
+/**
+ * Installments marked paid before payment_entries existed get one 'legacy'
+ * entry for their full amount, so history and reports see them. Idempotent
+ * (unique key on payment_id + legacy) and safe when workers start together.
+ * Returns the number of entries created.
+ */
+async function backfillPaymentEntries(targetPool) {
+  const [made] = await targetPool.query(
+    `INSERT IGNORE INTO payment_entries
+       (office_id, contract_id, payment_id, amount, currency, paid_on, method, reference_code, recorded_role, legacy)
+     SELECT office_id, contract_id, id, amount, currency, DATE(COALESCE(paid_at, created_at)), method, receipt_no, 'office', 1
+       FROM contract_payments WHERE status = 'paid' AND paid_amount = 0`,
+  );
+  await targetPool.query("UPDATE contract_payments SET paid_amount = amount WHERE status = 'paid' AND paid_amount = 0");
+  return made.affectedRows;
+}
+
 /** Adds each { table, index, columns } that is missing. Returns the names it added. */
 async function addMissingIndexes(targetPool, additions) {
   const added = [];
@@ -150,4 +189,6 @@ async function alterUnlessDone(targetPool, sql, errorCode) {
   }
 }
 
-module.exports = { pool, ping, ensureSchema, countTables, addMissingColumns, addMissingIndexes, addMissingEnumValues };
+module.exports = {
+  pool, ping, ensureSchema, countTables, addMissingColumns, addMissingIndexes, addMissingEnumValues, makeColumnsNullable, backfillPaymentEntries,
+};

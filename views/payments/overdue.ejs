@@ -1,0 +1,69 @@
+<div class="page-head">
+  <h1>الدفعات المتأخرة</h1>
+  <a href="<%= csvUrl %>" class="btn btn--secondary btn--small">تصدير CSV</a>
+</div>
+
+<form class="card filter-bar" method="get" action="/office/payments" role="search">
+  <div class="field">
+    <label for="q">بحث باسم الوحدة</label>
+    <input id="q" name="q" class="input" type="search" maxlength="60" value="<%= filters.q %>">
+  </div>
+  <div class="filter-grid">
+    <div class="field">
+      <label for="landlord">المالك</label>
+      <select id="landlord" name="landlord" class="select">
+        <option value="">الكل</option>
+        <% landlords.forEach(function (l) { %><option value="<%= l.id %>" <%= filters.landlordId === Number(l.id) ? 'selected' : '' %>><%= l.label %></option><% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label for="days">تأخر لا يقل عن</label>
+      <select id="days" name="days" class="select">
+        <option value="">أي مدة</option>
+        <% buckets.forEach(function (d) { %><option value="<%= d %>" <%= filters.minDays === d ? 'selected' : '' %>><%= d %> يوم</option><% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label for="from">استحقاق من</label>
+      <input id="from" name="from" class="input" type="date" value="<%= filters.from %>">
+    </div>
+    <div class="field">
+      <label for="to">استحقاق إلى</label>
+      <input id="to" name="to" class="input" type="date" value="<%= filters.to %>">
+    </div>
+  </div>
+  <button type="submit" class="btn btn--secondary btn--block">عرض</button>
+</form>
+
+<section class="stats" aria-label="ملخص المتأخرات">
+  <div class="stat card"><p class="stat__value"><%= total %></p><p class="stat__label">دفعات متأخرة</p></div>
+  <div class="stat card"><p class="stat__value"><%= fmt(remainingHalalas) %></p><p class="stat__label">المتبقي (ريال)</p></div>
+</section>
+
+<% if (rows.length === 0) { %>
+  <section class="card empty-card">
+    <p class="lead"><%= filtered ? 'لا توجد دفعات متأخرة تطابق البحث.' : 'لا توجد دفعات متأخرة. ممتاز!' %></p>
+    <% if (filtered) { %><a href="/office/payments" class="btn btn--secondary">عرض الكل</a><% } %>
+  </section>
+<% } else { %>
+  <ul class="item-list">
+    <% rows.forEach(function (r) { %>
+      <li class="item">
+        <div class="item__title">
+          <a href="/office/contracts/<%= r.contract_id %>#payments"><%= r.unit_label || 'وحدة' %></a>
+          <span class="badge badge--pay-late">متأخرة <%= r.daysOverdue %> يوم</span>
+          <% if (r.status === 'tenant_reported') { %><span class="badge badge--pay-tenant_reported">أبلغ المستأجر بالدفع</span><% } %>
+        </div>
+        <p class="item__meta">المالك: <%= r.landlord_label || '—' %> · الاستحقاق <span dir="ltr"><%= String(r.due_date).slice(0, 10) %></span></p>
+        <p class="item__meta">المبلغ <%= fmt(r.totalHalalas) %> · المدفوع <%= fmt(r.paidHalalas) %> · <strong>المتبقي <%= fmt(r.remainingHalalas) %> ريال</strong></p>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (pages > 1) { %>
+    <nav class="pager" aria-label="الصفحات">
+      <% if (prevUrl) { %><a class="btn btn--secondary" href="<%= prevUrl %>">السابق</a><% } else { %><span></span><% } %>
+      <span>صفحة <%= page %> من <%= pages %></span>
+      <% if (nextUrl) { %><a class="btn btn--secondary" href="<%= nextUrl %>">التالي</a><% } else { %><span></span><% } %>
+    </nav>
+  <% } %>
+<% } %>

@@ -17,6 +17,7 @@ const PLANS = [
     max_units: 20,
     max_members: 2,
     max_ai_reads_monthly: 10,
+    max_photos: 30,
     features: ['contracts', 'reminders', 'ai_read'],
     sort_order: 1,
   },
@@ -29,6 +30,7 @@ const PLANS = [
     max_units: 100,
     max_members: 3,
     max_ai_reads_monthly: 100,
+    max_photos: 200,
     features: ['contracts', 'reminders', 'ai_read', 'invites'],
     sort_order: 2,
   },
@@ -41,6 +43,7 @@ const PLANS = [
     max_units: 500,
     max_members: 10,
     max_ai_reads_monthly: 500,
+    max_photos: 1000,
     features: ['contracts', 'reminders', 'ai_read', 'invites', 'maintenance', 'listings', 'whatsapp'],
     sort_order: 3,
   },
@@ -53,6 +56,7 @@ const PLANS = [
     max_units: null,
     max_members: null,
     max_ai_reads_monthly: 2000,
+    max_photos: null,
     features: [
       'contracts',
       'reminders',
@@ -127,8 +131,8 @@ async function seed(pool) {
     const [result] = await pool.query(
       `INSERT IGNORE INTO plans
          (code, name_ar, price_monthly, price_yearly, currency, max_contracts, max_units,
-          max_members, max_ai_reads_monthly, features, is_active, sort_order)
-       VALUES (?, ?, ?, ?, 'SAR', ?, ?, ?, ?, ?, 1, ?)`,
+          max_members, max_ai_reads_monthly, max_photos, features, is_active, sort_order)
+       VALUES (?, ?, ?, ?, 'SAR', ?, ?, ?, ?, ?, ?, 1, ?)`,
       [
         plan.code,
         plan.name_ar,
@@ -138,6 +142,7 @@ async function seed(pool) {
         plan.max_units,
         plan.max_members,
         plan.max_ai_reads_monthly,
+        plan.max_photos,
         JSON.stringify(plan.features),
         plan.sort_order,
       ],

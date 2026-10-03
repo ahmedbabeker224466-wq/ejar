@@ -1,0 +1,20 @@
+<%- include('../partials/area-nav') %>
+<div class="page-head"><h1>الرسائل</h1></div>
+<% if (rows.length === 0) { %>
+  <section class="card empty-card">
+    <p class="lead"><%= kind === 'office' ? 'لا توجد محادثات بعد. افتح صفحة أي عقد واضغط "الرسائل" لبدء محادثة مع المالك والمستأجر.' : 'لا توجد عقود لبدء محادثة عليها.' %></p>
+  </section>
+<% } else { %>
+  <ul class="item-list">
+    <% rows.forEach(function (t) { %>
+      <li class="item">
+        <div class="item__title">
+          <a href="<%= base %>/<%= t.id %>"><%= t.unit_label || 'عقد' %></a>
+          <% if (t.unread) { %><span class="badge badge--soon"><%= t.unread %> جديدة</span><% } %>
+          <% if (kind === 'office' && t.muted) { %><span class="badge badge--ended">مكتومة</span><% } %>
+        </div>
+        <p class="item__meta"><%= t.officeName ? `${t.officeName} · ` : '' %><%= t.at ? `آخر رسالة ${t.at}` : 'لا توجد رسائل بعد' %></p>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>

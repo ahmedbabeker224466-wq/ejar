@@ -13,6 +13,8 @@ const engine = require('./contractEngine');
 const { scopeToOffice } = require('./scopeToOffice');
 const { createAudit } = require('./audit');
 const { riyadhDate } = require('./contractDates');
+const { withTransaction } = require('./transaction');
+const paymentEntries = require('./paymentEntries');
 
 const DECISIONS = { renew: 'سيجدد', not_renew: 'لن يجدد', undecided: 'لم يقرر بعد' };
 const REQUEST_TYPES = { rent_reduction: 'طلب تخفيض الإيجار' };
@@ -131,30 +133,34 @@ async function reportPayment(pool, officeId, { contractId, paymentId, userId, ip
 }
 
 /**
- * Confirms (paid, dated the Riyadh day the tenant reported it) or rejects
- * (back to due; the status recompute marks it late if overdue) a reported
- * payment. by: 'office' | 'landlord'. Returns true when it changed.
+ * Confirms (an entry for the whole remaining amount, dated the Riyadh day the
+ * tenant reported it) or rejects (back to due; the status recompute marks it
+ * late if overdue) a reported payment. by: 'office' | 'landlord'. Returns true
+ * when it changed.
  */
 async function answerReportedPayment(pool, officeId, { contractId, paymentId, confirm, actorId, by, ip }) {
-  const scoped = scopeToOffice(pool, officeId);
-  const payment = await scoped.selectOne('contract_payments', { id: paymentId, contract_id: contractId, status: 'tenant_reported' });
-  if (!payment) return false;
-  const result = confirm
-    ? await scoped.query(
-      `UPDATE contract_payments SET status = 'paid', paid_at = ?
-        WHERE id = ? AND contract_id = ? AND status = 'tenant_reported' AND office_id = :office_id`,
-      [`${riyadhDate(new Date(payment.reported_at || Date.now()))} 00:00:00`, paymentId, contractId],
-    )
-    : await scoped.query(
-      `UPDATE contract_payments SET status = 'due', reported_at = NULL, reported_by = NULL
-        WHERE id = ? AND contract_id = ? AND status = 'tenant_reported' AND office_id = :office_id`,
-      [paymentId, contractId],
-    );
-  if (result.affectedRows !== 1) return false;
-  await event(scoped, contractId, actorId, confirm ? 'payment_confirmed' : 'payment_rejected', { payment_id: paymentId, by });
-  await createAudit(pool).log(actorId, officeId, confirm ? 'payment.confirmed' : 'payment.rejected', 'contract_payment', paymentId,
-    { status: 'tenant_reported' }, { status: confirm ? 'paid' : 'due', by }, ip);
-  return true;
+  return withTransaction(pool, async (conn) => {
+    const scoped = scopeToOffice(conn, officeId);
+    const payment = await paymentEntries.lockPayment(scoped, contractId, paymentId);
+    if (!payment || payment.status !== 'tenant_reported') return false;
+    if (confirm) {
+      const paidOn = riyadhDate(new Date(payment.reported_at || Date.now()));
+      const done = await paymentEntries.applyEntry(scoped, payment, {
+        amount: null, paidOn, method: null, reference: null, actorId, role: by, today: riyadhDate(new Date()), eventType: null,
+      });
+      if (!done.ok) return false;
+    } else {
+      await scoped.query(
+        `UPDATE contract_payments SET status = 'due', reported_at = NULL, reported_by = NULL
+          WHERE id = ? AND contract_id = ? AND status = 'tenant_reported' AND office_id = :office_id`,
+        [paymentId, contractId],
+      );
+    }
+    await event(scoped, contractId, actorId, confirm ? 'payment_confirmed' : 'payment_rejected', { payment_id: paymentId, by });
+    await createAudit(conn).write(actorId, officeId, confirm ? 'payment.confirmed' : 'payment.rejected', 'contract_payment', paymentId,
+      { status: 'tenant_reported' }, { status: confirm ? 'paid' : 'due', by }, ip);
+    return true;
+  });
 }
 
 // ------------------------------------------------------------ office overview

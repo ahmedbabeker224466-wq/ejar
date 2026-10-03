@@ -1,0 +1,11 @@
+<%# Links between a landlord's or tenant's pages. Uses currentPath (set for every request) and currentArea. %>
+<% if (locals.currentArea) { %>
+  <nav class="area-links" aria-label="صفحات <%= currentArea === 'landlord' ? 'المالك' : 'المستأجر' %>">
+    <% const items = currentArea === 'landlord'
+      ? [['/landlord', 'الرئيسية'], ['/landlord/maintenance', 'الصيانة'], ['/landlord/messages', 'الرسائل'], ['/landlord/statement', 'كشف الحساب']]
+      : [['/tenant', 'الرئيسية'], ['/tenant/maintenance', 'الصيانة'], ['/tenant/messages', 'الرسائل']]; %>
+    <% items.forEach(function (item) { const here = item[0] === '/' + currentArea ? currentPath === item[0] : (currentPath === item[0] || currentPath.indexOf(item[0] + '/') === 0); %>
+      <a href="<%= item[0] %>" class="area-links__item<%= here ? ' is-current' : '' %>" <%- here ? 'aria-current="page"' : '' %>><%= item[1] %></a>
+    <% }) %>
+  </nav>
+<% } %>

@@ -1,0 +1,29 @@
+<%- include('../partials/area-nav') %>
+<div class="page-head">
+  <h1>كشف الحساب</h1>
+  <a class="btn btn--secondary btn--small" href="/landlord/statement/csv?<%= csvQuery %>">تصدير CSV</a>
+</div>
+<% if (range.error) { %><div class="flash flash--danger" role="alert"><%= range.error %> عرضنا المدة الافتراضية.</div><% } %>
+<form class="card filter-bar" method="get" action="/landlord/statement">
+  <div class="filter-grid">
+    <div class="field"><label for="from">من</label><input id="from" name="from" class="input" type="date" value="<%= range.from %>"></div>
+    <div class="field"><label for="to">إلى</label><input id="to" name="to" class="input" type="date" value="<%= range.to %>"></div>
+  </div>
+  <button type="submit" class="btn btn--secondary btn--block">عرض</button>
+</form>
+
+<% statement.offices.forEach(function (o) { %>
+  <section class="card detail-card">
+    <h2><%= o.officeName %></h2>
+    <% if (o.items.length === 0) { %>
+      <p class="empty-state">لا توجد دفعات مستحقة في هذه المدة.</p>
+    <% } else { %>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>الوحدة</th><th>الاستحقاق</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead>
+        <tbody><% o.items.forEach(function (i) { %><tr><td><%= i.unit || '—' %></td><td dir="ltr"><%= i.due %></td><td><%= fmt(i.total) %></td><td><%= fmt(i.paid) %></td><td><%= fmt(i.remaining) %></td><td><%= i.status %></td></tr><% }) %></tbody>
+        <tfoot><tr><th colspan="2">المجموع</th><th><%= fmt(o.totals.total) %></th><th><%= fmt(o.totals.paid) %></th><th><%= fmt(o.totals.remaining) %></th><th></th></tr></tfoot>
+      </table></div>
+      <p class="muted">المبالغ بالريال. هذا الكشف للاطلاع فقط.</p>
+    <% } %>
+  </section>
+<% }) %>

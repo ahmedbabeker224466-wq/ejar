@@ -20,6 +20,7 @@ const OFFICE_OWNER = [
   'listings',
   'reports',
   'messages',
+  'tasks',
   'team',
   'audit',
   'settings.basic',
@@ -29,7 +30,8 @@ const OFFICE_OWNER = [
   'office.delete',
 ];
 
-const OWNER_ONLY = ['team', 'settings.secure', 'billing', 'office.delete'];
+// The team page is for the owner and managers (a manager manages staff only; see services/team.js).
+const OWNER_ONLY = ['settings.secure', 'billing', 'office.delete'];
 
 const LANDLORD = [
   'own.units',
@@ -67,6 +69,7 @@ const CAPABILITIES = {
     'payments.write',
     'maintenance',
     'messages',
+    'tasks',
     'settings.basic',
   ],
   landlord: LANDLORD,

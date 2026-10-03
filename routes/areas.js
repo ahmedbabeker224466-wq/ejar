@@ -10,6 +10,9 @@ const { requirePerm } = require('../middleware/permissions');
 const { noStore } = require('../middleware/security');
 const portalRoutes = require('./portal');
 const notificationRoutes = require('./notifications');
+const maintenanceRoutes = require('./maintenance');
+const messageRoutes = require('./messages');
+const reportRoutes = require('./reports');
 
 const router = express.Router();
 
@@ -25,5 +28,9 @@ for (const area of AREAS) {
 
 router.use(portalRoutes);
 router.use(notificationRoutes);
+router.use(maintenanceRoutes.portal);
+router.use(maintenanceRoutes.photos);
+router.use(messageRoutes.portal);
+router.use(reportRoutes.portal);
 
 module.exports = router;

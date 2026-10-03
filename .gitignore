@@ -4,3 +4,5 @@ uploads/
 backups/
 *.log
 tmp/
+# Uploaded maintenance photos (UPLOAD_DIR default)
+storage/

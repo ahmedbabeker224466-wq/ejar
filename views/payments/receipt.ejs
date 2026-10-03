@@ -1,0 +1,43 @@
+<p class="back-link no-print"><a href="<%= backUrl %>">→ رجوع</a></p>
+<section class="card detail-card receipt" id="receipt">
+  <div class="page-head">
+    <h1>كشف دفعات العقد</h1>
+    <button type="button" class="btn btn--primary btn--small no-print" data-print>طباعة</button>
+  </div>
+  <dl class="details">
+    <dt>المكتب</dt><dd><%= officeName %></dd>
+    <% if (unitLabel) { %><dt>الوحدة</dt><dd><%= unitLabel %></dd><% } %>
+    <dt>مدة العقد</dt><dd><span dir="ltr"><%= startDate %></span> إلى <span dir="ltr"><%= endDate %></span></dd>
+    <dt>تاريخ الكشف</dt><dd dir="ltr"><%= today %></dd>
+  </dl>
+
+  <% if (history.length) { %>
+    <ul class="receipt-list">
+      <% history.forEach(function (p, i) { %>
+        <li class="receipt-row">
+          <div class="receipt-row__head">
+            <strong>دفعة <%= i + 1 %> · <span dir="ltr"><%= String(p.due_date).slice(0, 10) %></span></strong>
+            <span class="badge badge--pay-<%= p.partial ? 'partial' : p.shownStatus %>"><%= p.partial ? 'دفعة جزئية' : paymentLabels[p.shownStatus] %></span>
+          </div>
+          <dl class="receipt-row__figures">
+            <div><dt>المبلغ</dt><dd><%= fmt(p.totalHalalas) %></dd></div>
+            <div><dt>المدفوع</dt><dd><%= fmt(p.paidHalalas) %></dd></div>
+            <div><dt>المتبقي</dt><dd><%= fmt(p.remainingHalalas) %></dd></div>
+          </dl>
+          <% p.entries.filter(function (e) { return !e.undone_at; }).forEach(function (e) { %>
+            <p class="receipt__entry">↳ <%= fmt(e.halalas) %> ريال في <span dir="ltr"><%= e.paidOn %></span><%= e.method ? ` · ${methods[e.method] || ''}` : '' %><%= e.reference_code ? ` · مرجع: ${e.reference_code}` : '' %></p>
+          <% }) %>
+        </li>
+      <% }) %>
+    </ul>
+    <dl class="receipt-total">
+      <div><dt>مجموع الدفعات</dt><dd><%= fmt(totals.scheduled) %></dd></div>
+      <div><dt>المدفوع</dt><dd><%= fmt(totals.collected) %></dd></div>
+      <div><dt>المتبقي</dt><dd><%= fmt(totals.remaining) %></dd></div>
+    </dl>
+    <p class="muted">المبالغ بالريال السعودي. هذا الكشف للتتبع فقط ولا يُثبت سداداً رسمياً.</p>
+  <% } else { %>
+    <p class="empty-state">لا توجد دفعات لهذا العقد.</p>
+  <% } %>
+</section>
+<script src="<%= assetUrl('/js/print.js') %>" defer></script>

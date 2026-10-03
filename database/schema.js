@@ -121,6 +121,7 @@ const TABLES = [
     'max_units INT UNSIGNED NULL',
     'max_members INT UNSIGNED NULL',
     'max_ai_reads_monthly INT UNSIGNED NULL',
+    'max_photos INT UNSIGNED NULL', // maintenance photos stored per office (NULL = unlimited)
     'features JSON NULL',
     'is_active TINYINT(1) NOT NULL DEFAULT 1',
     'sort_order INT NOT NULL DEFAULT 0',
@@ -308,6 +309,8 @@ const TABLES = [
     CURRENCY,
     "status ENUM('due','paid','late','waived','tenant_reported') NOT NULL DEFAULT 'due'",
     'paid_at DATETIME NULL',
+    // Sum of the live payment_entries (partial payments); status is 'paid' only when it reaches amount.
+    `paid_amount ${MONEY} NOT NULL DEFAULT 0`,
     'reported_at DATETIME NULL', // the tenant said "I paid"; the office or landlord confirms
     `reported_by ${REF} NULL`,
     'method VARCHAR(30) NULL',
@@ -317,6 +320,34 @@ const TABLES = [
     'KEY idx_contract_payments_contract (contract_id)',
     fk('contract_payments', 'contract_id', 'contracts', 'CASCADE'),
     fk('contract_payments', 'office_id', 'offices', 'CASCADE'),
+  ]),
+
+  // Payment tracking only (the app never moves money): each row says "this
+  // much was received on this date". Undo keeps the row (undone_at, reason).
+  // reference_code is free text without account numbers (services/paymentEntries.js).
+  table('payment_entries', [
+    `office_id ${REF} NOT NULL`,
+    `contract_id ${REF} NOT NULL`,
+    `payment_id ${REF} NOT NULL`,
+    `amount ${MONEY} NOT NULL`,
+    CURRENCY,
+    'paid_on DATE NOT NULL',
+    'method VARCHAR(30) NULL',
+    'reference_code VARCHAR(40) NULL',
+    `recorded_by ${REF} NULL`,
+    "recorded_role VARCHAR(20) NOT NULL DEFAULT 'office'",
+    'undone_at DATETIME NULL',
+    `undone_by ${REF} NULL`,
+    'undo_reason VARCHAR(200) NULL',
+    'legacy TINYINT NULL', // 1 on the row made from a payment that was marked paid before entries existed
+    'UNIQUE KEY uq_payment_entries_legacy (payment_id, legacy)',
+    'KEY idx_payment_entries_office_paid (office_id, paid_on)',
+    'KEY idx_payment_entries_payment (payment_id)',
+    fk('payment_entries', 'office_id', 'offices', 'CASCADE'),
+    fk('payment_entries', 'contract_id', 'contracts', 'CASCADE'),
+    fk('payment_entries', 'payment_id', 'contract_payments', 'CASCADE'),
+    fk('payment_entries', 'recorded_by', 'users', 'SET NULL'),
+    fk('payment_entries', 'undone_by', 'users', 'SET NULL'),
   ]),
 
   table('contract_events', [
@@ -425,7 +456,8 @@ const TABLES = [
     `office_id ${REF} NOT NULL`,
     `landlord_id ${REF} NULL`,
     `contract_id ${REF} NULL`,
-    'role_hint VARCHAR(30) NULL',
+    'role_hint VARCHAR(30) NULL', // staff invites: office_manager | office_staff
+    'phone VARCHAR(20) NULL', // staff invites work only for this phone
     `created_by ${REF} NULL`,
     `used_by ${REF} NULL`,
     'used_at DATETIME NULL',
@@ -458,8 +490,14 @@ const TABLES = [
     "category ENUM('plumbing','electrical','ac','appliances','structural','other') NOT NULL",
     'description TEXT NOT NULL',
     "priority ENUM('low','normal','high') NOT NULL DEFAULT 'normal'",
-    "status ENUM('open','assigned','in_progress','done','cancelled') NOT NULL DEFAULT 'open'",
+    "status ENUM('new','seen','in_progress','done','rejected') NOT NULL DEFAULT 'new'",
+    `assigned_to ${REF} NULL`, // the office member in charge
     `assigned_vendor_id ${REF} NULL`,
+    'seen_at DATETIME NULL',
+    `seen_by ${REF} NULL`,
+    'started_at DATETIME NULL',
+    'status_changed_at DATETIME NULL',
+    `status_changed_by ${REF} NULL`,
     `cost ${MONEY} NULL`,
     CURRENCY,
     'closed_at DATETIME NULL',
@@ -468,12 +506,16 @@ const TABLES = [
     fk('maintenance_requests', 'unit_id', 'units', 'CASCADE'),
     fk('maintenance_requests', 'contract_id', 'contracts', 'SET NULL'),
     fk('maintenance_requests', 'reported_by', 'users', 'SET NULL'),
+    fk('maintenance_requests', 'assigned_to', 'users', 'SET NULL'),
     fk('maintenance_requests', 'assigned_vendor_id', 'vendors', 'SET NULL'),
   ]),
 
   table('maintenance_messages', [
     `request_id ${REF} NOT NULL`,
     `sender_id ${REF} NULL`,
+    "sender_role ENUM('office','landlord','tenant') NOT NULL DEFAULT 'office'",
+    // public: everyone on the request; landlord: office and landlord; internal: office only.
+    "visibility ENUM('public','landlord','internal') NOT NULL DEFAULT 'public'",
     'body TEXT NOT NULL',
     fk('maintenance_messages', 'request_id', 'maintenance_requests', 'CASCADE'),
     fk('maintenance_messages', 'sender_id', 'users', 'SET NULL'),
@@ -481,7 +523,8 @@ const TABLES = [
 
   table('maintenance_photos', [
     `request_id ${REF} NOT NULL`,
-    'path VARCHAR(255) NOT NULL',
+    'path VARCHAR(255) NOT NULL', // file name inside the uploads directory (never a user-supplied name)
+    'size_bytes INT UNSIGNED NULL',
     `uploaded_by ${REF} NULL`,
     fk('maintenance_photos', 'request_id', 'maintenance_requests', 'CASCADE'),
     fk('maintenance_photos', 'uploaded_by', 'users', 'SET NULL'),
@@ -711,19 +754,36 @@ const TABLES = [
   table('conversations', [
     `office_id ${REF} NOT NULL`,
     'subject VARCHAR(160) NULL',
-    `with_user_id ${REF} NOT NULL`,
+    `with_user_id ${REF} NULL`,
+    `contract_id ${REF} NULL`, // one thread per contract
+    'office_muted TINYINT(1) NOT NULL DEFAULT 0', // office staff get no notifications while muted
     'last_message_at DATETIME NULL',
+    'UNIQUE KEY uq_conversations_contract (contract_id)',
     fk('conversations', 'office_id', 'offices', 'CASCADE'),
     fk('conversations', 'with_user_id', 'users', 'CASCADE'),
+    fk('conversations', 'contract_id', 'contracts', 'CASCADE'),
   ]),
 
   table('messages', [
     `conversation_id ${REF} NOT NULL`,
     `sender_id ${REF} NULL`,
+    "sender_role ENUM('office','landlord','tenant') NOT NULL DEFAULT 'office'",
     'body TEXT NOT NULL',
     'read_at DATETIME NULL',
+    'deleted_at DATETIME NULL', // soft delete by the author within 5 minutes
+    'KEY idx_messages_conversation (conversation_id, id)',
     fk('messages', 'conversation_id', 'conversations', 'CASCADE'),
     fk('messages', 'sender_id', 'users', 'SET NULL'),
+  ]),
+
+  // The last message each participant has seen in a thread (unread counts).
+  table('message_reads', [
+    `user_id ${REF} NOT NULL`,
+    `conversation_id ${REF} NOT NULL`,
+    `last_read_id ${REF} NOT NULL DEFAULT 0`,
+    'UNIQUE KEY uq_message_reads (user_id, conversation_id)',
+    fk('message_reads', 'user_id', 'users', 'CASCADE'),
+    fk('message_reads', 'conversation_id', 'conversations', 'CASCADE'),
   ]),
 
   table('tickets', [
@@ -794,12 +854,15 @@ const TABLES = [
   table('office_tasks', [
     `office_id ${REF} NOT NULL`,
     'title VARCHAR(160) NOT NULL',
+    'description TEXT NULL',
     `assigned_to ${REF} NULL`,
     'due_date DATE NULL',
-    'entity_type VARCHAR(50) NULL',
+    'entity_type VARCHAR(50) NULL', // 'contract' | 'unit' | 'maintenance'
     'entity_id BIGINT UNSIGNED NULL',
-    "status ENUM('open','done') NOT NULL DEFAULT 'open'",
+    "status ENUM('todo','doing','done') NOT NULL DEFAULT 'todo'",
+    'completed_at DATETIME NULL',
     `created_by ${REF} NULL`,
+    'KEY idx_office_tasks_office_status (office_id, status)',
     fk('office_tasks', 'office_id', 'offices', 'CASCADE'),
     fk('office_tasks', 'assigned_to', 'users', 'SET NULL'),
     fk('office_tasks', 'created_by', 'users', 'SET NULL'),
@@ -906,6 +969,24 @@ const COLUMN_ADDITIONS = [
   { table: 'contracts', column: 'renewed_from_id', definition: 'BIGINT UNSIGNED NULL AFTER renewed_to_id' },
   { table: 'contract_payments', column: 'reported_at', definition: 'DATETIME NULL AFTER paid_at' },
   { table: 'contract_payments', column: 'reported_by', definition: 'BIGINT UNSIGNED NULL AFTER reported_at' },
+  { table: 'contract_payments', column: 'paid_amount', definition: 'DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER paid_at' },
+  { table: 'plans', column: 'max_photos', definition: 'INT UNSIGNED NULL AFTER max_ai_reads_monthly' },
+  { table: 'invites', column: 'phone', definition: 'VARCHAR(20) NULL AFTER role_hint' },
+  { table: 'maintenance_requests', column: 'assigned_to', definition: 'BIGINT UNSIGNED NULL AFTER priority' },
+  { table: 'maintenance_requests', column: 'seen_at', definition: 'DATETIME NULL AFTER assigned_vendor_id' },
+  { table: 'maintenance_requests', column: 'seen_by', definition: 'BIGINT UNSIGNED NULL AFTER seen_at' },
+  { table: 'maintenance_requests', column: 'started_at', definition: 'DATETIME NULL AFTER seen_by' },
+  { table: 'maintenance_requests', column: 'status_changed_at', definition: 'DATETIME NULL AFTER started_at' },
+  { table: 'maintenance_requests', column: 'status_changed_by', definition: 'BIGINT UNSIGNED NULL AFTER status_changed_at' },
+  { table: 'maintenance_messages', column: 'sender_role', definition: "ENUM('office','landlord','tenant') NOT NULL DEFAULT 'office' AFTER sender_id" },
+  { table: 'maintenance_messages', column: 'visibility', definition: "ENUM('public','landlord','internal') NOT NULL DEFAULT 'public' AFTER sender_role" },
+  { table: 'maintenance_photos', column: 'size_bytes', definition: 'INT UNSIGNED NULL AFTER path' },
+  { table: 'conversations', column: 'contract_id', definition: 'BIGINT UNSIGNED NULL AFTER with_user_id' },
+  { table: 'conversations', column: 'office_muted', definition: 'TINYINT(1) NOT NULL DEFAULT 0 AFTER contract_id' },
+  { table: 'messages', column: 'sender_role', definition: "ENUM('office','landlord','tenant') NOT NULL DEFAULT 'office' AFTER sender_id" },
+  { table: 'messages', column: 'deleted_at', definition: 'DATETIME NULL AFTER read_at' },
+  { table: 'office_tasks', column: 'description', definition: 'TEXT NULL AFTER title' },
+  { table: 'office_tasks', column: 'completed_at', definition: 'DATETIME NULL AFTER status' },
   { table: 'notification_prefs', column: 'quiet_start', definition: 'CHAR(5) NULL AFTER enabled' },
   { table: 'notification_prefs', column: 'quiet_end', definition: 'CHAR(5) NULL AFTER quiet_start' },
   { table: 'notifications', column: 'office_id', definition: 'BIGINT UNSIGNED NULL AFTER user_id' },
@@ -923,12 +1004,33 @@ const ENUM_ADDITIONS = [
     value: 'tenant_reported',
     definition: "ENUM('due','paid','late','waived','tenant_reported') NOT NULL DEFAULT 'due'",
   },
+  // The maintenance and task boards replaced their placeholder statuses (no code ever wrote rows with the old ones).
+  {
+    table: 'maintenance_requests',
+    column: 'status',
+    value: 'new',
+    definition: "ENUM('new','seen','in_progress','done','rejected') NOT NULL DEFAULT 'new'",
+  },
+  {
+    table: 'office_tasks',
+    column: 'status',
+    value: 'todo',
+    definition: "ENUM('todo','doing','done') NOT NULL DEFAULT 'todo'",
+  },
+];
+
+// A column that was created NOT NULL but must allow NULL now.
+const NULLABLE_CHANGES = [
+  { table: 'conversations', column: 'with_user_id', definition: 'BIGINT UNSIGNED NULL' },
 ];
 
 const INDEX_ADDITIONS = [
   { table: 'otp_codes', index: 'idx_otp_codes_ip_created', columns: 'ip, created_at' },
   { table: 'notifications', index: 'uq_notifications_dedupe', columns: 'dedupe_key', unique: true },
   { table: 'notifications', index: 'idx_notifications_office_created', columns: 'office_id, created_at' },
+  { table: 'messages', index: 'idx_messages_conversation', columns: 'conversation_id, id' },
+  { table: 'conversations', index: 'uq_conversations_contract', columns: 'contract_id', unique: true },
+  { table: 'office_tasks', index: 'idx_office_tasks_office_status', columns: 'office_id, status' },
 ];
 
 module.exports = {
@@ -936,6 +1038,7 @@ module.exports = {
   COLUMN_ADDITIONS,
   INDEX_ADDITIONS,
   ENUM_ADDITIONS,
+  NULLABLE_CHANGES,
   statements: TABLES.map((t) => t.sql),
   tableNames: TABLES.map((t) => t.name),
 };

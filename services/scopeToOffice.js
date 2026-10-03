@@ -27,6 +27,7 @@ const OFFICE_TABLES = new Set([
   'units',
   'contracts',
   'contract_payments',
+  'payment_entries',
   'contract_documents',
   'extraction_jobs',
   'ai_reads_usage',
@@ -64,6 +65,7 @@ const CHILD_TABLES = {
   listing_views: { parent: 'listings', key: 'listing_id' },
   messages: { parent: 'conversations', key: 'conversation_id' },
   ticket_messages: { parent: 'tickets', key: 'ticket_id' },
+  message_reads: { parent: 'conversations', key: 'conversation_id' },
 };
 
 const ALL_SCOPED = new Set([...OFFICE_TABLES, ...Object.keys(CHILD_TABLES)]);

@@ -1,0 +1,47 @@
+<%- include('../partials/area-nav') %>
+<p class="back-link"><a href="<%= listUrl %>">→ كل المحادثات</a></p>
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card detail-card">
+  <div class="page-head">
+    <h1><%= contract.unit_label || 'عقد' %></h1>
+    <% if (kind === 'office') { %>
+      <form method="post" action="<%= base %>/mute">
+        <input type="hidden" name="muted" value="<%= muted ? 0 : 1 %>">
+        <button type="submit" class="btn btn--secondary btn--small"><%= muted ? 'إلغاء الكتم' : 'كتم المحادثة' %></button>
+      </form>
+    <% } %>
+  </div>
+  <p class="muted">محادثة بين المكتب والمالك والمستأجر. نص فقط (حتى <%= maxLength %> حرف). لا تكتب أرقام هوية أو حسابات.</p>
+  <% if (kind === 'office' && muted) { %><p class="flash flash--info">المحادثة مكتومة: لا تصل إشعاراتها لفريق المكتب.</p><% } %>
+
+  <% if (messages.length) { %>
+    <ul class="thread">
+      <% messages.forEach(function (m) { %>
+        <li class="thread__item<%= m.mine ? ' thread__item--mine' : '' %>">
+          <p class="thread__head"><strong><%= m.author %><%= m.mine ? ' (أنت)' : '' %></strong> <span class="muted" dir="ltr"><%= m.at %></span></p>
+          <% if (m.deleted) { %>
+            <p class="muted">تم حذف هذه الرسالة.</p>
+          <% } else { %>
+            <p class="pre-line"><%= m.body %></p>
+            <% if (m.canDelete) { %>
+              <form method="post" action="<%= base %>/<%= m.id %>/delete"><button type="submit" class="btn btn--secondary btn--small">حذف (خلال 5 دقائق)</button></form>
+            <% } %>
+          <% } %>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p class="empty-state">لا توجد رسائل بعد. اكتب أول رسالة.</p>
+  <% } %>
+  <span id="end"></span>
+
+  <form method="post" action="<%= base %>" novalidate>
+    <div class="field">
+      <label for="body">رسالتك</label>
+      <textarea id="body" name="body" class="textarea" rows="3" maxlength="<%= maxLength %>" required><%= draft %></textarea>
+    </div>
+    <button type="submit" class="btn btn--primary btn--block">إرسال</button>
+  </form>
+</section>

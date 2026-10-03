@@ -25,6 +25,8 @@ const fileUpload = require('express-fileupload');
 const ai = require('../services/aiContractReader');
 const aiUsage = require('../services/aiUsage');
 const feedback = require('../services/feedback');
+const paymentEntries = require('../services/paymentEntries');
+const money = require('../services/money');
 
 const router = express.Router();
 
@@ -37,6 +39,8 @@ const MESSAGES = {
   deleted: 'تم حذف العقد.',
   invite_created: 'تم إنشاء رمز دعوة جديد للمستأجر.',
   invite_revoked: 'تم إلغاء رمز الدعوة.',
+  recorded: 'تم تسجيل الدفعة.',
+  undone: 'تم التراجع عن الدفعة.',
   confirmed: 'تم تأكيد الدفعة وأصبحت مدفوعة.',
   rejected: 'تم رفض بلاغ الدفع وعادت الدفعة مستحقة.',
   request_handled: 'تم تحديث حالة الطلب.',
@@ -49,6 +53,8 @@ const EVENT_LABELS = {
   unit_rented: 'أصبحت الوحدة مؤجرة',
   stage_changed: 'تغيّرت مرحلة العقد',
   payment_status: 'تغيّرت حالة دفعة',
+  payment_recorded: 'تم تسجيل دفعة',
+  payment_undone: 'تم التراجع عن دفعة',
   contract_edited: 'تم تعديل بيانات العقد',
   contract_terminated: 'تم إنهاء العقد',
   contract_renewed: 'تم تجديد العقد',
@@ -349,13 +355,13 @@ async function renderDetail(req, res, { status = 200, error = null } = {}) {
   const contract = req.contract;
   const day = today();
   const described = engine.describeContract(contract, day);
-  const payments = (await contracts.paymentsFor(db.pool, req.office.id, contract.id)).map((p) => ({
+  const history = await paymentEntries.historyFor(db.pool, req.office.id, contract.id, day);
+  const payments = history.map((p) => ({
     ...p,
-    shownStatus: engine.paymentDisplayStatus(p, day),
     paidOn: p.paid_at ? new Date(p.paid_at).toISOString().slice(0, 10) : null,
     reportedOn: p.reported_at ? riyadhDate(new Date(p.reported_at)) : null,
   }));
-  const sum = (list) => (list.reduce((total, p) => total + engine.toHalalas(String(p.amount)), 0) / 100).toFixed(2);
+  const sums = paymentEntries.totalsOf(history);
   const events = await contracts.eventsFor(db.pool, req.office.id, contract.id);
   const running = engine.LIVE_STAGES.includes(contract.status);
   return res.status(status).render('office/contracts/show', {
@@ -375,11 +381,11 @@ async function renderDetail(req, res, { status = 200, error = null } = {}) {
     hijri: { start: engine.formatHijri(contract.start_date), end: engine.formatHijri(contract.end_date) },
     rentPolicy: engine.rentChangePolicy({ city: contract.city, today: day, endDate: contract.end_date }),
     payments,
-    totals: {
-      schedule: sum(payments.filter((p) => p.status !== 'waived')),
-      paid: sum(payments.filter((p) => p.status === 'paid')),
-      open: sum(payments.filter((p) => ['due', 'late', 'tenant_reported'].includes(p.status))),
-    },
+    totals: { schedule: money.toDecimal(sums.scheduled), paid: money.toDecimal(sums.collected), open: money.toDecimal(sums.remaining) },
+    fmt: money.formatHalalas,
+    entryMethods: paymentEntries.METHODS,
+    entryRoleLabels: paymentEntries.ROLE_LABELS,
+    undoable: (e) => can(req.memberRole, 'payments.write') && e.canUndo,
     today: day,
     timeline: events.map((e) => ({ text: eventText(e), at: riyadhNow(new Date(e.created_at)).slice(0, 16) })),
     invite: await inviteView(req, contract),

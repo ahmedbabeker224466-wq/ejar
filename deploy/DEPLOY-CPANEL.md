@@ -23,7 +23,7 @@
 
 الآن معك ثلاث قيم ستحتاجها لاحقاً: اسم القاعدة الكامل، واسم المستخدم الكامل، وكلمة المرور.
 
-> لا تحتاج إنشاء الجداول بيدك. التطبيق ينشئ الجداول الـ 66 تلقائياً عند أول تشغيل.
+> لا تحتاج إنشاء الجداول بيدك. التطبيق ينشئ الجداول الـ 68 تلقائياً عند أول تشغيل.
 
 ---
 
@@ -125,6 +125,7 @@ SMTP_USER=
 SMTP_PASS=
 MAIL_FROM=
 RUN_CRON=
+UPLOAD_DIR=
 ```
 
 **الطريقة الثانية: من صفحة التطبيق**
@@ -179,7 +180,7 @@ RUN_CRON=
 2. **ملف السجل:** افتح `aqdi/logs/app.log` (أو `stderr.log` داخل مجلد `aqdi` في بعض الاستضافات). ستجد في أعلاه مربعاً بعنوان `Aqdi self-check` يوضح:
    - `Environment`: هل هناك متغير ناقص؟ يكتب اسمه، مثل `MISSING JWT_SECRET`.
    - `Database`: هل الاتصال بقاعدة البيانات ناجح؟
-   - `Schema`: عدد الجداول، ويجب أن يكون `66/66`.
+   - `Schema`: عدد الجداول، ويجب أن يكون `68/68`.
    - `SMS driver`: يكتب `console` أثناء التجربة.
    - `Status`: `SERVING` تعني أن الموقع يعمل. `MAINTENANCE PAGE` تعني أن الزوار يرون صفحة صيانة، ويكتب السبب بجانبها.
 3. **الصفحة الرئيسية:** افتح `https://yourdomain.sa`. يجب أن تظهر «منصة عقدي قيد الإنشاء».
@@ -264,6 +265,27 @@ RUN_CRON=
 - واتساب: من Meta (WhatsApp Cloud API) خذ **Phone number ID** و **Access token**، وأنشئ قالب رسالة باللغة العربية اسمه `aqdi_reminder` (أو أي اسم تكتبه في الإعدادات)، نصه فيه متغيران: `{{1}}` للعنوان و `{{2}}` لنص التذكير.
 - تيليجرام: أنشئ بوتاً من **@BotFather** والصق رمزه. التطبيق يربط البوت بالموقع تلقائياً (يحتاج `APP_URL` يبدأ بـ `https`). يربط كل شخص حسابه من **إعدادات الإشعارات** بإرسال الرمز الظاهر له إلى البوت.
 
+## الخطوة 12: الصيانة والدفعات والرسائل والتقارير
+
+**مجلد الصور (مهم):** تُخزَّن صور طلبات الصيانة على القرص (بعد إعادة ضغطها وحذف بيانات الموقع منها)، ولا تُحفظ في قاعدة البيانات.
+- المسار الافتراضي: مجلد `storage/uploads` داخل مجلد التطبيق (`aqdi`). ينشئه التطبيق عند أول صورة.
+- يجب أن يكون **خارج** `public_html` وخارج مجلد `public` الخاص بالتطبيق، فلا يصل إليه أحد برابط مباشر. الصور لا تُعرض إلا من خلال صفحة تتحقق من هوية صاحب الطلب.
+- يمكن تغيير المكان بالمتغير `UPLOAD_DIR` (مسار كامل، مثل `/home/اسم_الحساب/aqdi_uploads`). إذا وضعته داخل `public` يرفض التطبيق حفظ الصور.
+- يجب أن يكون المجلد قابلاً للكتابة من حساب cPanel (الصلاحية `700` تكفي).
+- **النسخ الاحتياطي:** انسخ هذا المجلد مع نسخة قاعدة البيانات. وعند رفع تحديث جديد بالـ FTPS لا تحذف هذا المجلد.
+- الحد الأقصى: 3 صور لكل طلب، 5 ميجابايت للصورة، وتُحوَّل إلى JPEG بحجم لا يتجاوز 1600 بكسل.
+
+**حد الصور في الباقة:** عمود `max_photos` في جدول `plans` (فارغ = بلا حد). القاعدة الجديدة تبدأ بـ 30 للتجربة و200 للأساسية و1000 للاحترافية. إذا كانت قاعدتك قديمة فنفّذ في phpMyAdmin:
+`UPDATE plans SET max_photos = 30 WHERE code = 'trial';`
+
+**حد أعضاء الفريق:** يستخدم عمود `max_members` الموجود (يشمل صاحب المكتب). الدعوات المعلقة تُحسب ضمن الحد.
+
+**ما الذي تغيّر في الأذونات:** المدير يرى صفحة "الفريق" ويدير الموظفين فقط (يدعوهم ويوقفهم ويعيد تفعيلهم)، أما تغيير الأدوار وإدارة المديرين فللمالك. وأُضيفت صفحة "مهام المكتب" لكل أعضاء المكتب.
+
+**الدفعات:** تسجيل الدفعات للتتبع فقط (لا يتحرك أي مال). يمكن التراجع عن دفعة خلال 24 ساعة بسبب مكتوب. عند أول تشغيل بعد التحديث تتحول الدفعات القديمة المسجلة "مدفوعة" إلى سجل دفعة واحد لكل منها تلقائياً.
+
+**ملفات CSV:** حتى 10 تحميلات في الدقيقة لكل شخص. الملف بترميز UTF-8 ويفتح مباشرة في Excel.
+
 ---
 
 ## ملاحظة: تغييرات قاعدة البيانات التي تُطبَّق تلقائياً
@@ -293,10 +315,17 @@ RUN_CRON=
 | التذكيرات | `ALTER TABLE notifications ADD COLUMN dedupe_key VARCHAR(190) NULL AFTER contract_id` | `Added column notifications.dedupe_key` |
 | التذكيرات | `ALTER TABLE notifications ADD UNIQUE INDEX uq_notifications_dedupe (dedupe_key)` | `Added index notifications.uq_notifications_dedupe` |
 | التذكيرات | `ALTER TABLE notifications ADD INDEX idx_notifications_office_created (office_id, created_at)` | `Added index notifications.idx_notifications_office_created` |
+| الصيانة والدفعات والرسائل والمهام | `ALTER TABLE contract_payments ADD COLUMN paid_amount DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER paid_at` | `Added column contract_payments.paid_amount` |
+| الصيانة والدفعات والرسائل والمهام | `ALTER TABLE plans ADD COLUMN max_photos INT UNSIGNED NULL AFTER max_ai_reads_monthly` | `Added column plans.max_photos` |
+| الصيانة والدفعات والرسائل والمهام | `ALTER TABLE invites ADD COLUMN phone VARCHAR(20) NULL AFTER role_hint` | `Added column invites.phone` |
+| الصيانة والدفعات والرسائل والمهام | أعمدة جديدة في `maintenance_requests` (assigned_to, seen_at, seen_by, started_at, status_changed_at, status_changed_by) و`maintenance_messages` (sender_role, visibility) و`maintenance_photos` (size_bytes) و`conversations` (contract_id, office_muted) و`messages` (sender_role, deleted_at) و`office_tasks` (description, completed_at) | `Added column ...` لكل عمود |
+| الصيانة والدفعات والرسائل والمهام | `ALTER TABLE conversations MODIFY COLUMN with_user_id BIGINT UNSIGNED NULL` | `Made conversations.with_user_id nullable` |
+| الصيانة والدفعات والرسائل والمهام | `ALTER TABLE maintenance_requests MODIFY COLUMN status ENUM('new','seen','in_progress','done','rejected') ...` و`office_tasks.status ENUM('todo','doing','done')` (الجدولان كانا فارغين) | `Added new to maintenance_requests.status` و`Added todo to office_tasks.status` |
+| الصيانة والدفعات والرسائل والمهام | فهارس جديدة: `messages.idx_messages_conversation` و`conversations.uq_conversations_contract` و`office_tasks.idx_office_tasks_office_status` | `Added index ...` |
 
 كل أمر يُنفَّذ مرة واحدة فقط، وفقط إذا كان العمود (أو القيمة الجديدة في القائمة) غير موجود. أمر `MODIFY COLUMN` يضيف قيمة جديدة لقائمة الحالات، ولا يغيّر أي صف موجود.
 
-تحديث المباني والوحدات لم يضف أي تغيير على قاعدة البيانات. تحديث العقود أضاف الأعمدة الستة أعلاه، ولم يضف جداول جديدة. تحديث قراءة العقود بالذكاء الاصطناعي أضاف جدولاً واحداً جديداً: `ai_reads_usage` (عدد القراءات لكل مكتب في كل شهر)، فأصبحت الجداول 60. يُنشأ تلقائياً بأمر `CREATE TABLE IF NOT EXISTS` عند التشغيل. تحديث صفحات المالك والمستأجر أضاف جدولين: `contract_decisions` (قرار المالك بشأن التجديد) و`contract_requests` (طلبات المستأجر، مثل تخفيض الإيجار)، فأصبحت الجداول 62، إضافة إلى العمودين والقيمة الجديدة أعلاه. تحديث التذكيرات أضاف أربعة جداول: `delivery_log` (حالة الإرسال لكل قناة، بلا نص ولا عناوين)، `reminder_rules` (قواعد التذكير لكل مكتب)، `channel_settings` (إعدادات واتساب وتيليجرام مشفرة)، `user_contacts` (رقم واتساب وحساب تيليجرام المؤكدان)، فأصبحت الجداول 66، إضافة إلى أعمدة `notifications` و `notification_prefs` أعلاه.
+تحديث المباني والوحدات لم يضف أي تغيير على قاعدة البيانات. تحديث العقود أضاف الأعمدة الستة أعلاه، ولم يضف جداول جديدة. تحديث قراءة العقود بالذكاء الاصطناعي أضاف جدولاً واحداً جديداً: `ai_reads_usage` (عدد القراءات لكل مكتب في كل شهر)، فأصبحت الجداول 60. يُنشأ تلقائياً بأمر `CREATE TABLE IF NOT EXISTS` عند التشغيل. تحديث صفحات المالك والمستأجر أضاف جدولين: `contract_decisions` (قرار المالك بشأن التجديد) و`contract_requests` (طلبات المستأجر، مثل تخفيض الإيجار)، فأصبحت الجداول 62، إضافة إلى العمودين والقيمة الجديدة أعلاه. تحديث التذكيرات أضاف أربعة جداول: `delivery_log` (حالة الإرسال لكل قناة، بلا نص ولا عناوين)، `reminder_rules` (قواعد التذكير لكل مكتب)، `channel_settings` (إعدادات واتساب وتيليجرام مشفرة)، `user_contacts` (رقم واتساب وحساب تيليجرام المؤكدان)، فأصبحت الجداول 66، إضافة إلى أعمدة `notifications` و `notification_prefs` أعلاه. تحديث الصيانة والدفعات والرسائل أضاف جدولين: `payment_entries` (سجل الدفعات المستلمة، بما يسمح بالدفع الجزئي والتراجع) و`message_reads` (آخر رسالة قرأها كل شخص في المحادثة)، فأصبحت الجداول 68.
 
 ## ملاحظة: HTTPS
 

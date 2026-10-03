@@ -275,6 +275,44 @@ async function officeReminders(pool, office, days, now) {
 }
 
 /**
+ * "Due tomorrow" reminders for internal tasks: the assignee of each open task
+ * whose due date is exactly one day after a covered day. The dedupe key holds
+ * the task, the person and the due date, so a repeat or a catch-up day never
+ * sends it twice. Text has the task number and the date, never the task text.
+ */
+async function taskReminders(pool, office, days, now) {
+  const scoped = scopeToOffice(pool, office.id);
+  const oldest = days.reduce((min, d) => (engine.compareDates(d.day, min) < 0 ? d.day : min), days[0].day);
+  const tasks = await scoped.query(
+    `SELECT t.id, t.due_date, t.assigned_to FROM office_tasks t
+       JOIN office_members m ON m.user_id = t.assigned_to AND m.is_active = 1 AND m.office_id = :office_id
+      WHERE t.office_id = :office_id AND t.status <> 'done' AND t.assigned_to IS NOT NULL AND t.due_date IS NOT NULL AND t.due_date > ?`,
+    [oldest],
+  );
+  const counts = { created: 0, duplicates: 0 };
+  for (const task of tasks) {
+    const due = String(task.due_date).slice(0, 10);
+    for (const { day, late } of days) {
+      if (engine.thresholdOn(day, due, [1], 'before') === null) continue;
+      const id = await createNotification(pool, {
+        userId: task.assigned_to,
+        officeId: office.id,
+        kind: 'task_due',
+        title: `${late ? 'متأخر: ' : ''}مهمة رقم ${task.id} تستحق غداً`,
+        body: `موعد المهمة رقم ${task.id} غداً ${ltr(due)}. افتحها لمتابعتها.`,
+        link: `/office/tasks/${task.id}`,
+        dedupeKey: `task_due:t${task.id}:u${task.assigned_to}:${due}`,
+        urgent: !late,
+        now,
+      });
+      if (id) counts.created += 1;
+      else counts.duplicates += 1;
+    }
+  }
+  return counts;
+}
+
+/**
  * The daily reminder run. today = riyadhDate(now); lastRun = the last day a
  * run finished (null on the first run). Offices without access (suspended,
  * expired trial) get nothing. Returns { created, duplicates, offices }.
@@ -289,8 +327,9 @@ async function computeDueReminders({ pool, today, lastRun = null, now = new Date
   for (const office of offices) {
     if (officeAccess(office, now).locked) continue;
     const counts = await officeReminders(pool, office, days, now);
-    total.created += counts.created;
-    total.duplicates += counts.duplicates;
+    const taskCounts = await taskReminders(pool, office, days, now);
+    total.created += counts.created + taskCounts.created;
+    total.duplicates += counts.duplicates + taskCounts.duplicates;
     total.offices += 1;
   }
   return total;
@@ -307,5 +346,6 @@ module.exports = {
   hitsFor,
   dedupeKey,
   isUrgent,
+  taskReminders,
   computeDueReminders,
 };

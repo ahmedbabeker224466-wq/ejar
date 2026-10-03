@@ -22,6 +22,7 @@ const OFFICE_NAV = [
   { key: 'listings', href: '/office/listings', label: 'الإعلانات', capability: 'listings' },
   { key: 'reports', href: '/office/reports', label: 'التقارير', capability: 'reports' },
   { key: 'messages', href: '/office/messages', label: 'الرسائل', capability: 'messages' },
+  { key: 'tasks', href: '/office/tasks', label: 'مهام المكتب', capability: 'tasks' },
   { key: 'team', href: '/office/team', label: 'الفريق', capability: 'team' },
   { key: 'audit', href: '/office/audit', label: 'سجل التدقيق', capability: 'audit' },
   { key: 'settings', href: '/office/settings', label: 'الإعدادات', capability: 'settings.basic' },

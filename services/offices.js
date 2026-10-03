@@ -202,10 +202,10 @@ async function dashboardCounts(pool, officeId, now = new Date()) {
          WHERE office_id = :office_id AND ${LIVE_CONTRACT} AND notice_deadline BETWEEN ? AND ?) AS deadline_90,
        (SELECT COUNT(*) FROM contract_payments
          WHERE office_id = :office_id AND (status = 'late' OR (status = 'due' AND due_date < ?))) AS late_payments,
-       (SELECT COALESCE(SUM(amount), 0) FROM contract_payments
+       (SELECT COALESCE(SUM(amount - paid_amount), 0) FROM contract_payments
          WHERE office_id = :office_id AND (status = 'late' OR (status = 'due' AND due_date < ?))) AS late_total,
        (SELECT COUNT(*) FROM maintenance_requests
-         WHERE office_id = :office_id AND status IN ('open','assigned','in_progress')) AS open_maintenance,
+         WHERE office_id = :office_id AND status IN ('new','seen','in_progress')) AS open_maintenance,
        (SELECT COUNT(*) FROM landlords WHERE office_id = :office_id) AS landlords_total,
        (SELECT COUNT(*) FROM landlords WHERE office_id = :office_id AND is_active = 1) AS landlords_active`,
     [window.from, window.to, today, today],

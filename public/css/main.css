@@ -1461,3 +1461,52 @@ img {
 .badge--delivery-sent { background: #dcfce7; color: #166534; }
 .badge--delivery-failed { background: #fee2e2; color: #991b1b; }
 .badge--delivery-skipped, .badge--delivery-pending { background: var(--stage-ended-soft); color: var(--stage-ended); }
+
+/* Payment entries, receipt and print */
+.badge--pay-partial { background: var(--stage-soon-soft); color: var(--stage-soon); }
+.entries { list-style: none; margin: var(--space-2) 0; padding: 0; display: grid; gap: var(--space-2); }
+.entry { padding: var(--space-2) var(--space-3); background: var(--stage-calm-soft); border-radius: 8px; font-size: var(--text-sm, 0.95rem); }
+.entry--undone { opacity: 0.65; text-decoration: line-through; }
+.entry--undone .muted { text-decoration: none; display: inline-block; }
+.table tfoot th { border-top: 2px solid var(--color-border); }
+@media print {
+  .site-header, .site-footer, .office-top, .office-nav, .office-backdrop, .office-footer, .no-print, .office-banner, .area-switch, .bell { display: none !important; }
+  .office-shell { display: block; }
+  body { background: #fff; }
+  .card { box-shadow: none; border: 0; }
+}
+
+/* Area links, maintenance, threads */
+.area-links { display: flex; gap: var(--space-2); overflow-x: auto; margin-bottom: var(--space-3); padding-bottom: var(--space-2); }
+.area-links__item { white-space: nowrap; padding: var(--space-2) var(--space-3); border-radius: 999px; background: var(--stage-calm-soft); color: var(--color-primary); text-decoration: none; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
+.area-links__item.is-current { background: var(--color-primary); color: #fff; }
+.badge--maint-new { background: var(--stage-soon-soft); color: var(--stage-soon); }
+.badge--maint-seen { background: #e0f2fe; color: #075985; }
+.badge--maint-in_progress { background: #ede9fe; color: #5b21b6; }
+.badge--maint-done { background: #dcfce7; color: #166534; }
+.badge--maint-rejected { background: var(--stage-ended-soft); color: var(--stage-ended); }
+.badge--prio-high { background: #fee2e2; color: #991b1b; }
+.photo-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: var(--space-2); }
+.photo-grid img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid var(--color-border); }
+.thread { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: grid; gap: var(--space-3); }
+.thread__item { padding: var(--space-3); border-radius: 10px; background: var(--stage-calm-soft); }
+.thread__item--internal { background: #fef9c3; }
+.thread__item--landlord { background: #eff6ff; }
+.thread__item--mine { border-inline-start: 4px solid var(--color-primary); }
+.thread__head { margin: 0 0 var(--space-2); display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+
+/* Kanban and inline forms */
+.kanban { display: grid; gap: var(--space-3); }
+.kanban__col h2 { display: flex; gap: var(--space-2); align-items: center; }
+.inline-form { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+@media (min-width: 900px) { .kanban { grid-template-columns: repeat(3, 1fr); align-items: start; } }
+
+/* Receipt: stacked rows, readable at 375px and on paper */
+.receipt-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.receipt-row { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: 10px; break-inside: avoid; }
+.receipt-row__head { display: flex; justify-content: space-between; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.receipt-row__figures, .receipt-total { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin: var(--space-2) 0 0; }
+.receipt-row__figures dt, .receipt-total dt { font-size: 0.85rem; color: #4b5563; }
+.receipt-row__figures dd, .receipt-total dd { margin: 0; font-weight: 700; }
+.receipt-total { margin: var(--space-4) 0; padding: var(--space-3); background: var(--stage-calm-soft); border-radius: 10px; }
+.receipt__entry { margin: var(--space-2) 0 0; font-size: 0.9rem; color: #4b5563; }

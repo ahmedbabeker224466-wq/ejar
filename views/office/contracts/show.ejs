@@ -66,7 +66,10 @@
 </section>
 
 <section class="card detail-card" id="payments">
-  <h2>الدفعات (<%= payments.length %>)</h2>
+  <div class="page-head">
+    <h2>الدفعات (<%= payments.length %>)</h2>
+    <a href="/office/contracts/<%= contract.id %>/receipt" class="btn btn--secondary btn--small">كشف قابل للطباعة</a>
+  </div>
   <ul class="payments">
     <% payments.forEach(function (p, i) { %>
       <li class="payment">
@@ -74,8 +77,10 @@
           <span>دفعة <%= i + 1 %> · <span dir="ltr"><%= p.due_date %></span></span>
           <strong><%= Number(p.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</strong>
           <span class="badge badge--pay-<%= p.shownStatus %>"><%= paymentLabels[p.shownStatus] %></span>
+          <% if (p.partial) { %><span class="badge badge--pay-partial">دفعة جزئية</span><% } %>
         </div>
         <% if (p.paidOn) { %><p class="muted">دُفعت في <span dir="ltr"><%= p.paidOn %></span><%= p.method ? ` · ${paymentMethods[p.method] || ''}` : '' %><%= p.receipt_no ? ` · إيصال ${p.receipt_no}` : '' %></p><% } %>
+        <%- include('../../partials/payment-entries', { p: p, base: `/office/contracts/${contract.id}/payments/${p.id}`, canRecord: canPay, undoable: undoable, fmt: fmt, methods: entryMethods, roleLabels: entryRoleLabels, today: today }) %>
         <% if (p.status === 'tenant_reported') { %>
           <p class="muted">أبلغ المستأجر أنه دفع<%= p.reportedOn ? ` في ${p.reportedOn}` : '' %>. تأكّد من وصول المبلغ.</p>
           <% if (canPay) { %>
@@ -87,7 +92,7 @@
         <% } %>
         <% if (canPay) { %>
           <details class="payment__edit">
-            <summary>تغيير الحالة</summary>
+            <summary>تغيير الحالة يدوياً (متقدم)</summary>
             <form method="post" action="/office/contracts/<%= contract.id %>/payments/<%= p.id %>">
               <div class="form-grid">
                 <div class="field">
@@ -193,8 +198,16 @@
 </section>
 
 <section class="card detail-card"><h2>المستندات</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
-<section class="card detail-card"><h2>الصيانة</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
-<section class="card detail-card"><h2>الرسائل</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
+<section class="card detail-card">
+  <h2>الصيانة</h2>
+  <p class="muted">طلبات الصيانة على وحدات المكتب.</p>
+  <a href="/office/maintenance" class="btn btn--secondary btn--block">طلبات الصيانة</a>
+</section>
+<section class="card detail-card">
+  <h2>الرسائل</h2>
+  <p class="muted">محادثة بين المكتب والمالك والمستأجر على هذا العقد.</p>
+  <a href="/office/messages/<%= contract.id %>" class="btn btn--secondary btn--block">فتح المحادثة</a>
+</section>
 
 <% if (canDelete) { %>
   <section class="card detail-card">

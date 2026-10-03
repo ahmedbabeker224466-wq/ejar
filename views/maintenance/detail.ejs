@@ -1,0 +1,87 @@
+<%- include('../partials/area-nav') %>
+<p class="back-link"><a href="<%= listUrl %>">→ كل الطلبات</a></p>
+<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card detail-card">
+  <div class="page-head">
+    <h1><%= request.unit_label || 'وحدة' %> · <%= request.categoryLabel %></h1>
+    <span class="badge badge--maint-<%= request.status %>"><%= request.statusLabel %></span>
+  </div>
+  <dl class="details">
+    <% if (request.building_name) { %><dt>المبنى</dt><dd><%= request.building_name %></dd><% } %>
+    <dt>الأولوية</dt><dd><%= request.priorityLabel %></dd>
+    <dt>تاريخ الطلب</dt><dd dir="ltr"><%= createdAt %></dd>
+    <% if (changedAt) { %><dt>آخر تغيير للحالة</dt><dd dir="ltr"><%= changedAt %></dd><% } %>
+    <% if (kind === 'office') { %><dt>المسؤول</dt><dd><%= request.assigneeLabel || 'غير محدد' %></dd><% } %>
+  </dl>
+  <h2>الوصف</h2>
+  <p class="pre-line"><%= request.description %></p>
+  <% if (photos.length) { %>
+    <h2>الصور</h2>
+    <ul class="photo-grid">
+      <% photos.forEach(function (ph, i) { %>
+        <li><a href="/maintenance/photos/<%= ph.id %>" target="_blank" rel="noopener"><img src="/maintenance/photos/<%= ph.id %>" alt="صورة مرفقة <%= i + 1 %>" loading="lazy" width="160" height="160"></a></li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<% if (kind === 'office') { %>
+  <section class="card detail-card">
+    <h2>إدارة الطلب</h2>
+    <% if (nextStatuses.length) { %>
+      <form method="post" action="<%= base %>/status" class="button-row">
+        <% nextStatuses.forEach(function (s) { %>
+          <button type="submit" name="status" value="<%= s %>" class="btn <%= s === 'rejected' ? 'btn--secondary' : 'btn--primary' %>"><%= { seen: 'تمت المشاهدة', in_progress: 'بدء التنفيذ', done: 'تم الإنجاز', rejected: 'رفض الطلب' }[s] %></button>
+        <% }) %>
+      </form>
+    <% } else { %>
+      <p class="muted">أُغلق الطلب.</p>
+    <% } %>
+    <form method="post" action="<%= base %>/assign">
+      <div class="field">
+        <label for="assignee">إسناد إلى عضو من الفريق</label>
+        <select id="assignee" name="assignee" class="select">
+          <option value="">بدون مسؤول</option>
+          <% members.forEach(function (m) { %><option value="<%= m.user_id %>" <%= Number(request.assigned_to) === m.user_id ? 'selected' : '' %>><%= m.display %> (<%= m.roleLabel %>)</option><% }) %>
+        </select>
+      </div>
+      <button type="submit" class="btn btn--secondary btn--block">حفظ الإسناد</button>
+    </form>
+  </section>
+<% } %>
+
+<section class="card detail-card" id="thread">
+  <h2>الردود</h2>
+  <% if (messages.length) { %>
+    <ul class="thread">
+      <% messages.forEach(function (m) { %>
+        <li class="thread__item thread__item--<%= m.visibility %>">
+          <p class="thread__head"><strong><%= m.author %></strong> <span class="muted" dir="ltr"><%= m.at %></span>
+            <% if (m.visibility === 'internal') { %><span class="badge badge--soon">داخلي</span><% } else if (m.visibility === 'landlord') { %><span class="badge badge--calm">المالك والمكتب</span><% } %>
+          </p>
+          <p class="pre-line"><%= m.body %></p>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p class="empty-state">لا توجد ردود بعد.</p>
+  <% } %>
+  <form method="post" action="<%= base %>/messages" novalidate>
+    <div class="field">
+      <label for="body"><%= kind === 'landlord' ? 'تعليق' : 'رد' %></label>
+      <textarea id="body" name="body" class="textarea" rows="3" maxlength="<%= limits.message %>" required></textarea>
+      <p class="field-hint">حتى <%= limits.message %> حرف، نص فقط.<%= kind === 'landlord' ? ' يراه المكتب فقط.' : '' %></p>
+    </div>
+    <% if (kind === 'office') { %>
+      <div class="field">
+        <label for="visibility">نوع الرد</label>
+        <select id="visibility" name="visibility" class="select">
+          <% Object.entries(visibility).forEach(function ([key, label]) { %><option value="<%= key %>"><%= label %></option><% }) %>
+        </select>
+      </div>
+    <% } %>
+    <button type="submit" class="btn btn--primary btn--block">إرسال</button>
+  </form>
+</section>

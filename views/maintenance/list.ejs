@@ -1,0 +1,121 @@
+<%- include('../partials/area-nav') %>
+<div class="page-head">
+  <h1>الصيانة</h1>
+</div>
+<% if (locals.message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+
+<% if (kind === 'tenant' && form) { %>
+  <section class="card form-card" id="new">
+    <h2>طلب صيانة جديد</h2>
+    <% if (form.errors.form) { %><div class="flash flash--danger" role="alert"><%= form.errors.form %></div><% } %>
+    <% if (form.contracts.length === 0) { %>
+      <p class="empty-state">لا يوجد عقد مرتبط بحسابك لرفع طلب صيانة عليه.</p>
+    <% } else { %>
+      <% const first = form.contracts[0]; const chosen = form.values.contract || String(first.contract_id); %>
+      <form method="post" action="/tenant/contracts/<%= chosen %>/maintenance" enctype="multipart/form-data" novalidate id="maintenance-form">
+        <% if (form.contracts.length > 1) { %>
+          <div class="field">
+            <label for="contract">العقد</label>
+            <select id="contract" name="contract_choice" class="select" data-action-template="/tenant/contracts/{id}/maintenance">
+              <% form.contracts.forEach(function (c) { %><option value="<%= c.contract_id %>" <%= String(c.contract_id) === chosen ? 'selected' : '' %>><%= c.office_name %> - عقد <%= c.contract_id %></option><% }) %>
+            </select>
+          </div>
+        <% } %>
+        <div class="form-grid">
+          <div class="field">
+            <label for="category">نوع المشكلة</label>
+            <select id="category" name="category" class="select" <%= form.errors.category ? 'aria-invalid=true' : '' %>>
+              <option value="">اختر</option>
+              <% Object.entries(labels.categories).forEach(function ([key, label]) { %><option value="<%= key %>" <%= form.values.category === key ? 'selected' : '' %>><%= label %></option><% }) %>
+            </select>
+            <% if (form.errors.category) { %><p class="field-error"><%= form.errors.category %></p><% } %>
+          </div>
+          <div class="field">
+            <label for="priority">الأولوية</label>
+            <select id="priority" name="priority" class="select">
+              <% Object.entries(labels.priorities).forEach(function ([key, label]) { %><option value="<%= key %>" <%= form.values.priority === key ? 'selected' : '' %>><%= label %></option><% }) %>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="description">وصف المشكلة</label>
+          <textarea id="description" name="description" class="textarea" rows="4" maxlength="500" required <%= form.errors.description ? 'aria-invalid=true' : '' %>><%= form.values.description %></textarea>
+          <p class="field-hint">حتى 500 حرف. لا تكتب أرقام هوية أو حسابات.</p>
+          <% if (form.errors.description) { %><p class="field-error"><%= form.errors.description %></p><% } %>
+        </div>
+        <div class="field">
+          <label for="photos">صور (اختياري، حتى <%= form.maxFiles %> صور، كل صورة حتى <%= form.maxMb %> ميجابايت)</label>
+          <input id="photos" name="photos" class="input input--file" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+          <p class="field-hint">تُحذف بيانات الموقع من الصور تلقائياً.</p>
+          <% if (form.errors.photos) { %><p class="field-error"><%= form.errors.photos %></p><% } %>
+        </div>
+        <button type="submit" class="btn btn--primary btn--block btn--large">إرسال الطلب</button>
+      </form>
+    <% } %>
+  </section>
+<% } %>
+
+<% if (kind === 'office') { %>
+  <form class="card filter-bar" method="get" action="/office/maintenance" role="search">
+    <div class="filter-grid">
+      <div class="field">
+        <label for="status">الحالة</label>
+        <select id="status" name="status" class="select">
+          <option value="">الكل</option>
+          <option value="open" <%= filters.status === 'open' ? 'selected' : '' %>>المفتوحة</option>
+          <% Object.entries(labels.statuses).forEach(function ([key, label]) { %><option value="<%= key %>" <%= filters.status === key ? 'selected' : '' %>><%= label %></option><% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="category-f">النوع</label>
+        <select id="category-f" name="category" class="select">
+          <option value="">الكل</option>
+          <% Object.entries(labels.categories).forEach(function ([key, label]) { %><option value="<%= key %>" <%= filters.category === key ? 'selected' : '' %>><%= label %></option><% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="assignee">المسؤول</label>
+        <select id="assignee" name="assignee" class="select">
+          <option value="">الكل</option>
+          <option value="me" <%= filters.assignee === 'me' ? 'selected' : '' %>>طلباتي</option>
+          <option value="none" <%= filters.assignee === 'none' ? 'selected' : '' %>>بدون مسؤول</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn--secondary btn--block">عرض</button>
+  </form>
+<% } %>
+
+<% if (rows.length === 0) { %>
+  <section class="card empty-card">
+    <p class="lead"><%= filtered ? 'لا توجد طلبات تطابق البحث.' : (kind === 'tenant' ? 'لم ترسل أي طلب صيانة بعد.' : 'لا توجد طلبات صيانة بعد. تظهر هنا طلبات المستأجرين.') %></p>
+    <% if (filtered) { %><a href="/office/maintenance" class="btn btn--secondary">عرض الكل</a><% } %>
+  </section>
+<% } else { %>
+  <p class="muted"><%= total %> طلب</p>
+  <ul class="item-list">
+    <% rows.forEach(function (r) { %>
+      <li class="item">
+        <div class="item__title">
+          <a href="<%= detailBase %>/<%= r.id %>"><%= r.unit_label || 'وحدة' %> · <%= r.categoryLabel %></a>
+          <span class="badge badge--maint-<%= r.status %>"><%= r.statusLabel %></span>
+          <% if (r.priority === 'high') { %><span class="badge badge--prio-high">عاجلة</span><% } %>
+        </div>
+        <p class="item__meta">
+          <span dir="ltr"><%= String(r.created_at).slice(0, 10) %></span>
+          <%= r.photo_count ? ` · ${r.photo_count} صور` : '' %>
+          <%= kind === 'office' ? ` · المسؤول: ${r.assigneeLabel || 'غير محدد'}` : '' %>
+          <%= r.officeName ? ` · ${r.officeName}` : '' %>
+        </p>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (pages > 1) { %>
+    <nav class="pager" aria-label="الصفحات">
+      <% if (prevUrl) { %><a class="btn btn--secondary" href="<%= prevUrl %>">السابق</a><% } else { %><span></span><% } %>
+      <span>صفحة <%= page %> من <%= pages %></span>
+      <% if (nextUrl) { %><a class="btn btn--secondary" href="<%= nextUrl %>">التالي</a><% } else { %><span></span><% } %>
+    </nav>
+  <% } %>
+<% } %>
+<% if (kind === 'tenant') { %><script src="<%= assetUrl('/js/maintenanceForm.js') %>" defer></script><% } %>

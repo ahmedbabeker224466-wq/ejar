@@ -1,3 +1,4 @@
+<%- include('../partials/area-nav') %>
 <p class="back-link"><a href="/landlord">→ صفحة المالك</a></p>
 <% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
 
@@ -59,12 +60,16 @@
 </section>
 
 <section class="card detail-card" id="payments">
-  <h2>الدفعات (<%= payments.length %>)</h2>
+  <div class="page-head">
+    <h2>الدفعات (<%= payments.length %>)</h2>
+    <a href="/landlord/contracts/<%= contract.id %>/receipt" class="btn btn--secondary btn--small">كشف قابل للطباعة</a>
+  </div>
   <% if (payments.length) { %>
     <ul class="payments">
       <% payments.forEach(function (p, i) { %>
         <li class="payment">
           <%- include('_payment', { p: p, index: i, paymentLabels: paymentLabels }) %>
+          <%- include('../partials/payment-entries', { p: p, base: `/landlord/contracts/${contract.id}/payments/${p.id}`, canRecord: true, undoable: undoable, fmt: fmt, methods: entryMethods, roleLabels: entryRoleLabels, today: today }) %>
           <% if (p.status === 'tenant_reported') { %>
             <p class="muted">أبلغ المستأجر أنه دفع. هل وصلك المبلغ؟</p>
             <div class="button-row">
