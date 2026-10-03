@@ -1,0 +1,34 @@
+<p class="back-link"><a href="/admin/promos">→ أكواد الخصم</a></p>
+<div class="page-head"><h1><%= row ? 'كود الخصم ' + row.code : 'كود خصم جديد' %></h1></div>
+<form method="post" action="<%= row ? '/admin/promos/' + row.id : '/admin/promos' %>" class="form-card" novalidate>
+  <% if (!row) { %>
+    <div class="field"><label for="code">الرمز</label><input id="code" name="code" class="input" dir="ltr" maxlength="30" value="<%= values.code %>" required>
+      <% if (errors.code) { %><p class="field-error"><%= errors.code %></p><% } %></div>
+  <% } %>
+  <div class="field"><label for="discount_type">نوع الخصم</label>
+    <select id="discount_type" name="discount_type" class="select">
+      <option value="percent" <%= values.discount_type === 'percent' ? 'selected' : '' %>>نسبة مئوية</option>
+      <option value="fixed" <%= values.discount_type === 'fixed' ? 'selected' : '' %>>مبلغ ثابت</option></select></div>
+  <div class="form-grid">
+    <div class="field"><label for="percent">النسبة % (إن كان نسبة)</label><input id="percent" name="percent" class="input" inputmode="decimal" dir="ltr" value="<%= values.percent %>">
+      <% if (errors.percent) { %><p class="field-error"><%= errors.percent %></p><% } %></div>
+    <div class="field"><label for="fixed">المبلغ بالريال (إن كان ثابتاً)</label><input id="fixed" name="fixed" class="input" inputmode="decimal" dir="ltr" value="<%= values.fixed %>">
+      <% if (errors.fixed) { %><p class="field-error"><%= errors.fixed %></p><% } %></div>
+    <div class="field"><label for="valid_from">يبدأ في (اختياري)</label><input id="valid_from" name="valid_from" class="input" type="date" dir="ltr" value="<%= values.valid_from %>">
+      <% if (errors.valid_from) { %><p class="field-error"><%= errors.valid_from %></p><% } %></div>
+    <div class="field"><label for="valid_to">ينتهي في (اختياري، يشمل اليوم)</label><input id="valid_to" name="valid_to" class="input" type="date" dir="ltr" value="<%= values.valid_to %>">
+      <% if (errors.valid_to) { %><p class="field-error"><%= errors.valid_to %></p><% } %></div>
+    <div class="field"><label for="max_redemptions">أقصى عدد استخدامات (اختياري)</label><input id="max_redemptions" name="max_redemptions" class="input" inputmode="numeric" dir="ltr" value="<%= values.max_redemptions %>">
+      <% if (errors.max_redemptions) { %><p class="field-error"><%= errors.max_redemptions %></p><% } %></div>
+  </div>
+  <fieldset class="checks"><legend>الباقات المشمولة (بدون اختيار = كل الباقات)</legend>
+    <div class="checks__grid">
+      <% allPlans.forEach(function (p) { %><label class="check"><input type="checkbox" name="plan_ids" value="<%= p.id %>" <%= values.plan_ids.map(Number).includes(Number(p.id)) ? 'checked' : '' %>> <%= p.name_ar %></label><% }) %>
+    </div></fieldset>
+  <label class="check"><input type="checkbox" name="is_active" value="1" <%= values.is_active ? 'checked' : '' %>> مفعّل</label>
+  <div class="field"><label for="note">ملاحظة داخلية</label><input id="note" name="note" class="input" maxlength="200" value="<%= values.note %>"></div>
+  <p class="muted">كل مكتب يستخدم الكود مرة واحدة فقط.</p>
+  <div class="field"><label for="reason">سبب الإجراء (يُسجَّل في سجل التدقيق)</label><input id="reason" name="reason" class="input" maxlength="200" required>
+    <% if (errors.reason) { %><p class="field-error"><%= errors.reason %></p><% } %></div>
+  <button type="submit" class="btn btn--primary btn--large btn--block">حفظ</button>
+</form>

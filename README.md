@@ -133,7 +133,7 @@ cPanel Cron Jobs fallback (with `RUN_CRON=false`):
 0 4 * * * curl -s -X POST -H "X-Cron-Secret: YOUR_CRON_SECRET" https://yourdomain.sa/cron/run/reminders
 ```
 
-Jobs: reminders, deliver, recompute, late_payments, digest, expire_invites, trial_check, purge_notifications, purge_auth (plus disabled placeholders: backup, plan_renewal, sms_balance, health_ping, reports).
+Jobs: reminders, deliver, recompute, late_payments, digest, expire_invites, trial_check, plan_renewal, purge_notifications, purge_auth (plus disabled placeholders: backup, sms_balance, health_ping, reports).
 
 ## Maintenance, payments, messages, team, tasks, reports
 
@@ -157,6 +157,38 @@ Jobs: reminders, deliver, recompute, late_payments, digest, expire_invites, tria
 Storage: maintenance photos are re-encoded with sharp (JPEG, at most 1600 px, no metadata) and stored in `UPLOAD_DIR` (default `storage/uploads` in the app folder). It must be outside the public folder and writable by the app; back it up with the database. See `deploy/DEPLOY-CPANEL.md` step 12. `plans.max_photos` limits photos per office; `plans.max_members` limits active team members.
 
 CSV: UTF-8 with BOM, cells starting with `= + - @` get a leading quote, 10 downloads per minute per person.
+
+## Subscriptions, payments, invoices and the platform admin
+
+Plans, the subscription lifecycle, checkout (Moyasar **test mode only**, or bank transfer), promo codes, invoices and the `/admin` area.
+
+| Route | What it does |
+|---|---|
+| `GET /office/billing` | Owner only: current plan and state, usage against the limits, plans to buy, open bank transfers, invoices |
+| `GET /office/billing/checkout?plan=&interval=&promo=` | Review: price, discount, VAT and total before paying; promo code and interval switch |
+| `POST /office/billing/orders` | Creates the order (quote, promo reservation, downgrade check in one transaction) |
+| `GET /office/billing/orders/:id/pay` | Moyasar hosted form (this page has its own Content-Security-Policy) |
+| `GET /office/billing/moyasar/callback` | The customer's return: the payment is fetched from Moyasar by id; the URL's status is ignored |
+| `POST /webhooks/moyasar` | Webhook: wrong or missing `secret_token` answers 404; only the payment id is used and the payment is fetched; replays are no-ops |
+| `GET\|POST /office/billing/orders/:id/transfer`, `GET /office/billing/receipts/:id` | Bank transfer: reference (never an IBAN or a long number) and an optional receipt image (re-encoded, owner and platform admin only) |
+| `GET /office/billing/invoices/:id` | Printable A4 invoice or receipt (ownership checked, 404 otherwise) |
+| `/admin` | Platform admin (2FA, every change needs a reason and writes an audit row): overview, offices (extend trial, change plan, suspend, unsuspend, notes), orders and payments, credit notes, bank-transfer queue, promo codes, plans, settings and kill switches, audit viewer |
+
+**Environment (Moyasar, test mode only).** `MOYASAR_SECRET_KEY`, `MOYASAR_PUBLISHABLE_KEY` and `MOYASAR_WEBHOOK_SECRET` come from the environment only. Without the first two the payment UI says "الدفع الإلكتروني غير مفعّل" and bank transfer still works. Live keys are refused unless `MOYASAR_ALLOW_LIVE=1` (do not set it yet). Card data never touches this app: the customer types it into Moyasar's hosted form; we keep only the payment id, status, amount in halalas and the last 4 digits when Moyasar returns them. Webhook URL to enter in Moyasar: `<APP_URL>/webhooks/moyasar`, with `MOYASAR_WEBHOOK_SECRET` as the secret token. The API shapes used (payment fetch, form settings, webhook body) are written from Moyasar's public documentation and must be verified once in test mode before launch.
+
+**Money.** VAT lives in `config/billing.js` (15%). Prices are stored VAT-exclusive; everything is integer halalas; VAT is rounded half up once on the discounted net. Order of math: subtotal, minus discount, VAT on the net, total.
+
+**Lifecycle.** A new office gets a trial (14 days) and a `trialing` subscription row. A paid period that ends gives 7 days of read-only access ("وضع القراءة فقط"), then the office is suspended; data is kept 90 days (a policy; nothing is deleted automatically). An expired trial is locked at once (as before). Renewing while the same plan runs starts the new period where the old one ends; a plan change or a lapsed plan starts from the payment day. A downgrade is refused while usage is above the new limits (the message lists what to reduce; nothing is deleted). Plan changes in `/admin/plans` apply to subscribers at once.
+
+**Cron.** `plan_renewal` (daily 06:00 Riyadh, also `POST /cron/run/plan_renewal`): moves statuses, reminds the owner 7, 3 and 1 days before the last day (trials too), and expires unpaid orders (24 h for cards, 72 h for transfers that were never sent), freeing their promo reservations. Idempotent (dedupe keys), notifications go through the notification service.
+
+**Invoices.** Gap-free numbers per series and Riyadh year (`INV-2026-000001`, credit notes `CN-2026-000001`) from a locked counter row. Each invoice is a snapshot (seller, buyer = office display name only, lines, discount, VAT, total). The title is "فاتورة ضريبية مبسطة" only when the seller VAT number is set in `/admin/settings`; otherwise "إيصال دفع". The refund action issues a credit note; it does not move money.
+
+**Invoicing entity pending, ZATCA later.** The company that issues invoices is not decided yet: legal name, VAT number, address and CR are empty-safe platform settings (platform admin only) and no company or VAT number is hardcoded. This app does not claim ZATCA e-invoicing compliance; ZATCA Phase 2 integration is a separate later task.
+
+**Plan features.** `plans.features` holds on/off switches (`whatsapp`, `telegram`, `reports_csv`, `ai_reading`); a missing key, null or the older array form means allowed. They are enforced on the server (AI reading, CSV downloads, WhatsApp/Telegram settings and delivery). `max_members` is the "max staff" limit.
+
+**Kill switches** (`/admin/settings`): disable signups (existing users keep signing in), disable AI reading, and a banner message shown on every page.
 
 ## Project layout
 

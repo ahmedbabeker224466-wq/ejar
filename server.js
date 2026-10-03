@@ -53,6 +53,9 @@ async function start() {
     logger.info(underPassenger ? 'Aqdi started under Passenger' : `Aqdi listening on port ${port}`),
   );
 
+  // The platform admin's banner message is kept in memory and refreshed here.
+  require('./services/platformSettings').startBannerRefresh();
+
   // Scheduled jobs (reminders, deliveries, cleanups). Every worker may start
   // them: each job takes a database lock, so only one runs it. RUN_CRON=false
   // turns them off (then cPanel Cron Jobs can call POST /cron/run/:job).

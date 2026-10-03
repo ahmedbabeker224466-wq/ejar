@@ -17,6 +17,7 @@ const areaRoutes = require('./routes/areas');
 const officeRoutes = require('./routes/office');
 const { loadUser, loadUnreadCount } = require('./middleware/auth');
 const maintenance = require('./middleware/maintenance');
+const platformSettings = require('./services/platformSettings');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -91,6 +92,12 @@ app.use(maintenance);
 // After static files, so serving CSS/JS never touches the database.
 app.use(loadUser());
 app.use(loadUnreadCount());
+
+// The platform admin's banner message (empty = none), read from memory.
+app.use((req, res, next) => {
+  res.locals.platformBanner = platformSettings.bannerNow();
+  next();
+});
 
 app.use(routes);
 app.use(authRoutes);

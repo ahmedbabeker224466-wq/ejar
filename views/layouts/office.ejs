@@ -13,6 +13,7 @@
   <script src="<%= assetUrl('/js/office.js') %>" defer></script>
 </head>
 <body class="office-body">
+  <%- include('../partials/platform-banner') %>
   <header class="office-top">
     <button type="button" class="office-menu-btn" id="office-menu-toggle" aria-controls="office-nav" aria-expanded="false">
       <span class="office-menu-btn__bars" aria-hidden="true"></span>
@@ -33,6 +34,11 @@
     <div class="office-banner office-banner--info" role="status">
       <%= access.trialDaysLeft === 0 ? 'تجربتك المجانية تنتهي اليوم' : `تجربتك المجانية تنتهي بعد ${access.trialDaysLeft} يوم` %>
       <% if (can('billing')) { %><a href="/office/billing">اشترك الآن</a><% } %>
+    </div>
+  <% } else if (access.readOnly) { %>
+    <div class="office-banner office-banner--danger" role="alert">
+      انتهى اشتراك المكتب: الحساب في وضع القراءة فقط وسيتوقف بعد <%= access.graceDaysLeft %> يوم.
+      <% if (can('billing')) { %><a href="/office/billing">جدّد الاشتراك</a><% } %>
     </div>
   <% } else if (access.pastDue) { %>
     <div class="office-banner office-banner--danger" role="alert">

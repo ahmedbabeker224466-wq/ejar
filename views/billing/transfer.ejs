@@ -1,0 +1,31 @@
+<p class="back-link"><a href="/office/billing">→ رجوع إلى الاشتراك</a></p>
+<div class="page-head"><h1>الدفع بالحوالة البنكية</h1></div>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<section class="card detail-card">
+  <p class="lead">حوّل المبلغ <strong><%= fmt(order.total) %> ريال</strong> (شامل الضريبة) ثم أرسل لنا مرجع الحوالة. رقم طلبك: <strong><%= order.id %></strong>.</p>
+  <% if (bank.iban || bank.name || bank.account_name) { %>
+    <dl class="details">
+      <% if (bank.name) { %><dt>البنك</dt><dd><%= bank.name %></dd><% } %>
+      <% if (bank.account_name) { %><dt>اسم الحساب</dt><dd><%= bank.account_name %></dd><% } %>
+      <% if (bank.iban) { %><dt>الآيبان</dt><dd dir="ltr"><%= bank.iban %></dd><% } %>
+    </dl>
+  <% } else { %>
+    <p class="flash flash--warning">لم تُضبط بيانات الحساب البنكي بعد. تواصل مع الدعم<% if (support.phone || support.email) { %>: <span dir="ltr"><%= support.phone %> <%= support.email %></span><% } %>.</p>
+  <% } %>
+</section>
+<section class="card detail-card">
+  <h2>أرسل مرجع الحوالة</h2>
+  <form method="post" action="/office/billing/orders/<%= order.id %>/transfer" enctype="multipart/form-data" novalidate>
+    <div class="field">
+      <label for="reference">رمز المرجع</label>
+      <input id="reference" name="reference" class="input" dir="ltr" maxlength="40" required>
+      <p class="field-hint">رمز قصير تجده في إشعار البنك. لا تكتب رقم حساب أو آيبان.</p>
+    </div>
+    <div class="field">
+      <label for="receipt">صورة الإيصال (اختياري)</label>
+      <input id="receipt" name="receipt" class="input input--file" type="file" accept="image/jpeg,image/png,image/webp">
+      <p class="field-hint">صورة JPG أو PNG أو WebP حتى 5 ميجابايت.</p>
+    </div>
+    <button type="submit" class="btn btn--primary btn--large btn--block">إرسال للمراجعة</button>
+  </form>
+</section>

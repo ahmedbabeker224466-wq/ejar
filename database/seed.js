@@ -6,7 +6,11 @@
 //
 //   node database/seed.js
 
-// Placeholder prices in SAR; set real prices from the admin panel later.
+// Feature switches of a plan (see services/plans.js FEATURE_FLAGS). The trial
+// has everything on so a new office can try it all.
+const ALL_FEATURES = { whatsapp: true, telegram: true, reports_csv: true, ai_reading: true };
+
+// Placeholder prices in SAR (VAT-exclusive); set real prices from the admin panel later.
 const PLANS = [
   {
     code: 'trial',
@@ -18,7 +22,7 @@ const PLANS = [
     max_members: 2,
     max_ai_reads_monthly: 10,
     max_photos: 30,
-    features: ['contracts', 'reminders', 'ai_read'],
+    features: ALL_FEATURES,
     sort_order: 1,
   },
   {
@@ -31,7 +35,7 @@ const PLANS = [
     max_members: 3,
     max_ai_reads_monthly: 100,
     max_photos: 200,
-    features: ['contracts', 'reminders', 'ai_read', 'invites'],
+    features: { whatsapp: false, telegram: false, reports_csv: true, ai_reading: true },
     sort_order: 2,
   },
   {
@@ -44,7 +48,7 @@ const PLANS = [
     max_members: 10,
     max_ai_reads_monthly: 500,
     max_photos: 1000,
-    features: ['contracts', 'reminders', 'ai_read', 'invites', 'maintenance', 'listings', 'whatsapp'],
+    features: ALL_FEATURES,
     sort_order: 3,
   },
   {
@@ -57,17 +61,7 @@ const PLANS = [
     max_members: null,
     max_ai_reads_monthly: 2000,
     max_photos: null,
-    features: [
-      'contracts',
-      'reminders',
-      'ai_read',
-      'invites',
-      'maintenance',
-      'listings',
-      'whatsapp',
-      'branches',
-      'priority_support',
-    ],
+    features: ALL_FEATURES,
     sort_order: 4,
   },
 ];

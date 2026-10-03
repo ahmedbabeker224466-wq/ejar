@@ -1,0 +1,31 @@
+<p class="back-link"><a href="/admin/plans">→ الباقات</a></p>
+<div class="page-head"><h1><%= plan ? 'الباقة ' + plan.name_ar : 'باقة جديدة' %></h1></div>
+<form method="post" action="<%= plan ? '/admin/plans/' + plan.id : '/admin/plans' %>" class="form-card" novalidate>
+  <% if (!plan) { %>
+    <div class="field"><label for="code">الرمز (إنجليزي صغير)</label><input id="code" name="code" class="input" dir="ltr" maxlength="30" value="<%= values.code %>" required>
+      <% if (errors.code) { %><p class="field-error"><%= errors.code %></p><% } %></div>
+  <% } %>
+  <div class="field"><label for="name_ar">اسم الباقة</label><input id="name_ar" name="name_ar" class="input" maxlength="80" value="<%= values.name_ar %>" required>
+    <% if (errors.name_ar) { %><p class="field-error"><%= errors.name_ar %></p><% } %></div>
+  <div class="form-grid">
+    <div class="field"><label for="price_monthly">السعر الشهري (ريال، قبل الضريبة)</label><input id="price_monthly" name="price_monthly" class="input" inputmode="decimal" dir="ltr" value="<%= values.price_monthly %>">
+      <% if (errors.price_monthly) { %><p class="field-error"><%= errors.price_monthly %></p><% } %></div>
+    <div class="field"><label for="price_yearly">السعر السنوي (ريال، قبل الضريبة)</label><input id="price_yearly" name="price_yearly" class="input" inputmode="decimal" dir="ltr" value="<%= values.price_yearly %>">
+      <% if (errors.price_yearly) { %><p class="field-error"><%= errors.price_yearly %></p><% } %></div>
+    <% limits.forEach(function (l) { %>
+      <div class="field"><label for="<%= l.key %>"><%= l.label %> (فارغ = بلا حد)</label><input id="<%= l.key %>" name="<%= l.key %>" class="input" inputmode="numeric" dir="ltr" value="<%= values[l.key] %>">
+        <% if (errors[l.key]) { %><p class="field-error"><%= errors[l.key] %></p><% } %></div>
+    <% }) %>
+    <div class="field"><label for="sort_order">الترتيب</label><input id="sort_order" name="sort_order" class="input" inputmode="numeric" dir="ltr" value="<%= values.sort_order %>">
+      <% if (errors.sort_order) { %><p class="field-error"><%= errors.sort_order %></p><% } %></div>
+  </div>
+  <fieldset class="checks"><legend>المزايا</legend>
+    <div class="checks__grid">
+      <% Object.keys(flags).forEach(function (f) { %><label class="check"><input type="checkbox" name="feature_<%= f %>" value="1" <%= values.features[f] ? 'checked' : '' %>> <%= flags[f] %></label><% }) %>
+    </div></fieldset>
+  <label class="check"><input type="checkbox" name="is_public" value="1" <%= values.is_public ? 'checked' : '' %>> تُعرض للمكاتب في صفحة الاشتراك</label>
+  <label class="check"><input type="checkbox" name="is_active" value="1" <%= values.is_active ? 'checked' : '' %>> مفعّلة</label>
+  <div class="field"><label for="reason">سبب الإجراء (يُسجَّل في سجل التدقيق)</label><input id="reason" name="reason" class="input" maxlength="200" required>
+    <% if (errors.reason) { %><p class="field-error"><%= errors.reason %></p><% } %></div>
+  <button type="submit" class="btn btn--primary btn--large btn--block">حفظ</button>
+</form>

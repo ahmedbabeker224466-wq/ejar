@@ -1,0 +1,12 @@
+<p class="back-link"><a href="/office/billing">→ رجوع إلى الاشتراك</a></p>
+<div class="page-head"><h1>الدفع بالبطاقة</h1></div>
+<section class="card detail-card">
+  <p class="lead">المبلغ المطلوب: <strong><%= fmt(order.total) %> ريال</strong> (شامل الضريبة) · طلب رقم <%= order.id %></p>
+  <link rel="stylesheet" href="<%= styleUrl %>">
+  <div class="mysr-form" id="moyasar-form"></div>
+  <p class="flash flash--warning" id="moyasar-missing" hidden>تعذّر تحميل نموذج الدفع. تحقق من اتصالك وأعد تحميل الصفحة، أو اختر الحوالة البنكية.</p>
+  <script type="application/json" id="moyasar-config"><%- configJson %></script>
+  <script src="<%= scriptUrl %>" defer></script>
+  <script src="<%= assetUrl('/js/moyasarForm.js') %>" defer></script>
+  <p class="muted">بيانات البطاقة تُدخَل في نموذج مزوّد الدفع مباشرة ولا تمر بخوادمنا ولا نحفظها.</p>
+</section>

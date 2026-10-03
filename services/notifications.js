@@ -26,6 +26,12 @@ const KIND_LABELS = {
   task_assigned: 'مهمة مسندة',
   task_due: 'مهمة تستحق غداً',
   trial_expired: 'انتهاء التجربة',
+  sub_reminder: 'قرب انتهاء الاشتراك',
+  sub_expired: 'انتهاء الاشتراك',
+  sub_suspended: 'إيقاف الحساب',
+  billing_paid: 'تأكيد دفع الاشتراك',
+  billing_transfer: 'قرار الحوالة البنكية',
+  billing_alert: 'تنبيه مالي',
   test: 'رسالة تجربة',
 };
 

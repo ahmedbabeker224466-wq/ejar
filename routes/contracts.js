@@ -22,6 +22,7 @@ const { maskPhone } = require('../utils/phone');
 const { requirePerm, can } = require('../middleware/permissions');
 const { rateLimit } = require('../middleware/rateLimit');
 const fileUpload = require('express-fileupload');
+const features = require('../services/features');
 const ai = require('../services/aiContractReader');
 const aiUsage = require('../services/aiUsage');
 const feedback = require('../services/feedback');
@@ -251,11 +252,13 @@ const aiUpload = fileUpload({
 
 async function renderAiUpload(req, res, { status = 200, error = null } = {}) {
   const config = ai.aiConfig();
+  const availability = await features.aiAvailability(db.pool, req.office.id);
+  const enabled = config.enabled && availability.available;
   return res.status(status).render('office/contracts/ai-upload', {
     title: 'قراءة العقد من ملف',
-    enabled: config.enabled,
-    disabledMessage: ai.MESSAGES.not_configured,
-    usage: config.enabled ? await aiUsage.usageFor(db.pool, req.office.id) : null,
+    enabled,
+    disabledMessage: config.enabled ? availability.message : ai.MESSAGES.not_configured,
+    usage: enabled ? await aiUsage.usageFor(db.pool, req.office.id) : null,
     error,
   });
 }
@@ -264,8 +267,11 @@ router.get('/office/contracts/new/ai', requirePerm('contracts.ai'), wrap((req, r
 
 /** Without CLAUDE_API_KEY the feature is off: answer before reading the upload. */
 function aiEnabled(req, res, next) {
-  if (ai.aiConfig().enabled) return next();
-  return renderAiUpload(req, res, { status: 503, error: ai.MESSAGES.not_configured }).catch(next);
+  if (!ai.aiConfig().enabled) return renderAiUpload(req, res, { status: 503, error: ai.MESSAGES.not_configured }).catch(next);
+  return features.aiAvailability(db.pool, req.office.id).then((availability) => {
+    if (availability.available) return next();
+    return renderAiUpload(req, res, { status: 403, error: availability.message });
+  }).catch(next);
 }
 
 router.post('/office/contracts/new/ai', requirePerm('contracts.ai'), aiEnabled, aiLimit, aiUpload, wrap(async (req, res) => {

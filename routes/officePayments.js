@@ -17,6 +17,7 @@ const { scopeToOffice } = require('../services/scopeToOffice');
 const { riyadhDate } = require('../services/contractDates');
 const { requirePerm } = require('../middleware/permissions');
 const { csvLimit } = require('../middleware/csvLimit');
+const { requireFeature } = require('../services/features');
 
 const router = express.Router();
 const today = () => riyadhDate(new Date());
@@ -80,7 +81,7 @@ router.get('/office/payments', requirePerm('payments.read'), wrap(async (req, re
   });
 }));
 
-router.get('/office/payments.csv', requirePerm('payments.read'), csvLimit, wrap(async (req, res) => {
+router.get('/office/payments.csv', requirePerm('payments.read'), requireFeature('reports_csv', { text: true }), csvLimit, wrap(async (req, res) => {
   const day = today();
   const filters = entries.parseOverdueFilters(req.query, day);
   const rows = await entries.overdueAll(db.pool, req.office.id, { today: day, filters });

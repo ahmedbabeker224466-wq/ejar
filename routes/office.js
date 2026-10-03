@@ -26,12 +26,14 @@ const messageRoutes = require('./messages');
 const teamRoutes = require('./team');
 const taskRoutes = require('./tasks');
 const reportRoutes = require('./reports');
+const billingRoutes = require('./billing');
 const contractsService = require('../services/contracts');
 const contractStatus = require('../services/contractStatus');
 const { riyadhDate } = require('../services/contractDates');
 const feedback = require('../services/feedback');
 const delivery = require('../services/delivery');
 const { KIND_LABELS } = require('../services/notifications');
+const platformSettings = require('../services/platformSettings');
 const { riyadhNow } = require('../utils/time');
 
 const router = express.Router();
@@ -95,6 +97,9 @@ router.post('/office/new', requireAuth, createOfficeLimit, onlyWithoutOffice, as
     return renderNewOffice(res, { ...formValues(values), phone: String(req.body.phone || '').slice(0, 20) }, errors, 422);
   }
   try {
+    if (await platformSettings.signupsDisabled()) {
+      return renderNewOffice(res, formValues(values), { form: 'التسجيل الجديد متوقف مؤقتاً. حاول لاحقاً.' }, 403);
+    }
     await offices.createOffice(db.pool, { userId: req.user.id, fields: values, ip: req.ip });
     return res.redirect('/office');
   } catch (err) {
@@ -156,10 +161,11 @@ router.use(messageRoutes.office);
 router.use(teamRoutes);
 router.use(taskRoutes);
 router.use(reportRoutes.office);
+router.use(billingRoutes.office);
 
 // One placeholder page per navigation item, each behind its own capability.
 // Landlords, units, contracts (routes/landlords.js, units.js, contracts.js) and settings (below) are real pages.
-for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'contracts', 'settings', 'payments', 'maintenance', 'messages', 'team', 'tasks', 'reports'].includes(i.key))) {
+for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'contracts', 'settings', 'payments', 'maintenance', 'messages', 'team', 'tasks', 'reports', 'billing'].includes(i.key))) {
   router.get(item.href, requirePerm(item.capability), (req, res) => {
     res.render('office/placeholder', { title: item.label });
   });

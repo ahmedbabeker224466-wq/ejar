@@ -6,6 +6,7 @@ const { scopeToOffice } = require('./scopeToOffice');
 const { createAudit } = require('./audit');
 const { withTransaction } = require('./transaction');
 const contractDates = require('./contractDates');
+const { periodState } = require('./subscriptionState');
 const engine = require('./contractEngine');
 const { normalizeSaudi, toWesternDigits } = require('../utils/phone');
 
@@ -93,7 +94,7 @@ function validateOfficeFields(body = {}) {
 async function membershipsFor(pool, userId) {
   const [rows] = await pool.query(
     `SELECT m.office_id, m.role, m.is_active,
-            o.name, o.city, o.status, o.trial_ends_at,
+            o.name, o.city, o.status, o.trial_ends_at, o.subscription_ends_at,
             p.code AS plan_code, p.name_ar AS plan_name
        FROM office_members m
        JOIN offices o ON o.id = m.office_id
@@ -152,6 +153,14 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
     for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
       await scoped.insert('office_settings', { setting_key: key, setting_value: value });
     }
+    await scoped.insert('subscriptions', {
+      plan_id: plan ? plan.id : null,
+      status: 'trialing',
+      billing_interval: 'monthly',
+      period_start: now,
+      period_end: trialEndsAt,
+      price: 0,
+    });
     await createAudit(conn).write(userId, officeId, 'office.create', 'office', officeId, null, {
       name: fields.name,
       city: fields.city,
@@ -166,7 +175,8 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
 /**
  * What the office may do right now, from its status:
  * trial (not expired) and active: full access; past_due: access plus a red
- * banner; suspended or an expired trial: locked except billing and settings.
+ * banner; a paid period that ended: read-only for the grace days, then locked;
+ * suspended or an expired trial: locked except billing and settings.
  */
 function officeAccess(office, now = new Date()) {
   const result = { locked: false, reason: null, pastDue: false, onTrial: false, trialDaysLeft: null };
@@ -177,8 +187,15 @@ function officeAccess(office, now = new Date()) {
     }
     return { ...result, onTrial: true, trialDaysLeft: contractDates.trialDaysLeft(office.trial_ends_at, now) };
   }
-  if (office.status === 'past_due') return { ...result, pastDue: true };
-  if (office.status === 'active') return result;
+  if (office.status === 'active' || office.status === 'past_due') {
+    // A paid period with an end date: after it, a read-only grace, then locked.
+    if (office.subscription_ends_at) {
+      const period = periodState(office.subscription_ends_at, now);
+      if (period.state === 'expired') return { ...result, locked: true, reason: 'expired' };
+      if (period.state === 'grace') return { ...result, pastDue: true, readOnly: true, graceDaysLeft: period.graceDaysLeft };
+    }
+    return office.status === 'past_due' ? { ...result, pastDue: true } : result;
+  }
   return { ...result, locked: true, reason: 'suspended' }; // unknown status: fail closed
 }
 

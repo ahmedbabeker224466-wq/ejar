@@ -1071,6 +1071,7 @@ const COLUMN_ADDITIONS = [
   { table: 'contract_payments', column: 'paid_amount', definition: 'DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER paid_at' },
   { table: 'plans', column: 'max_photos', definition: 'INT UNSIGNED NULL AFTER max_ai_reads_monthly' },
   { table: 'plans', column: 'is_public', definition: 'TINYINT(1) NOT NULL DEFAULT 1 AFTER max_photos' },
+  { table: 'promo_codes', column: 'currency', definition: "CHAR(3) NOT NULL DEFAULT 'SAR' AFTER fixed_amount" },
   { table: 'invites', column: 'phone', definition: 'VARCHAR(20) NULL AFTER role_hint' },
   { table: 'maintenance_requests', column: 'assigned_to', definition: 'BIGINT UNSIGNED NULL AFTER priority' },
   { table: 'maintenance_requests', column: 'seen_at', definition: 'DATETIME NULL AFTER assigned_vendor_id' },

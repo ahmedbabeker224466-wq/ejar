@@ -15,6 +15,8 @@ module.exports = Object.freeze({
   DATA_KEEP_DAYS: 90,
   // A pending order that was never paid expires after this many hours.
   ORDER_TTL_HOURS: 24,
+  // A bank-transfer order waits longer for the office to send the transfer.
+  BANK_ORDER_TTL_HOURS: 72,
   // Reminders before a period ends (and on the day it ends).
   REMINDER_DAYS: Object.freeze([7, 3, 1]),
   INTERVAL_MONTHS: Object.freeze({ monthly: 1, yearly: 12 }),

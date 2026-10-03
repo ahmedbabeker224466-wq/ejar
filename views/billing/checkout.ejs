@@ -1,0 +1,45 @@
+<p class="back-link"><a href="/office/billing">→ رجوع إلى الاشتراك</a></p>
+<div class="page-head"><h1>مراجعة الطلب</h1></div>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card detail-card">
+  <h2>باقة <%= plan.name_ar %> (<%= intervalLabel %>)</h2>
+  <p><a class="btn btn--secondary btn--small" href="/office/billing/checkout?plan=<%= plan.id %>&amp;interval=<%= otherInterval %>&amp;promo=<%= encodeURIComponent(promoCode) %>">التحويل إلى <%= otherLabel %></a></p>
+
+  <form method="get" action="/office/billing/checkout" class="inline-form" novalidate>
+    <input type="hidden" name="plan" value="<%= plan.id %>">
+    <input type="hidden" name="interval" value="<%= interval %>">
+    <div class="field">
+      <label for="promo">رمز الخصم (اختياري)</label>
+      <input id="promo" name="promo" class="input" dir="ltr" maxlength="30" value="<%= promoCode %>" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn--secondary">تطبيق</button>
+  </form>
+  <% if (promoApplied) { %><p class="flash flash--success">تم تطبيق رمز الخصم <strong dir="ltr"><%= promoCode %></strong>.</p><% } %>
+  <% if (promoError) { %><p class="flash flash--warning"><%= promoError %></p><% } %>
+
+  <dl class="details quote">
+    <dt>سعر الباقة (قبل الضريبة)</dt><dd><%= fmt(quote.subtotal) %> ريال</dd>
+    <% if (quote.discount > 0) { %><dt>الخصم</dt><dd>- <%= fmt(quote.discount) %> ريال</dd>
+    <dt>بعد الخصم</dt><dd><%= fmt(quote.net) %> ريال</dd><% } %>
+    <dt>ضريبة القيمة المضافة (<%= vatPercent %>%)</dt><dd><%= fmt(quote.vat) %> ريال</dd>
+    <dt class="quote__total">الإجمالي المطلوب</dt><dd class="quote__total"><%= fmt(quote.total) %> ريال</dd>
+  </dl>
+</section>
+
+<% if (!downgrade.ok) { %>
+  <section class="card detail-card"><p class="flash flash--danger" role="alert"><%= downgrade.message %></p></section>
+<% } else { %>
+  <section class="card detail-card">
+    <h2>طريقة الدفع</h2>
+    <% if (!online) { %><p class="flash flash--info">الدفع الإلكتروني غير مفعّل.</p><% } %>
+    <form method="post" action="/office/billing/orders" class="button-row">
+      <input type="hidden" name="plan" value="<%= plan.id %>">
+      <input type="hidden" name="interval" value="<%= interval %>">
+      <input type="hidden" name="promo" value="<%= promoApplied ? promoCode : '' %>">
+      <% if (online) { %><button type="submit" name="method" value="moyasar" class="btn btn--primary btn--large btn--block"><%= quote.total === 0 ? 'تفعيل الباقة' : 'ادفع بالبطاقة' %></button><% } %>
+      <button type="submit" name="method" value="bank_transfer" class="btn btn--secondary btn--large btn--block"><%= quote.total === 0 ? 'تفعيل الباقة' : 'الدفع بالحوالة البنكية' %></button>
+    </form>
+    <p class="muted">لا نحفظ بيانات بطاقتك: تُدخَل في نموذج الدفع الآمن لدى مزوّد الدفع.</p>
+  </section>
+<% } %>

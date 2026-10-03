@@ -1,0 +1,20 @@
+<div class="page-head"><h1>الباقات</h1><a href="/admin/plans/new" class="btn btn--primary btn--small">باقة جديدة</a></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<p class="muted">أي تعديل يسري فوراً على كل المشتركين في الباقة. الأسعار قبل الضريبة.</p>
+<ul class="item-list">
+  <% rows.forEach(function (p) { %>
+    <li class="item">
+      <div class="item__title"><a href="/admin/plans/<%= p.id %>"><strong><%= p.name_ar %></strong></a> <span dir="ltr">(<%= p.code %>)</span>
+        <span class="badge badge--bill-<%= Number(p.is_active) ? 'success' : 'danger' %>"><%= Number(p.is_active) ? 'مفعّلة' : 'موقوفة' %></span>
+        <% if (!Number(p.is_public)) { %><span class="badge badge--ended">غير معروضة</span><% } %></div>
+      <div class="item__meta"><%= fmtDec(p.price_monthly) %> / شهر · <%= fmtDec(p.price_yearly) %> / سنة ·
+        وحدات <%= p.max_units === null ? '∞' : p.max_units %> · عقود <%= p.max_contracts === null ? '∞' : p.max_contracts %> · فريق <%= p.max_members === null ? '∞' : p.max_members %></div>
+      <details class="danger-zone"><summary>حذف الباقة</summary>
+        <form method="post" action="/admin/plans/<%= p.id %>/delete" novalidate>
+          <div class="field"><label for="reason-<%= p.id %>">السبب</label><input id="reason-<%= p.id %>" name="reason" class="input" maxlength="200" required></div>
+          <button type="submit" class="btn btn--danger btn--small">حذف</button>
+        </form></details>
+    </li>
+  <% }) %>
+</ul>

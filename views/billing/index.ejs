@@ -1,0 +1,93 @@
+<div class="page-head"><h1>الاشتراك</h1></div>
+<% if (notice) { %><div class="flash flash--<%= notice[0] %>" role="<%= notice[0] === 'danger' ? 'alert' : 'status' %>"><%= notice[1] %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card detail-card">
+  <h2>باقتك الحالية</h2>
+  <dl class="details">
+    <dt>الباقة</dt><dd><%= plan ? plan.name_ar : 'غير محددة' %></dd>
+    <dt>الحالة</dt><dd><span class="badge badge--bill-<%= status.tone %>"><%= status.label %></span></dd>
+    <% if (status.until) { %><dt>صالحة حتى</dt><dd dir="ltr"><%= status.until %></dd><% } %>
+    <% if (interval) { %><dt>نوع الاشتراك</dt><dd><%= interval === 'yearly' ? 'سنوي' : 'شهري' %></dd><% } %>
+  </dl>
+  <% if (access.readOnly) { %>
+    <p class="flash flash--danger">انتهى الاشتراك: الحساب في وضع القراءة فقط لمدة <%= access.graceDaysLeft %> يوم، ثم يُوقف. بياناتك محفوظة <%= keepDays %> يوماً بعد الإيقاف.</p>
+  <% } else if (access.locked) { %>
+    <p class="flash flash--danger">الحساب متوقف الآن. بياناتك محفوظة <%= keepDays %> يوماً؛ جدّد الاشتراك لإعادة التشغيل.</p>
+  <% } %>
+  <% if (suspendedByAdmin) { %>
+    <p class="flash flash--warning">حساب المكتب موقوف من إدارة المنصة، ولا يمكن الدفع الآن.
+      <% if (support.phone || support.email) { %>للتواصل: <span dir="ltr"><%= support.phone %> <%= support.email %></span><% } %></p>
+  <% } %>
+</section>
+
+<section class="card detail-card">
+  <h2>الاستخدام</h2>
+  <ul class="usage-list">
+    <% usage.forEach(function (u) { %>
+      <li class="usage">
+        <div class="usage__head"><span><%= u.label %></span>
+          <strong><%= u.used %><%= u.limit === null ? ' (بلا حد)' : ' من ' + u.limit %></strong></div>
+        <% if (u.limit !== null) { %><meter class="usage__meter" min="0" max="<%= u.limit %>" value="<%= Math.min(u.used, u.limit) %>" low="<%= Math.floor(u.limit * 0.7) %>" high="<%= Math.floor(u.limit * 0.9) %>" optimum="0"><%= u.used %> / <%= u.limit %></meter><% } %>
+      </li>
+    <% }) %>
+  </ul>
+</section>
+
+<% if (transfers.length) { %>
+  <section class="card detail-card">
+    <h2>حوالات بنكية مفتوحة</h2>
+    <ul class="item-list">
+      <% transfers.forEach(function (t) { %>
+        <li class="item">
+          <div class="item__title"><strong>طلب رقم <%= t.id %></strong> · <%= fmt(t.total) %> ريال
+            <span class="badge badge--bill-info"><%= t.transferStatus === 'pending' ? 'بانتظار المراجعة' : 'بانتظار إرسال المرجع' %></span></div>
+          <% if (!t.transferId) { %><a class="btn btn--primary btn--small" href="/office/billing/orders/<%= t.id %>/transfer">إرسال مرجع الحوالة</a><% } %>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+<% } %>
+
+<% if (!suspendedByAdmin) { %>
+<section class="card detail-card">
+  <h2><%= access.onTrial || access.locked || access.readOnly ? 'اختر باقتك' : 'ترقية أو تجديد' %></h2>
+  <p class="muted">الأسعار قبل ضريبة القيمة المضافة (<%= vatPercent %>%) وتظهر في صفحة المراجعة قبل الدفع.</p>
+  <% if (!online) { %><p class="flash flash--info">الدفع الإلكتروني غير مفعّل. يمكنك الدفع بالحوالة البنكية.</p><% } %>
+  <ul class="plan-grid">
+    <% cards.forEach(function (c) { %>
+      <li class="plan-card<%= c.current ? ' plan-card--current' : '' %>">
+        <h3><%= c.name %><% if (c.current) { %> <span class="badge badge--bill-success">باقتك</span><% } %></h3>
+        <p class="plan-card__price"><strong><%= fmt(c.monthly) %></strong> ريال / شهر</p>
+        <% if (c.yearly > 0) { %><p class="muted"><%= fmt(c.yearly) %> ريال / سنة</p><% } %>
+        <ul class="plan-card__limits">
+          <% c.limits.forEach(function (l) { %><li><%= l.label %>: <%= l.limit === null ? 'بلا حد' : l.limit %></li><% }) %>
+          <% c.features.forEach(function (f) { %><li class="<%= f.on ? '' : 'is-off' %>"><%= f.on ? '✓' : '✗' %> <%= f.label %></li><% }) %>
+        </ul>
+        <div class="button-row">
+          <a class="btn btn--primary btn--small" href="/office/billing/checkout?plan=<%= c.id %>&amp;interval=monthly"><%= c.current ? 'تجديد شهري' : 'اشتراك شهري' %></a>
+          <% if (c.yearly > 0) { %><a class="btn btn--secondary btn--small" href="/office/billing/checkout?plan=<%= c.id %>&amp;interval=yearly"><%= c.current ? 'تجديد سنوي' : 'اشتراك سنوي' %></a><% } %>
+        </div>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (!cards.length) { %><p class="empty-state">لا توجد باقات متاحة للشراء الآن.</p><% } %>
+</section>
+<% } %>
+
+<section class="card detail-card">
+  <h2>الفواتير</h2>
+  <% if (invoices.length) { %>
+    <ul class="item-list">
+      <% invoices.forEach(function (i) { %>
+        <li class="item">
+          <div class="item__title"><a href="/office/billing/invoices/<%= i.id %>"><strong dir="ltr"><%= i.invoiceNo %></strong></a>
+            <span class="badge badge--bill-<%= i.kind === 'credit_note' ? 'danger' : 'success' %>"><%= i.title %></span>
+            <% if (i.status === 'credited') { %><span class="badge badge--ended">ملغاة بإشعار</span><% } %></div>
+          <div class="item__meta"><span dir="ltr"><%= i.issuedDay %></span> · <%= fmt(i.total) %> ريال</div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %><p class="empty-state">لا توجد فواتير بعد.</p><% } %>
+</section>
+<p class="muted">الاشتراك لا يتجدد تلقائياً: ندعوك للتجديد قبل انتهائه بـ 7 و3 ويوم. بعد الانتهاء يبقى الحساب للقراءة فقط <%= graceDays %> أيام ثم يُوقف.</p>

@@ -11,6 +11,7 @@
 const { scopeToOffice } = require('./scopeToOffice');
 const { prefsFor, withDisclaimer } = require('./notifications');
 const channelSettings = require('./channelSettings');
+const features = require('./features');
 const email = require('./channels/email');
 const whatsapp = require('./channels/whatsapp');
 const telegram = require('./channels/telegram');
@@ -54,7 +55,9 @@ function officeChannelLoader(pool) {
     const key = `${officeId}:${channel}`;
     if (!cache.has(key)) {
       try {
-        cache.set(key, await channelSettings.loadForSending(scopeToOffice(pool, officeId), channel));
+        // A plan without the channel sends nothing on it (the row is skipped).
+        const allowed = await features.officeAllows(pool, officeId, channel);
+        cache.set(key, allowed ? await channelSettings.loadForSending(scopeToOffice(pool, officeId), channel) : null);
       } catch (err) {
         logger.error(`Channel settings unreadable for office ${officeId} (${channel}): ${err.code || 'decrypt_failed'}`);
         cache.set(key, null);

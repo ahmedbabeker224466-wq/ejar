@@ -1,0 +1,28 @@
+<div class="page-head"><h1>المكاتب</h1></div>
+<form method="get" action="/admin/offices" class="filter-bar" novalidate>
+  <div class="field"><label for="q">بحث بالاسم أو الجوال</label><input id="q" name="q" class="input" value="<%= q %>" maxlength="60"></div>
+  <div class="field"><label for="status">الحالة</label>
+    <select id="status" name="status" class="select">
+      <option value="">الكل</option>
+      <% statuses.forEach(function (s) { %><option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= { trial: 'تجربة', active: 'فعّال', past_due: 'غير مسدَّد', suspended: 'موقوف' }[s] %></option><% }) %>
+    </select></div>
+  <button type="submit" class="btn btn--primary">بحث</button>
+</form>
+<p class="muted"><%= total %> مكتب</p>
+<ul class="item-list">
+  <% rows.forEach(function (o) { %>
+    <li class="item">
+      <div class="item__title"><a href="/admin/offices/<%= o.id %>"><strong><%= o.name %></strong></a>
+        <span class="badge badge--bill-<%= o.status === 'active' ? 'success' : o.status === 'trial' ? 'info' : 'danger' %>"><%= { trial: 'تجربة', active: 'فعّال', past_due: 'غير مسدَّد', suspended: 'موقوف' }[o.status] %></span></div>
+      <div class="item__meta"><%= o.city %> · الباقة: <%= o.plan_name || '—' %> · وحدات <%= o.units %> · عقود <%= o.contracts %> · سُجّل <span dir="ltr"><%= stamp(o.created_at) %></span></div>
+    </li>
+  <% }) %>
+</ul>
+<% if (!rows.length) { %><p class="empty-state">لا توجد مكاتب مطابقة.</p><% } %>
+<% if (pages > 1) { %>
+  <nav class="pager" aria-label="الصفحات">
+    <% if (page > 1) { %><a href="/admin/offices?q=<%= encodeURIComponent(q) %>&amp;status=<%= status %>&amp;page=<%= page - 1 %>">السابق</a><% } %>
+    <span>صفحة <%= page %> من <%= pages %></span>
+    <% if (page < pages) { %><a href="/admin/offices?q=<%= encodeURIComponent(q) %>&amp;status=<%= status %>&amp;page=<%= page + 1 %>">التالي</a><% } %>
+  </nav>
+<% } %>

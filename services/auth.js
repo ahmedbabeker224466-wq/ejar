@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const { normalizeSaudi } = require('../utils/phone');
+const platformSettings = require('./platformSettings');
 
 const SESSION_COOKIE = 'aqdi_session';
 const SESSION_AUDIENCE = 'session';
@@ -90,7 +91,16 @@ function checkSession(payload, row) {
   return null;
 }
 
-function createAuthService({ pool = db.pool } = {}) {
+/** A new phone tried to sign up while the platform admin has switched signups off. */
+class SignupsDisabledError extends Error {
+  constructor() {
+    super('New signups are switched off');
+    this.name = 'SignupsDisabledError';
+    this.code = 'signups_disabled';
+  }
+}
+
+function createAuthService({ pool = db.pool, signupsDisabled = () => platformSettings.signupsDisabled(pool) } = {}) {
   /**
    * Finds the user for a verified phone. A new phone becomes a user with no
    * role (NULL) until they create an office or accept an invite; only the
@@ -102,6 +112,8 @@ function createAuthService({ pool = db.pool } = {}) {
 
     let [[user]] = await pool.query('SELECT * FROM users WHERE phone = ?', [phone]);
     if (!user) {
+      // The kill switch stops new people only; the admin phone and existing users are never blocked.
+      if (!isAdmin && (await signupsDisabled())) throw new SignupsDisabledError();
       try {
         await pool.query('INSERT INTO users (phone, role, phone_verified) VALUES (?, ?, 1)', [
           phone,
@@ -227,6 +239,7 @@ function needsTwoFactor(user, env = process.env) {
 module.exports = {
   ...createAuthService(),
   createAuthService,
+  SignupsDisabledError,
   checkSession,
   homeFor,
   needsTwoFactor,

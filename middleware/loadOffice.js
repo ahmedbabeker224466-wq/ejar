@@ -78,6 +78,7 @@ function loadOffice(pool = db.pool) {
         city: member.city,
         status: member.status,
         trial_ends_at: member.trial_ends_at,
+        subscription_ends_at: member.subscription_ends_at,
         plan: member.plan_code ? { code: member.plan_code, name: member.plan_name } : null,
       };
       req.memberRole = member.role;
@@ -99,12 +100,19 @@ function loadOffice(pool = db.pool) {
   };
 }
 
-/** Suspended office or expired trial: only billing and settings stay open. */
+/**
+ * Suspended office or expired trial: only billing and settings stay open.
+ * During the read-only grace after a paid period, every page can be read but
+ * nothing can be changed (billing and settings stay writable, so the owner can pay).
+ */
 function officeGate(req, res, next) {
-  if (!req.officeAccess || !req.officeAccess.locked) return next();
+  const access = req.officeAccess;
+  if (!access || (!access.locked && !access.readOnly)) return next();
   const path = req.baseUrl + req.path;
   if (OPEN_WHEN_LOCKED.some((open) => path === open || path.startsWith(`${open}/`))) return next();
-  return res.status(402).render('office/locked', { title: 'اشتراكك منتهي', reason: req.officeAccess.reason });
+  if (access.locked) return res.status(402).render('office/locked', { title: 'اشتراكك منتهي', reason: access.reason });
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  return res.status(402).render('office/locked', { title: 'وضع القراءة فقط', reason: 'read_only' });
 }
 
 module.exports = { loadOffice, officeGate, navFor, OFFICE_NAV, ROLE_LABELS, OPEN_WHEN_LOCKED };

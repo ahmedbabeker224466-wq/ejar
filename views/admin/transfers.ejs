@@ -1,0 +1,35 @@
+<div class="page-head"><h1>الحوالات البنكية</h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<nav class="tabs" aria-label="التصفية">
+  <a href="/admin/transfers" <%- status === '' ? 'aria-current="page"' : '' %>>الكل</a>
+  <a href="/admin/transfers?status=pending" <%- status === 'pending' ? 'aria-current="page"' : '' %>>بانتظار المراجعة</a>
+  <a href="/admin/transfers?status=approved" <%- status === 'approved' ? 'aria-current="page"' : '' %>>مقبولة</a>
+  <a href="/admin/transfers?status=rejected" <%- status === 'rejected' ? 'aria-current="page"' : '' %>>مرفوضة</a>
+</nav>
+<ul class="item-list">
+  <% rows.forEach(function (t) { %>
+    <li class="item">
+      <div class="item__title"><strong>حوالة #<%= t.id %></strong> <a href="/admin/offices/<%= t.officeId %>"><%= t.officeName %></a>
+        <span class="badge badge--bill-<%= t.status === 'approved' ? 'success' : t.status === 'rejected' ? 'danger' : 'info' %>"><%= { pending: 'بانتظار المراجعة', approved: 'مقبولة', rejected: 'مرفوضة' }[t.status] %></span></div>
+      <div class="item__meta">طلب <%= t.orderId %> · <%= t.planCode %> · <%= t.interval === 'yearly' ? 'سنوي' : 'شهري' %> · المبلغ <%= fmt(t.total) %> <%= t.currency %> · المرجع: <strong dir="ltr"><%= t.reference %></strong> · <span dir="ltr"><%= stamp(t.createdAt) %></span></div>
+      <% if (t.hasReceipt) { %><p><a href="/admin/transfers/<%= t.id %>/receipt" target="_blank" rel="noopener noreferrer">عرض صورة الإيصال</a></p><% } %>
+      <% if (t.note) { %><p class="muted">ملاحظة: <%= t.note %></p><% } %>
+      <% if (t.status === 'pending') { %>
+        <div class="button-row">
+          <details class="danger-zone"><summary>قبول وتفعيل الباقة</summary>
+            <form method="post" action="/admin/transfers/<%= t.id %>/approve" novalidate>
+              <div class="field"><label for="ok-<%= t.id %>">سبب القبول (مثل: وصلت الحوالة في الكشف)</label><input id="ok-<%= t.id %>" name="reason" class="input" maxlength="200" required></div>
+              <button type="submit" class="btn btn--primary btn--small">قبول</button>
+            </form></details>
+          <details class="danger-zone"><summary>رفض</summary>
+            <form method="post" action="/admin/transfers/<%= t.id %>/reject" novalidate>
+              <div class="field"><label for="reason-<%= t.id %>">سبب الرفض (يصل للمكتب)</label><input id="reason-<%= t.id %>" name="reason" class="input" maxlength="200" required></div>
+              <button type="submit" class="btn btn--danger btn--small">رفض الحوالة</button>
+            </form></details>
+        </div>
+      <% } %>
+    </li>
+  <% }) %>
+</ul>
+<% if (!rows.length) { %><p class="empty-state">لا توجد حوالات.</p><% } %>

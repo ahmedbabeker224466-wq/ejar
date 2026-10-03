@@ -1,0 +1,24 @@
+<div class="page-head"><h1>سجل التدقيق</h1></div>
+<form method="get" action="/admin/audit" class="filter-bar" novalidate>
+  <div class="field"><label for="action">الإجراء (يبدأ بـ)</label><input id="action" name="action" class="input" dir="ltr" value="<%= filters.action %>" placeholder="admin."></div>
+  <div class="field"><label for="office">رقم المكتب</label><input id="office" name="office" class="input" dir="ltr" inputmode="numeric" value="<%= filters.officeId %>"></div>
+  <div class="field"><label for="actor">جوال المنفّذ</label><input id="actor" name="actor" class="input" dir="ltr" value="<%= filters.actor %>"></div>
+  <div class="field"><label for="from">من</label><input id="from" name="from" class="input" type="date" dir="ltr" value="<%= filters.from %>"></div>
+  <div class="field"><label for="to">إلى</label><input id="to" name="to" class="input" type="date" dir="ltr" value="<%= filters.to %>"></div>
+  <button type="submit" class="btn btn--primary">تصفية</button>
+</form>
+<p class="muted"><%= total %> سجل</p>
+<ul class="item-list">
+  <% rows.forEach(function (r) { %>
+    <li class="item">
+      <div class="item__title"><strong dir="ltr"><%= r.action %></strong> <span class="muted" dir="ltr"><%= r.entity_type %><%= r.entity_id ? ' #' + r.entity_id : '' %></span></div>
+      <div class="item__meta"><span dir="ltr"><%= stamp(r.created_at) %></span> · <span dir="ltr"><%= r.actor_phone || 'النظام' %></span><%= r.office_name ? ' · ' + r.office_name : '' %></div>
+      <% if (r.reason) { %><p class="muted">السبب: <%= r.reason %></p><% } %>
+    </li>
+  <% }) %>
+</ul>
+<% if (!rows.length) { %><p class="empty-state">لا توجد سجلات مطابقة.</p><% } %>
+<% if (pages > 1) { %>
+  <% const qs = 'action=' + encodeURIComponent(filters.action) + '&office=' + encodeURIComponent(filters.officeId) + '&actor=' + encodeURIComponent(filters.actor) + '&from=' + filters.from + '&to=' + filters.to; %>
+  <nav class="pager"><% if (page > 1) { %><a href="/admin/audit?<%= qs %>&amp;page=<%= page - 1 %>">السابق</a><% } %> <span>صفحة <%= page %> من <%= pages %></span> <% if (page < pages) { %><a href="/admin/audit?<%= qs %>&amp;page=<%= page + 1 %>">التالي</a><% } %></nav>
+<% } %>

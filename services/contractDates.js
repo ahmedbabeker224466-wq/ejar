@@ -191,7 +191,39 @@ function trialDaysLeft(endsAt, now) {
   return Math.max(0, daysBetween(riyadhDate(now), riyadhDate(new Date(endsAt))));
 }
 
+/** The instant a Riyadh calendar day starts (00:00 +03:00), as a Date. */
+function riyadhMidnight(ymd) {
+  return new Date(parseYmd(ymd) - RIYADH_OFFSET_MS);
+}
+
+/**
+ * When a subscription period that starts at `startAt` ends: the start of the
+ * Riyadh day `months` calendar months after the start day. The end is
+ * exclusive: the office has access while now < end.
+ */
+function subscriptionPeriodEnd(startAt, months) {
+  return riyadhMidnight(addMonths(riyadhDate(startAt), months));
+}
+
+/**
+ * Calendar days (Riyadh) from today to the last day of access of a period
+ * that ends (exclusively) at endAt: 0 on the last day, negative once over.
+ */
+function periodDaysLeft(endAt, now) {
+  const lastDay = riyadhDate(new Date(new Date(endAt).getTime() - 1));
+  return daysBetween(riyadhDate(now), lastDay);
+}
+
+/** The Riyadh calendar year of a point in time (invoice number series). */
+function riyadhYear(at) {
+  return Number(riyadhDate(at).slice(0, 4));
+}
+
 module.exports = {
+  riyadhMidnight,
+  subscriptionPeriodEnd,
+  periodDaysLeft,
+  riyadhYear,
   TRIAL_DAYS,
   INVITE_DAYS,
   ContractDateError,

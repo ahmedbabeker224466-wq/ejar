@@ -16,6 +16,7 @@ const { riyadhDate } = require('../services/contractDates');
 const { requireAuth } = require('../middleware/auth');
 const { requirePerm } = require('../middleware/permissions');
 const { csvLimit } = require('../middleware/csvLimit');
+const { requireFeature } = require('../services/features');
 const { loadArea } = require('./portal');
 
 const today = () => riyadhDate(new Date());
@@ -58,7 +59,7 @@ office.get('/office/reports', requirePerm('reports'), wrap(async (req, res) => {
   });
 }));
 
-office.get('/office/reports/csv/:name', requirePerm('reports'), csvLimit, wrap(async (req, res) => {
+office.get('/office/reports/csv/:name', requirePerm('reports'), requireFeature('reports_csv', { text: true }), csvLimit, wrap(async (req, res) => {
   const name = String(req.params.name);
   if (!Object.hasOwn(reports.REPORTS, name)) return notFound(res);
   const day = today();

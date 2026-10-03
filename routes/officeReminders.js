@@ -11,6 +11,7 @@ const db = require('../config/db');
 const reminders = require('../services/reminders');
 const channelSettings = require('../services/channelSettings');
 const delivery = require('../services/delivery');
+const features = require('../services/features');
 const { scopeToOffice } = require('../services/scopeToOffice');
 const { createAudit } = require('../services/audit');
 const { requirePerm } = require('../middleware/permissions');
@@ -70,14 +71,20 @@ router.post(`${BASE}/rules`, guard, wrap(async (req, res) => {
   return res.redirect(`${BASE}?done=rules`);
 }));
 
-router.post(`${BASE}/whatsapp`, guard, wrap(async (req, res) => {
+// WhatsApp and Telegram are plan features: saving them needs the plan to include them.
+const planHas = (flag) => wrap(async (req, res, next) => {
+  if (await features.officeAllows(db.pool, req.office.id, flag)) return next();
+  return render(req, res, { status: 403, warning: features.PLAN_MESSAGES[flag] });
+});
+
+router.post(`${BASE}/whatsapp`, guard, planHas('whatsapp'), wrap(async (req, res) => {
   const result = await channelSettings.saveWhatsapp(scopeToOffice(db.pool, req.office.id), req.body, req.user.id);
   if (!result.ok) return render(req, res, { status: 422, errors: { whatsapp: result.errors } });
   await createAudit(db.pool).log(req.user.id, req.office.id, 'channel.saved', 'office', req.office.id, null, { channel: 'whatsapp' }, req.ip);
   return res.redirect(`${BASE}?done=whatsapp#whatsapp`);
 }));
 
-router.post(`${BASE}/telegram`, guard, wrap(async (req, res) => {
+router.post(`${BASE}/telegram`, guard, planHas('telegram'), wrap(async (req, res) => {
   const result = await channelSettings.saveTelegram(scopeToOffice(db.pool, req.office.id), req.body, req.user.id);
   if (!result.ok) return render(req, res, { status: 422, errors: { telegram: result.errors } });
   await createAudit(db.pool).log(req.user.id, req.office.id, 'channel.saved', 'office', req.office.id, null, { channel: 'telegram' }, req.ip);

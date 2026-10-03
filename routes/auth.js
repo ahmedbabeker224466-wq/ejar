@@ -21,6 +21,7 @@ const MESSAGES = {
   invalid_code: 'الرمز غير صحيح أو انتهت صلاحيته. تأكد منه أو اطلب رمزاً جديداً.',
   send_failed: 'تعذّر إرسال الرمز الآن. حاول مرة أخرى بعد قليل.',
   inactive: 'لا يمكن الدخول بهذا الحساب حالياً. تواصل مع الدعم.',
+  signups_disabled: 'التسجيل الجديد متوقف مؤقتاً. حاول لاحقاً.',
   invalid_2fa: 'الرمز غير صحيح. اكتب الرمز الظاهر الآن في تطبيق المصادقة أو أحد رموز الاحتياط.',
 };
 
@@ -168,7 +169,13 @@ router.post('/login/verify', async (req, res, next) => {
     if (!result.ok) return renderVerify(res, pending, messageFor(result), 422);
 
     clearStep(res, LOGIN_COOKIE);
-    const user = await auth.findOrCreateUser(result.phone);
+    let user;
+    try {
+      user = await auth.findOrCreateUser(result.phone);
+    } catch (err) {
+      if (err.code === 'signups_disabled') return renderPhonePage(res, 'login', '', MESSAGES.signups_disabled, 403);
+      throw err;
+    }
     if (!user.is_active) {
       return renderPhonePage(res, 'login', '', MESSAGES.inactive, 403);
     }

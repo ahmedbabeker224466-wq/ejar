@@ -17,6 +17,7 @@ const delivery = require('./delivery');
 const contractStatus = require('./contractStatus');
 const { createNotification } = require('./notifications');
 const { officeAccess } = require('./offices');
+const subscriptions = require('./subscriptions');
 
 const TIMEZONE = 'Asia/Riyadh';
 const LAST_RUN_KEY = 'reminders.last_run_date';
@@ -45,7 +46,7 @@ async function runReminders({ pool, now }) {
 
 async function runDigest({ pool, now }) {
   const today = riyadhDate(now);
-  const [offices] = await pool.query('SELECT id, name, status, trial_ends_at, owner_id FROM offices WHERE owner_id IS NOT NULL ORDER BY id');
+  const [offices] = await pool.query('SELECT id, name, status, trial_ends_at, subscription_ends_at, owner_id FROM offices WHERE owner_id IS NOT NULL ORDER BY id');
   let sent = 0;
   for (const office of offices) {
     if (officeAccess(office, now).locked) continue;
@@ -129,11 +130,11 @@ const JOBS = {
   late_payments: { schedule: '20 0 * * *', label: 'تعليم الدفعات المتأخرة', run: ({ pool, now }) => contractStatus.markLatePayments({ pool, today: riyadhDate(now) }) },
   digest: { schedule: '0 8 * * *', label: 'ملخص المكتب اليومي', run: runDigest },
   expire_invites: { schedule: '15 * * * *', label: 'تنظيف رموز الدعوة القديمة', run: runExpireInvites },
+  plan_renewal: { schedule: '0 6 * * *', label: 'تجديد الاشتراكات وتذكيراتها', run: ({ pool, now }) => subscriptions.runDaily({ pool, now }) },
   trial_check: { schedule: '30 9 * * *', label: 'فحص انتهاء التجربة', run: runTrialCheck },
   purge_notifications: { schedule: '0 3 * * 5', label: 'حذف الإشعارات القديمة', run: runPurgeNotifications },
   purge_auth: { schedule: '*/10 * * * *', label: 'حذف رموز الدخول والجلسات المنتهية', run: runPurgeAuth },
   backup: { schedule: '0 2 * * *', placeholder: true },
-  plan_renewal: { schedule: '0 6 * * *', placeholder: true },
   sms_balance: { schedule: '0 10 * * *', placeholder: true },
   health_ping: { schedule: '*/15 * * * *', placeholder: true },
   reports: { schedule: '0 5 1 * *', placeholder: true },

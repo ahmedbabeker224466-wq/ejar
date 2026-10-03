@@ -320,7 +320,7 @@ async function taskReminders(pool, office, days, now) {
 async function computeDueReminders({ pool, today, lastRun = null, now = new Date(), officeId = null }) {
   const days = engine.reminderDays(today, lastRun);
   const [offices] = await pool.query(
-    `SELECT id, name, status, trial_ends_at, owner_id FROM offices ${officeId ? 'WHERE id = ?' : ''} ORDER BY id`,
+    `SELECT id, name, status, trial_ends_at, subscription_ends_at, owner_id FROM offices ${officeId ? 'WHERE id = ?' : ''} ORDER BY id`,
     officeId ? [officeId] : [],
   );
   const total = { created: 0, duplicates: 0, offices: 0 };

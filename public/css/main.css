@@ -1510,3 +1510,41 @@ img {
 .receipt-row__figures dd, .receipt-total dd { margin: 0; font-weight: 700; }
 .receipt-total { margin: var(--space-4) 0; padding: var(--space-3); background: var(--stage-calm-soft); border-radius: 10px; }
 .receipt__entry { margin: var(--space-2) 0 0; font-size: 0.9rem; color: #4b5563; }
+
+/* Billing: plans, usage meters, quote and invoice */
+.badge--bill-success { background: var(--color-success-soft); color: var(--color-success); }
+.badge--bill-danger { background: var(--color-danger-soft); color: var(--color-danger); }
+.badge--bill-info { background: var(--color-info-soft); color: var(--color-info); }
+.badge--bill-warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.usage-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.usage__head { display: flex; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
+.usage__meter { width: 100%; height: 14px; }
+.plan-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.plan-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); background: var(--color-surface); }
+.plan-card--current { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.plan-card h3 { margin: 0 0 var(--space-2); }
+.plan-card__price { font-size: var(--text-lg); margin: 0; }
+.plan-card__limits { list-style: none; padding: 0; margin: var(--space-3) 0; display: grid; gap: var(--space-1); }
+.plan-card__limits .is-off { color: var(--color-text-muted); text-decoration: line-through; }
+@media (min-width: 700px) { .plan-grid { grid-template-columns: repeat(2, 1fr); } }
+.quote dd { margin: 0; text-align: end; }
+.quote .quote__total { font-size: var(--text-lg); font-weight: 700; }
+.print-body { background: #fff; margin: 0; }
+.invoice-sheet { max-width: 210mm; margin: 0 auto; padding: var(--space-4); background: #fff; color: #000; }
+.invoice-actions { display: flex; gap: var(--space-2); justify-content: space-between; }
+.invoice-head h1 { margin: 0 0 var(--space-2); }
+.invoice-head p { margin: 0 0 var(--space-1); }
+.invoice-stamp { display: inline-block; border: 2px solid var(--color-danger); color: var(--color-danger); padding: 0 var(--space-3); font-weight: 700; }
+.invoice-parties { display: grid; gap: var(--space-4); margin: var(--space-4) 0; }
+.invoice-parties h2 { font-size: var(--text-lg); margin: 0 0 var(--space-2); }
+.invoice-parties p { margin: 0 0 var(--space-1); }
+.invoice-table td:last-child, .invoice-table th:last-child { text-align: end; white-space: nowrap; }
+.invoice-note { margin-top: var(--space-4); }
+@media (min-width: 600px) { .invoice-parties { grid-template-columns: 1fr 1fr; } }
+@page { size: A4; margin: 12mm; }
+@media print { .print-body .no-print { display: none !important; } .invoice-sheet { padding: 0; } }
+.office-banner--warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.invoice-sheet { box-sizing: border-box; width: 100%; }
+.invoice-table { min-width: 0; }
+.invoice-table th, .invoice-table td { white-space: normal; }
+.invoice-table td:last-child, .invoice-table th:last-child { white-space: nowrap; }

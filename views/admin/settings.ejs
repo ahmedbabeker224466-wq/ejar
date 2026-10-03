@@ -1,0 +1,44 @@
+<div class="page-head"><h1>إعدادات المنصة</h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+
+<form method="post" action="/admin/settings/details" class="form-card" novalidate>
+  <h2>بيانات البائع (تظهر في الفواتير)</h2>
+  <p class="muted">لم تُحدَّد الجهة المُصدِرة للفواتير بعد، لذلك كل الحقول اختيارية. تظهر الفاتورة باسم «فاتورة ضريبية مبسطة» فقط عند إدخال الرقم الضريبي، وإلا فهي «إيصال دفع». هذا النظام لا يدّعي الربط مع الفوترة الإلكترونية (زاتكا).</p>
+  <div class="field"><label for="legal_name">الاسم القانوني</label><input id="legal_name" name="legal_name" class="input" maxlength="150" value="<%= values.legal_name %>"></div>
+  <div class="form-grid">
+    <div class="field"><label for="vat_number">الرقم الضريبي (15 رقماً)</label><input id="vat_number" name="vat_number" class="input" dir="ltr" inputmode="numeric" maxlength="15" value="<%= values.vat_number %>">
+      <% if (errors.vat_number) { %><p class="field-error"><%= errors.vat_number %></p><% } %></div>
+    <div class="field"><label for="cr_number">السجل التجاري (10 أرقام)</label><input id="cr_number" name="cr_number" class="input" dir="ltr" inputmode="numeric" maxlength="10" value="<%= values.cr_number %>">
+      <% if (errors.cr_number) { %><p class="field-error"><%= errors.cr_number %></p><% } %></div>
+  </div>
+  <div class="field"><label for="address">العنوان</label><input id="address" name="address" class="input" maxlength="250" value="<%= values.address %>"></div>
+
+  <h2>الحساب البنكي للحوالات</h2>
+  <div class="form-grid">
+    <div class="field"><label for="bank_name">اسم البنك</label><input id="bank_name" name="bank_name" class="input" maxlength="80" value="<%= values.bank_name %>"></div>
+    <div class="field"><label for="bank_account_name">اسم صاحب الحساب</label><input id="bank_account_name" name="bank_account_name" class="input" maxlength="120" value="<%= values.bank_account_name %>"></div>
+    <div class="field"><label for="bank_iban">الآيبان</label><input id="bank_iban" name="bank_iban" class="input" dir="ltr" maxlength="34" value="<%= values.bank_iban %>">
+      <% if (errors.bank_iban) { %><p class="field-error"><%= errors.bank_iban %></p><% } %></div>
+  </div>
+
+  <h2>التواصل مع الدعم</h2>
+  <div class="form-grid">
+    <div class="field"><label for="support_phone">جوال الدعم</label><input id="support_phone" name="support_phone" class="input" dir="ltr" maxlength="20" value="<%= values.support_phone %>">
+      <% if (errors.support_phone) { %><p class="field-error"><%= errors.support_phone %></p><% } %></div>
+    <div class="field"><label for="support_email">بريد الدعم</label><input id="support_email" name="support_email" class="input" dir="ltr" maxlength="190" value="<%= values.support_email %>">
+      <% if (errors.support_email) { %><p class="field-error"><%= errors.support_email %></p><% } %></div>
+  </div>
+  <div class="field"><label for="reason-details">سبب الإجراء (يُسجَّل في سجل التدقيق)</label><input id="reason-details" name="reason" class="input" maxlength="200" required>
+    <% if (errors.reason) { %><p class="field-error"><%= errors.reason %></p><% } %></div>
+  <button type="submit" class="btn btn--primary btn--large btn--block">حفظ البيانات</button>
+</form>
+
+<form method="post" action="/admin/settings/switches" class="form-card" novalidate>
+  <h2>مفاتيح الإيقاف</h2>
+  <label class="check"><input type="checkbox" name="signups_disabled" value="1" <%= switches.signupsDisabled ? 'checked' : '' %>> إيقاف التسجيل الجديد (من لديه حساب يدخل عادياً)</label>
+  <label class="check"><input type="checkbox" name="ai_disabled" value="1" <%= switches.aiDisabled ? 'checked' : '' %>> إيقاف قراءة العقود بالذكاء الاصطناعي (الإدخال اليدوي يعمل)</label>
+  <div class="field"><label for="banner">رسالة تظهر أعلى كل الصفحات (اتركها فارغة لإخفائها)</label><input id="banner" name="banner" class="input" maxlength="200" value="<%= switches.banner %>"></div>
+  <div class="field"><label for="reason-switches">سبب الإجراء (يُسجَّل في سجل التدقيق)</label><input id="reason-switches" name="reason" class="input" maxlength="200" required>
+    <% if (errors.reason_switches) { %><p class="field-error"><%= errors.reason_switches %></p><% } %></div>
+  <button type="submit" class="btn btn--primary btn--large btn--block">حفظ المفاتيح</button>
+</form>
