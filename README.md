@@ -133,7 +133,7 @@ cPanel Cron Jobs fallback (with `RUN_CRON=false`):
 0 4 * * * curl -s -X POST -H "X-Cron-Secret: YOUR_CRON_SECRET" https://yourdomain.sa/cron/run/reminders
 ```
 
-Jobs: reminders, deliver, recompute, late_payments, digest, expire_invites, trial_check, plan_renewal, purge_notifications, purge_auth (plus disabled placeholders: backup, sms_balance, health_ping, reports).
+Jobs: reminders, deliver, recompute, late_payments, digest, expire_invites, trial_check, plan_renewal, purge_notifications, purge_auth plus backup (02:00), sms_balance (10:00), health_ping (every 15 minutes) and reports (monthly), see Operations below.
 
 ## Maintenance, payments, messages, team, tasks, reports
 
@@ -207,6 +207,18 @@ Plans, the subscription lifecycle, checkout (Moyasar **test mode only**, or bank
 Public pages show type, city, neighborhood (fixed list), rooms, area, annual rent, features, photos and the office name only.
 Listings hide themselves 60 days after publishing (jobs `listings_expiry`, `purge_inquiries`). Seed the default plans, FAQs and three draft blog posts once with `node database/seed.js`.
 No new environment variables. The final audit is in [`docs/AUDIT.md`](docs/AUDIT.md); the full deployment reference and pre-launch checklist in [`DEPLOY.md`](DEPLOY.md).
+
+## Operations: backups, health, SMS balance, monthly report
+
+| Route / command | What it does |
+|---|---|
+| job `backup` (daily 02:00) | Encrypted database backup in `BACKUP_DIR` (pure Node, no mysqldump), 14 daily + 8 weekly + 6 monthly kept |
+| `node scripts/restore-backup.js --file F --target DB` | Restore drill: checks the file, restores into a database, compares every table's row count |
+| `GET /healthz` | `{ "ok": true }` for uptime monitors, nothing else |
+| `GET /admin/ops`, `POST /admin/ops/backup` | Platform admin: health, backups list, "run backup now" (3 per hour), SMS balance, monthly reports |
+| jobs `health_ping`, `sms_balance`, `reports` | Health check every 15 minutes, SMS balance daily 10:00, monthly summary on the 1st at 05:00 |
+
+Environment (all optional): `BACKUP_DIR`, `BACKUP_WEBHOOK_URL`, `HEALTHCHECK_PING_URL`, `SMS_BALANCE_WARN`. Backups cannot be downloaded from the app; see [`DEPLOY.md`](DEPLOY.md) for the restore steps and the quarterly drill.
 
 ## Project layout
 

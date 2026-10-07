@@ -1077,11 +1077,25 @@ const TABLES = [
     'error TEXT NULL',
   ]),
 
+  // One row per backup run (file name, size, checksum of the encrypted file, a short error code). No row data.
   table('backups', [
-    'path VARCHAR(255) NOT NULL',
+    'path VARCHAR(255) NULL', // legacy column of the first skeleton; unused
+    'filename VARCHAR(80) NULL',
     'size_bytes BIGINT UNSIGNED NULL',
-    "status ENUM('ok','failed') NOT NULL",
-    'error TEXT NULL',
+    'sha256 CHAR(64) NULL',
+    'tables_count INT UNSIGNED NULL',
+    "trigger_kind ENUM('scheduled','manual') NOT NULL DEFAULT 'scheduled'",
+    "status ENUM('running','ok','failed') NOT NULL DEFAULT 'running'",
+    'error TEXT NULL', // legacy column of the first skeleton; unused
+    'error_code VARCHAR(60) NULL',
+    'KEY idx_backups_created (created_at)',
+  ]),
+
+  // The monthly platform summary: counts only, one row per Riyadh month.
+  table('platform_reports', [
+    'period CHAR(7) NOT NULL',
+    'report_json JSON NOT NULL',
+    'UNIQUE KEY uq_platform_reports_period (period)',
   ]),
 
   table('feature_flags', [
@@ -1096,6 +1110,11 @@ const TABLES = [
 // already includes them for new databases; ensureSchema() adds them to older
 // databases that are missing them.
 const COLUMN_ADDITIONS = [
+  { table: 'backups', column: 'filename', definition: 'VARCHAR(80) NULL AFTER path' },
+  { table: 'backups', column: 'sha256', definition: 'CHAR(64) NULL AFTER size_bytes' },
+  { table: 'backups', column: 'tables_count', definition: 'INT UNSIGNED NULL AFTER sha256' },
+  { table: 'backups', column: 'trigger_kind', definition: "ENUM('scheduled','manual') NOT NULL DEFAULT 'scheduled' AFTER tables_count" },
+  { table: 'backups', column: 'error_code', definition: 'VARCHAR(60) NULL AFTER error' },
   { table: 'users', column: 'twofa_backup_codes', definition: 'JSON NULL AFTER twofa_enabled' },
   { table: 'otp_codes', column: 'ip', definition: 'VARCHAR(45) NULL AFTER consumed_at' },
   { table: 'invites', column: 'revoked_at', definition: 'DATETIME NULL AFTER used_at' },
@@ -1156,6 +1175,13 @@ const COLUMN_ADDITIONS = [
 // ENUM values added after a table first shipped: MODIFY COLUMN runs only when
 // the value is missing from the column type (safe to repeat, never drops data).
 const ENUM_ADDITIONS = [
+  // Backups gained the 'running' state (a run is recorded before it finishes).
+  {
+    table: 'backups',
+    column: 'status',
+    value: 'running',
+    definition: "ENUM('running','ok','failed') NOT NULL DEFAULT 'running'",
+  },
   {
     table: 'contract_payments',
     column: 'status',
@@ -1198,6 +1224,7 @@ const SKELETON_TABLES = [
 
 // A column that was created NOT NULL but must allow NULL now.
 const NULLABLE_CHANGES = [
+  { table: 'backups', column: 'path', definition: 'VARCHAR(255) NULL' },
   { table: 'conversations', column: 'with_user_id', definition: 'BIGINT UNSIGNED NULL' },
   { table: 'listing_inquiries', column: 'name', definition: 'VARCHAR(120) NULL' },
   { table: 'listing_inquiries', column: 'phone', definition: 'VARCHAR(20) NULL' },
@@ -1205,6 +1232,7 @@ const NULLABLE_CHANGES = [
 ];
 
 const INDEX_ADDITIONS = [
+  { table: 'backups', index: 'idx_backups_created', columns: 'created_at' },
   { table: 'otp_codes', index: 'idx_otp_codes_ip_created', columns: 'ip, created_at' },
   { table: 'notifications', index: 'uq_notifications_dedupe', columns: 'dedupe_key', unique: true },
   { table: 'notifications', index: 'idx_notifications_office_created', columns: 'office_id, created_at' },

@@ -60,7 +60,7 @@ Over real HTTP: a new phone signs in and creates an office, adds a landlord, a b
 
 ## 6. Schema self-check
 
-`/health/detail` (with `X-Cron-Secret`) reports `live.schema.found = total = 72` tables, equal to `database/schema.js` and to the list in `CLAUDE.md` (asserted in `auditSweep`).
+`/health/detail` (with `X-Cron-Secret`) reports `live.schema.found = total = 73` tables, equal to `database/schema.js` and to the list in `CLAUDE.md` (asserted in `auditSweep`).
 
 ## 7. Dependencies
 
@@ -78,3 +78,26 @@ These are not code defects; they are on the pre-launch checklist in `DEPLOY.md`.
 6. **Console SMS driver** prints codes; keep `SMS_PROVIDER` set to a real provider in production.
 7. **Backups** are a hosting task (not automated by the app); the `backup` job is a registered placeholder.
 8. ZATCA e-invoicing is **not** implemented; the invoice page says it is not an approved e-invoice.
+
+## 9. Operations: backups, restore, health, SMS balance, reports (Prompt 16)
+
+Covered by `tests/backup.test.js` and `tests/opsFlow.test.js` (throwaway databases `aqdi_bk_*`, fixed clocks, mocked HTTPS).
+
+| Check | Result |
+|---|---|
+| The backup is one file `aqdi-YYYYMMDD-HHmm.sql.gz.enc` (mode 0600, directory 0700); no plaintext SQL, table name or row marker is visible in it; it is not a plain gzip; nothing but the `.enc` file is left in the directory; sha256 stored and equal to the file's | pass |
+| Restore drill: restored rows equal the source for every table (Arabic, emoji, quotes, backslashes, NULs, line breaks, 70 KB text, JSON, DECIMAL, BIGINT UNSIGNED, DATE/DATETIME/TIMESTAMP, 1,300 rows over several INSERT batches, foreign key still enforced, CHECKSUM TABLE equal) | pass |
+| The real database is dumped completely: the file lists exactly the 73 table names, the restore reaches the footer row counts | pass |
+| Damaged file (one byte flipped), file cut mid-frame or exactly between frames, junk file, wrong `SECRET_BOX_KEY`, two frames swapped: refused with a code, and the target database is not even created | pass |
+| Restore refuses the production `DB_NAME` without `--i-know-this-overwrites-production`, a bad target name, a missing file, a non-empty target without `--overwrite`; CLI exit codes (usage 2, refusal 1, success 0) and nothing secret in its output | pass |
+| Retention: 14 daily + 8 weekly (Sundays) + 6 monthly; bounded to 28 files; the newest and a lone old backup are never removed; foreign files and fresh temp files untouched; stale temp files and failed rows over 90 days removed | pass |
+| Job lock: a second run while the lock is held writes no file and no row; the admin button answers "locked" | pass |
+| Failure: row `failed` with a short code, one platform-admin notification per day, no SQL/error text in it, no temp file left, the webhook gets only `{ ok:false, error, at }`; success webhook only `{ ok, size, sha256, filename, at }`; a non-https webhook URL is ignored | pass |
+| `/admin/ops`: anonymous 302, tenant/owner/staff refused, admin with 2FA required but missing refused, no download link or route, reason required, cross-origin 403, audit row with the reason, 4th attempt in an hour 429 | pass |
+| Health thresholds exactly at their lines, unmeasured values never alarm, alerts once per issue per day, "all clear" on recovery, monitor pinged only when healthy and only over https, a failing monitor never fails the job | pass |
+| `/healthz` answers only `{"ok":true}`; `/health/detail` stays behind the secret | pass |
+| SMS balance: console driver unsupported; Unifonic/Msegat parsing and error codes; one warning per day; `SMS_BALANCE_WARN` respected | pass (provider request shapes unverified against a live account) |
+| Monthly report: created once per period, one notification, counts only; no phone, email, name or message text in the JSON or the notice | pass |
+| Logs of both files hold no key, URL token, SQL, row data, phone, name or email | pass |
+
+Open points: the SMS balance endpoints must be confirmed once with a real Unifonic/Msegat account; the backup is only as safe as the separate copy of `SECRET_BOX_KEY` and the weekly off-server download (documented in `DEPLOY.md` section 6b); off-site upload (SFTP/S3) is deliberately not implemented.

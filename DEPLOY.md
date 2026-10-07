@@ -53,6 +53,10 @@ application root). `.env` is never committed.
 | `PLATFORM_ADMIN_PHONE` | yes | your Saudi mobile; signing in with it gives the platform_admin role |
 | `REQUIRE_ADMIN_2FA` | **leave unset** | testing only; ignored in production and flagged by the self-check |
 | `RUN_CRON` | no | `false` when cPanel Cron Jobs call the URLs instead of the built-in scheduler |
+| `BACKUP_DIR` | recommended | absolute folder for the encrypted backups, **outside** `public/`, e.g. `/home/USER/aqdi_backups` (empty = `./backups` in the application root, ignored by git and by the deploy rsync). Created with mode `0700` |
+| `BACKUP_WEBHOOK_URL` | optional | `https://...` monitor that receives `{ ok, size, sha256, filename, at }` after each backup (never the file) |
+| `HEALTHCHECK_PING_URL` | optional | `https://...` uptime-monitor heartbeat, fetched after every healthy 15-minute check |
+| `SMS_BALANCE_WARN` | optional | warn the platform admin below this SMS balance (default 100) |
 | `UPLOAD_DIR` | yes | absolute path **outside** `public/`, writable by the app, e.g. `/home/USER/aqdi_uploads` |
 | `SMS_PROVIDER`, `SMS_API_KEY`, `SMS_SENDER`, `SMS_USERNAME` | yes (production) | `unifonic` or `msegat`; `console` is refused in production |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | optional | email reminders; empty = email skipped |
@@ -67,7 +71,7 @@ default, not an environment variable.
 
 ## 4. First start
 
-1. Start the app. `ensureSchema()` creates every table (72) and applies the
+1. Start the app. `ensureSchema()` creates every table (73) and applies the
    additive migrations on its own; there is nothing to run by hand.
 2. Seed the default rows once (plans, message templates, settings, FAQs and
    three **draft** blog posts flagged "needs review before publishing"). From the
@@ -76,7 +80,7 @@ default, not an environment variable.
 3. Open `https://your-domain/health`: `status: ok`, `database: reachable`.
 4. Check the detail (the same value as `CRON_SECRET`):
    `curl -H "X-Cron-Secret: ..." https://your-domain/health/detail`
-   shows `live.schema.found == live.schema.total` (72/72), the client IP the app
+   shows `live.schema.found == live.schema.total` (73/73), the client IP the app
    sees (it must not be 127.0.0.1 for every visitor) and every startup warning.
 5. Sign in with `PLATFORM_ADMIN_PHONE`, set up the authenticator app (2FA) and
    **save the backup codes** (shown once).
@@ -107,11 +111,16 @@ in cPanel > Cron Jobs (replace the URL and the secret). Each call answers only
 0 7 * * *    ... /cron/run/reminders            # contract and payment reminders
 0 8 * * *    ... /cron/run/digest               # office daily summary
 30 9 * * *   ... /cron/run/trial_check          # trial ending
+# operations
+*/15 * * * * ... /cron/run/health_ping          # health check, alerts to the platform admin
+0 2 * * *    ... /cron/run/backup               # encrypted database backup (see section 6b)
+0 10 * * *   ... /cron/run/sms_balance          # SMS balance, warns below SMS_BALANCE_WARN
+0 5 1 * *    ... /cron/run/reports              # monthly platform summary (the 1st)
 # weekly
 0 3 * * 5    ... /cron/run/purge_notifications  # notifications 180 days, delivery log 90 days
 ```
 
-`backup`, `sms_balance`, `health_ping` and `reports` are registered but off (placeholders).
+cPanel cron uses the **server's** clock: set the hours above to Riyadh time (the built-in scheduler always uses Asia/Riyadh). A run that finds the job already running (for example the built-in scheduler and a cron line together) does nothing: `{ "ok": true, "processed": 0 }`.
 
 ## 6. Uploads directory
 
@@ -125,6 +134,44 @@ metadata under random file names. Requirements:
 - never served directly. Everything goes through routes that check access:
   `/maintenance/photos/:id`, `/listings/photos/:id/:variant` (only while the
   listing is public), `/blog/:slug/cover`, `/office/billing/receipts/:id`.
+
+## 6b. Backups, restore and the restore drill
+
+**What it does.** Job `backup` (daily 02:00 Riyadh) writes one file `aqdi-YYYYMMDD-HHmm.sql.gz.enc` into `BACKUP_DIR`: every table, one consistent snapshot, gzip, then AES-256-GCM with `SECRET_BOX_KEY`. It is built in Node (no `mysqldump` is needed or used), so it works on shared hosting. The plaintext SQL is never written to disk. Kept: the newest backup of each of the last 14 days, 8 Sundays and 6 months; older ones are deleted; the newest is never deleted. A failed backup notifies the platform admin (one notification a day) and shows in Admin > "التشغيل والنسخ الاحتياطي" (`/admin/ops`) with its error code.
+
+**The key is part of the backup.** A backup can only be opened with the same `SECRET_BOX_KEY`. Keep a copy of the key **separately from the backups** (a password manager). Rotating the key makes older backups unreadable: do it before launch, then keep the old key with the old files.
+
+**BACKUP_DIR on cPanel.**
+1. Create the folder **outside** `public_html` and outside any folder the web server publishes, e.g. `/home/USER/aqdi_backups`.
+2. `chmod 700 /home/USER/aqdi_backups` (the app does this itself on first run; check it in File Manager > Permissions: 0700, owner = your account).
+3. Put the path in `BACKUP_DIR`. Make sure the disk quota has room for about 28 files of the database size.
+4. Files are created with mode `0600`.
+
+**Download decision.** Backups hold personal data (phones, nicknames), so **the app offers no download button** and no download route. You download them yourself: cPanel > File Manager > `aqdi_backups` > select the file > Download. Do this **weekly to a machine that is not the server** (a laptop with an encrypted disk, or a separate storage account); a backup that lives only on the server is lost with the server. Verify the file: the sha256 in `/admin/ops` must equal `sha256sum aqdi-....sql.gz.enc` of the downloaded file.
+
+**Run one now.** `/admin/ops` > "نسخة احتياطية الآن" (needs a reason; 3 per hour), or from cPanel Terminal: `curl -s -X POST -H "X-Cron-Secret: SECRET" https://your-domain/cron/run/backup`.
+
+**Restore, step by step** (cPanel Terminal, or a laptop with the code, Node 20 and access to a MySQL):
+1. Get the file: `ls -l /home/USER/aqdi_backups` (or upload the downloaded file to the machine).
+2. Export the same settings the app uses (or have them in `.env`): `DB_HOST`, `DB_USER`, `DB_PASSWORD` and the **same `SECRET_BOX_KEY`** that was active when the backup was made. `DB_NAME` stays the live database name; it is only used as a safety check.
+3. Restore into a **new, empty database** first (create it in cPanel > MySQL Databases and give your user all privileges on it):
+   `cd /home/USER/aqdi && node scripts/restore-backup.js --file /home/USER/aqdi_backups/aqdi-20261007-0200.sql.gz.enc --target USER_aqdi_restore`
+4. Read the output. It checks the sha256 (from the `backups` table, or pass `--sha <value from /admin/ops>`), decrypts and verifies the whole file **before touching anything**, restores, then compares every table's row count with the file. `OK: every table matches.` and exit code 0 means the restore is good. Any other result (`REFUSED (sha_mismatch)`, `bad_key_or_corrupt`, `truncated`, `count_mismatch`, `production_refused`, `target_not_empty`) means: do not use this file or target; try an older backup or check the key.
+5. Look at the data (cPanel > phpMyAdmin on the restored database): a few offices, contracts, the newest rows.
+6. **Putting it live (disaster only).** Stop the app (Setup Node.js App > Stop). Then either point `DB_NAME` at the restored database and restart, or restore over the live name: `... --target LIVE_DB_NAME --i-know-this-overwrites-production` (this drops and recreates the tables of the live database; use only when it is already lost or damaged). Start the app and check `/health`, `/health/detail` (73/73 tables) and sign in.
+7. Everything written after the backup's time (up to a day) is lost: tell offices to re-check the last day, and note that notifications for that day may be sent again or missed.
+
+**Quarterly restore drill** (put it in your calendar; a backup that was never restored is a hope, not a backup):
+- [ ] Download the newest backup to a separate machine and compare its sha256 with `/admin/ops`.
+- [ ] Restore it into a scratch database with `scripts/restore-backup.js` (step 3) using the **production key from the password manager**, not the one in the server's `.env` by habit.
+- [ ] Output ends with `OK: every table matches` and exit code 0.
+- [ ] Open the scratch copy: counts of offices, contracts and users look right; the newest rows are from last night.
+- [ ] Time it, write down how long the restore took and the size of the file.
+- [ ] Try a damaged copy (change one byte) and confirm it is refused.
+- [ ] Drop the scratch database; delete the downloaded copy if it is on a shared machine.
+- [ ] Check retention: `/admin/ops` shows about 14 recent days plus Sundays and month starts, and no failed backups in the last week.
+
+**Monitoring.** `GET /healthz` answers `{"ok":true}` and nothing else: point an uptime monitor at it. Set `HEALTHCHECK_PING_URL` for a heartbeat (dead-man's-switch) service, and `BACKUP_WEBHOOK_URL` to be told after every backup. The health check (every 15 minutes) alerts the platform admin, once per problem per day, when: the database is unreachable, the scheduled jobs stopped (30 min), the last good backup is older than 36 hours, disk space of `BACKUP_DIR` or `UPLOAD_DIR` is below 200 MB, the message queue is stuck, many messages failed in the last hour, or a suspicious payment waits. It sends an "all clear" when a problem goes away. The SMS balance is checked daily (Unifonic and Msegat; the request shapes follow their public documentation and should be checked once with your real account).
 
 ## 7. SSL and Cloudflare
 
@@ -156,8 +203,8 @@ Do every item, in this order. Tick it in your copy.
 - [ ] Review the three seeded blog drafts (Admin > Blog); publish, edit or delete them. They are marked "يحتاج مراجعة قبل النشر".
 - [ ] Plans: check names, prices (VAT-exclusive), limits and the `listings` / `whatsapp` / `telegram` / `reports_csv` / `ai_reading` switches in Admin > Plans.
 - [ ] Moyasar stays in TEST mode until the commercial entity is decided; bank transfer works without it.
-- [ ] Backups: schedule the cPanel database backup (daily) **and** a copy of `UPLOAD_DIR`; do one test restore into an empty database.
-- [ ] Monitoring: an external uptime check on `https://your-domain/health` (every 1-5 minutes) with an alert to your phone; read `/health/detail` after every deploy.
+- [ ] Backups: set `BACKUP_DIR` (outside `public_html`, mode 0700), run one backup from `/admin/ops`, download it through File Manager to another machine, keep `SECRET_BOX_KEY` in a password manager **apart from the backups**, and do the restore drill of section 6b once before launch. Also copy `UPLOAD_DIR` (photos and receipts are not in the database dump). cPanel's own account backup is a good second layer.
+- [ ] Monitoring: an external uptime check on `https://your-domain/healthz` (every 1-5 minutes) with an alert to your phone; optionally `HEALTHCHECK_PING_URL` and `BACKUP_WEBHOOK_URL`; read `/health/detail` after every deploy and `/admin/ops` weekly.
 - [ ] `robots.txt` and `sitemap.xml` open and correct; submit the sitemap in Google Search Console.
 - [ ] Open the site on a phone: home, pricing, a listing, register, create an office, sign out, sign in.
 - [ ] Run `npm test` against a **throwaway** database (never the real one) and `npm audit --omit=dev` before the release commit.
@@ -171,7 +218,7 @@ on the newer schema.
 1. cPanel > Git Version Control > the repository > History (or `git log`): note the last good commit.
 2. Check it out and deploy it: either `git revert <bad commit>` on `main` and deploy, or on the server `git reset --hard <good commit>` then Deploy HEAD Commit. (Reverting keeps history; prefer it.)
 3. Touch `tmp/restart.txt` (or *Restart* in Setup Node.js App) and check `/health` and `/health/detail`.
-4. If a migration itself was the problem, restore the database backup taken before the deploy; take one before every deploy that adds tables.
+4. If a migration itself was the problem, restore the database backup taken before the deploy (section 6b); take one from `/admin/ops` before every deploy that adds tables.
 5. Uploads are never touched by a deploy; no action needed.
 6. If something is badly wrong and you need time: Admin > Settings > banner message, or turn off sign-ups / AI reading with the kill switches. They are memory-refreshed within 30 seconds.
 

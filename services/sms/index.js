@@ -53,4 +53,18 @@ async function sendSms(toE164, message, driver = selectDriver()) {
   return result;
 }
 
-module.exports = { selectDriver, sendSms };
+/**
+ * The account balance of the selected provider: { supported: false } for the
+ * console driver or an unconfigured one, otherwise { supported: true, ok, balance | error }.
+ * Never logs keys or numbers.
+ */
+async function getBalance(driver = selectDriver()) {
+  if (!driver || typeof driver.getBalance !== 'function') return { supported: false };
+  try {
+    return await driver.getBalance();
+  } catch (err) {
+    return { supported: true, ok: false, error: err.code || 'driver_error' };
+  }
+}
+
+module.exports = { selectDriver, sendSms, getBalance };

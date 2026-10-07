@@ -242,7 +242,9 @@ test('plan feature flag and max_listings: refused without the feature, stops at 
   // Deleting one frees a slot.
   const rows = (await db.pool.query('SELECT id FROM listings WHERE office_id = ?', [p.office.id]))[0];
   assert.equal((await post(`/office/listings/${rows[0].id}/delete`, p.cookie, {})).location, '/office/listings');
-  assert.equal((await post('/office/listings', p.cookie, { unit_id: String(p.units[3]) })).status, 302);
+  // Which two of the five parallel creates won is up to the database: use a unit that has no listing now.
+  const [[free]] = await db.pool.query('SELECT id FROM units WHERE office_id = ? AND id NOT IN (SELECT unit_id FROM listings WHERE office_id = ?) ORDER BY id LIMIT 1', [p.office.id, p.office.id]);
+  assert.equal((await post('/office/listings', p.cookie, { unit_id: String(free.id) })).status, 302);
   // The billing page shows the listing usage.
   assert.match((await http.request('/office/billing', { cookie: p.cookie })).text, /الإعلانات العامة/);
 });

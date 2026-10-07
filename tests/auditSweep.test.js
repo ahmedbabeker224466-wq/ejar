@@ -111,7 +111,7 @@ function routeTable() {
 
 // Routes that answer a visitor who is not signed in, by design.
 const PUBLIC = [
-  /^GET \/(health|health\/detail|features|pricing|about|privacy|terms|disclaimer|contact|blog|blog\/feed\.xml|blog\/:slug|blog\/:slug\/cover|sitemap\.xml|robots\.txt|listings|listings\/:id|listings\/photos\/:id\/:variant|listings\/:id\/report|login|register|join|login\/verify|login\/2fa|login\/2fa\/setup|logout)?$/,
+  /^GET \/(health|healthz|health\/detail|features|pricing|about|privacy|terms|disclaimer|contact|blog|blog\/feed\.xml|blog\/:slug|blog\/:slug\/cover|sitemap\.xml|robots\.txt|listings|listings\/:id|listings\/photos\/:id\/:variant|listings\/:id\/report|login|register|join|login\/verify|login\/2fa|login\/2fa\/setup|logout)?$/,
   /^POST \/(contact|listings\/:id\/inquiry|listings\/:id\/report|login|login\/verify|login\/resend|login\/2fa|login\/2fa\/setup|register|webhooks\/moyasar|webhooks\/telegram\/:secret|cron\/run\/:job)$/,
 ];
 const isPublic = (r) => PUBLIC.some((re) => re.test(`${r.method} ${r.path}`));

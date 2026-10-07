@@ -20,6 +20,8 @@ const { officeAccess } = require('./offices');
 const subscriptions = require('./subscriptions');
 const listings = require('./listings');
 const inquiries = require('./inquiries');
+const backup = require('./backup');
+const ops = require('./ops');
 
 const TIMEZONE = 'Asia/Riyadh';
 const LAST_RUN_KEY = 'reminders.last_run_date';
@@ -124,7 +126,7 @@ async function runPurgeAuth({ pool }) {
   return otp.affectedRows + sessions.affectedRows;
 }
 
-// name -> { schedule (Riyadh time), run }. Placeholders are registered but off.
+// name -> { schedule (Riyadh time), run }.
 const JOBS = {
   reminders: { schedule: '0 7 * * *', label: 'إنشاء التذكيرات', run: runReminders },
   deliver: { schedule: '*/5 * * * *', label: 'إرسال الرسائل المعلقة', run: ({ pool, now }) => delivery.deliverPending({ pool, now }).then((r) => r.processed) },
@@ -138,10 +140,10 @@ const JOBS = {
   trial_check: { schedule: '30 9 * * *', label: 'فحص انتهاء التجربة', run: runTrialCheck },
   purge_notifications: { schedule: '0 3 * * 5', label: 'حذف الإشعارات القديمة', run: runPurgeNotifications },
   purge_auth: { schedule: '*/10 * * * *', label: 'حذف رموز الدخول والجلسات المنتهية', run: runPurgeAuth },
-  backup: { schedule: '0 2 * * *', placeholder: true },
-  sms_balance: { schedule: '0 10 * * *', placeholder: true },
-  health_ping: { schedule: '*/15 * * * *', placeholder: true },
-  reports: { schedule: '0 5 1 * *', placeholder: true },
+  backup: { schedule: '0 2 * * *', label: 'النسخ الاحتياطي المشفّر', run: async ({ pool, now, trigger }) => (await backup.runBackup({ pool, now, trigger }), 1) },
+  sms_balance: { schedule: '0 10 * * *', label: 'فحص رصيد الرسائل', run: ({ pool, now }) => ops.runSmsBalance({ pool, now }) },
+  health_ping: { schedule: '*/15 * * * *', label: 'فحص صحة النظام', run: ({ pool, now }) => ops.runHealthPing({ pool, now }) },
+  reports: { schedule: '0 5 1 * *', label: 'التقرير الشهري للمنصة', run: ({ pool, now }) => ops.generateMonthlyReport({ pool, now }) },
 };
 
 // ------------------------------------------------------------ locking and running
@@ -167,17 +169,16 @@ async function runWithLock(pool, name, fn) {
 }
 
 /** Runs one job now (scheduler or /cron/run). Never throws. */
-async function runJob(name, { pool = db.pool, now = () => new Date() } = {}) {
+async function runJob(name, { pool = db.pool, now = () => new Date(), trigger = 'scheduled' } = {}) {
   const job = Object.hasOwn(JOBS, name) ? JOBS[name] : null;
   if (!job) return { ok: false, error: 'unknown_job', processed: 0 };
-  if (job.placeholder) return { ok: false, error: 'not_implemented', processed: 0 };
   const started = Date.now();
   let runId = null;
   try {
     return await runWithLock(pool, name, async () => {
       const [insert] = await pool.query("INSERT INTO cron_runs (job_name, started_at, status) VALUES (?, UTC_TIMESTAMP(), 'running')", [name]);
       runId = insert.insertId;
-      const processed = await job.run({ pool, now: now() });
+      const processed = await job.run({ pool, now: now(), trigger });
       await pool.query(
         "UPDATE cron_runs SET finished_at = UTC_TIMESTAMP(), duration_ms = ?, processed = ?, status = 'ok' WHERE id = ?",
         [Date.now() - started, Number(processed) || 0, runId],
@@ -197,18 +198,13 @@ async function runJob(name, { pool = db.pool, now = () => new Date() } = {}) {
   }
 }
 
-/** Schedules every real job. Returns { stop }. Placeholders log once. */
+/** Schedules every job. Returns { stop }. */
 function start({ pool = db.pool } = {}) {
   const tasks = [];
-  const missing = [];
   for (const [name, job] of Object.entries(JOBS)) {
-    if (job.placeholder) {
-      missing.push(name);
-      continue;
-    }
     tasks.push(cron.schedule(job.schedule, () => runJob(name, { pool }), { name: `aqdi-${name}`, timezone: TIMEZONE, noOverlap: true }));
   }
-  logger.info(`Cron started: ${tasks.length} jobs (Asia/Riyadh). Not implemented yet: ${missing.join(', ')}`);
+  logger.info(`Cron started: ${tasks.length} jobs (Asia/Riyadh).`);
   return {
     stop() {
       for (const task of tasks) task.destroy();

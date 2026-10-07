@@ -586,7 +586,7 @@ test('cron: the advisory lock prevents a double run; runJob records cron_runs', 
   const done = await cron.runJob('expire_invites');
   assert.equal(done.ok, true);
   assert.equal(await count("SELECT COUNT(*) FROM cron_runs WHERE job_name = 'expire_invites' AND status = 'ok'"), before + 1);
-  assert.deepEqual(await cron.runJob('backup'), { ok: false, error: 'not_implemented', processed: 0 });
+  for (const [name, job] of Object.entries(cron.JOBS)) assert.equal(typeof job.run, 'function', `${name} is a real job`);
   assert.equal((await cron.runJob('nope')).error, 'unknown_job');
   for (const [name, job] of Object.entries(cron.JOBS)) assert.ok(require('node-cron').validate(job.schedule), name);
   assert.equal(Object.keys(cron.JOBS).length, 16); // + listings_expiry and purge_inquiries
@@ -602,7 +602,6 @@ test('POST /cron/run/:job needs the right X-Cron-Secret and answers only { ok, p
   assert.deepEqual(Object.keys(body).sort(), ['ok', 'processed']);
   assert.equal(body.ok, true);
   assert.equal((await post('unknown_job', process.env.CRON_SECRET)).status, 404);
-  assert.equal((await post('backup', process.env.CRON_SECRET)).status, 501);
   assert.equal((await fetch(`${http.base()}/cron/run/expire_invites`)).status, 404, 'GET is not a route');
 });
 

@@ -11,4 +11,8 @@ module.exports = {
     logger.warn(`[SMS-CONSOLE] >>> to ${toE164}: ${message.replace(/\s*\n\s*/g, ' / ')}`);
     return { ok: true, providerRef: `console-${Date.now()}`, error: null };
   },
+  // No account, no balance.
+  async getBalance() {
+    return { supported: false };
+  },
 };

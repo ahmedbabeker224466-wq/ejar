@@ -27,4 +27,22 @@ function open(sealed) {
   return Buffer.concat([decipher.update(buffer.subarray(28)), decipher.final()]).toString('utf8');
 }
 
-module.exports = { seal, open };
+/** Like seal() for raw bytes, with optional additional authenticated data (aad). Same stored format. */
+function sealBytes(bytes, aad = null) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key(), iv);
+  if (aad) cipher.setAAD(aad);
+  const encrypted = Buffer.concat([cipher.update(bytes), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), encrypted]);
+}
+
+/** Opens sealBytes() output; throws when the key, the bytes or the aad are wrong. */
+function openBytes(sealed, aad = null) {
+  const buffer = Buffer.from(sealed);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key(), buffer.subarray(0, 12));
+  decipher.setAuthTag(buffer.subarray(12, 28));
+  if (aad) decipher.setAAD(aad);
+  return Buffer.concat([decipher.update(buffer.subarray(28)), decipher.final()]);
+}
+
+module.exports = { seal, open, sealBytes, openBytes };

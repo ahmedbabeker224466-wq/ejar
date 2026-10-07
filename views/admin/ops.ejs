@@ -1,0 +1,76 @@
+<div class="page-head"><h1>التشغيل والنسخ الاحتياطي</h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card">
+  <h2>حالة النظام</h2>
+  <% if (!snapshot) { %>
+    <p class="muted">لم يعمل الفحص الدوري بعد (كل 15 دقيقة).</p>
+  <% } else { %>
+    <p>
+      <span class="badge badge--bill-<%= snapshot.ok ? 'success' : 'danger' %>"><%= snapshot.ok ? 'كل شيء سليم' : 'يوجد تنبيه' %></span>
+      <span class="muted">آخر فحص: <span dir="ltr"><%= ageText(snapshot.at) %></span></span>
+    </p>
+    <% if (snapshot.issues && snapshot.issues.length) { %>
+      <ul class="item-list">
+        <% snapshot.issues.forEach(function (key) { %>
+          <li class="item"><strong><%= labels[key] || key %></strong><% if (snapshot.details && snapshot.details[key]) { %> <span class="muted"><%= snapshot.details[key] %></span><% } %></li>
+        <% }) %>
+      </ul>
+    <% } %>
+    <% if (snapshot.checks && snapshot.checks.db !== false) { %>
+      <ul class="item-list">
+        <li class="item">آخر تشغيل للمهام المجدولة: <%= snapshot.checks.cronAgeMinutes === null ? '—' : 'قبل ' + snapshot.checks.cronAgeMinutes + ' دقيقة' %></li>
+        <li class="item">آخر نسخة ناجحة: <%= snapshot.checks.backupAgeHours === null ? '—' : 'قبل ' + snapshot.checks.backupAgeHours + ' ساعة' %></li>
+        <li class="item">طابور الرسائل: <%= snapshot.checks.queue ? snapshot.checks.queue.pending : 0 %> رسالة معلقة</li>
+        <li class="item">رسائل فشلت في الساعة الماضية: <%= snapshot.checks.failedLastHour %></li>
+        <li class="item">دفعات مشبوهة: <%= snapshot.checks.suspiciousOrders %></li>
+      </ul>
+    <% } %>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2>النسخ الاحتياطي</h2>
+  <p class="muted">كل يوم 02:00 بتوقيت الرياض، مشفّرة بمفتاح الخادم. لا يوجد تنزيل من هنا؛ حمّل الملفات من «مدير الملفات» في cPanel (مجلد النسخ الاحتياطي).</p>
+  <form method="post" action="/admin/ops/backup" class="inline-form" novalidate>
+    <label class="visually-hidden" for="backup-reason">السبب</label>
+    <input id="backup-reason" name="reason" class="input" maxlength="200" placeholder="لماذا تشغّل نسخة الآن؟" required>
+    <button type="submit" class="btn btn--primary">نسخة احتياطية الآن</button>
+  </form>
+  <ul class="item-list">
+    <% backups.forEach(function (b) { %>
+      <li class="item">
+        <div class="item__title"><strong dir="ltr"><%= b.filename || '—' %></strong>
+          <span class="badge badge--bill-<%= b.status === 'ok' ? 'success' : (b.status === 'running' ? 'warning' : 'danger') %>"><%= b.status === 'ok' ? 'ناجحة' : (b.status === 'running' ? 'جارية' : 'فشلت') %></span>
+          <span class="muted"><%= b.trigger_kind === 'manual' ? 'يدوية' : 'مجدولة' %></span>
+        </div>
+        <div class="item__meta"><%= sizeText(b.size_bytes) %> · <%= ageText(b.created_at) %><% if (b.tables_count) { %> · <%= b.tables_count %> جدولاً<% } %><% if (b.error_code) { %> · رمز الخطأ <span dir="ltr"><%= b.error_code %></span><% } %></div>
+        <% if (b.sha256) { %><div class="item__meta" dir="ltr">sha256: <%= b.sha256 %></div><% } %>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (!backups.length) { %><p class="empty-state">لا توجد نسخ بعد.</p><% } %>
+</section>
+
+<section class="card">
+  <h2>رصيد الرسائل</h2>
+  <% if (!sms) { %><p class="muted">لم يُفحص بعد (يومياً 10:00).</p>
+  <% } else if (!sms.supported) { %><p class="muted">مزوّد الرسائل الحالي لا يدعم قراءة الرصيد.</p>
+  <% } else if (!sms.ok) { %><p>تعذّرت قراءة الرصيد (<span dir="ltr"><%= sms.error %></span>).</p>
+  <% } else { %><p>الرصيد: <strong dir="ltr"><%= sms.balance %></strong> <span class="muted"><%= ageText(sms.at) %></span></p><% } %>
+</section>
+
+<section class="card">
+  <h2>التقارير الشهرية</h2>
+  <ul class="item-list">
+    <% reports.forEach(function (r) { %>
+      <li class="item">
+        <div class="item__title"><strong dir="ltr"><%= r.period %></strong></div>
+        <div class="item__meta">مكاتب جديدة <%= r.data.new_offices %> · اشتراكات نشطة <%= r.data.active_subscriptions %> · الدخل الشهري <span dir="ltr"><%= r.data.mrr_sar %></span> ريال · مغادرون <%= r.data.churned_offices %></div>
+        <div class="item__meta">إشعارات <%= r.data.notifications_created %> · قراءات ذكاء <%= r.data.ai_reads %> · نجاح النسخ <%= r.data.backup_success_pct === null ? '—' : r.data.backup_success_pct + '%' %> · رسائل تواصل <%= r.data.support_contact_messages %></div>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (!reports.length) { %><p class="empty-state">يصدر أول تقرير في أول يوم من الشهر القادم.</p><% } %>
+</section>

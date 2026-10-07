@@ -11,6 +11,12 @@ const { rateLimit } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
+// Minimal liveness answer for uptime monitors: nothing about the system inside.
+router.get('/healthz', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ ok: true });
+});
+
 router.get('/health', async (req, res) => {
   const database = await db.ping();
   res.set('Cache-Control', 'no-store');
@@ -70,7 +76,7 @@ router.post('/cron/run/:job', cronLimit, async (req, res, next) => {
     const job = String(req.params.job || '');
     if (!Object.hasOwn(cronJobs.JOBS, job)) return res.status(404).json({ ok: false, processed: 0 });
     const result = await cronJobs.runJob(job);
-    const status = result.error === 'not_implemented' ? 501 : result.ok ? 200 : 500;
+    const status = result.ok ? 200 : 500;
     return res.status(status).json({ ok: Boolean(result.ok), processed: Number(result.processed) || 0 });
   } catch (err) {
     return next(err);

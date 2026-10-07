@@ -35,6 +35,11 @@ const KIND_LABELS = {
   listing_inquiry: 'استفسار على إعلان',
   listing_expiring: 'إعلان على وشك أن يُخفى',
   listing_report: 'بلاغ عن إعلان',
+  backup_failed: 'فشل النسخ الاحتياطي',
+  ops_alert: 'تنبيه تشغيلي',
+  ops_clear: 'عاد النظام لوضعه الطبيعي',
+  sms_low: 'رصيد الرسائل منخفض',
+  ops_report: 'التقرير الشهري للمنصة',
   contact_new: 'رسالة من نموذج التواصل',
   test: 'رسالة تجربة',
 };

@@ -49,6 +49,7 @@ const NAV = [
   { key: 'messages', href: '/admin/messages', label: 'رسائل التواصل' },
   { key: 'blog', href: '/admin/blog', label: 'المدونة' },
   { key: 'settings', href: '/admin/settings', label: 'إعدادات المنصة' },
+  { key: 'ops', href: '/admin/ops', label: 'التشغيل والنسخ الاحتياطي' },
   { key: 'audit', href: '/admin/audit', label: 'سجل التدقيق' },
 ];
 
@@ -99,6 +100,9 @@ const DONE = {
   unbanned: 'أُعيد حق نشر الإعلانات للمكتب.',
   handled: 'تم تعليم الرسالة كمعالجة.',
   analytics: 'تم حفظ شيفرة التحليلات.',
+  backup_ok: 'اكتمل النسخ الاحتياطي.',
+  backup_failed: 'فشل النسخ الاحتياطي. راجع رمز الخطأ في الجدول.',
+  backup_locked: 'نسخة احتياطية أخرى تعمل الآن. حاول بعد قليل.',
 };
 const doneText = (key) => (Object.hasOwn(DONE, key) ? DONE[key] : null);
 
@@ -540,5 +544,6 @@ router.get('/admin/audit', wrap(async (req, res) => {
 }));
 
 require('./adminContent')(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText });
+require('./adminOps')(router, { wrap, reasonOf, REASON_ERROR, audit, doneText });
 
 module.exports = router;

@@ -24,6 +24,7 @@ const FORBIDDEN_COLUMN = /national|iqama|id_number|_nid\b|\biban|meter|account_?
 // Every column with "name" in it, reviewed one by one.
 const NAME_COLUMNS = new Set([
   'buildings.name', // nickname of a building
+  'backups.filename', // the backup file's own name (aqdi-date-time), no party data
   'office_branches.name', // branch of the office
   'offices.name', // the office's own public name
   'plans.name_ar', // plan title

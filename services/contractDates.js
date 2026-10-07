@@ -219,7 +219,27 @@ function riyadhYear(at) {
   return Number(riyadhDate(at).slice(0, 4));
 }
 
+/** Day of the week of a 'YYYY-MM-DD' date: 0 = Sunday ... 6 = Saturday. */
+function weekdayOf(ymd) {
+  return new Date(parseYmd(ymd)).getUTCDay();
+}
+
+/** The month before the one that contains `ymd`, as 'YYYY-MM'. */
+function previousMonthOf(ymd) {
+  parseYmd(ymd);
+  return addMonths(`${ymd.slice(0, 7)}-01`, -1).slice(0, 7);
+}
+
+/** The instants a Riyadh month 'YYYY-MM' starts (inclusive) and ends (exclusive). */
+function monthBounds(period) {
+  const first = `${period}-01`;
+  return { start: riyadhMidnight(first), end: riyadhMidnight(addMonths(first, 1)) };
+}
+
 module.exports = {
+  weekdayOf,
+  previousMonthOf,
+  monthBounds,
   riyadhMidnight,
   subscriptionPeriodEnd,
   periodDaysLeft,
