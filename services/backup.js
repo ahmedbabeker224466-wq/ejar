@@ -179,13 +179,44 @@ async function* decryptFrames(file) {
 
 // ------------------------------------------------------------ dumping
 
-const DATE_TYPES = new Set(['DATE', 'DATETIME', 'TIMESTAMP', 'NEWDATE', 'TIME', 'YEAR']);
-const STRING_TYPES = new Set(['LONGLONG', 'DECIMAL', 'NEWDECIMAL', 'BIT', 'JSON']);
+// Column kinds are decided from information_schema (DATA_TYPE), never from the
+// protocol's field.type: MariaDB reports JSON columns (LONGTEXT + CHECK json_valid)
+// as BLOB, and a BLOB rule would either parse JSON into an object or turn real
+// binary bytes into text.
+const TEXT_TYPES = new Set(['json', 'char', 'varchar', 'tinytext', 'text', 'mediumtext', 'longtext', 'enum', 'set']);
+const BINARY_TYPES = new Set(['blob', 'tinyblob', 'mediumblob', 'longblob', 'binary', 'varbinary']);
+const STRING_NUMERIC_TYPES = new Set(['date', 'datetime', 'timestamp', 'time', 'year', 'decimal', 'bigint', 'bit']);
 
-function typeCast(field, next) {
-  if (field.type === 'JSON') return field.string('utf8'); // raw JSON text, not a parsed object
-  if (DATE_TYPES.has(field.type) || STRING_TYPES.has(field.type)) return field.string();
-  return next();
+/** column name -> 'text' | 'binary' | 'string' | 'plain' for one table, read inside the snapshot. */
+async function columnKinds(conn, table) {
+  const [cols] = await conn.query(
+    'SELECT COLUMN_NAME AS name, DATA_TYPE AS type, CHARACTER_SET_NAME AS charset FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION',
+    [table],
+  );
+  const kinds = new Map();
+  for (const c of cols) {
+    const type = String(c.type).toLowerCase();
+    let kind = 'plain';
+    if (BINARY_TYPES.has(type) && !c.charset) kind = 'binary';
+    else if (TEXT_TYPES.has(type) || c.charset) kind = 'text';
+    else if (STRING_NUMERIC_TYPES.has(type)) kind = 'string';
+    kinds.set(c.name, kind);
+  }
+  return kinds;
+}
+
+/** mysql2 typeCast that hands back raw text, raw bytes or exact strings, never a parsed value. */
+function makeTypeCast(kinds) {
+  return (field, next) => {
+    const kind = kinds.get(field.name);
+    if (kind === 'text') {
+      const raw = field.buffer();
+      return raw === null ? null : raw.toString('utf8');
+    }
+    if (kind === 'binary') return field.buffer();
+    if (kind === 'string') return field.string();
+    return next();
+  };
 }
 
 const quoteId = (name) => `\`${String(name).replace(/`/g, '``')}\``;
@@ -193,6 +224,8 @@ const quoteId = (name) => `\`${String(name).replace(/`/g, '``')}\``;
 function valueSql(value) {
   if (value === null || value === undefined) return 'NULL';
   if (Buffer.isBuffer(value)) return `X'${value.toString('hex')}'`;
+  // A parsed object (or its useless text) means the column was read wrongly: never write that into a backup.
+  if (typeof value === 'object' || value === '[object Object]') throw new BackupError('bad_value_serialization', 'A value could not be serialized faithfully');
   return mysql.escape(String(value));
 }
 
@@ -207,6 +240,7 @@ async function* dumpSql(conn, now) {
     const [[created]] = await conn.query(`SHOW CREATE TABLE ${quoteId(table)}`);
     const createSql = String(created['Create Table']).replace(/\s*\n\s*/g, ' ');
     yield `-- table ${table}\nDROP TABLE IF EXISTS ${quoteId(table)};\n${createSql};\n`;
+    const typeCast = makeTypeCast(await columnKinds(conn, table));
     const stream = conn.connection.query({ sql: `SELECT * FROM ${quoteId(table)}`, rowsAsArray: true, typeCast }).stream({ highWaterMark: 64 });
     let batch = [];
     let bytes = 0;
@@ -586,4 +620,7 @@ module.exports = {
   restoreBackup,
   sha256OfFile,
   writeBackupFile,
+  sqlPieces,
+  valueSql,
+  makeTypeCast,
 };

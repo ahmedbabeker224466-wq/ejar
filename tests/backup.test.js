@@ -141,6 +141,28 @@ async function seedSource() {
       [i % 2 ? 1 : 2, txt, i === 0 ? null : '1234567.89', JSON.stringify({ a: [1, 2, { b: 'ç"\\' }], t: txt && txt.slice(0, 5) })],
     );
   }
+
+  // JSON (native and the MariaDB shape: LONGTEXT + CHECK json_valid), TEXT and real binary columns.
+  await srcPool.query(`CREATE TABLE typed (
+      id INT AUTO_INCREMENT PRIMARY KEY, j JSON NULL, jt LONGTEXT NULL, t TEXT NULL, b BLOB NULL, vb VARBINARY(10) NULL,
+      CONSTRAINT chk_typed_jt CHECK (jt IS NULL OR JSON_VALID(jt))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  const nested = { a: { b: [1, 2.5, { c: 'ç"\\' }], d: null }, 'عربي': 'قيمة ☕ 😀', e: '\u0627\n"quoted"', empty: {}, arr: [] };
+  const bigJson = JSON.stringify({ items: Array.from({ length: 6000 }, (_, i) => ({ i, s: `نص ${i} "q" \\ end` })) });
+  assert.ok(bigJson.length > 100 * 1024);
+  const jsonCases = [
+    [JSON.stringify(nested), 'عربي ☕'],
+    ['{}', ''],
+    ['null', null], // JSON null (a value) ...
+    [null, null], // ... versus SQL NULL
+    ['"\\u0627\\u0644"', "it's \\ \"x\""],
+    [bigJson, 'x'.repeat(2000)],
+  ];
+  for (const [json, text] of jsonCases) {
+    await srcPool.query('INSERT INTO typed (j, jt, t, b, vb) VALUES (?, ?, ?, ?, ?)', [json, json, text, Buffer.from([0x00, 0xff, 0x01, 0x80, 0xc3, 0x28]), Buffer.from([0xff, 0xfe, 0x00])]);
+  }
+  await srcPool.query('INSERT INTO typed (j, jt, t, b, vb) VALUES (NULL, NULL, NULL, NULL, NULL), (NULL, NULL, ?, ?, ?)', ['', Buffer.alloc(0), Buffer.alloc(0)]);
+  await srcPool.query('INSERT INTO typed (b) VALUES (?)', [crypto.randomBytes(60000)]);
   // More than one INSERT batch (500 rows each).
   const values = [];
   for (let i = 0; i < 1300; i += 1) values.push(`(NULL, 'row ${i}', ${i}.50, NULL, NULL, NULL, 0, ${i}, '2026-01-01 00:00:00', 'a')`);
@@ -230,6 +252,16 @@ test('date helpers for the backup names, the weekly keeper and the report period
   assert.throws(() => dates.weekdayOf('2026-02-30'));
 });
 
+test('serialization guard: a parsed object or "[object Object]" is never written into a backup; bytes become hex', () => {
+  assert.throws(() => backup.valueSql({ a: 1 }), (e) => e.code === 'bad_value_serialization');
+  assert.throws(() => backup.valueSql([1, 2]), (e) => e.code === 'bad_value_serialization');
+  assert.throws(() => backup.valueSql('[object Object]'), (e) => e.code === 'bad_value_serialization');
+  assert.equal(backup.valueSql(null), 'NULL');
+  assert.equal(backup.valueSql(Buffer.from([0, 255, 1])), "X'00ff01'");
+  assert.equal(backup.valueSql('a\'b\\'), "'a\\'b\\\\'");
+  assert.equal(backup.valueSql(12.5), "'12.5'");
+});
+
 test('BACKUP_DIR must be outside public/ and is created with mode 0700', { skip }, () => {
   assert.throws(() => backup.backupDir({ BACKUP_DIR: path.join(__dirname, '..', 'public', 'x') }), (e) => e.code === 'backup_dir_public');
   const made = backup.ensureBackupDir({ BACKUP_DIR: path.join(dir, 'fresh', 'b') });
@@ -247,7 +279,7 @@ dbTest('a backup is one encrypted file (mode 0600), no plaintext on disk, checks
   const result = await backup.runBackup({ pool: srcPool, now, env: { ...process.env } });
   sourceBackup = result;
   assert.equal(result.filename, 'aqdi-20261007-1300.sql.gz.enc');
-  assert.equal(result.tables, 5);
+  assert.equal(result.tables, 6);
   const file = path.join(process.env.BACKUP_DIR, result.filename);
   assert.equal(fs.statSync(file).mode & 0o777, 0o600);
   assert.equal(fs.statSync(process.env.BACKUP_DIR).mode & 0o777, 0o700);
@@ -268,8 +300,14 @@ dbTest('a backup is one encrypted file (mode 0600), no plaintext on disk, checks
   assert.equal(row.error_code, null);
 
   const info = await backup.inspectBackup(file);
-  assert.deepEqual(info.tables, ['backups', 'cron_runs', 'empty_table', 'kv', 'parent'], 'the table list is in the header');
+  assert.deepEqual(info.tables, ['backups', 'cron_runs', 'empty_table', 'kv', 'parent', 'typed'], 'the table list is in the header');
   assert.equal(info.rows.kv, 1308);
+  assert.equal(info.rows.typed, 9);
+  // The decrypted SQL never holds a serialized object, and every JSON text is real JSON.
+  let sql = '';
+  for await (const piece of backup.sqlPieces(file)) sql += piece;
+  assert.ok(!sql.includes('[object Object]'));
+  assert.ok(sql.includes('INSERT INTO `typed`'));
   assert.equal(info.rows.empty_table, 0);
 });
 
@@ -279,7 +317,7 @@ dbTest('restore drill: every table comes back with the same rows (odd values, JS
   const lines = [];
   const result = await backup.restoreBackup({ file, target: RESTORED, expectedSha: sourceBackup.sha256, env: dbEnv(), log: (m) => lines.push(m) });
   assert.equal(result.ok, true);
-  assert.deepEqual(result.tables, { backups: 1, cron_runs: 0, empty_table: 0, kv: 1308, parent: 2 });
+  assert.deepEqual(result.tables, { backups: 1, cron_runs: 0, empty_table: 0, kv: 1308, parent: 2, typed: 9 });
   assert.ok(lines.some((l) => /Checksum matches/.test(l)));
 
   const restored = mysql.createPool({
@@ -288,7 +326,7 @@ dbTest('restore drill: every table comes back with the same rows (odd values, JS
   });
   restored.pool.on('connection', (c) => c.query("SET time_zone = '+00:00'"));
   try {
-    for (const table of ['kv', 'parent', 'empty_table']) {
+    for (const table of ['kv', 'parent', 'empty_table', 'typed']) {
       const [a] = await srcPool.query(`SELECT * FROM \`${table}\` ORDER BY 1`);
       const [b] = await restored.query(`SELECT * FROM \`${table}\` ORDER BY 1`);
       assert.deepEqual(b, a, `${table} differs`);
@@ -296,6 +334,21 @@ dbTest('restore drill: every table comes back with the same rows (odd values, JS
       const [[sb]] = await restored.query(`CHECKSUM TABLE \`${table}\``);
       assert.equal(sb.Checksum, sa.Checksum, `${table} checksum differs`);
     }
+    // JSON, TEXT and binary columns: byte for byte (hex of the stored bytes), and no value turned into "[object Object]".
+    const columns = 'id, HEX(CAST(j AS CHAR)) AS j, HEX(jt) AS jt, HEX(t) AS t, HEX(b) AS b, HEX(vb) AS vb, JSON_VALID(jt) AS jv';
+    const [ta] = await srcPool.query(`SELECT ${columns} FROM typed ORDER BY id`);
+    const [tb] = await restored.query(`SELECT ${columns} FROM typed ORDER BY id`);
+    assert.equal(ta.length, 9);
+    assert.deepEqual(tb, ta, 'typed columns differ after the restore');
+    const [[bin]] = await restored.query('SELECT HEX(b) AS b, HEX(vb) AS vb FROM typed WHERE id = 1');
+    assert.equal(bin.b, '00FF0180C328', 'binary bytes survive (0xFF is not 0xEFBFBD)');
+    assert.equal(bin.vb, 'FFFE00');
+    const [[jnull]] = await restored.query("SELECT COUNT(*) AS n FROM typed WHERE jt = 'null'");
+    assert.equal(Number(jnull.n), 1, 'JSON null stays a value');
+    const [[sqlnull]] = await restored.query('SELECT COUNT(*) AS n FROM typed WHERE j IS NULL AND jt IS NULL');
+    assert.equal(Number(sqlnull.n), 4, 'SQL NULL stays NULL (4 rows have both JSON columns NULL)');
+    const [[objs]] = await restored.query("SELECT COUNT(*) AS n FROM typed WHERE jt LIKE '%[object Object]%' OR t LIKE '%[object Object]%'");
+    assert.equal(Number(objs.n), 0);
     // The foreign key is back and works.
     await assert.rejects(restored.query("INSERT INTO kv (parent_id, txt) VALUES (999999, 'x')"), /foreign key/i);
     const [[big]] = await restored.query("SELECT CAST(big AS CHAR) AS big, txt FROM kv WHERE txt = ?", [MARKER_AR]);
