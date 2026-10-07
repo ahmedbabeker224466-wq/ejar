@@ -109,6 +109,27 @@ async function memberUsage(scoped, { lock = false } = {}) {
   return { limit: office && office.max_members !== null && office.max_members !== undefined ? Number(office.max_members) : null, current: Number(n) };
 }
 
+/**
+ * Like unitUsage, for public listings (plans.max_listings, NULL = unlimited):
+ * the office's listings that are not rented. With { lock: true } it must be
+ * the FIRST statement of the transaction.
+ */
+async function listingUsage(scoped, { lock = false } = {}) {
+  const [office] = await scoped.query(
+    `SELECT o.id, p.max_listings FROM offices o LEFT JOIN plans p ON p.id = o.plan_id
+      WHERE o.id = :office_id${lock ? ' FOR UPDATE' : ''}`,
+  );
+  const [{ n }] = await scoped.query(
+    `SELECT COUNT(*) AS n FROM listings WHERE office_id = :office_id AND status <> 'rented'${lock ? ' LOCK IN SHARE MODE' : ''}`,
+  );
+  return { limit: office && office.max_listings !== null && office.max_listings !== undefined ? Number(office.max_listings) : null, current: Number(n) };
+}
+
+/** Arabic refusal for the listing limit. */
+function listingLimitMessage({ limit, current }) {
+  return `وصلت إلى حد باقتك: ${limit} إعلانات (لديك ${current}). احذف إعلاناً قديماً أو رقِّ اشتراكك.`;
+}
+
 /** Arabic refusal for the photo limit. */
 function photoLimitMessage({ limit }) {
   return `وصل المكتب إلى حد باقته من الصور (${limit} صورة). أرسل الطلب بدون صور أو تواصل مع المكتب.`;
@@ -121,5 +142,5 @@ function memberLimitMessage({ limit, current }) {
 
 module.exports = {
   checkLimit, unitLimitMessage, contractLimitMessage, usageText, unitUsage, contractUsage,
-  photoUsage, memberUsage, photoLimitMessage, memberLimitMessage,
+  photoUsage, memberUsage, listingUsage, photoLimitMessage, memberLimitMessage, listingLimitMessage,
 };

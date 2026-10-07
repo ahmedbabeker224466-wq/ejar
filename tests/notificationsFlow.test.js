@@ -589,7 +589,7 @@ test('cron: the advisory lock prevents a double run; runJob records cron_runs', 
   assert.deepEqual(await cron.runJob('backup'), { ok: false, error: 'not_implemented', processed: 0 });
   assert.equal((await cron.runJob('nope')).error, 'unknown_job');
   for (const [name, job] of Object.entries(cron.JOBS)) assert.ok(require('node-cron').validate(job.schedule), name);
-  assert.equal(Object.keys(cron.JOBS).length, 14);
+  assert.equal(Object.keys(cron.JOBS).length, 16); // + listings_expiry and purge_inquiries
 });
 
 test('POST /cron/run/:job needs the right X-Cron-Secret and answers only { ok, processed }', { skip }, async () => {

@@ -1152,6 +1152,7 @@ img {
 /* Units and buildings */
 .tabs {
   display: flex;
+  flex-wrap: wrap; /* five status tabs must not widen the page on a phone */
   gap: var(--space-2);
   margin-bottom: var(--space-4);
   border-bottom: 2px solid var(--color-border);
@@ -1548,3 +1549,50 @@ img {
 .invoice-table { min-width: 0; }
 .invoice-table th, .invoice-table td { white-space: normal; }
 .invoice-table td:last-child, .invoice-table th:last-child { white-space: nowrap; }
+
+/* Listings: office manager and public pages */
+.badge--listing-draft { background: var(--stage-ended-soft); color: var(--stage-ended); }
+.badge--listing-published { background: var(--color-success-soft); color: var(--color-success); }
+.badge--listing-hidden { background: var(--color-warning-soft); color: var(--color-warning); }
+.badge--listing-rented { background: var(--color-info-soft); color: var(--color-info); }
+.photo-manager { list-style: none; margin: 0 0 var(--space-4); padding: 0; display: grid; gap: var(--space-3); }
+.photo-manager__item { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.photo-manager__item img { width: 100%; max-width: 240px; height: auto; border-radius: var(--radius-sm); background: var(--color-bg); }
+@media (min-width: 700px) { .photo-manager { grid-template-columns: repeat(2, 1fr); } }
+
+/* Public site: listings, marketing sections, blog */
+.hp { position: absolute; inset-inline-start: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.section { margin-block: var(--space-6); }
+.cards-3 { display: grid; gap: var(--space-4); }
+@media (min-width: 700px) { .cards-3 { grid-template-columns: repeat(3, 1fr); } }
+.check-list { margin: 0; padding-inline-start: var(--space-5); display: grid; gap: var(--space-2); }
+.faq { display: grid; gap: var(--space-2); }
+.faq__item { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); background: var(--color-surface); }
+.faq__item summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+.prose { max-width: 70ch; }
+.prose h2 { margin-top: var(--space-5); }
+.post-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.post-cover { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-md); }
+.post-body { line-height: 1.9; }
+.post-body blockquote { margin: var(--space-4) 0; padding-inline-start: var(--space-4); border-inline-start: 4px solid var(--color-primary); color: var(--color-text-muted); }
+.listing-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+@media (min-width: 600px) { .listing-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 960px) { .listing-grid { grid-template-columns: repeat(3, 1fr); } }
+.listing-card { padding: 0; overflow: hidden; }
+.listing-card__link { display: block; padding-bottom: var(--space-3); color: inherit; text-decoration: none; }
+.listing-card__link > :not(.listing-card__img) { margin-inline: var(--space-4); }
+.listing-card__link h2 { font-size: var(--text-lg); margin-block: var(--space-3) var(--space-2); }
+.listing-card__img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; background: var(--color-bg); }
+.listing-card__img--empty { border-bottom: 1px solid var(--color-border); }
+.listing-card__price, .listing-detail__price { font-size: var(--text-lg); margin: 0; color: var(--color-primary); }
+.gallery { margin-block: var(--space-4); }
+.gallery__main { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-md); background: var(--color-bg); }
+.gallery__thumbs { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; gap: var(--space-2); overflow-x: auto; }
+.gallery__thumbs img { display: block; width: 96px; height: 72px; object-fit: cover; border-radius: var(--radius-sm); }
+.gallery__thumbs a { display: block; min-width: 44px; min-height: 44px; }
+
+/* The header stays on one line on phones: the links scroll sideways instead of overflowing. */
+@media (max-width: 700px) {
+  .site-header__inner { flex-wrap: wrap; gap: var(--space-2); padding-block: var(--space-2); }
+  .site-nav { order: 3; width: 100%; margin-inline-start: 0; overflow-x: auto; }
+}

@@ -1,0 +1,125 @@
+<p class="back-link"><a href="/office/listings">→ الإعلانات</a></p>
+<div class="page-head"><h1><%= listing.title %></h1>
+  <span class="badge badge--listing-<%= listing.status %>"><%= statusLabels[listing.status] %></span></div>
+<% if (notice) { %><div class="flash flash--<%= notice[0] %>" role="status"><%= notice[1] %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<% if (listing.adminHidden) { %><div class="flash flash--danger" role="alert">أخفت إدارة المنصة هذا الإعلان<%= listing.adminHiddenReason ? ': ' + listing.adminHiddenReason : '' %>. لا يمكن نشره مرة أخرى.</div><% } %>
+<% if (listing.status === 'rented') { %><div class="flash flash--info">الوحدة مؤجرة، فالإعلان مخفي. يعود مسودة عندما تُصبح الوحدة شاغرة.</div><% } %>
+
+<section class="card detail-card">
+  <h2>الحالة</h2>
+  <% if (listing.status === 'published') { %>
+    <p>منشور حتى <strong dir="ltr"><%= stamp(listing.expiresAt) %></strong> (يُخفى تلقائياً بعد <%= days %> يوماً ما لم تجدده).</p>
+    <p><a href="<%= publicPath %>" target="_blank" rel="noopener noreferrer">عرض الصفحة العامة</a></p>
+  <% } %>
+  <div class="button-row">
+    <% if (listing.status === 'draft' || listing.status === 'hidden') { %>
+      <form method="post" action="/office/listings/<%= listing.id %>/publish"><button type="submit" class="btn btn--primary"><%= listing.status === 'hidden' ? 'نشر مرة أخرى' : 'نشر الإعلان' %></button></form>
+    <% } %>
+    <% if (listing.status === 'published') { %>
+      <form method="post" action="/office/listings/<%= listing.id %>/renew"><button type="submit" class="btn btn--primary">تجديد <%= days %> يوماً</button></form>
+      <form method="post" action="/office/listings/<%= listing.id %>/hide"><button type="submit" class="btn btn--secondary">إخفاء</button></form>
+    <% } %>
+  </div>
+  <p class="muted">للنشر: الإيجار والحي ووصف قصير وصورة واحدة على الأقل، والوحدة شاغرة.</p>
+</section>
+
+<% if (listing.status !== 'rented') { %>
+<form method="post" action="/office/listings/<%= listing.id %>" class="form-card" novalidate>
+  <h2>بيانات الإعلان (تظهر للعموم)</h2>
+  <div class="form-grid">
+    <div class="field"><label for="unit_type">نوع العقار</label>
+      <select id="unit_type" name="unit_type" class="select">
+        <% Object.keys(types).forEach(function (t) { %><option value="<%= t %>" <%= values.unit_type === t ? 'selected' : '' %>><%= types[t] %></option><% }) %>
+      </select><% if (errors.unit_type) { %><p class="field-error"><%= errors.unit_type %></p><% } %></div>
+    <div class="field"><label for="city">المدينة</label>
+      <select id="city" name="city" class="select" data-hood-city>
+        <% cities.forEach(function (c) { %><option value="<%= c %>" <%= values.city === c ? 'selected' : '' %>><%= c %></option><% }) %>
+      </select><% if (errors.city) { %><p class="field-error"><%= errors.city %></p><% } %></div>
+    <div class="field"><label for="neighborhood">الحي</label>
+      <select id="neighborhood" name="neighborhood" class="select" data-hood-select>
+        <option value="">اختر الحي</option>
+        <% cities.forEach(function (c) { var list = (byCity[c] || []).concat([other]); %>
+          <optgroup label="<%= c %>" data-city="<%= c %>">
+            <% list.forEach(function (n) { %><option value="<%= n %>" <%= values.city === c && values.neighborhood === n ? 'selected' : '' %>><%= n %></option><% }) %>
+          </optgroup>
+        <% }) %>
+      </select><% if (errors.neighborhood) { %><p class="field-error"><%= errors.neighborhood %></p><% } %></div>
+    <div class="field"><label for="price">الإيجار السنوي (ريال)</label>
+      <input id="price" name="price" class="input" inputmode="decimal" dir="ltr" value="<%= values.price %>">
+      <% if (errors.price) { %><p class="field-error"><%= errors.price %></p><% } %></div>
+    <div class="field"><label for="rooms">الغرف</label><input id="rooms" name="rooms" class="input" inputmode="numeric" dir="ltr" maxlength="2" value="<%= values.rooms %>">
+      <% if (errors.rooms) { %><p class="field-error"><%= errors.rooms %></p><% } %></div>
+    <div class="field"><label for="bathrooms">دورات المياه</label><input id="bathrooms" name="bathrooms" class="input" inputmode="numeric" dir="ltr" maxlength="2" value="<%= values.bathrooms %>">
+      <% if (errors.bathrooms) { %><p class="field-error"><%= errors.bathrooms %></p><% } %></div>
+    <div class="field"><label for="area_sqm">المساحة (م²)</label><input id="area_sqm" name="area_sqm" class="input" inputmode="decimal" dir="ltr" value="<%= values.area_sqm %>">
+      <% if (errors.area_sqm) { %><p class="field-error"><%= errors.area_sqm %></p><% } %></div>
+  </div>
+  <fieldset class="checks"><legend>المزايا</legend>
+    <div class="checks__grid">
+      <% Object.keys(featureLabels).forEach(function (f) { %><label class="check"><input type="checkbox" name="features" value="<%= f %>" <%= values.features.indexOf(f) >= 0 ? 'checked' : '' %>> <%= featureLabels[f] %></label><% }) %>
+    </div>
+    <% if (errors.features) { %><p class="field-error"><%= errors.features %></p><% } %></fieldset>
+  <div class="field"><label for="description">وصف قصير (حتى 800 حرف)</label>
+    <textarea id="description" name="description" class="textarea" rows="5" maxlength="800"><%= values.description %></textarea>
+    <p class="field-hint">لا تكتب أرقام هواتف أو روابط أو حسابات؛ سيصلك الاستفسار من نموذج التواصل.</p>
+    <% if (errors.description) { %><p class="field-error"><%= errors.description %></p><% } %></div>
+  <button type="submit" class="btn btn--primary btn--large btn--block">حفظ</button>
+</form>
+
+<section class="card detail-card" id="photos">
+  <h2>الصور (<%= photos.length %> من <%= maxPhotos %>)</h2>
+  <p class="muted">تُحفظ الصور بعد حذف بيانات الموقع والكاميرا منها، وبحجم لا يتجاوز 1600 بكسل. الحد 5 ميجابايت للصورة.</p>
+  <% if (photos.length) { %>
+    <ul class="photo-manager">
+      <% photos.forEach(function (p, i) { %>
+        <li class="photo-manager__item">
+          <img src="/office/listings/<%= listing.id %>/photos/<%= p.id %>/thumb" alt="صورة <%= i + 1 %>" width="160" height="120" loading="lazy">
+          <div class="button-row">
+            <% if (p.isCover) { %><span class="badge badge--bill-success">الغلاف</span><% } else { %>
+              <form method="post" action="/office/listings/<%= listing.id %>/photos/<%= p.id %>/cover"><button type="submit" class="btn btn--secondary btn--small">اجعلها الغلاف</button></form><% } %>
+            <% if (i > 0) { %><form method="post" action="/office/listings/<%= listing.id %>/photos/<%= p.id %>/up"><button type="submit" class="btn btn--secondary btn--small" aria-label="تقديم">↑</button></form><% } %>
+            <% if (i < photos.length - 1) { %><form method="post" action="/office/listings/<%= listing.id %>/photos/<%= p.id %>/down"><button type="submit" class="btn btn--secondary btn--small" aria-label="تأخير">↓</button></form><% } %>
+            <form method="post" action="/office/listings/<%= listing.id %>/photos/<%= p.id %>/delete"><button type="submit" class="btn btn--danger btn--small">حذف</button></form>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+  <% if (photos.length < maxPhotos) { %>
+    <form method="post" action="/office/listings/<%= listing.id %>/photos" enctype="multipart/form-data" novalidate>
+      <div class="field"><label for="photos-input">إضافة صور</label>
+        <input id="photos-input" name="photos" class="input input--file" type="file" multiple accept="image/jpeg,image/png,image/webp"></div>
+      <button type="submit" class="btn btn--primary">رفع</button>
+    </form>
+  <% } %>
+</section>
+
+<section class="card detail-card" id="inquiries">
+  <h2>الاستفسارات (<%= inquiries.length %>)</h2>
+  <p class="muted">بيانات الزائر له وحده، وتُحذف تلقائياً بعد 90 يوماً.</p>
+  <ul class="item-list">
+    <% inquiries.forEach(function (q) { %>
+      <li class="item">
+        <div class="item__title"><strong><%= q.name || 'زائر' %></strong> <span class="badge badge--role"><%= inquiryStatuses[q.status] %></span></div>
+        <div class="item__meta"><% if (q.phone) { %><span dir="ltr"><%= q.phone %></span><% } %> <% if (q.email) { %><span dir="ltr"><%= q.email %></span><% } %> · <span dir="ltr"><%= stamp(q.created_at) %></span></div>
+        <% if (q.message) { %><p class="pre-line"><%= q.message %></p><% } %>
+        <form method="post" action="/office/listings/<%= listing.id %>/inquiries/<%= q.id %>/status" class="inline-form">
+          <label class="visually-hidden" for="st-<%= q.id %>">الحالة</label>
+          <select id="st-<%= q.id %>" name="status" class="select">
+            <% Object.keys(inquiryStatuses).forEach(function (s) { %><option value="<%= s %>" <%= q.status === s ? 'selected' : '' %>><%= inquiryStatuses[s] %></option><% }) %>
+          </select>
+          <button type="submit" class="btn btn--secondary btn--small">تحديث</button>
+        </form>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (!inquiries.length) { %><p class="empty-state">لا توجد استفسارات بعد.</p><% } %>
+</section>
+<% } %>
+
+<section class="card detail-card">
+  <details class="danger-zone"><summary>حذف الإعلان</summary>
+    <form method="post" action="/office/listings/<%= listing.id %>/delete"><p class="muted">يُحذف الإعلان وصوره واستفساراته نهائياً.</p><button type="submit" class="btn btn--danger">حذف</button></form></details>
+</section>
+<script src="<%= assetUrl('/js/listingForm.js') %>" defer></script>

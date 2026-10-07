@@ -18,6 +18,7 @@ const FEATURE_FLAGS = Object.freeze({
   telegram: 'إرسال التذكيرات عبر تيليجرام',
   reports_csv: 'تنزيل التقارير بصيغة CSV',
   ai_reading: 'قراءة العقد بالذكاء الاصطناعي',
+  listings: 'نشر الإعلانات العامة',
 });
 
 // plan column -> label, in the order shown. max_members is "max staff" in the
@@ -28,6 +29,7 @@ const LIMITS = Object.freeze([
   { key: 'max_members', usage: 'members', label: 'أعضاء الفريق', unit: 'عضو' },
   { key: 'max_ai_reads_monthly', usage: 'aiReads', label: 'قراءات الذكاء الاصطناعي في الشهر', unit: 'قراءة', monthly: true },
   { key: 'max_photos', usage: 'photos', label: 'صور الصيانة', unit: 'صورة' },
+  { key: 'max_listings', usage: 'listings', label: 'الإعلانات العامة', unit: 'إعلان' },
 ]);
 
 /** The on/off switches of a plan as { flag: boolean } (legacy and empty = all on). */
@@ -109,7 +111,7 @@ function validatePlan(body = {}, { creating = false } = {}) {
 // ------------------------------------------------------------ CRUD (platform admin)
 
 const PLAN_COLUMNS = `id, code, name_ar, price_monthly, price_yearly, currency, max_contracts, max_units, max_members,
-  max_ai_reads_monthly, max_photos, is_public, features, is_active, sort_order`;
+  max_ai_reads_monthly, max_photos, max_listings, is_public, features, is_active, sort_order`;
 
 async function listPlans(pool, { onlyBuyable = false } = {}) {
   const [rows] = await pool.query(
@@ -127,11 +129,11 @@ async function getPlan(pool, id) {
 async function createPlan(pool, values) {
   const [result] = await pool.query(
     `INSERT INTO plans (code, name_ar, price_monthly, price_yearly, currency, max_contracts, max_units, max_members,
-        max_ai_reads_monthly, max_photos, is_public, features, is_active, sort_order)
-     VALUES (?, ?, ?, ?, 'SAR', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        max_ai_reads_monthly, max_photos, max_listings, is_public, features, is_active, sort_order)
+     VALUES (?, ?, ?, ?, 'SAR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       values.code, values.name_ar, money.toDecimal(values.priceMonthly), money.toDecimal(values.priceYearly),
-      values.max_contracts, values.max_units, values.max_members, values.max_ai_reads_monthly, values.max_photos,
+      values.max_contracts, values.max_units, values.max_members, values.max_ai_reads_monthly, values.max_photos, values.max_listings,
       values.is_public, JSON.stringify(values.features), values.is_active, values.sort_order,
     ],
   );
@@ -141,11 +143,11 @@ async function createPlan(pool, values) {
 async function updatePlan(pool, id, values) {
   const [result] = await pool.query(
     `UPDATE plans SET name_ar = ?, price_monthly = ?, price_yearly = ?, max_contracts = ?, max_units = ?, max_members = ?,
-        max_ai_reads_monthly = ?, max_photos = ?, is_public = ?, features = ?, is_active = ?, sort_order = ?
+        max_ai_reads_monthly = ?, max_photos = ?, max_listings = ?, is_public = ?, features = ?, is_active = ?, sort_order = ?
       WHERE id = ?`,
     [
       values.name_ar, money.toDecimal(values.priceMonthly), money.toDecimal(values.priceYearly),
-      values.max_contracts, values.max_units, values.max_members, values.max_ai_reads_monthly, values.max_photos,
+      values.max_contracts, values.max_units, values.max_members, values.max_ai_reads_monthly, values.max_photos, values.max_listings,
       values.is_public, JSON.stringify(values.features), values.is_active, values.sort_order, id,
     ],
   );
@@ -174,7 +176,8 @@ async function usageFor(pool, officeId, now = new Date()) {
        (SELECT COUNT(*) FROM units WHERE office_id = :office_id) AS units,
        (SELECT COUNT(*) FROM contracts WHERE office_id = :office_id AND status IN ('calm','soon','urgent','deadline_passed')) AS contracts,
        (SELECT COUNT(*) FROM office_members WHERE office_id = :office_id AND is_active = 1) AS members,
-       (SELECT COUNT(*) FROM maintenance_photos ph JOIN maintenance_requests r ON r.id = ph.request_id WHERE r.office_id = :office_id) AS photos`,
+       (SELECT COUNT(*) FROM maintenance_photos ph JOIN maintenance_requests r ON r.id = ph.request_id WHERE r.office_id = :office_id) AS photos,
+       (SELECT COUNT(*) FROM listings WHERE office_id = :office_id AND status <> 'rented') AS listings`,
   );
   const ai = await aiUsage.usageFor(pool, officeId, now);
   return {
@@ -182,6 +185,7 @@ async function usageFor(pool, officeId, now = new Date()) {
     contracts: Number(row.contracts),
     members: Number(row.members),
     photos: Number(row.photos),
+    listings: Number(row.listings),
     aiReads: ai.used,
   };
 }

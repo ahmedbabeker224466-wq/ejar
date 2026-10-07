@@ -59,7 +59,7 @@ test('yearly prices count as one twelfth per month in MRR', () => {
 // ------------------------------------------------------------ plans
 
 test('features: missing, null and the older array form mean allowed; false switches off', () => {
-  assert.deepEqual(plans.normalizeFeatures(null), { whatsapp: true, telegram: true, reports_csv: true, ai_reading: true });
+  assert.deepEqual(plans.normalizeFeatures(null), { whatsapp: true, telegram: true, reports_csv: true, ai_reading: true, listings: true });
   assert.equal(plans.planAllows({ features: ['contracts', 'reminders'] }, 'whatsapp'), true);
   assert.equal(plans.planAllows({ features: { whatsapp: false } }, 'whatsapp'), false);
   assert.equal(plans.planAllows({ features: '{"ai_reading":false}' }, 'ai_reading'), false);
@@ -76,7 +76,7 @@ test('plan form: prices, limits (blank = unlimited), flags and the code', () => 
   assert.equal(ok.values.priceYearly, 149000);
   assert.equal(ok.values.max_units, null);
   assert.equal(ok.values.max_contracts, 300);
-  assert.deepEqual(ok.values.features, { whatsapp: true, telegram: false, reports_csv: false, ai_reading: false });
+  assert.deepEqual(ok.values.features, { whatsapp: true, telegram: false, reports_csv: false, ai_reading: false, listings: false });
   const bad = plans.validatePlan({ code: 'Bad Code', name_ar: '', price_monthly: 'abc', max_units: '0', sort_order: 'x' }, { creating: true });
   for (const field of ['code', 'name_ar', 'price_monthly', 'max_units', 'sort_order']) assert.ok(bad.errors[field], field);
 });

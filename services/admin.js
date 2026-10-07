@@ -105,7 +105,7 @@ async function listOffices(pool, { q = '', status = '', page = 1 } = {}) {
 async function officeDetail(pool, officeId, now = new Date()) {
   if (!/^\d+$/.test(String(officeId))) return null;
   const [[office]] = await pool.query(
-    `SELECT o.id, o.name, o.city, o.phone, o.email, o.status, o.plan_id, o.trial_ends_at, o.subscription_ends_at, o.created_at, p.name_ar AS plan_name
+    `SELECT o.id, o.name, o.city, o.phone, o.email, o.status, o.plan_id, o.trial_ends_at, o.subscription_ends_at, o.created_at, o.listings_banned, p.name_ar AS plan_name
        FROM offices o LEFT JOIN plans p ON p.id = o.plan_id WHERE o.id = ?`,
     [officeId],
   );

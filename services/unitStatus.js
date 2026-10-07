@@ -3,7 +3,8 @@
 // Unit status rules.
 // - 'vacant' <-> 'maintenance': office staff switch these by hand.
 // - 'rented': set and cleared only by the contract system, through setRented
-//   and setVacant. A manual change to or from 'rented' is refused.
+//   and setVacant. A manual change to or from 'rented' is refused. The unit's
+//   public listing follows: rented with the unit, back to draft when vacant.
 
 const { createAudit } = require('./audit');
 
@@ -56,6 +57,8 @@ async function setRented(scoped, unitId, { actorId = null, ip = null } = {}) {
     await scoped.query("UPDATE units SET status = 'rented' WHERE id = ? AND office_id = :office_id", [unitId]);
     await audit(scoped, actorId, unitId, unit.status, 'rented', ip);
   }
+  // A listing of a rented unit is rented too (it leaves the public site at once).
+  await require('./listings').syncRented(scoped, unitId);
   return true;
 }
 
@@ -71,7 +74,11 @@ async function setVacant(scoped, unitId, { actorId = null, ip = null } = {}) {
     "UPDATE units SET status = 'vacant' WHERE id = ? AND status = 'rented' AND office_id = :office_id",
     [unitId],
   );
-  if (result.affectedRows === 1) await audit(scoped, actorId, unitId, 'rented', 'vacant', ip);
+  if (result.affectedRows === 1) {
+    await audit(scoped, actorId, unitId, 'rented', 'vacant', ip);
+    // The listing goes back to draft; the office publishes it again on purpose.
+    await require('./listings').syncVacant(scoped, unitId);
+  }
   return true;
 }
 

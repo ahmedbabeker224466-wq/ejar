@@ -1,0 +1,8 @@
+<article class="card prose">
+  <p class="back-link"><a href="/blog">→ المدونة</a></p>
+  <h1><%= post.title %></h1>
+  <p class="muted"><time datetime="<%= new Date(post.publishedAt).toISOString() %>"><%= new Date(post.publishedAt).toISOString().slice(0, 10) %></time></p>
+  <% if (cover) { %><img class="post-cover" src="/blog/<%= post.slug %>/cover" alt="" width="800" height="450" loading="lazy"><% } %>
+  <div class="post-body"><%- post.html %></div>
+  <p class="muted">معلومات عامة وليست استشارة قانونية. تحقق دائماً من المصدر الرسمي.</p>
+</article>

@@ -1,0 +1,63 @@
+<article class="listing-detail">
+  <p class="back-link"><a href="/listings">→ كل الإعلانات</a></p>
+  <h1><%= listing.title %></h1>
+  <p class="listing-detail__price"><strong><%= fmt(listing.price) %></strong> ريال سنوياً</p>
+
+  <% if (photos.length) { %>
+    <section class="gallery" aria-label="صور الإعلان" data-gallery>
+      <a href="/listings/photos/<%= photos[0] %>/full" class="gallery__main-link" target="_blank" rel="noopener noreferrer">
+        <img src="/listings/photos/<%= photos[0] %>/full" alt="<%= listing.title %>" width="1200" height="900" class="gallery__main" data-gallery-main>
+      </a>
+      <% if (photos.length > 1) { %>
+        <ul class="gallery__thumbs">
+          <% photos.forEach(function (id, i) { %>
+            <li><a href="/listings/photos/<%= id %>/full" target="_blank" rel="noopener noreferrer" data-gallery-thumb>
+              <img src="/listings/photos/<%= id %>/thumb" alt="صورة <%= i + 1 %> من <%= photos.length %>" width="120" height="90" loading="lazy"></a></li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+  <% } %>
+
+  <section class="card">
+    <h2>المواصفات</h2>
+    <dl class="details">
+      <dt>النوع</dt><dd><%= types[listing.unitType] || 'عقار' %></dd>
+      <dt>المدينة</dt><dd><%= listing.city %></dd>
+      <% if (listing.neighborhood) { %><dt>الحي</dt><dd><%= listing.neighborhood %></dd><% } %>
+      <% if (listing.rooms !== null) { %><dt>الغرف</dt><dd><%= listing.rooms %></dd><% } %>
+      <% if (listing.bathrooms !== null) { %><dt>دورات المياه</dt><dd><%= listing.bathrooms %></dd><% } %>
+      <% if (listing.area !== null) { %><dt>المساحة</dt><dd><%= listing.area %> م²</dd><% } %>
+      <dt>الإيجار السنوي</dt><dd><%= fmt(listing.price) %> ريال</dd>
+      <dt>المكتب</dt><dd><%= listing.officeName %></dd>
+    </dl>
+    <% if (listing.features.length) { %>
+      <h3>المزايا</h3>
+      <ul class="tag-list"><% listing.features.forEach(function (f) { %><li><%= featureLabels[f] %></li><% }) %></ul>
+    <% } %>
+    <% if (listing.description) { %><h3>الوصف</h3><p class="pre-line"><%= listing.description %></p><% } %>
+  </section>
+
+  <section class="card" id="inquiry">
+    <h2>تواصل مع المكتب</h2>
+    <% if (sent) { %><div class="flash flash--success" role="status">وصل استفسارك إلى المكتب وسيتواصل معك.</div><% } %>
+    <form method="post" action="/listings/<%= listing.id %>/inquiry" novalidate>
+      <div class="field"><label for="q-name">اسمك أو لقبك (اختياري)</label><input id="q-name" name="name" class="input" maxlength="60" value="<%= values.name || '' %>" autocomplete="nickname">
+        <% if (errors.name) { %><p class="field-error"><%= errors.name %></p><% } %></div>
+      <div class="form-grid">
+        <div class="field"><label for="q-phone">جوالك</label><input id="q-phone" name="phone" class="input" type="tel" inputmode="tel" dir="ltr" maxlength="30" value="<%= values.phone || '' %>" autocomplete="tel">
+          <% if (errors.phone) { %><p class="field-error"><%= errors.phone %></p><% } %></div>
+        <div class="field"><label for="q-email">بريدك الإلكتروني</label><input id="q-email" name="email" class="input" type="email" dir="ltr" maxlength="190" value="<%= values.email || '' %>" autocomplete="email">
+          <% if (errors.email) { %><p class="field-error"><%= errors.email %></p><% } %></div>
+      </div>
+      <% if (errors.contact) { %><p class="field-error"><%= errors.contact %></p><% } %>
+      <p class="field-hint">اكتب جوالك أو بريدك. لا نعرض بياناتك للعموم، ويراها المكتب فقط، وتُحذف بعد 90 يوماً.</p>
+      <div class="field"><label for="q-message">رسالتك (حتى 500 حرف)</label><textarea id="q-message" name="message" class="textarea" rows="4" maxlength="500"><%= values.message || '' %></textarea>
+        <% if (errors.message) { %><p class="field-error"><%= errors.message %></p><% } %></div>
+      <div class="hp" aria-hidden="true"><label for="q-website">اترك هذا الحقل فارغاً</label><input id="q-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <button type="submit" class="btn btn--primary btn--large btn--block">إرسال الاستفسار</button>
+    </form>
+  </section>
+  <p class="muted">الإعلان من المكتب أعلاه، وعقدي وسيط تقني فقط. <a href="/listings/<%= listing.id %>/report" rel="nofollow">الإبلاغ عن هذا الإعلان</a></p>
+</article>
+<script src="<%= assetUrl('/js/gallery.js') %>" defer></script>

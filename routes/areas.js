@@ -13,10 +13,14 @@ const messageRoutes = require('./messages');
 const reportRoutes = require('./reports');
 const billingRoutes = require('./billing');
 const adminRoutes = require('./admin');
+const publicListings = require('./publicListings');
+const siteRoutes = require('./site');
 
 const router = express.Router();
 
 router.use(adminRoutes);
+router.use(publicListings);
+router.use(siteRoutes);
 router.use(billingRoutes.webhook);
 router.use(portalRoutes);
 router.use(notificationRoutes);

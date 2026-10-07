@@ -45,6 +45,9 @@ const NAV = [
   { key: 'transfers', href: '/admin/transfers', label: 'الحوالات البنكية' },
   { key: 'promos', href: '/admin/promos', label: 'أكواد الخصم' },
   { key: 'plans', href: '/admin/plans', label: 'الباقات' },
+  { key: 'reports', href: '/admin/reports', label: 'بلاغات الإعلانات' },
+  { key: 'messages', href: '/admin/messages', label: 'رسائل التواصل' },
+  { key: 'blog', href: '/admin/blog', label: 'المدونة' },
   { key: 'settings', href: '/admin/settings', label: 'إعدادات المنصة' },
   { key: 'audit', href: '/admin/audit', label: 'سجل التدقيق' },
 ];
@@ -89,6 +92,13 @@ const DONE = {
   saved: 'تم الحفظ.',
   created: 'تمت الإضافة.',
   deleted: 'تم الحذف.',
+  dismissed: 'تم إغلاق البلاغ دون إجراء.',
+  hidden: 'تم إخفاء الإعلان.',
+  unhidden: 'أُلغي إخفاء الإدارة؛ على المكتب نشر الإعلان من جديد.',
+  banned: 'تم إيقاف نشر الإعلانات لهذا المكتب وإخفاء إعلاناته.',
+  unbanned: 'أُعيد حق نشر الإعلانات للمكتب.',
+  handled: 'تم تعليم الرسالة كمعالجة.',
+  analytics: 'تم حفظ شيفرة التحليلات.',
 };
 const doneText = (key) => (Object.hasOwn(DONE, key) ? DONE[key] : null);
 
@@ -373,12 +383,13 @@ const planFormValues = (plan) => (plan ? {
   max_members: plan.max_members === null ? '' : String(plan.max_members),
   max_ai_reads_monthly: plan.max_ai_reads_monthly === null ? '' : String(plan.max_ai_reads_monthly),
   max_photos: plan.max_photos === null ? '' : String(plan.max_photos),
+  max_listings: plan.max_listings === null || plan.max_listings === undefined ? '' : String(plan.max_listings),
   features: plans.normalizeFeatures(plan.features),
   is_public: Number(plan.is_public) === 1,
   is_active: Number(plan.is_active) === 1,
   sort_order: String(plan.sort_order),
 } : {
-  code: '', name_ar: '', price_monthly: '0', price_yearly: '0', max_units: '', max_contracts: '', max_members: '', max_ai_reads_monthly: '', max_photos: '',
+  code: '', name_ar: '', price_monthly: '0', price_yearly: '0', max_units: '', max_contracts: '', max_members: '', max_ai_reads_monthly: '', max_photos: '', max_listings: '',
   features: plans.normalizeFeatures(null), is_public: true, is_active: true, sort_order: '0',
 });
 
@@ -473,6 +484,7 @@ async function renderSettings(req, res, { errors = {}, values = null, status = 2
     },
     errors,
     switches,
+    analytics: await platformSettings.get(platformSettings.KEYS.analyticsSnippet),
     done: doneText(req.query.done),
   });
 }
@@ -526,5 +538,7 @@ router.get('/admin/audit', wrap(async (req, res) => {
   });
   return res.render('admin/audit', { title: 'سجل التدقيق', ...result, rows, filters });
 }));
+
+require('./adminContent')(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText });
 
 module.exports = router;

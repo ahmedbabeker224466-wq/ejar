@@ -1,0 +1,61 @@
+<section class="card">
+  <h1>إعلانات العقارات للإيجار</h1>
+  <p class="muted">الإيجار سنوي بالريال السعودي. للتواصل مع المكتب استخدم نموذج الاستفسار في صفحة الإعلان.</p>
+  <form method="get" action="/listings" class="filter-grid" novalidate>
+    <div class="field"><label for="f-city">المدينة</label>
+      <select id="f-city" name="city" class="select" data-hood-city>
+        <option value="">كل المدن</option>
+        <% cities.forEach(function (c) { %><option value="<%= c %>" <%= filters.city === c ? 'selected' : '' %>><%= c %></option><% }) %>
+      </select></div>
+    <div class="field"><label for="f-hood">الحي</label>
+      <select id="f-hood" name="neighborhood" class="select" data-hood-select>
+        <option value="">كل الأحياء</option>
+        <% cities.forEach(function (c) { var list = (byCity[c] || []).concat([other]); %>
+          <optgroup label="<%= c %>" data-city="<%= c %>">
+            <% list.forEach(function (n) { %><option value="<%= n %>" <%= filters.neighborhood === n && (!filters.city || filters.city === c) ? 'selected' : '' %>><%= n %></option><% }) %>
+          </optgroup>
+        <% }) %>
+      </select></div>
+    <div class="field"><label for="f-type">النوع</label>
+      <select id="f-type" name="type" class="select"><option value="">كل الأنواع</option>
+        <% Object.keys(types).forEach(function (t) { %><option value="<%= t %>" <%= filters.type === t ? 'selected' : '' %>><%= types[t] %></option><% }) %></select></div>
+    <div class="field"><label for="f-rooms">الغرف</label>
+      <select id="f-rooms" name="rooms" class="select"><option value="">الكل</option>
+        <% ['1', '2', '3', '4', '5+'].forEach(function (r) { %><option value="<%= r %>" <%= rawFilters.rooms === r ? 'selected' : '' %>><%= r %></option><% }) %></select></div>
+    <div class="field"><label for="f-min">أقل إيجار سنوي</label><input id="f-min" name="min_price" class="input" inputmode="numeric" dir="ltr" maxlength="9" value="<%= rawFilters.min_price %>"></div>
+    <div class="field"><label for="f-max">أعلى إيجار سنوي</label><input id="f-max" name="max_price" class="input" inputmode="numeric" dir="ltr" maxlength="9" value="<%= rawFilters.max_price %>"></div>
+    <div class="field"><label for="f-sort">الترتيب</label>
+      <select id="f-sort" name="sort" class="select">
+        <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>الأحدث</option>
+        <option value="price_asc" <%= filters.sort === 'price_asc' ? 'selected' : '' %>>الأقل سعراً</option>
+        <option value="price_desc" <%= filters.sort === 'price_desc' ? 'selected' : '' %>>الأعلى سعراً</option>
+        <option value="area_desc" <%= filters.sort === 'area_desc' ? 'selected' : '' %>>الأكبر مساحة</option>
+      </select></div>
+    <button type="submit" class="btn btn--primary">بحث</button>
+  </form>
+</section>
+
+<p class="muted"><%= total %> إعلان</p>
+<ul class="listing-grid">
+  <% rows.forEach(function (l) { %>
+    <li class="listing-card card">
+      <a href="/listings/<%= l.id %>" class="listing-card__link">
+        <% if (l.coverId) { %><img src="/listings/photos/<%= l.coverId %>/thumb" alt="<%= l.title %>" width="480" height="360" loading="lazy" class="listing-card__img">
+        <% } else { %><div class="listing-card__img listing-card__img--empty" role="img" aria-label="بدون صورة"></div><% } %>
+        <h2><%= l.title %></h2>
+        <p class="listing-card__price"><strong><%= fmt(l.price) %></strong> ريال / سنة</p>
+        <p class="muted"><%= l.rooms !== null ? l.rooms + ' غرف · ' : '' %><%= l.bathrooms !== null ? l.bathrooms + ' دورات مياه · ' : '' %><%= l.area !== null ? l.area + ' م²' : '' %></p>
+        <p class="muted"><%= l.officeName %></p>
+      </a>
+    </li>
+  <% }) %>
+</ul>
+<% if (!rows.length) { %><p class="empty-state">لا توجد إعلانات مطابقة الآن.</p><% } %>
+<% if (pages > 1) { %>
+  <nav class="pager" aria-label="الصفحات">
+    <% if (page > 1) { %><a href="/listings?<%= qs %><%= qs ? '&' : '' %>page=<%= page - 1 %>">السابق</a><% } %>
+    <span>صفحة <%= page %> من <%= pages %></span>
+    <% if (page < pages) { %><a href="/listings?<%= qs %><%= qs ? '&' : '' %>page=<%= page + 1 %>">التالي</a><% } %>
+  </nav>
+<% } %>
+<script src="<%= assetUrl('/js/listingForm.js') %>" defer></script>

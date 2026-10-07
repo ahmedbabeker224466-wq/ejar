@@ -145,7 +145,7 @@ async function webhook(body) {
 const hook = (paymentId, secret = KEYS.MOYASAR_WEBHOOK_SECRET) => webhook({ id: 'evt', type: 'payment_paid', secret_token: secret, data: { id: paymentId } });
 
 /** An office on the trial plan. */
-const newOffice = (n, name = `اختبار-دفع-${n}`) => fx.office(n, name, { landlords: 0, units: 0 });
+const newOffice = (n, name = `تجربة-دفع-${n}`) => fx.office(n, name, { landlords: 0, units: 0 });
 
 /** Creates an order over HTTP. Returns the order row. */
 async function buy(office, plan, { interval = 'monthly', method = 'moyasar', promo = '' } = {}) {
@@ -629,7 +629,7 @@ test('bank transfer rejected: the order fails, the promo is freed, the office is
 // ------------------------------------------------------------ plans: downgrade, immediate changes, features
 
 test('downgrade is blocked with what to reduce, and nothing is deleted', { skip }, async () => {
-  const o = await fx.office(29, 'اختبار-دفع-29', { landlords: 1, units: 3 });
+  const o = await fx.office(29, 'تجربة-دفع-29', { landlords: 1, units: 3 });
   const before = await count('SELECT COUNT(*) FROM units WHERE office_id = ?', [o.office.id]);
   const res = await post('/office/billing/orders', o.cookie, { plan: String(small.id), interval: 'monthly', method: 'moyasar' });
   assert.equal(res.status, 422);

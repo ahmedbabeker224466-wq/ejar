@@ -1,0 +1,6 @@
+<p class="flash flash--warning" role="note"><strong>يراجعها محامٍ قبل الإطلاق.</strong> هذا نص مؤقت للتجربة وليس صياغة قانونية نهائية.</p>
+<% if (seller.legal_name || seller.cr_number || seller.address) { %>
+  <p class="muted">الجهة المشغّلة: <% if (seller.legal_name) { %><strong><%= seller.legal_name %></strong><% } %><% if (seller.cr_number) { %> · سجل تجاري <span dir="ltr"><%= seller.cr_number %></span><% } %><% if (seller.address) { %> · <%= seller.address %><% } %></p>
+<% } else { %>
+  <p class="muted">بيانات الجهة المشغّلة غير محددة بعد، وستظهر هنا قبل الإطلاق.</p>
+<% } %>

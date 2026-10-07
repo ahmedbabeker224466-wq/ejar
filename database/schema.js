@@ -122,6 +122,7 @@ const TABLES = [
     'max_members INT UNSIGNED NULL',
     'max_ai_reads_monthly INT UNSIGNED NULL',
     'max_photos INT UNSIGNED NULL', // maintenance photos stored per office (NULL = unlimited)
+    'max_listings INT UNSIGNED NULL DEFAULT 5', // public listings (not rented) per office (NULL = unlimited)
     'is_public TINYINT(1) NOT NULL DEFAULT 1', // shown to offices on the billing page
     'features JSON NULL',
     'is_active TINYINT(1) NOT NULL DEFAULT 1',
@@ -144,6 +145,7 @@ const TABLES = [
     "status ENUM('trial','active','past_due','suspended') NOT NULL DEFAULT 'trial'",
     'trial_ends_at DATETIME NULL',
     'subscription_ends_at DATETIME NULL',
+    'listings_banned TINYINT(1) NOT NULL DEFAULT 0', // the platform admin removed this office's right to publish listings
     fk('offices', 'owner_id', 'users', 'SET NULL'),
     fk('offices', 'plan_id', 'plans', 'SET NULL'),
   ]),
@@ -237,9 +239,12 @@ const TABLES = [
 
   table('unit_photos', [
     `unit_id ${REF} NOT NULL`,
-    'path VARCHAR(255) NOT NULL',
+    'path VARCHAR(255) NOT NULL', // random file name of the 1600 px JPEG in UPLOAD_DIR
     'sort_order INT NOT NULL DEFAULT 0',
     'is_cover TINYINT(1) NOT NULL DEFAULT 0',
+    'thumb_path VARCHAR(255) NULL', // random file name of the 480 px thumbnail
+    'size_bytes INT UNSIGNED NULL',
+    'KEY idx_unit_photos_unit (unit_id, sort_order)',
     fk('unit_photos', 'unit_id', 'units', 'CASCADE'),
   ]),
 
@@ -537,26 +542,57 @@ const TABLES = [
     `unit_id ${REF} NOT NULL`,
     'title VARCHAR(160) NOT NULL',
     'description TEXT NOT NULL',
-    `price ${MONEY} NOT NULL`,
+    `price ${MONEY} NOT NULL`, // annual rent
     CURRENCY,
-    'rega_ad_license VARCHAR(40) NULL',
-    "status ENUM('draft','pending_review','published','hidden') NOT NULL DEFAULT 'draft'",
+    'rega_ad_license VARCHAR(40) NULL', // unused: this app makes no claim about advertising licences
+    "status ENUM('draft','pending_review','published','rented','hidden') NOT NULL DEFAULT 'draft'",
     'published_at DATETIME NULL',
     'views_count INT UNSIGNED NOT NULL DEFAULT 0',
+    // What the public page shows: a snapshot made for the listing, never the unit label, address or owner.
+    'expires_at DATETIME NULL',
+    "unit_type VARCHAR(20) NOT NULL DEFAULT 'apartment'",
+    "city VARCHAR(80) NOT NULL DEFAULT ''",
+    "neighborhood VARCHAR(80) NOT NULL DEFAULT ''",
+    'rooms TINYINT UNSIGNED NULL',
+    'bathrooms TINYINT UNSIGNED NULL',
+    'area_sqm DECIMAL(10,2) NULL',
+    'features JSON NULL',
+    'admin_hidden TINYINT(1) NOT NULL DEFAULT 0', // hidden by the platform admin: the office cannot publish it again
+    'admin_hidden_reason VARCHAR(200) NULL',
     'KEY idx_listings_status_published (status, published_at)',
+    'KEY idx_listings_status_expires (status, expires_at)',
+    'UNIQUE KEY uq_listings_unit (unit_id)',
     fk('listings', 'office_id', 'offices', 'CASCADE'),
     fk('listings', 'unit_id', 'units', 'CASCADE'),
   ]),
 
+  // The visitor's own contact details (a phone or an email, a nickname at most).
+  // Deleted after 90 days by the purge_inquiries cron job.
   table('listing_inquiries', [
     `listing_id ${REF} NOT NULL`,
     `office_id ${REF} NOT NULL`,
-    'name VARCHAR(120) NOT NULL',
-    'phone VARCHAR(20) NOT NULL',
+    'name VARCHAR(120) NULL',
+    'phone VARCHAR(20) NULL',
+    'email VARCHAR(190) NULL',
     'message TEXT NULL',
     "status ENUM('new','contacted','closed') NOT NULL DEFAULT 'new'",
+    'KEY idx_listing_inquiries_created (created_at)',
+    'KEY idx_listing_inquiries_listing (listing_id, id)',
     fk('listing_inquiries', 'listing_id', 'listings', 'CASCADE'),
     fk('listing_inquiries', 'office_id', 'offices', 'CASCADE'),
+  ]),
+
+  // Abuse reports from the public page, handled by the platform admin. No reporter data is kept.
+  table('listing_reports', [
+    `listing_id ${REF} NOT NULL`,
+    "reason ENUM('spam','wrong_info','fake','other') NOT NULL",
+    'note VARCHAR(300) NULL',
+    "status ENUM('open','dismissed','actioned') NOT NULL DEFAULT 'open'",
+    `handled_by ${REF} NULL`,
+    'handled_at DATETIME NULL',
+    'KEY idx_listing_reports_status (status, id)',
+    fk('listing_reports', 'listing_id', 'listings', 'CASCADE'),
+    fk('listing_reports', 'handled_by', 'users', 'SET NULL'),
   ]),
 
   table('listing_views', [
@@ -910,7 +946,7 @@ const TABLES = [
 
   table('contact_messages', [
     'name VARCHAR(120) NOT NULL',
-    'phone VARCHAR(20) NOT NULL',
+    'phone VARCHAR(20) NULL',
     'email VARCHAR(190) NULL',
     'message TEXT NOT NULL',
     'handled_at DATETIME NULL',
@@ -986,6 +1022,9 @@ const TABLES = [
     "status ENUM('draft','published') NOT NULL DEFAULT 'draft'",
     'published_at DATETIME NULL',
     'views INT UNSIGNED NOT NULL DEFAULT 0',
+    'meta_title VARCHAR(160) NULL',
+    'meta_description VARCHAR(300) NULL',
+    'needs_review TINYINT(1) NOT NULL DEFAULT 0', // flagged "needs review before publishing"
     'UNIQUE KEY uq_blog_posts_slug (slug)',
   ]),
 
@@ -1072,6 +1111,24 @@ const COLUMN_ADDITIONS = [
   { table: 'plans', column: 'max_photos', definition: 'INT UNSIGNED NULL AFTER max_ai_reads_monthly' },
   { table: 'plans', column: 'is_public', definition: 'TINYINT(1) NOT NULL DEFAULT 1 AFTER max_photos' },
   { table: 'promo_codes', column: 'currency', definition: "CHAR(3) NOT NULL DEFAULT 'SAR' AFTER fixed_amount" },
+  { table: 'plans', column: 'max_listings', definition: 'INT UNSIGNED NULL DEFAULT 5 AFTER max_photos' },
+  { table: 'offices', column: 'listings_banned', definition: 'TINYINT(1) NOT NULL DEFAULT 0 AFTER subscription_ends_at' },
+  { table: 'listings', column: 'expires_at', definition: 'DATETIME NULL AFTER views_count' },
+  { table: 'listings', column: 'unit_type', definition: "VARCHAR(20) NOT NULL DEFAULT 'apartment' AFTER expires_at" },
+  { table: 'listings', column: 'city', definition: "VARCHAR(80) NOT NULL DEFAULT '' AFTER unit_type" },
+  { table: 'listings', column: 'neighborhood', definition: "VARCHAR(80) NOT NULL DEFAULT '' AFTER city" },
+  { table: 'listings', column: 'rooms', definition: 'TINYINT UNSIGNED NULL AFTER neighborhood' },
+  { table: 'listings', column: 'bathrooms', definition: 'TINYINT UNSIGNED NULL AFTER rooms' },
+  { table: 'listings', column: 'area_sqm', definition: 'DECIMAL(10,2) NULL AFTER bathrooms' },
+  { table: 'listings', column: 'features', definition: 'JSON NULL AFTER area_sqm' },
+  { table: 'listings', column: 'admin_hidden', definition: 'TINYINT(1) NOT NULL DEFAULT 0 AFTER features' },
+  { table: 'listings', column: 'admin_hidden_reason', definition: 'VARCHAR(200) NULL AFTER admin_hidden' },
+  { table: 'listing_inquiries', column: 'email', definition: 'VARCHAR(190) NULL AFTER phone' },
+  { table: 'unit_photos', column: 'thumb_path', definition: 'VARCHAR(255) NULL AFTER is_cover' },
+  { table: 'unit_photos', column: 'size_bytes', definition: 'INT UNSIGNED NULL AFTER thumb_path' },
+  { table: 'blog_posts', column: 'meta_title', definition: 'VARCHAR(160) NULL AFTER views' },
+  { table: 'blog_posts', column: 'meta_description', definition: 'VARCHAR(300) NULL AFTER meta_title' },
+  { table: 'blog_posts', column: 'needs_review', definition: 'TINYINT(1) NOT NULL DEFAULT 0 AFTER meta_description' },
   { table: 'invites', column: 'phone', definition: 'VARCHAR(20) NULL AFTER role_hint' },
   { table: 'maintenance_requests', column: 'assigned_to', definition: 'BIGINT UNSIGNED NULL AFTER priority' },
   { table: 'maintenance_requests', column: 'seen_at', definition: 'DATETIME NULL AFTER assigned_vendor_id' },
@@ -1112,6 +1169,13 @@ const ENUM_ADDITIONS = [
     value: 'new',
     definition: "ENUM('new','seen','in_progress','done','rejected') NOT NULL DEFAULT 'new'",
   },
+  // Listings gained the 'rented' state (a contract rents the unit).
+  {
+    table: 'listings',
+    column: 'status',
+    value: 'rented',
+    definition: "ENUM('draft','pending_review','published','rented','hidden') NOT NULL DEFAULT 'draft'",
+  },
   {
     table: 'office_tasks',
     column: 'status',
@@ -1135,6 +1199,9 @@ const SKELETON_TABLES = [
 // A column that was created NOT NULL but must allow NULL now.
 const NULLABLE_CHANGES = [
   { table: 'conversations', column: 'with_user_id', definition: 'BIGINT UNSIGNED NULL' },
+  { table: 'listing_inquiries', column: 'name', definition: 'VARCHAR(120) NULL' },
+  { table: 'listing_inquiries', column: 'phone', definition: 'VARCHAR(20) NULL' },
+  { table: 'contact_messages', column: 'phone', definition: 'VARCHAR(20) NULL' },
 ];
 
 const INDEX_ADDITIONS = [
@@ -1144,6 +1211,10 @@ const INDEX_ADDITIONS = [
   { table: 'messages', index: 'idx_messages_conversation', columns: 'conversation_id, id' },
   { table: 'conversations', index: 'uq_conversations_contract', columns: 'contract_id', unique: true },
   { table: 'office_tasks', index: 'idx_office_tasks_office_status', columns: 'office_id, status' },
+  { table: 'listings', index: 'uq_listings_unit', columns: 'unit_id', unique: true },
+  { table: 'listings', index: 'idx_listings_status_expires', columns: 'status, expires_at' },
+  { table: 'listing_inquiries', index: 'idx_listing_inquiries_created', columns: 'created_at' },
+  { table: 'unit_photos', index: 'idx_unit_photos_unit', columns: 'unit_id, sort_order' },
 ];
 
 module.exports = {

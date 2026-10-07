@@ -1,0 +1,18 @@
+<p class="back-link"><a href="/office/listings">→ الإعلانات</a></p>
+<div class="page-head"><h1>إعلان جديد</h1></div>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<% if (units.length) { %>
+  <form method="post" action="/office/listings" class="form-card" novalidate>
+    <div class="field">
+      <label for="unit_id">الوحدة الشاغرة</label>
+      <select id="unit_id" name="unit_id" class="select" required>
+        <option value="">اختر الوحدة</option>
+        <% units.forEach(function (u) { %><option value="<%= u.id %>" <%= String(u.id) === unitId ? 'selected' : '' %>><%= u.label %> — <%= types[u.unit_type] || 'عقار' %> — <%= u.city %></option><% }) %>
+      </select>
+      <p class="field-hint">اسم الوحدة يظهر لك فقط ولا يظهر في الإعلان العام.</p>
+    </div>
+    <button type="submit" class="btn btn--primary btn--large btn--block">إنشاء مسودة</button>
+  </form>
+<% } else { %>
+  <p class="empty-state">لا توجد وحدات شاغرة بدون إعلان. أضف وحدة من <a href="/office/units/new">العقارات والوحدات</a>.</p>
+<% } %>

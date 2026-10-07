@@ -1,0 +1,21 @@
+<div class="page-head"><h1>رسائل التواصل</h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<ul class="item-list">
+  <% rows.forEach(function (m) { %>
+    <li class="item">
+      <div class="item__title"><strong><%= m.name %></strong> <span class="badge badge--bill-<%= m.handled_at ? 'success' : 'danger' %>"><%= m.handled_at ? 'تمت المعالجة' : 'جديدة' %></span></div>
+      <div class="item__meta"><% if (m.phone) { %><span dir="ltr"><%= m.phone %></span> <% } %><% if (m.email) { %><span dir="ltr"><%= m.email %></span> <% } %>· <span dir="ltr"><%= stamp(m.created_at) %></span></div>
+      <p class="pre-line"><%= m.message %></p>
+      <% if (!m.handled_at) { %>
+        <form method="post" action="/admin/messages/<%= m.id %>/handled" class="inline-form" novalidate>
+          <label class="visually-hidden" for="mh-<%= m.id %>">السبب</label>
+          <input id="mh-<%= m.id %>" name="reason" class="input" maxlength="200" placeholder="كيف عولجت الرسالة؟" required>
+          <button type="submit" class="btn btn--secondary btn--small">تمت المعالجة</button>
+        </form>
+      <% } %>
+    </li>
+  <% }) %>
+</ul>
+<% if (!rows.length) { %><p class="empty-state">لا توجد رسائل.</p><% } %>
+<p class="muted">بيانات التواصل هنا من الزائر نفسه لأجل الرد عليه فقط.</p>

@@ -11,10 +11,6 @@ const { rateLimit } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.render('pages/home', { title: 'عقدي' });
-});
-
 router.get('/health', async (req, res) => {
   const database = await db.ping();
   res.set('Cache-Control', 'no-store');

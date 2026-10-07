@@ -1,0 +1,20 @@
+<div class="page-head"><h1>الإعلانات العامة</h1><a href="/office/listings/new" class="btn btn--primary btn--small">إعلان جديد</a></div>
+<p class="muted">الإعلان صفحة عامة يراها أي زائر: النوع والمدينة والحي والمواصفات والإيجار والصور فقط. لا يظهر رقم جوال ولا اسم ولا عنوان؛ يتواصل الزائر معك من خلال نموذج الاستفسار.</p>
+<nav class="tabs" aria-label="التصفية">
+  <a href="/office/listings" <%- status === '' ? 'aria-current="page"' : '' %>>الكل</a>
+  <% ['draft', 'published', 'hidden', 'rented'].forEach(function (s) { %>
+    <a href="/office/listings?status=<%= s %>" <%- status === s ? 'aria-current="page"' : '' %>><%= statusLabels[s] %></a>
+  <% }) %>
+</nav>
+<ul class="item-list">
+  <% rows.forEach(function (l) { %>
+    <li class="item">
+      <div class="item__title"><a href="/office/listings/<%= l.id %>"><strong><%= l.title %></strong></a>
+        <span class="badge badge--listing-<%= l.status %>"><%= statusLabels[l.status] %></span>
+        <% if (l.adminHidden) { %><span class="badge badge--bill-danger">أخفته الإدارة</span><% } %></div>
+      <div class="item__meta"><%= fmt(l.price) %> ريال سنوياً · صور <%= l.photoCount %> · استفسارات <%= l.inquiryCount %>
+        <% if (l.status === 'published') { %> · ينتهي <span dir="ltr"><%= stamp(l.expiresAt) %></span><% } %></div>
+    </li>
+  <% }) %>
+</ul>
+<% if (!rows.length) { %><p class="empty-state">لا توجد إعلانات بعد. اختر وحدة شاغرة وأنشئ إعلاناً.</p><% } %>

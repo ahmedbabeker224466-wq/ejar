@@ -32,6 +32,10 @@ const KIND_LABELS = {
   billing_paid: 'تأكيد دفع الاشتراك',
   billing_transfer: 'قرار الحوالة البنكية',
   billing_alert: 'تنبيه مالي',
+  listing_inquiry: 'استفسار على إعلان',
+  listing_expiring: 'إعلان على وشك أن يُخفى',
+  listing_report: 'بلاغ عن إعلان',
+  contact_new: 'رسالة من نموذج التواصل',
   test: 'رسالة تجربة',
 };
 

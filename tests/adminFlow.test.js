@@ -105,7 +105,7 @@ const apost = (p, form) => http.request(p, { method: 'POST', cookie: admin.cooki
 const one = async (sql, params = []) => (await db.pool.query(sql, params))[0][0];
 const count = async (sql, params = []) => Number(Object.values(await one(sql, params))[0]);
 const officeRow = (id) => one('SELECT * FROM offices WHERE id = ?', [id]);
-const newOffice = (n, name = `اختبار-إدارة-${n}`, opts = { landlords: 0, units: 0 }) => fx.office(n, name, opts);
+const newOffice = (n, name = `تجربة-إدارة-${n}`, opts = { landlords: 0, units: 0 }) => fx.office(n, name, opts);
 const lastAudit = (action, officeId = null) => one(
   `SELECT * FROM audit_logs WHERE id > ? AND action = ? ${officeId ? 'AND office_id = ?' : ''} ORDER BY id DESC LIMIT 1`,
   officeId ? [auditStart, action, officeId] : [auditStart, action],
@@ -198,15 +198,15 @@ test('dashboard: the cards render from real counts', { skip }, async () => {
 // ------------------------------------------------------------ offices
 
 test('offices list and detail: search, filter, no party data, no impersonation', { skip }, async () => {
-  const o = await newOffice(6, 'اختبار-إدارة-ظاهر', { landlords: 1, units: 2 });
+  const o = await newOffice(6, 'تجربة-إدارة-ظاهر', { landlords: 1, units: 2 });
   await fx.contract(o, { unitIndex: 0 }); // tenant label 'اسم-سري'
-  const list = await aget('/admin/offices?q=%D8%A7%D8%AE%D8%AA%D8%A8%D8%A7%D8%B1-%D8%A5%D8%AF%D8%A7%D8%B1%D8%A9-%D8%B8%D8%A7%D9%87%D8%B1');
-  assert.match(list.text, /اختبار-إدارة-ظاهر/);
+  const list = await aget('/admin/offices?q=%D8%AA%D8%AC%D8%B1%D8%A8%D8%A9-%D8%A5%D8%AF%D8%A7%D8%B1%D8%A9-%D8%B8%D8%A7%D9%87%D8%B1');
+  assert.match(list.text, /تجربة-إدارة-ظاهر/);
   assert.match((await aget('/admin/offices?status=suspended')).text, /مكتب/);
-  assert.doesNotMatch((await aget('/admin/offices?q=zzzz-nothing-zzzz')).text, /اختبار-إدارة-ظاهر/);
+  assert.doesNotMatch((await aget('/admin/offices?q=zzzz-nothing-zzzz')).text, /تجربة-إدارة-ظاهر/);
   const detail = await aget(`/admin/offices/${o.office.id}`);
   assert.equal(detail.status, 200);
-  assert.match(detail.text, /اختبار-إدارة-ظاهر/);
+  assert.match(detail.text, /تجربة-إدارة-ظاهر/);
   assert.match(detail.text, /الاستخدام/);
   for (const secret of ['اسم-سري', 'مالك 1', 'شقة 1-1', '36000']) {
     assert.equal(detail.text.includes(secret), false, `no party data: ${secret}`);
@@ -218,7 +218,7 @@ test('offices list and detail: search, filter, no party data, no impersonation',
 });
 
 test('office actions: a reason is required, each change is real and audit-logged with that reason', { skip }, async () => {
-  const o = await fx.office(7, 'اختبار-إدارة-إجراءات', { landlords: 1, units: 3 });
+  const o = await fx.office(7, 'تجربة-إدارة-إجراءات', { landlords: 1, units: 3 });
   const id = o.office.id;
   const trialBefore = new Date((await officeRow(id)).trial_ends_at);
 
@@ -300,7 +300,7 @@ test('office actions: a reason is required, each change is real and audit-logged
 // ------------------------------------------------------------ orders, invoices, credit notes, transfers
 
 test('orders page, invoices and credit notes through the admin UI', { skip }, async () => {
-  const o = await newOffice(8, 'اختبار-إدارة-طلبات');
+  const o = await newOffice(8, 'تجربة-إدارة-طلبات');
   const [ins] = await db.pool.query(
     `INSERT INTO orders (office_id, plan_id, plan_code, billing_interval, method, status, subtotal, vat_rate_bp, vat_amount, total, currency, created_by, expires_at)
      VALUES (?, ?, 'adm_small', 'monthly', 'moyasar', 'pending', 10.00, 1500, 1.50, 11.50, 'SAR', ?, UTC_TIMESTAMP() + INTERVAL 1 DAY)`,
@@ -309,7 +309,7 @@ test('orders page, invoices and credit notes through the admin UI', { skip }, as
   const settled = await mod.orders.settle(db.pool, { orderId: ins.insertId, provider: 'moyasar', providerRef: `adm-pay-${ins.insertId}`, amount: 1150, currency: 'SAR', last4: '4242' });
   assert.equal(settled.status, 'paid');
   const orders = await aget('/admin/orders?status=paid&method=moyasar');
-  assert.match(orders.text, /اختبار-إدارة-طلبات/);
+  assert.match(orders.text, /تجربة-إدارة-طلبات/);
   assert.match(orders.text, new RegExp(settled.invoiceNo));
   assert.match(orders.text, /\*\*\*\*4242/);
   assert.equal((await aget('/admin/orders?suspicious=1')).status, 200);
@@ -339,7 +339,7 @@ test('orders page, invoices and credit notes through the admin UI', { skip }, as
 test('bank-transfer queue: approve and reject need a reason, both are audit-logged, the receipt opens for the admin', { skip }, async () => {
   const sharp = require('sharp');
   const png = await sharp({ create: { width: 20, height: 20, channels: 3, background: '#aaaaaa' } }).png().toBuffer();
-  const o = await newOffice(9, 'اختبار-إدارة-حوالة');
+  const o = await newOffice(9, 'تجربة-إدارة-حوالة');
   const [[plan]] = await db.pool.query("SELECT id FROM plans WHERE code = 'adm_big'");
   const mk = async (reference, withReceipt) => {
     const created = await mod.orders.createOrder(db.pool, { officeId: o.office.id, userId: o.user.id, planId: plan.id, interval: 'monthly', method: 'bank_transfer' });
@@ -353,7 +353,7 @@ test('bank-transfer queue: approve and reject need a reason, both are audit-logg
   const first = await mk('ADM-REF-1', true);
   const queue = await aget('/admin/transfers?status=pending');
   assert.match(queue.text, /ADM-REF-1/);
-  assert.match(queue.text, /اختبار-إدارة-حوالة/);
+  assert.match(queue.text, /تجربة-إدارة-حوالة/);
   assert.match(queue.text, new RegExp(`/admin/transfers/${first}/receipt`));
   const receipt = await fx.get(`/admin/transfers/${first}/receipt`, admin.cookie);
   assert.equal(receipt.status, 200);
@@ -414,13 +414,13 @@ test('plans: create, edit (applies at once), delete only when unused, each with 
   assert.equal(plan.max_units, 5);
   assert.equal(plan.max_contracts, null);
   const features = typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features;
-  assert.deepEqual(features, { whatsapp: true, telegram: false, reports_csv: true, ai_reading: false });
+  assert.deepEqual(features, { whatsapp: true, telegram: false, reports_csv: true, ai_reading: false, listings: false });
   assert.equal((await apost('/admin/plans', form)).status, 422, 'duplicate code');
   assert.equal(afterOf(await lastAudit('admin.plan.create')).reason, 'باقة جديدة');
   assert.match((await aget('/admin/plans')).text, /اختبار باقة جديدة/);
 
   // Edit: a subscriber sees the new limit immediately.
-  const o = await newOffice(10, 'اختبار-إدارة-باقة');
+  const o = await newOffice(10, 'تجربة-إدارة-باقة');
   await db.pool.query('UPDATE offices SET plan_id = ? WHERE id = ?', [plan.id, o.office.id]);
   const scoped = require('../services/scopeToOffice').scopeToOffice(db.pool, o.office.id);
   const planLimits = require('../services/planLimits');
@@ -446,7 +446,7 @@ test('plans: create, edit (applies at once), delete only when unused, each with 
 // ------------------------------------------------------------ platform settings and kill switches
 
 test('seller details: editable by the platform admin only, validated, empty-safe, audit holds names not values', { skip }, async () => {
-  const owner = await newOffice(11, 'اختبار-إدارة-إعدادات');
+  const owner = await newOffice(11, 'تجربة-إدارة-إعدادات');
   assert.equal((await http.request('/admin/settings/details', { method: 'POST', cookie: owner.cookie, form: { legal_name: 'شركة', reason: 'محاولة' } })).status, 403);
   assert.equal(await count("SELECT COUNT(*) FROM settings WHERE setting_key = 'seller.legal_name' AND setting_value = 'شركة'"), 0);
 
@@ -486,7 +486,7 @@ test('kill switches: the form maps to stored values, the banner is cleaned and s
   // The banner shows on every page of this process, signed in or not.
   assert.match((await http.request('/login')).text, /صيانة قصيرة الليلة/);
   assert.match((await aget('/admin')).text, /صيانة قصيرة الليلة/);
-  assert.match((await http.request('/office', { cookie: (await newOffice(12, 'اختبار-إدارة-بانر')).cookie })).text, /صيانة قصيرة الليلة/);
+  assert.match((await http.request('/office', { cookie: (await newOffice(12, 'تجربة-إدارة-بانر')).cookie })).text, /صيانة قصيرة الليلة/);
   await apost('/admin/settings/switches', { banner: '', reason: 'إزالة الإعلان' });
   assert.doesNotMatch((await http.request('/login')).text, /صيانة قصيرة الليلة/);
 
@@ -506,20 +506,20 @@ test('kill switches: the form maps to stored values, the banner is cleaned and s
   const paused = await mod.features.aiAvailability(stub, 1);
   assert.deepEqual(paused, { available: false, message: mod.features.AI_PAUSED_MESSAGE });
   mod.settings.invalidate();
-  const o = await newOffice(13, 'اختبار-إدارة-ذكاء');
+  const o = await newOffice(13, 'تجربة-إدارة-ذكاء');
   assert.equal((await mod.features.aiAvailability(db.pool, o.office.id)).available, true, 'on by default');
 });
 
 // ------------------------------------------------------------ audit viewer and the reason rule
 
 test('audit viewer: filters by action, office, actor and date; non-admins cannot read it', { skip }, async () => {
-  const o = await newOffice(14, 'اختبار-إدارة-سجل');
+  const o = await newOffice(14, 'تجربة-إدارة-سجل');
   await apost(`/admin/offices/${o.office.id}/extend-trial`, { days: '2', reason: 'سبب ظاهر في السجل' });
   const all = await aget(`/admin/audit?action=admin.office&office=${o.office.id}`);
   assert.equal(all.status, 200);
   assert.match(all.text, /admin\.office\.extend_trial/);
   assert.match(all.text, /سبب ظاهر في السجل/);
-  assert.match(all.text, /اختبار-إدارة-سجل/);
+  assert.match(all.text, /تجربة-إدارة-سجل/);
   const other = await aget(`/admin/audit?action=admin.promo&office=${o.office.id}`);
   assert.doesNotMatch(other.text, /extend_trial/);
   const byActor = await aget(`/admin/audit?actor=${phone(0)}&office=${o.office.id}`);

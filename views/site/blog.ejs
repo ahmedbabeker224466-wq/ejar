@@ -1,0 +1,18 @@
+<section class="card"><h1>المدونة</h1><p class="lead">مقالات قصيرة لمكاتب العقار. معلومات عامة وليست استشارة قانونية.</p></section>
+<ul class="post-list">
+  <% rows.forEach(function (p) { %>
+    <li class="card">
+      <h2><a href="/blog/<%= p.slug %>"><%= p.title %></a></h2>
+      <p class="muted"><time datetime="<%= new Date(p.publishedAt).toISOString() %>"><%= new Date(p.publishedAt).toISOString().slice(0, 10) %></time></p>
+      <% if (p.excerpt) { %><p><%= p.excerpt %></p><% } %>
+    </li>
+  <% }) %>
+</ul>
+<% if (!rows.length) { %><p class="empty-state">لا توجد مقالات منشورة بعد.</p><% } %>
+<% if (pages > 1) { %>
+  <nav class="pager" aria-label="الصفحات">
+    <% if (page > 1) { %><a href="/blog?page=<%= page - 1 %>">السابق</a><% } %>
+    <span>صفحة <%= page %> من <%= pages %></span>
+    <% if (page < pages) { %><a href="/blog?page=<%= page + 1 %>">التالي</a><% } %>
+  </nav>
+<% } %>

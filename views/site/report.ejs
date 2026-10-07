@@ -1,0 +1,19 @@
+<section class="card">
+  <p class="back-link"><a href="/listings/<%= listing.id %>">→ العودة للإعلان</a></p>
+  <h1>الإبلاغ عن إعلان</h1>
+  <% if (done) { %>
+    <div class="flash flash--success" role="status">شكراً. وصل بلاغك وسنراجع الإعلان.</div>
+  <% } else { %>
+    <p class="muted"><%= listing.title %></p>
+    <form method="post" action="/listings/<%= listing.id %>/report" novalidate>
+      <div class="field"><label for="r-reason">سبب البلاغ</label>
+        <select id="r-reason" name="reason" class="select" required>
+          <option value="">اختر السبب</option>
+          <% Object.keys(reasons).forEach(function (k) { %><option value="<%= k %>" <%= values.reason === k ? 'selected' : '' %>><%= reasons[k] %></option><% }) %>
+        </select><% if (errors.reason) { %><p class="field-error"><%= errors.reason %></p><% } %></div>
+      <div class="field"><label for="r-note">تفاصيل (اختياري، 300 حرف)</label><textarea id="r-note" name="note" class="textarea" rows="3" maxlength="300"><%= values.note || '' %></textarea></div>
+      <div class="hp" aria-hidden="true"><label for="r-website">اترك هذا الحقل فارغاً</label><input id="r-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <button type="submit" class="btn btn--primary btn--block">إرسال البلاغ</button>
+    </form>
+  <% } %>
+</section>

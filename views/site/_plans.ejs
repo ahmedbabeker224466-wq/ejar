@@ -1,0 +1,15 @@
+<ul class="plan-grid">
+  <% plans.forEach(function (p) { %>
+    <li class="plan-card">
+      <h3><%= p.name %></h3>
+      <p class="plan-card__price"><strong><%= fmt(p.monthly) %></strong> ريال / شهر</p>
+      <% if (p.yearly > 0) { %><p class="muted"><%= fmt(p.yearly) %> ريال / سنة</p><% } %>
+      <ul class="plan-card__limits">
+        <% p.limits.forEach(function (l) { %><li><%= l.label %>: <%= l.limit === null ? 'بلا حد' : l.limit %></li><% }) %>
+        <% p.features.forEach(function (f) { %><li class="<%= f.on ? '' : 'is-off' %>"><%= f.on ? '✓' : '✗' %> <%= f.label %></li><% }) %>
+      </ul>
+    </li>
+  <% }) %>
+</ul>
+<% if (!plans.length) { %><p class="empty-state">تُعلَن الباقات قريباً.</p><% } %>
+<p class="muted">الأسعار قبل ضريبة القيمة المضافة (<%= vatPercent %>%) وتظهر كاملة قبل الدفع. تجربة مجانية <%= trialDays %> يوماً بدون بطاقة.</p>

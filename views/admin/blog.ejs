@@ -1,0 +1,13 @@
+<div class="page-head"><h1>المدونة</h1><a href="/admin/blog/new" class="btn btn--primary btn--small">مقال جديد</a></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+<ul class="item-list">
+  <% rows.forEach(function (p) { %>
+    <li class="item">
+      <div class="item__title"><a href="/admin/blog/<%= p.id %>"><strong><%= p.title %></strong></a>
+        <span class="badge badge--bill-<%= p.status === 'published' ? 'success' : 'info' %>"><%= p.status === 'published' ? 'منشور' : 'مسودة' %></span>
+        <% if (p.needsReview) { %><span class="badge badge--bill-warning">يحتاج مراجعة قبل النشر</span><% } %></div>
+      <div class="item__meta"><span dir="ltr">/blog/<%= p.slug %></span> · <span dir="ltr"><%= stamp(p.publishedAt || p.createdAt) %></span></div>
+    </li>
+  <% }) %>
+</ul>
+<% if (!rows.length) { %><p class="empty-state">لا توجد مقالات.</p><% } %>

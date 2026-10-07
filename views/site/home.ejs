@@ -1,0 +1,62 @@
+<section class="hero card" aria-labelledby="hero-title">
+  <h1 id="hero-title">تابع عقود الإيجار ومواعيدها بلا قلق</h1>
+  <p class="lead">عقدي لمكاتب العقار: يحسب مواعيد التجديد وإشعار عدم التجديد، ويتتبع الدفعات والصيانة، ويذكّر الملاك والمستأجرين قبل كل موعد مهم.</p>
+  <div class="actions">
+    <a href="/register" class="btn btn--primary btn--block btn--large">سجّل مكتبك وجرّب مجاناً</a>
+    <a href="/listings" class="btn btn--secondary btn--block">تصفح إعلانات العقارات</a>
+  </div>
+  <p class="muted">تجربة مجانية <%= trialDays %> يوماً، بدون بطاقة.</p>
+</section>
+
+<section class="section" aria-labelledby="how-title">
+  <h2 id="how-title">كيف يعمل؟</h2>
+  <div class="cards-3">
+    <article class="card"><h3>للمكتب</h3>
+      <p>تنشئ العقد في منصة إيجار كما تفعل اليوم، ثم ترفع الملف لقراءة التواريخ والمبالغ فقط، أو تدخلها بنفسك. يبني عقدي المواعيد والدفعات ويذكّرك.</p></article>
+    <article class="card"><h3>للمالك</h3>
+      <p>يدخل برمز دعوة مجاني من مكتبه، فيتابع عقاراته ومواعيد قراراته ويؤكد الدفعات ويكتب قراره بشأن التجديد.</p></article>
+    <article class="card"><h3>للمستأجر</h3>
+      <p>يدخل برمز العقد فيرى تواريخ عقده ودفعاته، ويبلّغ عن الدفع، ويرفع طلب صيانة بالصور، ويراسل المكتب.</p></article>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="features-title">
+  <h2 id="features-title">ماذا تحصل عليه؟</h2>
+  <div class="cards-3">
+    <article class="card"><h3>مواعيد دقيقة</h3><p>تنبيهات متدرجة قبل موعد القرار وموعد تعديل الإيجار ونهاية العقد، حسب القواعد المضبوطة في التطبيق.</p></article>
+    <article class="card"><h3>أربع قنوات تذكير</h3><p>داخل التطبيق دائماً، ويمكن إضافة البريد وواتساب وتيليجرام مع ساعات هدوء ليلية.</p></article>
+    <article class="card"><h3>تتبع الدفعات</h3><p>دفعات كاملة وجزئية وكشف يمكن طباعته. يتتبع التطبيق فقط ولا ينقل أي مال.</p></article>
+    <article class="card"><h3>صيانة ورسائل</h3><p>طلبات صيانة بالصور وحالات واضحة، ومحادثة لكل عقد بين المكتب والمالك والمستأجر.</p></article>
+    <article class="card"><h3>تقارير</h3><p>إشغال وعقود قريبة الانتهاء ومتأخرات وتحصيل مع تنزيل CSV.</p></article>
+    <article class="card"><h3>إعلانات عامة</h3><p>انشر وحداتك الشاغرة بالصور والمواصفات دون إظهار رقم أو اسم أو عنوان تفصيلي.</p></article>
+  </div>
+  <p><a href="/features">كل المزايا</a></p>
+</section>
+
+<section class="section card" aria-labelledby="privacy-title">
+  <h2 id="privacy-title">وعد الخصوصية</h2>
+  <ul class="check-list">
+    <li>لا نحفظ أسماء الأطراف ولا أرقام الهوية أو الإقامة ولا الآيبان ولا أرقام العدادات.</li>
+    <li>لا نحتفظ بملف العقد المرفوع: يُقرأ في الذاكرة ثم يُتجاهل.</li>
+    <li>الإعلانات العامة لا تعرض رقماً ولا اسماً ولا عنواناً تفصيلياً؛ الحي من قائمة ثابتة.</li>
+    <li>صور الإعلانات تُنظَّف من بيانات الموقع والكاميرا قبل حفظها.</li>
+    <li>كل مكتب يرى بياناته فقط، وكل العمليات المهمة تُسجَّل.</li>
+  </ul>
+</section>
+
+<section class="section" aria-labelledby="pricing-title">
+  <h2 id="pricing-title">الأسعار</h2>
+  <%- include('_plans') %>
+  <p><a href="/pricing" class="btn btn--secondary">تفاصيل الباقات</a></p>
+</section>
+
+<section class="section" aria-labelledby="faq-title">
+  <h2 id="faq-title">أسئلة شائعة</h2>
+  <%- include('_faq') %>
+</section>
+
+<section class="section card hero" aria-labelledby="cta-title">
+  <h2 id="cta-title">ابدأ اليوم</h2>
+  <p class="lead">سجّل مكتبك في دقائق وأضف أول عقد.</p>
+  <a href="/register" class="btn btn--primary btn--large btn--block">سجّل مكتبك</a>
+</section>

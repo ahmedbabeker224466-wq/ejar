@@ -1,0 +1,43 @@
+<p class="back-link"><a href="/admin/blog">→ المدونة</a></p>
+<div class="page-head"><h1><%= post ? post.title : 'مقال جديد' %></h1></div>
+<form method="post" action="<%= post ? '/admin/blog/' + post.id : '/admin/blog' %>" enctype="multipart/form-data" class="form-card" novalidate>
+  <% if (!post) { %>
+    <div class="field"><label for="slug">الرابط (إنجليزي)</label><input id="slug" name="slug" class="input" dir="ltr" maxlength="100" value="<%= values.slug %>" required>
+      <% if (errors.slug) { %><p class="field-error"><%= errors.slug %></p><% } %></div>
+  <% } %>
+  <div class="field"><label for="title_ar">العنوان</label><input id="title_ar" name="title_ar" class="input" maxlength="200" value="<%= values.title_ar %>" required>
+    <% if (errors.title_ar) { %><p class="field-error"><%= errors.title_ar %></p><% } %></div>
+  <div class="field"><label for="excerpt_ar">ملخص قصير</label><textarea id="excerpt_ar" name="excerpt_ar" class="textarea" rows="2" maxlength="500"><%= values.excerpt_ar %></textarea>
+    <% if (errors.excerpt_ar) { %><p class="field-error"><%= errors.excerpt_ar %></p><% } %></div>
+  <div class="field"><label for="body_ar">النص (Markdown بسيط)</label>
+    <textarea id="body_ar" name="body_ar" class="textarea" rows="16"><%= values.body_ar %></textarea>
+    <p class="field-hint">المسموح: ## عنوان، ### عنوان فرعي، **غامق**، *مائل*، قوائم بـ - أو 1.، > اقتباس، --- فاصل، [نص](https://…). أي HTML يُعرض كنص عادي.</p>
+    <% if (errors.body_ar) { %><p class="field-error"><%= errors.body_ar %></p><% } %></div>
+  <div class="form-grid">
+    <div class="field"><label for="meta_title">عنوان محركات البحث</label><input id="meta_title" name="meta_title" class="input" maxlength="160" value="<%= values.meta_title %>">
+      <% if (errors.meta_title) { %><p class="field-error"><%= errors.meta_title %></p><% } %></div>
+    <div class="field"><label for="meta_description">وصف محركات البحث</label><input id="meta_description" name="meta_description" class="input" maxlength="300" value="<%= values.meta_description %>">
+      <% if (errors.meta_description) { %><p class="field-error"><%= errors.meta_description %></p><% } %></div>
+  </div>
+  <div class="field"><label for="cover">صورة الغلاف (اختياري)</label><input id="cover" name="cover" class="input input--file" type="file" accept="image/jpeg,image/png,image/webp">
+    <% if (post && post.hasCover) { %><label class="check"><input type="checkbox" name="remove_cover" value="1"> حذف الغلاف الحالي</label><% } %>
+    <% if (errors.cover) { %><p class="field-error"><%= errors.cover %></p><% } %></div>
+  <div class="field"><label for="status">الحالة</label>
+    <select id="status" name="status" class="select">
+      <option value="draft" <%= values.status === 'draft' ? 'selected' : '' %>>مسودة</option>
+      <option value="published" <%= values.status === 'published' ? 'selected' : '' %>>منشور</option>
+    </select></div>
+  <label class="check"><input type="checkbox" name="needs_review" value="1" <%= values.needs_review ? 'checked' : '' %>> يحتاج مراجعة قبل النشر</label>
+  <div class="field"><label for="reason">سبب الإجراء (يُسجَّل في سجل التدقيق)</label><input id="reason" name="reason" class="input" maxlength="200" required>
+    <% if (errors.reason) { %><p class="field-error"><%= errors.reason %></p><% } %></div>
+  <button type="submit" class="btn btn--primary btn--large btn--block">حفظ</button>
+</form>
+<% if (post) { %>
+  <section class="card detail-card">
+    <details class="danger-zone"><summary>حذف المقال</summary>
+      <form method="post" action="/admin/blog/<%= post.id %>/delete" novalidate>
+        <div class="field"><label for="reason-del">السبب</label><input id="reason-del" name="reason" class="input" maxlength="200" required></div>
+        <button type="submit" class="btn btn--danger">حذف</button>
+      </form></details>
+  </section>
+<% } %>

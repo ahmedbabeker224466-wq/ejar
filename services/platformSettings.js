@@ -8,6 +8,7 @@
 
 const db = require('../config/db');
 const { toWesternDigits } = require('../utils/phone');
+const { sanitizeSnippet } = require('./analytics');
 
 const KEYS = Object.freeze({
   sellerLegalName: 'seller.legal_name',
@@ -22,6 +23,7 @@ const KEYS = Object.freeze({
   signupsDisabled: 'kill.signups_disabled',
   aiDisabled: 'kill.ai_disabled',
   bannerMessage: 'banner.message',
+  analyticsSnippet: 'analytics.snippet',
 });
 
 const CACHE_MS = 15 * 1000;
@@ -31,6 +33,8 @@ let cache = null;
 // database inside a request); server.js refreshes it every 30 seconds and a
 // save in this process updates it at once.
 let bannerText = '';
+// The analytics snippet is memory-only too (re-validated when loaded).
+let analyticsState = { snippet: '', origins: [] };
 
 /** Forgets the cached values (after a save, and in tests). */
 function invalidate() {
@@ -143,7 +147,18 @@ async function save(pool, values) {
   }
   invalidate();
   if (Object.hasOwn(values, KEYS.bannerMessage)) bannerText = values[KEYS.bannerMessage];
+  if (Object.hasOwn(values, KEYS.analyticsSnippet)) setAnalytics(values[KEYS.analyticsSnippet]);
   return changed;
+}
+
+function setAnalytics(text) {
+  const result = sanitizeSnippet(text);
+  analyticsState = result.ok ? { snippet: result.snippet, origins: result.origins } : { snippet: '', origins: [] };
+}
+
+/** The analytics snippet and the origins its script needs (memory only; empty by default). */
+function analyticsNow() {
+  return analyticsState;
 }
 
 /** The banner message right now (memory only, '' = none). */
@@ -155,7 +170,9 @@ function bannerNow() {
 async function refreshBanner(pool = db.pool) {
   try {
     invalidate();
-    bannerText = (await loadAll(pool))[KEYS.bannerMessage] || '';
+    const all = await loadAll(pool);
+    bannerText = all[KEYS.bannerMessage] || '';
+    setAnalytics(all[KEYS.analyticsSnippet] || '');
   } catch {
     // Keep the last known message when the database is briefly unreachable.
   }
@@ -198,6 +215,7 @@ module.exports = {
   switchValues,
   save,
   bannerNow,
+  analyticsNow,
   refreshBanner,
   startBannerRefresh,
 };

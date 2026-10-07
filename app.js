@@ -17,7 +17,9 @@ const areaRoutes = require('./routes/areas');
 const officeRoutes = require('./routes/office');
 const { loadUser, loadUnreadCount } = require('./middleware/auth');
 const maintenance = require('./middleware/maintenance');
+const { sameOrigin } = require('./middleware/security');
 const platformSettings = require('./services/platformSettings');
+const { extendCsp } = require('./services/analytics');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -54,9 +56,21 @@ app.use(
     referrerPolicy: { policy: 'same-origin' },
   }),
 );
+// The optional analytics snippet (empty by default): the page gets the sanitized
+// tag and the policy allows only that provider's own origins.
+app.use((req, res, next) => {
+  const { snippet, origins } = platformSettings.analyticsNow();
+  res.locals.analyticsSnippet = snippet;
+  const csp = res.getHeader('Content-Security-Policy');
+  if (snippet && typeof csp === 'string') res.setHeader('Content-Security-Policy', extendCsp(csp, origins));
+  next();
+});
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false, limit: '20kb' }));
 app.use(express.json({ limit: '20kb' }));
+
+// A state-changing request sent from another site is refused everywhere (webhooks and cron send no Origin).
+app.use(sameOrigin);
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

@@ -12,6 +12,7 @@
     <dt>الباقة</dt><dd><%= office.plan_name || '—' %></dd>
     <dt>نهاية التجربة</dt><dd dir="ltr"><%= stamp(office.trial_ends_at) %></dd>
     <dt>نهاية الاشتراك</dt><dd dir="ltr"><%= stamp(office.subscription_ends_at) %></dd>
+    <dt>نشر الإعلانات</dt><dd><%= Number(office.listings_banned) ? 'موقوف من الإدارة' : 'مسموح' %></dd>
     <dt>أعضاء الفريق</dt><dd><%= members.active %> فعّال من <%= members.total %></dd>
     <dt>آخر نشاط</dt><dd dir="ltr"><%= stamp(lastSeen) %></dd>
     <dt>تاريخ التسجيل</dt><dd dir="ltr"><%= stamp(office.created_at) %></dd>
@@ -61,6 +62,12 @@
       <button type="submit" class="btn btn--danger">إيقاف المكتب</button>
     </form>
   <% } %>
+  <form method="post" action="/admin/offices/<%= office.id %>/listings-ban" novalidate>
+    <h3><%= Number(office.listings_banned) ? 'إعادة حق نشر الإعلانات' : 'إيقاف نشر الإعلانات' %></h3>
+    <input type="hidden" name="ban" value="<%= Number(office.listings_banned) ? '0' : '1' %>">
+    <div class="field"><label for="reason-ban">السبب</label><input id="reason-ban" name="reason" class="input" maxlength="200" required></div>
+    <button type="submit" class="btn <%= Number(office.listings_banned) ? 'btn--primary' : 'btn--danger' %>"><%= Number(office.listings_banned) ? 'إعادة الحق' : 'إيقاف النشر وإخفاء الإعلانات' %></button>
+  </form>
 </section>
 
 <section class="card detail-card">

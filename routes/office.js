@@ -27,6 +27,7 @@ const teamRoutes = require('./team');
 const taskRoutes = require('./tasks');
 const reportRoutes = require('./reports');
 const billingRoutes = require('./billing');
+const listingRoutes = require('./listings');
 const contractsService = require('../services/contracts');
 const contractStatus = require('../services/contractStatus');
 const { riyadhDate } = require('../services/contractDates');
@@ -162,10 +163,11 @@ router.use(teamRoutes);
 router.use(taskRoutes);
 router.use(reportRoutes.office);
 router.use(billingRoutes.office);
+router.use(listingRoutes);
 
 // One placeholder page per navigation item, each behind its own capability.
 // Landlords, units, contracts (routes/landlords.js, units.js, contracts.js) and settings (below) are real pages.
-for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'contracts', 'settings', 'payments', 'maintenance', 'messages', 'team', 'tasks', 'reports', 'billing'].includes(i.key))) {
+for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'contracts', 'settings', 'payments', 'maintenance', 'messages', 'team', 'tasks', 'reports', 'billing', 'listings'].includes(i.key))) {
   router.get(item.href, requirePerm(item.capability), (req, res) => {
     res.render('office/placeholder', { title: item.label });
   });

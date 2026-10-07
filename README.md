@@ -85,7 +85,7 @@ cPanel hosting, so the dependency list is fixed; see `CLAUDE.md` before adding o
 
 ## Deploy to cPanel
 
-Step-by-step guide in Arabic: [`deploy/DEPLOY-CPANEL.md`](deploy/DEPLOY-CPANEL.md).
+Step-by-step guide in Arabic: [`deploy/DEPLOY-CPANEL.md`](deploy/DEPLOY-CPANEL.md). Technical reference, cron lines, pre-launch checklist and rollback: [`DEPLOY.md`](DEPLOY.md).
 Pushes to `main` are tested by `.github/workflows/ci.yml` and, when the tests
 pass, uploaded over FTPS by `.github/workflows/deploy.yml`.
 
@@ -189,6 +189,24 @@ Plans, the subscription lifecycle, checkout (Moyasar **test mode only**, or bank
 **Plan features.** `plans.features` holds on/off switches (`whatsapp`, `telegram`, `reports_csv`, `ai_reading`); a missing key, null or the older array form means allowed. They are enforced on the server (AI reading, CSV downloads, WhatsApp/Telegram settings and delivery). `max_members` is the "max staff" limit.
 
 **Kill switches** (`/admin/settings`): disable signups (existing users keep signing in), disable AI reading, and a banner message shown on every page.
+
+## Public listings, marketing site and blog
+
+| Route | What it does |
+|---|---|
+| `GET /`, `/features`, `/pricing`, `/about`, `/privacy`, `/terms`, `/disclaimer` | Marketing pages (pricing is read from the plans table) |
+| `GET/POST /contact` | Contact form, stored for the platform admin (5 per IP per hour) |
+| `GET /listings`, `/listings/:id` | Public search (12 per page) and detail; expired, rented or hidden answer 410, drafts 404 |
+| `POST /listings/:id/inquiry`, `GET/POST /listings/:id/report` | Inquiry (honeypot, 5 per IP and 10 per listing per hour) and abuse report |
+| `GET /listings/photos/:id/:variant` | Listing photo (`full` or `thumb`), only while the listing is public |
+| `GET /blog`, `/blog/:slug`, `/blog/:slug/cover`, `/blog/feed.xml` | Blog and RSS |
+| `GET /sitemap.xml`, `/robots.txt` | SEO (private areas are disallowed) |
+| `/office/listings...` | Office side: create from a vacant unit, edit, photos, publish, hide, renew, inquiries (plan feature `listings`, limit `max_listings`) |
+| `/admin/reports`, `/admin/messages`, `/admin/blog`, `POST /admin/settings/analytics` | Platform admin: abuse queue, contact messages, blog CRUD, optional analytics tag |
+
+Public pages show type, city, neighborhood (fixed list), rooms, area, annual rent, features, photos and the office name only.
+Listings hide themselves 60 days after publishing (jobs `listings_expiry`, `purge_inquiries`). Seed the default plans, FAQs and three draft blog posts once with `node database/seed.js`.
+No new environment variables. The final audit is in [`docs/AUDIT.md`](docs/AUDIT.md); the full deployment reference and pre-launch checklist in [`DEPLOY.md`](DEPLOY.md).
 
 ## Project layout
 

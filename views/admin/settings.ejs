@@ -42,3 +42,13 @@
     <% if (errors.reason_switches) { %><p class="field-error"><%= errors.reason_switches %></p><% } %></div>
   <button type="submit" class="btn btn--primary btn--large btn--block">حفظ المفاتيح</button>
 </form>
+
+<form method="post" action="/admin/settings/analytics" class="form-card" novalidate>
+  <h2>شيفرة التحليلات (اختيارية)</h2>
+  <p class="muted">فارغة افتراضياً ولا تُحمَّل أي شيفرة تتبع. الصق وسم <code dir="ltr">&lt;script src="https://..."&gt;&lt;/script&gt;</code> واحداً فقط من مزوّد معروف (<span dir="ltr">Google Tag Manager، Google Analytics، Plausible، Fathom، Cloudflare، Umami، Simple Analytics</span>). تظهر في الصفحات العامة فقط، لا في صفحات المكاتب أو الإدارة.</p>
+  <div class="field"><label for="snippet">الوسم</label><textarea id="snippet" name="snippet" class="textarea" rows="3" dir="ltr" maxlength="1000"><%= analytics %></textarea>
+    <% if (errors.snippet) { %><p class="field-error"><%= errors.snippet %></p><% } %></div>
+  <div class="field"><label for="reason-analytics">سبب الإجراء (يُسجَّل في سجل التدقيق)</label><input id="reason-analytics" name="reason" class="input" maxlength="200" required>
+    <% if (errors.reason_analytics) { %><p class="field-error"><%= errors.reason_analytics %></p><% } %></div>
+  <button type="submit" class="btn btn--primary btn--large btn--block">حفظ</button>
+</form>

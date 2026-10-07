@@ -1,0 +1,25 @@
+<section class="card">
+  <h1>تواصل معنا</h1>
+  <% if (sent) { %>
+    <div class="flash flash--success" role="status">وصلتنا رسالتك. سنرد عليك قريباً.</div>
+  <% } %>
+  <% if (support.phone || support.email) { %>
+    <p class="muted">أو عبر: <% if (support.phone) { %><span dir="ltr"><%= support.phone %></span> <% } %><% if (support.email) { %><span dir="ltr"><%= support.email %></span><% } %></p>
+  <% } %>
+  <form method="post" action="/contact" novalidate>
+    <div class="field"><label for="name">اسمك أو لقبك (اختياري)</label><input id="name" name="name" class="input" maxlength="60" value="<%= values.name || '' %>" autocomplete="nickname">
+      <% if (errors.name) { %><p class="field-error"><%= errors.name %></p><% } %></div>
+    <div class="form-grid">
+      <div class="field"><label for="phone">جوالك</label><input id="phone" name="phone" class="input" type="tel" inputmode="tel" dir="ltr" maxlength="30" value="<%= values.phone || '' %>" autocomplete="tel">
+        <% if (errors.phone) { %><p class="field-error"><%= errors.phone %></p><% } %></div>
+      <div class="field"><label for="email">بريدك الإلكتروني</label><input id="email" name="email" class="input" type="email" dir="ltr" maxlength="190" value="<%= values.email || '' %>" autocomplete="email">
+        <% if (errors.email) { %><p class="field-error"><%= errors.email %></p><% } %></div>
+    </div>
+    <% if (errors.contact) { %><p class="field-error"><%= errors.contact %></p><% } %>
+    <p class="field-hint">اكتب جوالك أو بريدك لنرد عليك.</p>
+    <div class="field"><label for="message">رسالتك (حتى 1000 حرف)</label><textarea id="message" name="message" class="textarea" rows="5" maxlength="1000" required><%= values.message || '' %></textarea>
+      <% if (errors.message) { %><p class="field-error"><%= errors.message %></p><% } %></div>
+    <div class="hp" aria-hidden="true"><label for="website">اترك هذا الحقل فارغاً</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+    <button type="submit" class="btn btn--primary btn--large btn--block">إرسال</button>
+  </form>
+</section>

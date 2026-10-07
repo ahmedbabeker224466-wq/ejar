@@ -1,0 +1,34 @@
+<div class="page-head"><h1>بلاغات الإعلانات</h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<ul class="item-list">
+  <% rows.forEach(function (r) { %>
+    <li class="item">
+      <div class="item__title"><strong>بلاغ #<%= r.id %></strong> · <%= reasons[r.reason] %>
+        <span class="badge badge--bill-<%= r.status === 'open' ? 'danger' : 'success' %>"><%= { open: 'مفتوح', dismissed: 'أُغلق', actioned: 'تم الإجراء' }[r.status] %></span></div>
+      <div class="item__meta">الإعلان <a href="/listings/<%= r.listing_id %>" target="_blank" rel="noopener noreferrer">#<%= r.listing_id %></a> «<%= r.title %>» · <a href="/admin/offices/<%= r.office_id %>"><%= r.office_name %></a> · <span dir="ltr"><%= stamp(r.created_at) %></span> · حالة الإعلان: <%= r.listing_status %><%= Number(r.admin_hidden) ? ' (أخفته الإدارة)' : '' %></div>
+      <% if (r.note) { %><p class="pre-line"><%= r.note %></p><% } %>
+      <% if (r.status === 'open') { %>
+        <details class="danger-zone"><summary>إجراء على البلاغ</summary>
+          <form method="post" action="/admin/reports/<%= r.id %>/hide" novalidate>
+            <div class="field"><label for="h-<%= r.id %>">سبب إخفاء الإعلان (يصل للمكتب)</label><input id="h-<%= r.id %>" name="reason" class="input" maxlength="200" required></div>
+            <button type="submit" class="btn btn--danger btn--small">إخفاء الإعلان</button>
+          </form>
+          <form method="post" action="/admin/reports/<%= r.id %>/dismiss" novalidate>
+            <div class="field"><label for="d-<%= r.id %>">سبب إغلاق البلاغ دون إجراء</label><input id="d-<%= r.id %>" name="reason" class="input" maxlength="200" required></div>
+            <button type="submit" class="btn btn--secondary btn--small">إغلاق البلاغ</button>
+          </form>
+        </details>
+      <% } %>
+      <% if (Number(r.admin_hidden)) { %>
+        <details class="danger-zone"><summary>إلغاء الإخفاء</summary>
+          <form method="post" action="/admin/listings/<%= r.listing_id %>/unhide" novalidate>
+            <div class="field"><label for="u-<%= r.id %>">السبب</label><input id="u-<%= r.id %>" name="reason" class="input" maxlength="200" required></div>
+            <button type="submit" class="btn btn--primary btn--small">إلغاء الإخفاء</button>
+          </form></details>
+      <% } %>
+    </li>
+  <% }) %>
+</ul>
+<% if (!rows.length) { %><p class="empty-state">لا توجد بلاغات.</p><% } %>
+<p class="muted">لإيقاف نشر الإعلانات لمكتب كامل افتح صفحته من <a href="/admin/offices">المكاتب</a>.</p>

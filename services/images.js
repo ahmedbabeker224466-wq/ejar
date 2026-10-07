@@ -79,4 +79,12 @@ async function deleteImage(name, env = process.env) {
   if (file) await fs.promises.rm(file, { force: true });
 }
 
-module.exports = { MAX_BYTES, MAX_FILES, MAX_SIDE, sniffImage, uploadDir, processImage, saveImage, imagePath, deleteImage };
+/** A thumbnail (at most `side` px, JPEG, no metadata) of an already processed image. */
+async function makeThumbnail(buffer, side = 480) {
+  return sharp(buffer)
+    .resize({ width: side, height: side, fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 78 })
+    .toBuffer();
+}
+
+module.exports = { makeThumbnail, MAX_BYTES, MAX_FILES, MAX_SIDE, sniffImage, uploadDir, processImage, saveImage, imagePath, deleteImage };

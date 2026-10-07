@@ -3,21 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title><%= title %><%= title === 'عقدي' ? '' : ' | عقدي' %></title>
-  <meta name="description" content="منصة عقدي لمكاتب العقار: متابعة عقود الإيجار ومواعيدها وتذكير الملاك والمستأجرين.">
+  <% const pageTitle = locals.metaTitle || title; const pageDescription = locals.metaDescription || 'منصة عقدي لمكاتب العقار: متابعة عقود الإيجار ومواعيدها وتذكير الملاك والمستأجرين.'; %>
+  <title><%= pageTitle %><%= pageTitle === 'عقدي' ? '' : ' | عقدي' %></title>
+  <meta name="description" content="<%= pageDescription %>">
+  <meta name="robots" content="<%= locals.indexable ? 'index,follow' : 'noindex,nofollow' %>">
   <meta name="theme-color" content="#0f766e">
+  <% if (locals.canonicalUrl) { %><link rel="canonical" href="<%= canonicalUrl %>"><% } %>
 
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="<%= locals.ogType || 'website' %>">
   <meta property="og:locale" content="ar_SA">
   <meta property="og:site_name" content="عقدي">
-  <meta property="og:title" content="<%= title %>">
-  <meta property="og:description" content="منصة عقدي لمكاتب العقار: متابعة عقود الإيجار ومواعيدها وتذكير الملاك والمستأجرين.">
-  <% if (appUrl) { %><meta property="og:url" content="<%= appUrl + currentPath %>"><% } %>
+  <meta property="og:title" content="<%= pageTitle %>">
+  <meta property="og:description" content="<%= pageDescription %>">
+  <% if (locals.canonicalUrl) { %><meta property="og:url" content="<%= canonicalUrl %>"><% } %>
+  <% if (locals.ogImage) { %><meta property="og:image" content="<%= ogImage %>"><% } %>
+  <meta name="twitter:card" content="<%= locals.ogImage ? 'summary_large_image' : 'summary' %>">
+  <% if (locals.rssUrl) { %><link rel="alternate" type="application/rss+xml" title="مدونة عقدي" href="<%= rssUrl %>"><% } %>
+  <% if (locals.jsonLd) { %><script type="application/ld+json"><%- jsonLd %></script><% } %>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="<%= assetUrl('/css/main.css') %>">
+  <% if (locals.indexable && locals.analyticsSnippet) { %><%- analyticsSnippet %><% } %>
 </head>
 <body>
   <%- include('../partials/platform-banner') %>
