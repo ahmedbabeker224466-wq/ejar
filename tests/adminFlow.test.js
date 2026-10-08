@@ -535,8 +535,9 @@ test('audit viewer: filters by action, office, actor and date; non-admins cannot
 
 test('every admin action in this run was audit-logged with a reason and the admin as actor', { skip }, async () => {
   const [rows] = await db.pool.query(
-    "SELECT action, actor_id, after_json FROM audit_logs WHERE id > ? AND (action LIKE 'admin.%' OR action IN ('billing.transfer_approve', 'billing.transfer_reject'))",
-    [auditStart],
+    // Only this file's admin: other test files (parallel processes) write admin audit rows into the same table too.
+    "SELECT action, actor_id, after_json FROM audit_logs WHERE id > ? AND actor_id = ? AND (action LIKE 'admin.%' OR action IN ('billing.transfer_approve', 'billing.transfer_reject'))",
+    [auditStart, admin.user.id],
   );
   const actions = new Set(rows.map((r) => r.action));
   for (const expected of [
