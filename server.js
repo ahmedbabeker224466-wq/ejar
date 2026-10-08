@@ -56,6 +56,9 @@ async function start() {
   // The platform admin's banner message is kept in memory and refreshed here.
   require('./services/platformSettings').startBannerRefresh();
 
+  // In production, log (by id only, never values) which launch checks still fail.
+  require('./services/launch').logStartupGuard();
+
   // Scheduled jobs (reminders, deliveries, cleanups). Every worker may start
   // them: each job takes a database lock, so only one runs it. RUN_CRON=false
   // turns them off (then cPanel Cron Jobs can call POST /cron/run/:job).

@@ -1,0 +1,65 @@
+<div class="page-head"><h1>جاهزية الإطلاق</h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<section class="card">
+  <p>
+    <span class="badge badge--bill-<%= summary.ready ? 'success' : 'danger' %>"><%= summary.ready ? 'لا يوجد ما يمنع الإطلاق' : 'غير جاهز للإطلاق' %></span>
+    <span class="muted">ناجح <%= summary.pass %> · تحذير <%= summary.warn %> · فاشل <%= summary.fail %></span>
+  </p>
+  <p class="muted">هذه الصفحة لا تعرض أي سر أو كلمة مرور، فقط هل الفحص ناجح أم لا. ما لا يستطيع التطبيق رؤيته (كلمة مرور لم يُعطَ إياها، مراجعة محامٍ) تؤكده أنت بيدك مع سبب يُسجَّل في سجل التدقيق.</p>
+</section>
+
+<ul class="item-list">
+  <% checks.forEach(function (c) { %>
+    <li class="item" id="check-<%= c.id %>">
+      <div class="item__title">
+        <span class="badge badge--bill-<%= c.status === 'pass' ? 'success' : (c.status === 'warn' ? 'warning' : 'danger') %>"><%= c.status === 'pass' ? 'ناجح' : (c.status === 'warn' ? 'تحذير' : 'فاشل') %></span>
+        <strong><%= c.titleAr %></strong>
+      </div>
+      <p><%= c.detailAr %></p>
+
+      <% if (c.id === 'ejar_rules') { %>
+        <table class="table" aria-label="قواعد إيجار الحالية">
+          <tbody>
+            <% rules.forEach(function (r) { %>
+              <tr<%- r.highlight ? ' class="is-highlight"' : '' %>><th scope="row"><%= r.label %></th><td><%= r.value %></td></tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+
+      <% if (c.confirm && confirms[c.confirm]) { %>
+        <% const f = confirms[c.confirm]; %>
+        <details<%- openKey === c.confirm ? ' open' : '' %>>
+          <summary><%= c.record ? 'تحديث التأكيد' : f.button %></summary>
+          <p class="muted"><%= f.help %></p>
+          <form method="post" action="/admin/launch/confirm/<%= c.confirm %>" novalidate>
+            <% if (f.fields.includes('on')) { %>
+              <div class="field"><label for="on-<%= c.id %>">التاريخ</label><input id="on-<%= c.id %>" name="on" class="input" type="date" dir="ltr"></div>
+            <% } %>
+            <% if (f.fields.includes('source')) { %>
+              <div class="field"><label for="src-<%= c.id %>"><%= f.sourceLabel %></label><input id="src-<%= c.id %>" name="source" class="input" maxlength="300" required></div>
+            <% } %>
+            <% if (f.fields.includes('note')) { %>
+              <div class="field"><label for="note-<%= c.id %>"><%= f.noteLabel %></label><input id="note-<%= c.id %>" name="note" class="input" maxlength="300"<%- f.noteMin ? ' required' : '' %>></div>
+            <% } %>
+            <div class="field"><label for="why-<%= c.id %>">السبب (يُسجَّل في سجل التدقيق)</label><input id="why-<%= c.id %>" name="reason" class="input" maxlength="200" required></div>
+            <button type="submit" class="btn btn--primary"><%= f.button %></button>
+          </form>
+        </details>
+      <% } %>
+
+      <% if (c.smtpTest) { %>
+        <details<%- openKey === 'smtp' ? ' open' : '' %>>
+          <summary>إرسال رسالة تجربة</summary>
+          <form method="post" action="/admin/launch/smtp-test" novalidate>
+            <div class="field"><label for="to-smtp">البريد الذي يستلم الرسالة (لا يُحفظ)</label><input id="to-smtp" name="to" class="input" type="email" dir="ltr" required></div>
+            <div class="field"><label for="why-smtp">السبب (يُسجَّل في سجل التدقيق)</label><input id="why-smtp" name="reason" class="input" maxlength="200" required></div>
+            <button type="submit" class="btn btn--primary">أرسل رسالة تجربة</button>
+          </form>
+        </details>
+      <% } %>
+    </li>
+  <% }) %>
+</ul>

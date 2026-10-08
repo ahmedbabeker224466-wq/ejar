@@ -101,3 +101,7 @@ Covered by `tests/backup.test.js` and `tests/opsFlow.test.js` (throwaway databas
 | Logs of both files hold no key, URL token, SQL, row data, phone, name or email | pass |
 
 Open points: the SMS balance endpoints must be confirmed once with a real Unifonic/Msegat account; the backup is only as safe as the separate copy of `SECRET_BOX_KEY` and the weekly off-server download (documented in `DEPLOY.md` section 6b); off-site upload (SFTP/S3) is deliberately not implemented.
+
+## 10. Launch readiness page (Prompt 17)
+
+`tests/launch.test.js`: all 19 checks pass together and each one turns warn/fail for its own reason alone (fake database, fixed clock); secret strength rules; confirmation forms (real date, not future, source >= 10 characters); no secret value in any result or on the page; admin-only access incl. the 2FA guard; reasons required, cross-site posts refused, audit rows without the note or source; the legal notice disappears from /privacy, /terms and /disclaimer after the lawyer confirmation; the test email stores only its result and is limited to 5 an hour; the startup guard logs ids only. Open point: the hand confirmations are statements by the admin, not proof.

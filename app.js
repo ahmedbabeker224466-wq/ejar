@@ -110,6 +110,7 @@ app.use(loadUnreadCount());
 // The platform admin's banner message (empty = none), read from memory.
 app.use((req, res, next) => {
   res.locals.platformBanner = platformSettings.bannerNow();
+  res.locals.legalReviewed = platformSettings.legalReviewedNow();
   next();
 });
 

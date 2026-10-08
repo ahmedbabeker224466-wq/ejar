@@ -33,6 +33,13 @@ const RULES = Object.freeze({
   // 0..urgentDays = urgent, below 0 = deadline passed.
   // VERIFY against the official Ejar/REGA source before launch.
   STAGE_THRESHOLDS: Object.freeze({ soonDays: 30, urgentDays: 7 }),
+
+  // Who checked the numbers above, when, and against which official source.
+  // Left null here: the platform admin records the verification on /admin/launch
+  // (stored in the database). Filling these two in is also accepted by that page.
+  // They are not rules and the engine never reads them.
+  verifiedAt: null, // 'YYYY-MM-DD'
+  verifiedSource: null, // text, at least 10 characters
 });
 
 module.exports = RULES;

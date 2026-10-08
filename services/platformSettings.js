@@ -24,6 +24,7 @@ const KEYS = Object.freeze({
   aiDisabled: 'kill.ai_disabled',
   bannerMessage: 'banner.message',
   analyticsSnippet: 'analytics.snippet',
+  legalReviewed: 'launch.legal_reviewed', // JSON written by /admin/launch once a lawyer has reviewed the legal pages
 });
 
 const CACHE_MS = 15 * 1000;
@@ -34,6 +35,7 @@ let cache = null;
 // save in this process updates it at once.
 let bannerText = '';
 // The analytics snippet is memory-only too (re-validated when loaded).
+let legalReviewed = false;
 let analyticsState = { snippet: '', origins: [] };
 
 /** Forgets the cached values (after a save, and in tests). */
@@ -161,6 +163,15 @@ function analyticsNow() {
   return analyticsState;
 }
 
+/** Whether the legal pages are confirmed as reviewed by a lawyer (memory only; false hides nothing, it shows the notice). */
+function legalReviewedNow() {
+  return legalReviewed;
+}
+
+function setLegalReviewed(value) {
+  legalReviewed = Boolean(value);
+}
+
 /** The banner message right now (memory only, '' = none). */
 function bannerNow() {
   return bannerText;
@@ -173,6 +184,7 @@ async function refreshBanner(pool = db.pool) {
     const all = await loadAll(pool);
     bannerText = all[KEYS.bannerMessage] || '';
     setAnalytics(all[KEYS.analyticsSnippet] || '');
+    legalReviewed = Boolean(all[KEYS.legalReviewed]);
   } catch {
     // Keep the last known message when the database is briefly unreachable.
   }
@@ -215,6 +227,8 @@ module.exports = {
   switchValues,
   save,
   bannerNow,
+  legalReviewedNow,
+  setLegalReviewed,
   analyticsNow,
   refreshBanner,
   startBannerRefresh,

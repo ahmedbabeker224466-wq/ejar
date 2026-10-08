@@ -49,6 +49,7 @@ const NAV = [
   { key: 'messages', href: '/admin/messages', label: 'رسائل التواصل' },
   { key: 'blog', href: '/admin/blog', label: 'المدونة' },
   { key: 'settings', href: '/admin/settings', label: 'إعدادات المنصة' },
+  { key: 'launch', href: '/admin/launch', label: 'جاهزية الإطلاق' },
   { key: 'ops', href: '/admin/ops', label: 'التشغيل والنسخ الاحتياطي' },
   { key: 'audit', href: '/admin/audit', label: 'سجل التدقيق' },
 ];
@@ -100,6 +101,9 @@ const DONE = {
   unbanned: 'أُعيد حق نشر الإعلانات للمكتب.',
   handled: 'تم تعليم الرسالة كمعالجة.',
   analytics: 'تم حفظ شيفرة التحليلات.',
+  launch_confirmed: 'تم تسجيل التأكيد.',
+  smtp_ok: 'نجحت رسالة التجربة.',
+  smtp_failed: 'فشلت رسالة التجربة. راجع إعدادات SMTP.',
   backup_ok: 'اكتمل النسخ الاحتياطي.',
   backup_failed: 'فشل النسخ الاحتياطي. راجع رمز الخطأ في الجدول.',
   backup_locked: 'نسخة احتياطية أخرى تعمل الآن. حاول بعد قليل.',
@@ -544,6 +548,7 @@ router.get('/admin/audit', wrap(async (req, res) => {
 }));
 
 require('./adminContent')(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText });
+require('./adminLaunch')(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText });
 require('./adminOps')(router, { wrap, reasonOf, REASON_ERROR, audit, doneText });
 
 module.exports = router;

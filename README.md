@@ -220,6 +220,10 @@ No new environment variables. The final audit is in [`docs/AUDIT.md`](docs/AUDIT
 
 Environment (all optional): `BACKUP_DIR`, `BACKUP_WEBHOOK_URL`, `HEALTHCHECK_PING_URL`, `SMS_BALANCE_WARN`. Backups cannot be downloaded from the app; see [`DEPLOY.md`](DEPLOY.md) for the restore steps and the quarterly drill.
 
+## Launch readiness
+
+`GET /admin/launch` (platform admin only) shows 19 pass / warn / fail checks for opening the platform to real users (environment, secrets strength, 2FA, backups and restore drill, seller details, Ejar rules verification, lawyer review, SMTP test, Moyasar keys, APP_URL/HSTS, cron, directories, npm audit date). Secret values are never shown. Hand confirmations need a reason and are audit-logged; in production the failing check ids are logged at start-up.
+
 ## Project layout
 
 | Path | Purpose |

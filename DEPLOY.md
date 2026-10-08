@@ -190,6 +190,8 @@ metadata under random file names. Requirements:
 
 ## 8. Pre-launch checklist
 
+The live version of this list is **Admin > جاهزية الإطلاق** (`/admin/launch`): 19 checks with pass / warn / fail, no secret ever shown. Items the app cannot see (secrets and DB password rotated, backup codes regenerated, restore drill, Ejar rules verified, lawyer review, last `npm audit`) are recorded there by hand with a reason. In production the app also logs the ids of failing checks at start-up. Open it before opening the platform to real users and keep going until nothing is red.
+
 Do every item, in this order. Tick it in your copy.
 
 - [ ] Create a **new** database user and password for production; never reuse a development value. Rotate `DB_PASSWORD`.
