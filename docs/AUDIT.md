@@ -60,7 +60,7 @@ Over real HTTP: a new phone signs in and creates an office, adds a landlord, a b
 
 ## 6. Schema self-check
 
-`/health/detail` (with `X-Cron-Secret`) reports `live.schema.found = total = 73` tables, equal to `database/schema.js` and to the list in `CLAUDE.md` (asserted in `auditSweep`).
+`/health/detail` (with `X-Cron-Secret`) reports `live.schema.found = total = 74` tables, equal to `database/schema.js` and to the list in `CLAUDE.md` (asserted in `auditSweep`).
 
 ## 7. Dependencies
 
@@ -104,7 +104,7 @@ Open points: the SMS balance endpoints must be confirmed once with a real Unifon
 
 ## 10. Launch readiness page (Prompt 17)
 
-`tests/launch.test.js`: all 20 checks pass together and each one turns warn/fail for its own reason alone (fake database, fixed clock); secret strength rules; confirmation forms (real date, not future, source >= 10 characters); no secret value in any result or on the page; admin-only access incl. the 2FA guard; reasons required, cross-site posts refused, audit rows without the note or source; the legal notice disappears from /privacy, /terms and /disclaimer after the lawyer confirmation; the test email stores only its result and is limited to 5 an hour; the startup guard logs ids only. Open point: the hand confirmations are statements by the admin, not proof.
+`tests/launch.test.js`: all 21 checks pass together and each one turns warn/fail for its own reason alone (fake database, fixed clock); secret strength rules; confirmation forms (real date, not future, source >= 10 characters); no secret value in any result or on the page; admin-only access incl. the 2FA guard; reasons required, cross-site posts refused, audit rows without the note or source; the legal notice disappears from /privacy, /terms and /disclaimer after the lawyer confirmation; the test email stores only its result and is limited to 5 an hour; the startup guard logs ids only. Open point: the hand confirmations are statements by the admin, not proof.
 
 ## 11. Role-by-role review fixes (Prompt 18)
 
@@ -117,3 +117,15 @@ Open points: the SMS balance endpoints must be confirmed once with a real Unifon
 | Default plan: `plan_id` NULL reads the trial plan (or the cheapest active plan) in memberships and limits; the backfill sets it once with exactly one subscription row and one audit row, never touches an office that has a plan, and fills live subscriptions without a plan; `/admin/launch` warns while any office has no plan | `tests/officePages.test.js`, `tests/launch.test.js` | pass |
 
 `npm audit`: three new advisories (body-parser, nodemailer, qs) were fixed with `npm audit fix` (lockfile only, within the existing version ranges); found 0 vulnerabilities. The 13 dependencies are unchanged.
+
+## 12. Office public link (Prompt 19)
+
+| What | Test | Result |
+|---|---|---|
+| Slug form (a-z, 0-9, single hyphens, 3-40, lower-cased), reserved words, official-looking names (ejar, rega, moj, nafath, absher, balady, gov, ...), Arabic error texts | `tests/officeLink.test.js` | pass |
+| Every top-level path the app mounts and every `public/` folder is reserved; the only top-level parameter route is `/:slug`, mounted right before the 404 handler | `tests/officeLink.test.js` | pass |
+| New office: `office-xxxxxx`, page off, link answers the same 404 as an unknown slug; start-up backfill gives a slug once (idempotent) | `tests/officePublicPage.test.js` | pass |
+| Settings: staff do not see the section and get 403 on both posts, a manager may change it; uniqueness against current slugs and history (case-insensitive); 3 changes per 30 days (429); own old slug can be taken back; audit rows without the description text | `tests/officePublicPage.test.js` | pass |
+| Public page: name, city, escaped description, only this office's published listings (no drafts, no other office), no unit label, landlord, tenant, phone, email; disclaimer; canonical; `noindex` without listings; cache 60 s; sitemap lists pages with listings | `tests/officePublicPage.test.js` | pass |
+| Old slug and other case 301 to the current one; switched off, suspended or expired trial 404 (old links too); health, static files, real pages and the 404 page unaffected; POST is never handled | `tests/officePublicPage.test.js` | pass |
+| `/admin/launch` warns (`office_links`) while `APP_URL` is not a public https domain | `tests/launch.test.js` | pass |

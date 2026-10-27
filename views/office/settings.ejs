@@ -29,3 +29,42 @@
     <p class="muted">تعديل بيانات المكتب متاح لمالك المكتب ومديره فقط.</p>
   <% } %>
 </section>
+
+<% if (link) { %>
+<section class="card form-card" id="office-link">
+  <h2>رابط مكتبك</h2>
+  <% if (link.notice) { %><div class="flash flash--success" role="status"><%= link.notice %></div><% } %>
+  <p class="muted">صفحة عامة لمكتبك تعرض اسم المكتب والمدينة والوصف وإعلاناتك المنشورة فقط، ويتواصل الزوار معك عبر نموذج الاستفسار في كل إعلان.</p>
+  <% if (link.url) { %>
+    <div class="invite-code office-link"><output id="office-link-url" dir="ltr"><%= link.url %></output><button type="button" class="btn btn--secondary" data-copy="#office-link-url" data-copied="تم النسخ">نسخ الرابط</button></div>
+    <p class="muted"><%= link.enabled ? 'الصفحة ظاهرة للعامة.' : 'الصفحة مخفية الآن: من يفتح الرابط يرى «الصفحة غير موجودة».' %></p>
+  <% } %>
+
+  <form method="post" action="/office/settings/link" novalidate data-slug-form data-min="<%= link.min %>" data-max="<%= link.max %>">
+    <div class="field">
+      <label for="slug">تغيير الرابط</label>
+      <div class="slug-input" dir="ltr"><span class="muted"><%= link.base %>/</span><input id="slug" name="slug" class="input" type="text" dir="ltr" inputmode="url" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="<%= link.max %>" value="<%= link.typed || link.slug || '' %>" aria-describedby="slug-hint slug-error" <%= link.error ? 'aria-invalid=true' : '' %> required></div>
+      <p id="slug-hint" class="field-hint">حروف إنجليزية صغيرة وأرقام وشرطة بين الكلمات، من <%= link.min %> إلى <%= link.max %> حرفاً، مثل: al-ittihad</p>
+      <p id="slug-error" class="field-error" role="alert" data-slug-error><%= link.error || '' %></p>
+    </div>
+    <p class="muted">بعد التغيير يبقى الرابط القديم يحوّل الزوار إلى الرابط الجديد تلقائياً. يمكنك التغيير <%= link.changesLeft %> مرات أخرى خلال 30 يوماً.</p>
+    <button type="submit" class="btn btn--secondary btn--block" <%= link.changesLeft === 0 ? 'disabled' : '' %>>حفظ الرابط</button>
+  </form>
+
+  <form method="post" action="/office/settings/public-page" novalidate>
+    <div class="field">
+      <label class="check"><input type="checkbox" name="enabled" value="1" <%= link.enabledValue ? 'checked' : '' %>> إظهار صفحة المكتب للعامة</label>
+    </div>
+    <div class="field">
+      <label for="public-description">وصف قصير للمكتب (اختياري)</label>
+      <textarea id="public-description" name="description" class="input" rows="3" maxlength="<%= link.descriptionMax %>" aria-describedby="description-hint" <%= link.descriptionError ? 'aria-invalid=true' : '' %>><%= link.descriptionValue %></textarea>
+      <p id="description-hint" class="field-hint">حتى <%= link.descriptionMax %> حرف، نص فقط، بدون أرقام هواتف أو روابط.</p>
+      <% if (link.descriptionError) { %><p class="field-error" role="alert"><%= link.descriptionError %></p><% } %>
+    </div>
+    <button type="submit" class="btn btn--primary btn--block">حفظ إعدادات الصفحة</button>
+  </form>
+  <p class="disclaimer">تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط</p>
+</section>
+<script src="<%= assetUrl('/js/copy.js') %>" defer></script>
+<script src="<%= assetUrl('/js/officeLink.js') %>" defer></script>
+<% } %>

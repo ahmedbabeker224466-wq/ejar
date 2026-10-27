@@ -31,6 +31,8 @@ const listingRoutes = require('./listings');
 const contractsService = require('../services/contracts');
 const officeTenants = require('../services/officeTenants');
 const officeAudit = require('../services/officeAudit');
+const officeLink = require('../services/officeLink');
+const seo = require('../services/seo');
 const contractStatus = require('../services/contractStatus');
 const { riyadhDate } = require('../services/contractDates');
 const feedback = require('../services/feedback');
@@ -219,15 +221,33 @@ router.get('/office/audit', requirePerm('audit'), async (req, res, next) => {
 
 // ------------------------------------------------------------ settings
 
-async function renderSettings(req, res, { values, errors = {}, saved = false, status = 200 } = {}) {
+const LINK_NOTICES = { link: 'تم تغيير رابط مكتبك. الرابط القديم يحوّل الزوار إلى الجديد.', page: 'تم حفظ إعدادات صفحة المكتب.' };
+
+async function renderSettings(req, res, { values, errors = {}, saved = false, status = 200, link = {} } = {}) {
   const current = values || formValues(await offices.officeDetails(db.pool, req.office.id));
+  const canEditOffice = can(req.memberRole, 'settings.office');
+  const linkState = canEditOffice ? await officeLink.linkSettings(db.pool, req.office.id) : null;
   return res.status(status).render('office/settings', {
     title: 'الإعدادات',
     cities: offices.SAUDI_CITIES,
     values: current,
     errors,
     saved,
-    canEditOffice: can(req.memberRole, 'settings.office'),
+    canEditOffice,
+    link: linkState && {
+      ...linkState,
+      url: linkState.slug ? seo.absolute(seo.baseUrl(req), `/${linkState.slug}`) : null,
+      base: seo.baseUrl(req),
+      typed: link.typed ?? '',
+      error: link.error ? officeLink.ERRORS[link.error] : null,
+      descriptionValue: link.description ?? linkState.description,
+      descriptionError: link.descriptionError || null,
+      enabledValue: link.enabled ?? linkState.enabled,
+      notice: LINK_NOTICES[req.query.link] || null,
+      min: officeLink.MIN_LENGTH,
+      max: officeLink.MAX_LENGTH,
+      descriptionMax: officeLink.DESCRIPTION_MAX,
+    },
   });
 }
 
@@ -253,6 +273,33 @@ router.post('/office/settings', requirePerm('settings.office'), async (req, res,
     return res.redirect('/office/settings?saved=1');
   } catch (err) {
     // The error handler logs only the error type and code, never the values.
+    return next(err);
+  }
+});
+
+// The office's public link (owner and manager). Open while the office is locked, like the rest of settings.
+router.post('/office/settings/link', requirePerm('settings.office'), async (req, res, next) => {
+  try {
+    const result = await officeLink.changeSlug(db.pool, { officeId: req.office.id, actorId: req.user.id, slug: req.body.slug, ip: req.ip });
+    if (result.ok) return res.redirect('/office/settings?link=link#office-link');
+    return await renderSettings(req, res, { status: result.error === 'limit' ? 429 : 422, link: { typed: String(req.body.slug || '').slice(0, 60), error: result.error } });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post('/office/settings/public-page', requirePerm('settings.office'), async (req, res, next) => {
+  try {
+    const { values, errors } = officeLink.validatePageFields(req.body);
+    if (errors.description) {
+      return await renderSettings(req, res, {
+        status: 422,
+        link: { description: String(req.body.description || '').slice(0, 600), descriptionError: errors.description, enabled: values.enabled },
+      });
+    }
+    await officeLink.savePublicPage(db.pool, { officeId: req.office.id, actorId: req.user.id, ...values, ip: req.ip });
+    return res.redirect('/office/settings?link=page#office-link');
+  } catch (err) {
     return next(err);
   }
 });

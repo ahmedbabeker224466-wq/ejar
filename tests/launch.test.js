@@ -114,13 +114,13 @@ test('everything in order: every check passes and the platform is ready', async 
   const checks = await run(fakePool(), goodEnv());
   assert.deepEqual(checks.map((c) => c.id), [
     'node_env', 'sms_provider', 'secrets_strength', 'secrets_rotated', 'db_password_rotated', 'admin_2fa', 'admin_backup_codes', 'backup_recent', 'restore_drill',
-    'backup_dir', 'seller_details', 'office_plans', 'ejar_rules', 'legal_review', 'smtp', 'moyasar', 'app_url', 'cron_heartbeat', 'uploads_dir', 'npm_audit',
+    'backup_dir', 'seller_details', 'office_plans', 'ejar_rules', 'legal_review', 'smtp', 'moyasar', 'app_url', 'office_links', 'cron_heartbeat', 'uploads_dir', 'npm_audit',
   ]);
   for (const c of checks) {
     assert.equal(c.status, 'pass', `${c.id}: ${c.detailAr}`);
     assert.ok(c.titleAr && c.detailAr, c.id);
   }
-  assert.deepEqual(launch.summarize(checks), { pass: 20, warn: 0, fail: 0, ready: true });
+  assert.deepEqual(launch.summarize(checks), { pass: 21, warn: 0, fail: 0, ready: true });
 });
 
 test('each check turns warn or fail for its own reason, and nothing else changes', async () => {
@@ -175,6 +175,10 @@ test('each check turns warn or fail for its own reason, and nothing else changes
   const noEjar = ALL_RECORDS();
   delete noEjar.ejar_rules;
   await expectOnly('ejar_rules', 'fail', fakePool({ records: noEjar }));
+  for (const url of ['', 'http://aqdi.example', 'https://localhost:3000', 'https://127.0.0.1', 'https://intranet']) {
+    assert.equal(byId(await run(fakePool(), { ...goodEnv(), APP_URL: url })).office_links.status, 'warn', url || 'empty');
+  }
+  assert.equal(byId(await run(fakePool(), goodEnv())).office_links.status, 'pass');
   const plansWarn = await expectOnly('office_plans', 'warn', fakePool({ noPlan: 2 }));
   assert.match(plansWarn.detailAr, /^2 مكتب بدون باقة/);
   // 9
@@ -348,7 +352,7 @@ test.describe('/admin/launch', { skip }, () => {
 
     const page = await http.request('/admin/launch', { cookie: admin.cookie });
     assert.equal(page.status, 200);
-    assert.equal((page.text.match(/id="check-/g) || []).length, 20);
+    assert.equal((page.text.match(/id="check-/g) || []).length, 21);
     assert.match(page.text, /جاهزية الإطلاق/);
     assert.match(page.text, /غير جاهز للإطلاق/);
     assert.match(page.text, /2025-09-25/, 'the Riyadh freeze value is shown for comparison');

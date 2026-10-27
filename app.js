@@ -15,6 +15,7 @@ const routes = require('./routes');
 const authRoutes = require('./routes/auth');
 const areaRoutes = require('./routes/areas');
 const officeRoutes = require('./routes/office');
+const officePage = require('./routes/officePage');
 const { loadUser, loadUnreadCount } = require('./middleware/auth');
 const maintenance = require('./middleware/maintenance');
 const { sameOrigin } = require('./middleware/security');
@@ -118,6 +119,8 @@ app.use(routes);
 app.use(authRoutes);
 app.use(officeRoutes);
 app.use(areaRoutes);
+// The office public page /<slug>: LAST, so it never shadows a real route.
+app.use(officePage);
 
 app.use(notFound);
 app.use(errorHandler);

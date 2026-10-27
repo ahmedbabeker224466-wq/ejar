@@ -312,6 +312,13 @@ async function runChecks({ pool = db.pool, env = process.env, now = new Date(), 
   else if (!hsts) out.push(result('app_url', WARN, 'عنوان الموقع وملفات الارتباط', 'APP_URL صحيح وملفات الارتباط Secure، لكن ترويسة HSTS غير ظاهرة في هذه الاستجابة.'));
   else out.push(result('app_url', PASS, 'عنوان الموقع وملفات الارتباط', 'APP_URL بصيغة https ويطابق النطاق، وملفات الارتباط Secure، وترويسة HSTS موجودة.'));
 
+  // 12b. office public links (/<slug>) are built from APP_URL: it must be a public https domain
+  const linkHost = appHost ? appHost.replace(/:\d+$/, '').toLowerCase() : '';
+  const localHost = !linkHost || linkHost === 'localhost' || linkHost.endsWith('.localhost') || /^[\d.]+$/.test(linkHost) || linkHost.includes('[') || !linkHost.includes('.');
+  out.push(!https || localHost
+    ? result('office_links', WARN, 'روابط المكاتب العامة', 'لا يوجد نطاق عام مضبوط (APP_URL بصيغة https ونطاق حقيقي)، فروابط صفحات المكاتب المعروضة في الإعدادات وخريطة الموقع لن تعمل للزوار.')
+    : result('office_links', PASS, 'روابط المكاتب العامة', `روابط المكاتب تُبنى على النطاق ${linkHost}، مثل ${linkHost}/office-name.`));
+
   // 13. cron heartbeat and deliveries
   const [[beat]] = await pool.query("SELECT MAX(started_at) AS at FROM cron_runs WHERE job_name IN ('deliver', 'purge_auth') AND status = 'ok'");
   const [[stuck]] = await pool.query("SELECT COUNT(*) AS n FROM delivery_log WHERE status = 'pending' AND next_retry_at < ?", [dates.hoursAfter(now, -1)]);

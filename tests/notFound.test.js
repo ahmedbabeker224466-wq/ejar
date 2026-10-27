@@ -4,6 +4,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const app = require('../app');
 
+// Unknown one-word paths are looked up as office links (routes/officePage.js): close the pool so the file can exit.
+test.after(() => require('../config/db').pool.end());
+
 function listen() {
   return new Promise((resolve) => {
     const server = app.listen(0, () => resolve(server));

@@ -11,6 +11,7 @@ const db = require('../config/db');
 const rules = require('../config/listings');
 const blog = require('../services/blog');
 const listings = require('../services/listings');
+const officeLink = require('../services/officeLink');
 const plans = require('../services/plans');
 const pricing = require('../services/pricing');
 const inquiries = require('../services/inquiries');
@@ -151,12 +152,13 @@ router.get('/blog/:slug', wrap(async (req, res) => {
 
 router.get('/sitemap.xml', wrap(async (req, res) => {
   const base = seo.baseUrl(req);
-  const [index, posts] = await Promise.all([listings.publicIndex(db.pool), blog.publishedIndex(db.pool)]);
+  const [index, posts, officePages] = await Promise.all([listings.publicIndex(db.pool), blog.publishedIndex(db.pool), officeLink.publicIndex(db.pool)]);
   res.set({ 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
   return res.send(seo.sitemapXml(base, [
     ...siteContent.PUBLIC_PAGES,
     ...index.map((l) => ({ path: `/listings/${l.id}`, lastmod: l.updatedAt, changefreq: 'weekly', priority: '0.7' })),
     ...posts.map((p) => ({ path: `/blog/${p.slug}`, lastmod: p.updated_at || p.published_at, changefreq: 'monthly', priority: '0.5' })),
+    ...officePages.map((o) => ({ path: `/${o.slug}`, lastmod: o.updatedAt, changefreq: 'weekly', priority: '0.6' })),
   ]));
 }));
 

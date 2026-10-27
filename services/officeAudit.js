@@ -25,6 +25,8 @@ const ACTION_LABELS = {
   'office.create': 'إنشاء المكتب',
   'office.update': 'تعديل بيانات المكتب',
   'office.plan_backfill': 'تحديد الباقة الافتراضية تلقائياً',
+  'office.public_slug': 'تغيير رابط المكتب',
+  'office.public_page': 'إعدادات صفحة المكتب العامة',
   'landlord.create': 'إضافة مالك',
   'landlord.update': 'تعديل مالك',
   'landlord.activate': 'إعادة تفعيل مالك',

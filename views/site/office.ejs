@@ -1,0 +1,26 @@
+<section class="card">
+  <h1><%= office.name %></h1>
+  <p class="muted"><%= office.city %></p>
+  <% if (office.description) { %><p class="office-page__about"><%= office.description %></p><% } %>
+  <p class="muted">للتواصل مع المكتب افتح الإعلان واستخدم نموذج الاستفسار.</p>
+</section>
+
+<% if (total) { %>
+  <p class="muted"><%= total %> إعلان</p>
+  <ul class="listing-grid">
+    <% rows.forEach(function (l) { %>
+      <%- include('_listing-card', { l, fmt }) %>
+    <% }) %>
+  </ul>
+  <% if (pages > 1) { %>
+    <nav class="pager" aria-label="الصفحات">
+      <% if (page > 1) { %><a href="/<%= office.slug %><%= page - 1 > 1 ? '?page=' + (page - 1) : '' %>">السابق</a><% } %>
+      <span>صفحة <%= page %> من <%= pages %></span>
+      <% if (page < pages) { %><a href="/<%= office.slug %>?page=<%= page + 1 %>">التالي</a><% } %>
+    </nav>
+  <% } %>
+<% } else { %>
+  <p class="empty-state">لا توجد إعلانات منشورة لهذا المكتب الآن.</p>
+<% } %>
+
+<p class="disclaimer">تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط</p>

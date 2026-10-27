@@ -6,6 +6,7 @@ const { scopeToOffice } = require('./scopeToOffice');
 const { createAudit } = require('./audit');
 const { planJoin, DEFAULT_PLAN_ID_SQL } = require('./defaultPlan');
 const { withTransaction } = require('./transaction');
+const { assignAutoSlug } = require('./officeLink');
 const contractDates = require('./contractDates');
 const { periodState } = require('./subscriptionState');
 const engine = require('./contractEngine');
@@ -144,6 +145,8 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
     );
     const officeId = created.insertId;
     const scoped = scopeToOffice(conn, officeId);
+    // The public link starts as office-xxxxxx with the page switched off.
+    await assignAutoSlug(conn, officeId);
 
     const [roleUpdate] = await conn.query(
       "UPDATE users SET role = 'office_owner' WHERE id = ? AND role IS NULL",

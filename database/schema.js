@@ -146,6 +146,10 @@ const TABLES = [
     'trial_ends_at DATETIME NULL',
     'subscription_ends_at DATETIME NULL',
     'listings_banned TINYINT(1) NOT NULL DEFAULT 0', // the platform admin removed this office's right to publish listings
+    'public_slug VARCHAR(40) NULL', // the office's public link /<slug> (services/officeLink.js)
+    'public_page_enabled TINYINT(1) NOT NULL DEFAULT 0',
+    'public_description VARCHAR(300) NULL', // plain text the owner writes for the public page
+    'UNIQUE KEY uq_offices_public_slug (public_slug)',
     fk('offices', 'owner_id', 'users', 'SET NULL'),
     fk('offices', 'plan_id', 'plans', 'SET NULL'),
   ]),
@@ -159,6 +163,15 @@ const TABLES = [
     'UNIQUE KEY uq_office_members (office_id, user_id)',
     fk('office_members', 'office_id', 'offices', 'CASCADE'),
     fk('office_members', 'user_id', 'users', 'CASCADE'),
+  ]),
+
+  // Old public slugs of an office: /<old> answers 301 to the current one.
+  table('office_slug_history', [
+    `office_id ${REF} NOT NULL`,
+    'slug VARCHAR(40) NOT NULL',
+    'UNIQUE KEY uq_office_slug_history_slug (slug)',
+    'KEY idx_office_slug_history_office (office_id, created_at)',
+    fk('office_slug_history', 'office_id', 'offices', 'CASCADE'),
   ]),
 
   table('office_branches', [
@@ -1110,6 +1123,9 @@ const TABLES = [
 // already includes them for new databases; ensureSchema() adds them to older
 // databases that are missing them.
 const COLUMN_ADDITIONS = [
+  { table: 'offices', column: 'public_slug', definition: 'VARCHAR(40) NULL AFTER listings_banned' },
+  { table: 'offices', column: 'public_page_enabled', definition: 'TINYINT(1) NOT NULL DEFAULT 0 AFTER public_slug' },
+  { table: 'offices', column: 'public_description', definition: 'VARCHAR(300) NULL AFTER public_page_enabled' },
   { table: 'backups', column: 'filename', definition: 'VARCHAR(80) NULL AFTER path' },
   { table: 'backups', column: 'sha256', definition: 'CHAR(64) NULL AFTER size_bytes' },
   { table: 'backups', column: 'tables_count', definition: 'INT UNSIGNED NULL AFTER sha256' },
@@ -1232,6 +1248,7 @@ const NULLABLE_CHANGES = [
 ];
 
 const INDEX_ADDITIONS = [
+  { table: 'offices', index: 'uq_offices_public_slug', columns: 'public_slug', unique: true },
   { table: 'backups', index: 'idx_backups_created', columns: 'created_at' },
   { table: 'otp_codes', index: 'idx_otp_codes_ip_created', columns: 'ip, created_at' },
   { table: 'notifications', index: 'uq_notifications_dedupe', columns: 'dedupe_key', unique: true },

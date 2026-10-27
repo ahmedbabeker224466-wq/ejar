@@ -473,6 +473,21 @@ async function getPublic(pool, id, now = new Date()) {
   return { state: 'ok', listing: present(row) };
 }
 
+/** One page of one office's public listings (the office's public page /<slug>), newest first. */
+async function publicForOffice(pool, officeId, { page = 1 } = {}, now = new Date()) {
+  const scoped = scopeToOffice(pool, officeId);
+  const from = `FROM listings l JOIN offices o ON o.id = l.office_id WHERE l.office_id = :office_id AND ${PUBLIC_WHERE}`;
+  const [{ n }] = await scoped.query(`SELECT COUNT(*) AS n ${from}`, [now, now]);
+  const total = Number(n);
+  const pages = Math.max(1, Math.ceil(total / rules.PAGE_SIZE));
+  const current = Math.min(Math.max(1, Number.parseInt(page, 10) || 1), pages);
+  const rows = await scoped.query(
+    `SELECT ${PUBLIC_COLUMNS} ${from} ORDER BY ${SORTS.newest} LIMIT ${rules.PAGE_SIZE} OFFSET ${(current - 1) * rules.PAGE_SIZE}`,
+    [now, now],
+  );
+  return { rows: rows.map(present), total, page: current, pages };
+}
+
 /** Ids and timestamps of every public listing (for the sitemap). */
 async function publicIndex(pool, now = new Date(), limit = 5000) {
   const [rows] = await pool.query(
@@ -487,6 +502,7 @@ module.exports = {
   FEATURES,
   STATUS_LABELS,
   PUBLIC_WHERE,
+  publicForOffice,
   titleFor,
   validateListing,
   missingForPublish,

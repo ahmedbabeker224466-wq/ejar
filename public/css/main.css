@@ -1595,3 +1595,27 @@ img {
   .site-header__inner { flex-wrap: wrap; gap: var(--space-2); padding-block: var(--space-2); }
   .site-nav { order: 3; width: 100%; margin-inline-start: 0; overflow-x: auto; }
 }
+
+/* The office's public link in settings: a long URL, not a short code. */
+.office-link output {
+  font-size: 1rem;
+  letter-spacing: normal;
+  overflow-wrap: anywhere;
+}
+
+.slug-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.slug-input .input {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.office-page__about {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

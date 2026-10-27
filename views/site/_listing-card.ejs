@@ -1,0 +1,10 @@
+<li class="listing-card card">
+  <a href="/listings/<%= l.id %>" class="listing-card__link">
+    <% if (l.coverId) { %><img src="/listings/photos/<%= l.coverId %>/thumb" alt="<%= l.title %>" width="480" height="360" loading="lazy" class="listing-card__img">
+    <% } else { %><div class="listing-card__img listing-card__img--empty" role="img" aria-label="بدون صورة"></div><% } %>
+    <h2><%= l.title %></h2>
+    <p class="listing-card__price"><strong><%= fmt(l.price) %></strong> ريال / سنة</p>
+    <p class="muted"><%= l.rooms !== null ? l.rooms + ' غرف · ' : '' %><%= l.bathrooms !== null ? l.bathrooms + ' دورات مياه · ' : '' %><%= l.area !== null ? l.area + ' م²' : '' %></p>
+    <p class="muted"><%= l.officeName %></p>
+  </a>
+</li>

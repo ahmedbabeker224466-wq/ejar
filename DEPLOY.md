@@ -71,7 +71,7 @@ default, not an environment variable.
 
 ## 4. First start
 
-1. Start the app. `ensureSchema()` creates every table (73) and applies the
+1. Start the app. `ensureSchema()` creates every table (74) and applies the
    additive migrations on its own; there is nothing to run by hand.
 2. Seed the default rows once (plans, message templates, settings, FAQs and
    three **draft** blog posts flagged "needs review before publishing"). From the
@@ -80,7 +80,7 @@ default, not an environment variable.
 3. Open `https://your-domain/health`: `status: ok`, `database: reachable`.
 4. Check the detail (the same value as `CRON_SECRET`):
    `curl -H "X-Cron-Secret: ..." https://your-domain/health/detail`
-   shows `live.schema.found == live.schema.total` (73/73), the client IP the app
+   shows `live.schema.found == live.schema.total` (74/74), the client IP the app
    sees (it must not be 127.0.0.1 for every visitor) and every startup warning.
 5. Sign in with `PLATFORM_ADMIN_PHONE`, set up the authenticator app (2FA) and
    **save the backup codes** (shown once).
@@ -158,7 +158,7 @@ metadata under random file names. Requirements:
    `cd /home/USER/aqdi && node scripts/restore-backup.js --file /home/USER/aqdi_backups/aqdi-20261007-0200.sql.gz.enc --target USER_aqdi_restore`
 4. Read the output. It checks the sha256 (from the `backups` table, or pass `--sha <value from /admin/ops>`), decrypts and verifies the whole file **before touching anything**, restores, then compares every table's row count with the file. `OK: every table matches.` and exit code 0 means the restore is good. Any other result (`REFUSED (sha_mismatch)`, `bad_key_or_corrupt`, `truncated`, `count_mismatch`, `production_refused`, `target_not_empty`) means: do not use this file or target; try an older backup or check the key.
 5. Look at the data (cPanel > phpMyAdmin on the restored database): a few offices, contracts, the newest rows.
-6. **Putting it live (disaster only).** Stop the app (Setup Node.js App > Stop). Then either point `DB_NAME` at the restored database and restart, or restore over the live name: `... --target LIVE_DB_NAME --i-know-this-overwrites-production` (this drops and recreates the tables of the live database; use only when it is already lost or damaged). Start the app and check `/health`, `/health/detail` (73/73 tables) and sign in.
+6. **Putting it live (disaster only).** Stop the app (Setup Node.js App > Stop). Then either point `DB_NAME` at the restored database and restart, or restore over the live name: `... --target LIVE_DB_NAME --i-know-this-overwrites-production` (this drops and recreates the tables of the live database; use only when it is already lost or damaged). Start the app and check `/health`, `/health/detail` (74/74 tables) and sign in.
 7. Everything written after the backup's time (up to a day) is lost: tell offices to re-check the last day, and note that notifications for that day may be sent again or missed.
 
 **Quarterly restore drill** (put it in your calendar; a backup that was never restored is a hope, not a backup):
@@ -190,7 +190,7 @@ metadata under random file names. Requirements:
 
 ## 8. Pre-launch checklist
 
-The live version of this list is **Admin > جاهزية الإطلاق** (`/admin/launch`): 20 checks with pass / warn / fail, no secret ever shown. Items the app cannot see (secrets and DB password rotated, backup codes regenerated, restore drill, Ejar rules verified, lawyer review, last `npm audit`) are recorded there by hand with a reason. In production the app also logs the ids of failing checks at start-up. Open it before opening the platform to real users and keep going until nothing is red.
+The live version of this list is **Admin > جاهزية الإطلاق** (`/admin/launch`): 21 checks with pass / warn / fail, no secret ever shown. Items the app cannot see (secrets and DB password rotated, backup codes regenerated, restore drill, Ejar rules verified, lawyer review, last `npm audit`) are recorded there by hand with a reason. In production the app also logs the ids of failing checks at start-up. Open it before opening the platform to real users and keep going until nothing is red.
 
 Do every item, in this order. Tick it in your copy.
 
@@ -208,6 +208,7 @@ Do every item, in this order. Tick it in your copy.
 - [ ] Backups: set `BACKUP_DIR` (outside `public_html`, mode 0700), run one backup from `/admin/ops`, download it through File Manager to another machine, keep `SECRET_BOX_KEY` in a password manager **apart from the backups**, and do the restore drill of section 6b once before launch. Also copy `UPLOAD_DIR` (photos and receipts are not in the database dump). cPanel's own account backup is a good second layer.
 - [ ] Monitoring: an external uptime check on `https://your-domain/healthz` (every 1-5 minutes) with an alert to your phone; optionally `HEALTHCHECK_PING_URL` and `BACKUP_WEBHOOK_URL`; read `/health/detail` after every deploy and `/admin/ops` weekly.
 - [ ] `robots.txt` and `sitemap.xml` open and correct; submit the sitemap in Google Search Console.
+- [ ] Office public links: `APP_URL` is the real public https domain (the links shown in office settings and the sitemap are built from it; "روابط المكاتب العامة" on `/admin/launch` must be green). Open one office link with the page switched on and one switched off (it must show the normal 404).
 - [ ] Open the site on a phone: home, pricing, a listing, register, create an office, sign out, sign in.
 - [ ] Run `npm test` against a **throwaway** database (never the real one) and `npm audit --omit=dev` before the release commit.
 

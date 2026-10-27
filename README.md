@@ -214,6 +214,18 @@ Public pages show type, city, neighborhood (fixed list), rooms, area, annual ren
 Listings hide themselves 60 days after publishing (jobs `listings_expiry`, `purge_inquiries`). Seed the default plans, FAQs and three draft blog posts once with `node database/seed.js`.
 No new environment variables. The final audit is in [`docs/AUDIT.md`](docs/AUDIT.md); the full deployment reference and pre-launch checklist in [`DEPLOY.md`](DEPLOY.md).
 
+## Office public link (`/<slug>`)
+
+Each office has a public page at `<APP_URL>/<slug>` (phase 1: a path on the platform's own domain; no custom domains). It shows only the office name, city, an optional description (up to 300 characters, plain text, no phone numbers, emails or links) and the office's published listings; visitors contact the office only through each listing's inquiry form.
+
+| Route | What it does |
+|---|---|
+| `GET /<slug>` | The office page. Mounted last, after every other router. Unknown slugs, a page switched off, a suspended office or an expired trial fall through to the normal 404. An old slug or another letter case answers 301 to the current link. Cached 60 s, 120 lookups per IP per minute, `noindex` while the office has no published listing; pages with listings are in `/sitemap.xml` |
+| `POST /office/settings/link` | Change the slug (owner and manager, `settings.office`): lower-case a-z, 0-9 and single hyphens, 3-40 characters, unique across current and old slugs, not a reserved word (every mounted top-level path plus a fixed list) and nothing that looks official (ejar, rega, moj, nafath, absher, balady, ...). 3 changes per 30 days; the old slug is kept in `office_slug_history` and redirects |
+| `POST /office/settings/public-page` | The switch "إظهار صفحة المكتب للعامة" and the description |
+
+New offices get an automatic `office-xxxxxx` slug with the page switched off; existing offices get one from the start-up migration (`ensureSchema`, idempotent). Changes are audit-logged (`office.public_slug`, `office.public_page`; never the description text). `tests/officeLink.test.js` fails when a mounted top-level path is missing from the reserved list. The link uses `APP_URL`; `/admin/launch` warns while it is not a public https domain.
+
 ## Operations: backups, health, SMS balance, monthly report
 
 | Route / command | What it does |
@@ -228,7 +240,7 @@ Environment (all optional): `BACKUP_DIR`, `BACKUP_WEBHOOK_URL`, `HEALTHCHECK_PIN
 
 ## Launch readiness
 
-`GET /admin/launch` (platform admin only) shows 20 pass / warn / fail checks for opening the platform to real users (environment, secrets strength, 2FA, backups and restore drill, seller details, offices without a plan (warn), Ejar rules verification, lawyer review, SMTP test, Moyasar keys, APP_URL/HSTS, cron, directories, npm audit date). Secret values are never shown. Hand confirmations need a reason and are audit-logged; in production the failing check ids are logged at start-up.
+`GET /admin/launch` (platform admin only) shows 21 pass / warn / fail checks for opening the platform to real users (environment, secrets strength, 2FA, backups and restore drill, seller details, offices without a plan (warn), Ejar rules verification, lawyer review, SMTP test, Moyasar keys, APP_URL/HSTS, office public links domain, cron, directories, npm audit date). Secret values are never shown. Hand confirmations need a reason and are audit-logged; in production the failing check ids are logged at start-up.
 
 ## Project layout
 
