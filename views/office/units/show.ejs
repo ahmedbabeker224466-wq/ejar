@@ -60,8 +60,25 @@
     <a href="/office/contracts/new?landlord=<%= unit.landlord_id %>&amp;unit=<%= unit.id %>" class="btn btn--primary">إضافة عقد لهذه الوحدة</a>
   <% } %>
 </section>
-<section class="card detail-card"><h2>الصيانة</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
-<section class="card detail-card"><h2>الصور</h2><p class="muted">هذه الصفحة قيد البناء</p></section>
+<section class="card detail-card" id="maintenance">
+  <h2>الصيانة (<%= maintenance.total %>)</h2>
+  <% if (maintenance.total === 0) { %>
+    <p class="muted">لا توجد طلبات صيانة على هذه الوحدة. يرفع المستأجر الطلب من حسابه.</p>
+  <% } else { %>
+    <ul class="item-list">
+      <% maintenance.rows.forEach(function (r) { %>
+        <li class="item">
+          <% if (canSeeMaintenance) { %><a class="item__title" href="/office/maintenance/<%= r.id %>">طلب رقم <%= r.id %> · <%= r.categoryLabel %></a><% } else { %><p class="item__title">طلب رقم <%= r.id %> · <%= r.categoryLabel %></p><% } %>
+          <div class="item__badges"><span class="badge badge--maint-<%= r.status %>"><%= r.statusLabel %></span></div>
+          <p class="item__meta"><span><%= r.priorityLabel %></span><span dir="ltr"><%= riyadhDate(new Date(r.created_at)) %></span></p>
+        </li>
+      <% }) %>
+    </ul>
+    <% if (maintenance.total > maintenance.rows.length && canSeeMaintenance) { %>
+      <a href="/office/maintenance" class="btn btn--secondary btn--block">كل طلبات الصيانة</a>
+    <% } %>
+  <% } %>
+</section>
 
 <% if (canDelete) { %>
   <section class="card detail-card">

@@ -69,6 +69,9 @@ async function ensureSchema(targetPool = pool) {
     await addMissingEnumValues(targetPool, ENUM_ADDITIONS);
     current = 'payment entries backfill';
     await backfillPaymentEntries(targetPool);
+    current = 'office plan backfill';
+    // Required here, not at the top: services/defaultPlan.js loads modules that load this file.
+    await require('../services/defaultPlan').backfillOfficePlans(targetPool);
     result.created = (await countTables(targetPool)) - result.found;
     result.ok = true;
     return result;

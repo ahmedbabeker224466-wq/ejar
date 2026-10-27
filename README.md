@@ -153,6 +153,10 @@ Jobs: reminders, deliver, recompute, late_payments, digest, expire_invites, tria
 | `GET /office/tasks`, `/:id`, `POST /office/tasks`, `/:id`, `/:id/status`, `/:id/comments` | Internal Kanban tasks |
 | `GET /office/reports`, `/office/reports/csv/:name` | Reports (occupancy, expiring, overdue, collections, maintenance, workload) and CSV |
 | `GET /landlord/statement`, `/landlord/statement/csv` | Landlord's read-only statement |
+| `GET /office/tenants` | Office tenants (capability `tenants`): one row per contract that was not replaced by a renewal, with the tenant nickname, unit, contract stage and join state (joined, invited, not invited); search, filter, 20 per page |
+| `GET /office/audit` | Read-only audit log of the office's own actions (capability `audit`: owner and manager): who (nickname or masked phone, and role), action, target, time in Riyadh; 30 per page; platform-admin rows and before/after values are never shown |
+
+The unit page lists that unit's maintenance requests; the contract page says plainly that the contract file is not stored. No page is a placeholder any more (`tests/noPlaceholders.test.js` fails on placeholder views or "قيد البناء" text).
 
 Storage: maintenance photos are re-encoded with sharp (JPEG, at most 1600 px, no metadata) and stored in `UPLOAD_DIR` (default `storage/uploads` in the app folder). It must be outside the public folder and writable by the app; back it up with the database. See `deploy/DEPLOY-CPANEL.md` step 12. `plans.max_photos` limits photos per office; `plans.max_members` limits active team members.
 
@@ -185,6 +189,8 @@ Plans, the subscription lifecycle, checkout (Moyasar **test mode only**, or bank
 **Invoices.** Gap-free numbers per series and Riyadh year (`INV-2026-000001`, credit notes `CN-2026-000001`) from a locked counter row. Each invoice is a snapshot (seller, buyer = office display name only, lines, discount, VAT, total). The title is "فاتورة ضريبية مبسطة" only when the seller VAT number is set in `/admin/settings`; otherwise "إيصال دفع". The refund action issues a credit note; it does not move money.
 
 **Invoicing entity pending, ZATCA later.** The company that issues invoices is not decided yet: legal name, VAT number, address and CR are empty-safe platform settings (platform admin only) and no company or VAT number is hardcoded. This app does not claim ZATCA e-invoicing compliance; ZATCA Phase 2 integration is a separate later task.
+
+**Default plan.** An office with `plan_id` NULL (created before any plan existed) is read as being on the default plan: the `trial` plan when it is active, otherwise the cheapest active plan (`services/defaultPlan.js`). At start-up `ensureSchema` (and `node database/seed.js`) store that plan once and create the matching subscription row (idempotent, one transaction per office, audit action `office.plan_backfill`). New offices get the same default plan.
 
 **Plan features.** `plans.features` holds on/off switches (`whatsapp`, `telegram`, `reports_csv`, `ai_reading`); a missing key, null or the older array form means allowed. They are enforced on the server (AI reading, CSV downloads, WhatsApp/Telegram settings and delivery). `max_members` is the "max staff" limit.
 
@@ -222,7 +228,7 @@ Environment (all optional): `BACKUP_DIR`, `BACKUP_WEBHOOK_URL`, `HEALTHCHECK_PIN
 
 ## Launch readiness
 
-`GET /admin/launch` (platform admin only) shows 19 pass / warn / fail checks for opening the platform to real users (environment, secrets strength, 2FA, backups and restore drill, seller details, Ejar rules verification, lawyer review, SMTP test, Moyasar keys, APP_URL/HSTS, cron, directories, npm audit date). Secret values are never shown. Hand confirmations need a reason and are audit-logged; in production the failing check ids are logged at start-up.
+`GET /admin/launch` (platform admin only) shows 20 pass / warn / fail checks for opening the platform to real users (environment, secrets strength, 2FA, backups and restore drill, seller details, offices without a plan (warn), Ejar rules verification, lawyer review, SMTP test, Moyasar keys, APP_URL/HSTS, cron, directories, npm audit date). Secret values are never shown. Hand confirmations need a reason and are audit-logged; in production the failing check ids are logged at start-up.
 
 ## Project layout
 

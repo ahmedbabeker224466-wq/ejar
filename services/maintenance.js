@@ -197,6 +197,14 @@ async function listForOffice(pool, officeId, { filters, userId, page = 1 }) {
   return { total, pages: p.pages, page: p.page, rows: rows.map(shape) };
 }
 
+/** The newest requests on one unit of this office (the unit page): { total, rows }. */
+async function listForUnit(pool, officeId, unitId, limit = 20) {
+  const scoped = scopeToOffice(pool, officeId);
+  const [{ n }] = await scoped.query('SELECT COUNT(*) AS n FROM maintenance_requests r WHERE r.unit_id = ? AND r.office_id = :office_id', [unitId]);
+  const rows = await scoped.query(`${SELECT_REQUEST} WHERE r.unit_id = ? AND r.office_id = :office_id ORDER BY r.id DESC LIMIT ${Number(limit)}`, [unitId]);
+  return { total: Number(n), rows: rows.map(shape) };
+}
+
 /** Requests on the landlord's own units (every linked office), newest first. */
 async function listForLandlord(pool, links) {
   const all = [];
@@ -470,6 +478,7 @@ module.exports = {
   messagesFor,
   photosFor,
   listForOffice,
+  listForUnit,
   listForLandlord,
   listForTenant,
   createRequest,

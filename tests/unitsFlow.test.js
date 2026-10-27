@@ -203,7 +203,8 @@ test('units: validation, building of another landlord or office, city from build
 
   const page = await http.request(`/office/units/${id}`, { cookie: a.cookie });
   assert.equal(page.status, 200);
-  for (const text of ['شقة 3', 'مكيف', 'موقف سيارة', 'عمارة أ', '45,000', 'شاغرة', 'العقود', 'الصيانة', 'الصور']) assert.ok(page.text.includes(text), text);
+  for (const text of ['شقة 3', 'مكيف', 'موقف سيارة', 'عمارة أ', '45,000', 'شاغرة', 'العقود', 'الصيانة']) assert.ok(page.text.includes(text), text);
+  assert.ok(!page.text.includes('<h2>الصور</h2>'), 'no photos section on the unit page');
 
   const edited = await http.request(`/office/units/${id}`, {
     method: 'POST', cookie: a.cookie,

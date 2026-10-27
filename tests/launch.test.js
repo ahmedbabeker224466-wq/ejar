@@ -44,7 +44,7 @@ const ALL_RECORDS = () => ({
 function fakePool(o = {}) {
   const opts = {
     records: ALL_RECORDS(), seller: { 'seller.legal_name': 'شركة', 'seller.address': 'الرياض', 'seller.vat_number': '300000000000003' },
-    admins: { total: 1, enabled: 1 }, backupAt: new Date('2026-12-01T00:00:00Z'), cronAt: new Date('2026-12-01T08:50:00Z'), stuck: 0, failed: 0, ...o,
+    admins: { total: 1, enabled: 1 }, backupAt: new Date('2026-12-01T00:00:00Z'), cronAt: new Date('2026-12-01T08:50:00Z'), stuck: 0, failed: 0, noPlan: 0, ...o,
   };
   const pool = {
     async query(sql) {
@@ -53,6 +53,7 @@ function fakePool(o = {}) {
       if (sql.includes('FROM users')) return [[opts.admins]];
       if (sql.includes('FROM backups')) return [[{ at: opts.backupAt }]];
       if (sql.includes('FROM cron_runs')) return [[{ at: opts.cronAt }]];
+      if (sql.includes('FROM offices WHERE plan_id IS NULL')) return [[{ n: opts.noPlan }]];
       if (sql.includes("status = 'pending'")) return [[{ n: opts.stuck }]];
       if (sql.includes("status = 'failed'")) return [[{ n: opts.failed }]];
       throw new Error(`unexpected query: ${sql}`);
@@ -113,13 +114,13 @@ test('everything in order: every check passes and the platform is ready', async 
   const checks = await run(fakePool(), goodEnv());
   assert.deepEqual(checks.map((c) => c.id), [
     'node_env', 'sms_provider', 'secrets_strength', 'secrets_rotated', 'db_password_rotated', 'admin_2fa', 'admin_backup_codes', 'backup_recent', 'restore_drill',
-    'backup_dir', 'seller_details', 'ejar_rules', 'legal_review', 'smtp', 'moyasar', 'app_url', 'cron_heartbeat', 'uploads_dir', 'npm_audit',
+    'backup_dir', 'seller_details', 'office_plans', 'ejar_rules', 'legal_review', 'smtp', 'moyasar', 'app_url', 'cron_heartbeat', 'uploads_dir', 'npm_audit',
   ]);
   for (const c of checks) {
     assert.equal(c.status, 'pass', `${c.id}: ${c.detailAr}`);
     assert.ok(c.titleAr && c.detailAr, c.id);
   }
-  assert.deepEqual(launch.summarize(checks), { pass: 19, warn: 0, fail: 0, ready: true });
+  assert.deepEqual(launch.summarize(checks), { pass: 20, warn: 0, fail: 0, ready: true });
 });
 
 test('each check turns warn or fail for its own reason, and nothing else changes', async () => {
@@ -174,6 +175,8 @@ test('each check turns warn or fail for its own reason, and nothing else changes
   const noEjar = ALL_RECORDS();
   delete noEjar.ejar_rules;
   await expectOnly('ejar_rules', 'fail', fakePool({ records: noEjar }));
+  const plansWarn = await expectOnly('office_plans', 'warn', fakePool({ noPlan: 2 }));
+  assert.match(plansWarn.detailAr, /^2 مكتب بدون باقة/);
   // 9
   const noLegal = ALL_RECORDS();
   delete noLegal.legal_review;
@@ -345,7 +348,7 @@ test.describe('/admin/launch', { skip }, () => {
 
     const page = await http.request('/admin/launch', { cookie: admin.cookie });
     assert.equal(page.status, 200);
-    assert.equal((page.text.match(/id="check-/g) || []).length, 19);
+    assert.equal((page.text.match(/id="check-/g) || []).length, 20);
     assert.match(page.text, /جاهزية الإطلاق/);
     assert.match(page.text, /غير جاهز للإطلاق/);
     assert.match(page.text, /2025-09-25/, 'the Riyadh freeze value is shown for comparison');

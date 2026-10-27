@@ -5,6 +5,7 @@
 
 const db = require('../config/db');
 const plans = require('./plans');
+const { planJoin } = require('./defaultPlan');
 const platformSettings = require('./platformSettings');
 
 const PLAN_MESSAGES = {
@@ -19,7 +20,7 @@ const AI_PAUSED_MESSAGE = 'قراءة العقد بالذكاء الاصطناع
 /** Whether the office's current plan has a feature switched on (no plan = allowed). */
 async function officeAllows(pool, officeId, flag) {
   const [[row]] = await pool.query(
-    'SELECT p.features FROM offices o LEFT JOIN plans p ON p.id = o.plan_id WHERE o.id = ?',
+    `SELECT p.features FROM offices o ${planJoin()} WHERE o.id = ?`,
     [officeId],
   );
   if (!row || row.features === null || row.features === undefined) return true;

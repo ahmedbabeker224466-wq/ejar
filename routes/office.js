@@ -15,7 +15,7 @@ const { requireAuth } = require('../middleware/auth');
 const { requirePerm, can } = require('../middleware/permissions');
 const { noStore, sameOrigin } = require('../middleware/security');
 const { rateLimit } = require('../middleware/rateLimit');
-const { loadOffice, officeGate, OFFICE_NAV } = require('../middleware/loadOffice');
+const { loadOffice, officeGate } = require('../middleware/loadOffice');
 const landlordRoutes = require('./landlords');
 const unitRoutes = require('./units');
 const contractRoutes = require('./contracts');
@@ -29,6 +29,8 @@ const reportRoutes = require('./reports');
 const billingRoutes = require('./billing');
 const listingRoutes = require('./listings');
 const contractsService = require('../services/contracts');
+const officeTenants = require('../services/officeTenants');
+const officeAudit = require('../services/officeAudit');
 const contractStatus = require('../services/contractStatus');
 const { riyadhDate } = require('../services/contractDates');
 const feedback = require('../services/feedback');
@@ -165,13 +167,55 @@ router.use(reportRoutes.office);
 router.use(billingRoutes.office);
 router.use(listingRoutes);
 
-// One placeholder page per navigation item, each behind its own capability.
-// Landlords, units, contracts (routes/landlords.js, units.js, contracts.js) and settings (below) are real pages.
-for (const item of OFFICE_NAV.filter((i) => !['home', 'landlords', 'units', 'contracts', 'settings', 'payments', 'maintenance', 'messages', 'team', 'tasks', 'reports', 'billing', 'listings'].includes(i.key))) {
-  router.get(item.href, requirePerm(item.capability), (req, res) => {
-    res.render('office/placeholder', { title: item.label });
-  });
-}
+// ------------------------------------------------------------ tenants
+
+router.get('/office/tenants', requirePerm('tenants'), async (req, res, next) => {
+  try {
+    const q = String(req.query.q || '').slice(0, 60);
+    const status = officeTenants.STATUSES.includes(req.query.status) ? req.query.status : '';
+    const result = await officeTenants.listTenants(db.pool, req.office.id, { q, status, page: req.query.page });
+    const pageUrl = (page) => {
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (status) params.set('status', status);
+      if (page > 1) params.set('page', String(page));
+      const text = params.toString();
+      return `/office/tenants${text ? `?${text}` : ''}`;
+    };
+    return res.render('office/tenants', {
+      title: 'المستأجرون',
+      ...result,
+      q,
+      status,
+      statusLabels: officeTenants.STATUS_LABELS,
+      stageLabels: contractsService.STAGE_LABELS,
+      filtered: Boolean(q || status),
+      canAddContract: can(req.memberRole, 'contracts'),
+      prevUrl: result.page > 1 ? pageUrl(result.page - 1) : null,
+      nextUrl: result.page < result.pages ? pageUrl(result.page + 1) : null,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// ------------------------------------------------------------ audit log (read only)
+
+router.get('/office/audit', requirePerm('audit'), async (req, res, next) => {
+  try {
+    const result = await officeAudit.listOfficeAudit(db.pool, req.office.id, { page: req.query.page });
+    const pageUrl = (page) => (page > 1 ? `/office/audit?page=${page}` : '/office/audit');
+    return res.render('office/audit', {
+      title: 'سجل التدقيق',
+      ...result,
+      riyadhTime: (at) => riyadhNow(new Date(at)).slice(0, 16),
+      prevUrl: result.page > 1 ? pageUrl(result.page - 1) : null,
+      nextUrl: result.page < result.pages ? pageUrl(result.page + 1) : null,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
 
 // ------------------------------------------------------------ settings
 

@@ -12,13 +12,14 @@ const { scopeToOffice } = require('./scopeToOffice');
 const { withTransaction } = require('./transaction');
 const { checkLimit } = require('./planLimits');
 const { riyadhMonth } = require('./contractDates');
+const { planJoin } = require('./defaultPlan');
 
 /** This month's limit and count for the office (no lock). */
 async function usageFor(pool, officeId, now = new Date()) {
   const scoped = scopeToOffice(pool, officeId);
   const month = riyadhMonth(now);
   const [office] = await scoped.query(
-    'SELECT p.max_ai_reads_monthly AS max_reads FROM offices o LEFT JOIN plans p ON p.id = o.plan_id WHERE o.id = :office_id',
+    `SELECT p.max_ai_reads_monthly AS max_reads FROM offices o ${planJoin()} WHERE o.id = :office_id`,
   );
   const row = await scoped.selectOne('ai_reads_usage', { month }, { columns: ['count'] });
   return {
@@ -39,7 +40,7 @@ async function reserveRead(pool, officeId, now = new Date()) {
     // First statement: lock the office, so reservations queue up.
     const [office] = await scoped.query(
       `SELECT o.id, p.max_ai_reads_monthly AS max_reads FROM offices o
-         LEFT JOIN plans p ON p.id = o.plan_id WHERE o.id = :office_id FOR UPDATE`,
+         ${planJoin()} WHERE o.id = :office_id FOR UPDATE`,
     );
     const limit = office && office.max_reads !== null ? Number(office.max_reads) : null;
     await scoped.query(

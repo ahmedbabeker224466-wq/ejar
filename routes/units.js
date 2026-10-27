@@ -15,6 +15,7 @@ const { scopeToOffice } = require('../services/scopeToOffice');
 const { SAUDI_CITIES } = require('../services/offices');
 const { requirePerm, can } = require('../middleware/permissions');
 const contractsService = require('../services/contracts');
+const maintenance = require('../services/maintenance');
 const { riyadhDate } = require('../services/contractDates');
 
 const router = express.Router();
@@ -276,6 +277,9 @@ async function renderUnit(req, res, { status = 200, error = null } = {}) {
     error,
     contracts: await contractsService.listContracts(db.pool, req.office.id, { unitId: unit.id, pageSize: 20 }, riyadhDate(new Date())),
     stageLabels: contractsService.STAGE_LABELS,
+    maintenance: await maintenance.listForUnit(db.pool, req.office.id, unit.id),
+    canSeeMaintenance: can(req.memberRole, 'maintenance'),
+    riyadhDate,
     canDelete: can(req.memberRole, 'contracts.delete') && unit.status !== 'rented'
       && unit.contracts_count + unit.maintenance_count + unit.listings_count === 0,
   });

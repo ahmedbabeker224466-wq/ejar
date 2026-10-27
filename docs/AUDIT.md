@@ -104,4 +104,16 @@ Open points: the SMS balance endpoints must be confirmed once with a real Unifon
 
 ## 10. Launch readiness page (Prompt 17)
 
-`tests/launch.test.js`: all 19 checks pass together and each one turns warn/fail for its own reason alone (fake database, fixed clock); secret strength rules; confirmation forms (real date, not future, source >= 10 characters); no secret value in any result or on the page; admin-only access incl. the 2FA guard; reasons required, cross-site posts refused, audit rows without the note or source; the legal notice disappears from /privacy, /terms and /disclaimer after the lawyer confirmation; the test email stores only its result and is limited to 5 an hour; the startup guard logs ids only. Open point: the hand confirmations are statements by the admin, not proof.
+`tests/launch.test.js`: all 20 checks pass together and each one turns warn/fail for its own reason alone (fake database, fixed clock); secret strength rules; confirmation forms (real date, not future, source >= 10 characters); no secret value in any result or on the page; admin-only access incl. the 2FA guard; reasons required, cross-site posts refused, audit rows without the note or source; the legal notice disappears from /privacy, /terms and /disclaimer after the lawyer confirmation; the test email stores only its result and is limited to 5 an hour; the startup guard logs ids only. Open point: the hand confirmations are statements by the admin, not proof.
+
+## 11. Role-by-role review fixes (Prompt 18)
+
+| What | Test | Result |
+|---|---|---|
+| No placeholder page or "قيد البناء" text in any view, route or service; no route loop generated from the navigation; every office navigation item has its own route | `tests/noPlaceholders.test.js` | pass |
+| `/office/tenants`: empty state, one row per contract (nickname, unit, stage, joined / invited / not invited), filters and search, staff and manager allowed, a tenant or anonymous visitor refused, another office's tenants never listed (its contract id answers 404) | `tests/officePages.test.js`, `officeFlow` | pass |
+| `/office/audit`: owner and manager allowed, staff 403 and no menu item, only this office's rows, platform-admin rows and their reasons hidden, phone masked, 30 per page, empty state | `tests/officePages.test.js` | pass |
+| Unit page lists only that unit's maintenance requests (not another unit's or office's, no description), no photos section; contract page says the file is not stored | `tests/officePages.test.js`, `unitsFlow` | pass |
+| Default plan: `plan_id` NULL reads the trial plan (or the cheapest active plan) in memberships and limits; the backfill sets it once with exactly one subscription row and one audit row, never touches an office that has a plan, and fills live subscriptions without a plan; `/admin/launch` warns while any office has no plan | `tests/officePages.test.js`, `tests/launch.test.js` | pass |
+
+`npm audit`: three new advisories (body-parser, nodemailer, qs) were fixed with `npm audit fix` (lockfile only, within the existing version ranges); found 0 vulnerabilities. The 13 dependencies are unchanged.

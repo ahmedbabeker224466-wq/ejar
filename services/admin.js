@@ -8,6 +8,7 @@
 const money = require('./money');
 const pricing = require('./pricing');
 const plans = require('./plans');
+const { planJoin, effectivePlanIdSql } = require('./defaultPlan');
 const subscriptions = require('./subscriptions');
 const { scopeToOffice } = require('./scopeToOffice');
 const { riyadhMonth, riyadhMidnight, hoursAfter } = require('./contractDates');
@@ -94,7 +95,7 @@ async function listOffices(pool, { q = '', status = '', page = 1 } = {}) {
     `SELECT o.id, o.name, o.city, o.phone, o.status, o.trial_ends_at, o.subscription_ends_at, o.created_at, p.name_ar AS plan_name,
             (SELECT COUNT(*) FROM units u WHERE u.office_id = o.id) AS units,
             (SELECT COUNT(*) FROM contracts c WHERE c.office_id = o.id) AS contracts
-       FROM offices o LEFT JOIN plans p ON p.id = o.plan_id ${clause}
+       FROM offices o ${planJoin()} ${clause}
       ORDER BY o.id DESC LIMIT ${PAGE_SIZE} OFFSET ${(current - 1) * PAGE_SIZE}`,
     params,
   );
@@ -105,8 +106,8 @@ async function listOffices(pool, { q = '', status = '', page = 1 } = {}) {
 async function officeDetail(pool, officeId, now = new Date()) {
   if (!/^\d+$/.test(String(officeId))) return null;
   const [[office]] = await pool.query(
-    `SELECT o.id, o.name, o.city, o.phone, o.email, o.status, o.plan_id, o.trial_ends_at, o.subscription_ends_at, o.created_at, o.listings_banned, p.name_ar AS plan_name
-       FROM offices o LEFT JOIN plans p ON p.id = o.plan_id WHERE o.id = ?`,
+    `SELECT o.id, o.name, o.city, o.phone, o.email, o.status, ${effectivePlanIdSql()} AS plan_id, o.trial_ends_at, o.subscription_ends_at, o.created_at, o.listings_banned, p.name_ar AS plan_name
+       FROM offices o ${planJoin()} WHERE o.id = ?`,
     [officeId],
   );
   if (!office) return null;

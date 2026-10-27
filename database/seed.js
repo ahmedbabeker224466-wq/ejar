@@ -254,6 +254,9 @@ async function seed(pool) {
     counts.settings += result.affectedRows;
   }
 
+  // Offices created before any plan existed get the default plan (idempotent).
+  await require('../services/defaultPlan').backfillOfficePlans(pool);
+
   return counts;
 }
 

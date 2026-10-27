@@ -4,6 +4,7 @@
 
 const { scopeToOffice } = require('./scopeToOffice');
 const { createAudit } = require('./audit');
+const { planJoin, DEFAULT_PLAN_ID_SQL } = require('./defaultPlan');
 const { withTransaction } = require('./transaction');
 const contractDates = require('./contractDates');
 const { periodState } = require('./subscriptionState');
@@ -98,7 +99,7 @@ async function membershipsFor(pool, userId) {
             p.code AS plan_code, p.name_ar AS plan_name
        FROM office_members m
        JOIN offices o ON o.id = m.office_id
-       LEFT JOIN plans p ON p.id = o.plan_id
+       ${planJoin()}
       WHERE m.user_id = ?
       ORDER BY m.is_active DESC, m.joined_at ASC, m.id ASC`,
     [userId],
@@ -120,8 +121,9 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
     if (user.role !== null) throw new OfficeCreateError('has_role');
     if ((await membershipsFor(conn, userId)).length > 0) throw new OfficeCreateError('has_office');
 
+    // The default plan: 'trial' when active, otherwise the cheapest active plan.
     const [[plan]] = await conn.query(
-      'SELECT id FROM plans WHERE is_active = 1 ORDER BY price_monthly ASC, sort_order ASC, id ASC LIMIT 1',
+      `SELECT ${DEFAULT_PLAN_ID_SQL} AS id`,
     );
     const trialEndsAt = contractDates.trialEndsAt(now);
     const [created] = await conn.query(

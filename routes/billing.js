@@ -29,6 +29,7 @@ const logger = require('../utils/logger');
 const { riyadhDate } = require('../services/contractDates');
 const { requirePerm } = require('../middleware/permissions');
 const { rateLimit } = require('../middleware/rateLimit');
+const { effectivePlanIdSql } = require('../services/defaultPlan');
 
 const INTERVAL_LABELS = { monthly: 'شهري', yearly: 'سنوي' };
 
@@ -78,7 +79,7 @@ function statusLine(office, access) {
 
 async function renderIndex(req, res, extra = {}) {
   const officeId = req.office.id;
-  const [[row]] = await db.pool.query('SELECT plan_id FROM offices WHERE id = ?', [officeId]);
+  const [[row]] = await db.pool.query(`SELECT ${effectivePlanIdSql('o')} AS plan_id FROM offices o WHERE o.id = ?`, [officeId]);
   const plan = row && row.plan_id ? await plans.getPlan(db.pool, row.plan_id) : null;
   const usage = await plans.usageFor(db.pool, officeId);
   const notice = Object.hasOwn(NOTICES, req.query.notice) ? NOTICES[req.query.notice] : null;

@@ -169,10 +169,8 @@ test('register end to end: new phone -> code -> /office/new -> office, owner, me
   assert.equal(office.status, 'trial');
   const days = (new Date(office.trial_ends_at).getTime() - before) / 86400000;
   assert.ok(days > 13.99 && days < 14.01, `trial ends in 14 days (got ${days})`);
-  const [[cheapest]] = await db.pool.query(
-    'SELECT id FROM plans WHERE is_active = 1 ORDER BY price_monthly ASC, sort_order ASC, id ASC LIMIT 1',
-  );
-  assert.equal(office.plan_id, cheapest.id, 'lowest-priced active plan');
+  const [[fallback]] = await db.pool.query(`SELECT ${require('../services/defaultPlan').DEFAULT_PLAN_ID_SQL} AS id`);
+  assert.equal(office.plan_id, fallback.id, 'the trial plan, else the lowest-priced active plan');
 
   const [members] = await db.pool.query('SELECT * FROM office_members WHERE office_id = ?', [office.id]);
   assert.equal(members.length, 1);
@@ -381,7 +379,9 @@ test('staff and managers cannot open pages their capabilities do not allow', { s
     const page = await request(path, { cookie: staff });
     assert.equal(page.status, 200, `staff ${path}`);
   }
-  assert.match((await request('/office/tenants', { cookie: staff })).text, /هذه الصفحة قيد البناء/);
+  const tenantsPage = (await request('/office/tenants', { cookie: staff })).text;
+  assert.match(tenantsPage, /لا يوجد مستأجرون بعد/);
+  assert.doesNotMatch(tenantsPage, /قيد البناء/);
 
   // Staff sees settings read-only and cannot save.
   const settings = await request('/office/settings', { cookie: staff });

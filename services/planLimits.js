@@ -5,6 +5,8 @@
 // locking the office row, so parallel creates inside one office queue up and
 // cannot pass the limit together.
 
+const { planJoin } = require('./defaultPlan');
+
 /**
  * Whether `adding` more rows fit. limit null/undefined = unlimited.
  * Returns { ok, limit, current, remaining } (remaining null when unlimited).
@@ -47,7 +49,7 @@ function usageText({ limit, current }) {
  */
 async function unitUsage(scoped, { lock = false } = {}) {
   const [office] = await scoped.query(
-    `SELECT o.id, p.max_units FROM offices o LEFT JOIN plans p ON p.id = o.plan_id
+    `SELECT o.id, p.max_units FROM offices o ${planJoin()}
       WHERE o.id = :office_id${lock ? ' FOR UPDATE' : ''}`,
   );
   const [{ n }] = await scoped.query(
@@ -66,7 +68,7 @@ const LIVE_SQL = "status IN ('calm','soon','urgent','deadline_passed')";
  */
 async function contractUsage(scoped, { lock = false } = {}) {
   const [office] = await scoped.query(
-    `SELECT o.id, p.max_contracts FROM offices o LEFT JOIN plans p ON p.id = o.plan_id
+    `SELECT o.id, p.max_contracts FROM offices o ${planJoin()}
       WHERE o.id = :office_id${lock ? ' FOR UPDATE' : ''}`,
   );
   const [{ n }] = await scoped.query(
@@ -82,7 +84,7 @@ async function contractUsage(scoped, { lock = false } = {}) {
  */
 async function photoUsage(scoped, { lock = false } = {}) {
   const [office] = await scoped.query(
-    `SELECT o.id, p.max_photos FROM offices o LEFT JOIN plans p ON p.id = o.plan_id
+    `SELECT o.id, p.max_photos FROM offices o ${planJoin()}
       WHERE o.id = :office_id${lock ? ' FOR UPDATE' : ''}`,
   );
   const [{ n }] = await scoped.query(
@@ -100,7 +102,7 @@ async function photoUsage(scoped, { lock = false } = {}) {
  */
 async function memberUsage(scoped, { lock = false } = {}) {
   const [office] = await scoped.query(
-    `SELECT o.id, p.max_members FROM offices o LEFT JOIN plans p ON p.id = o.plan_id
+    `SELECT o.id, p.max_members FROM offices o ${planJoin()}
       WHERE o.id = :office_id${lock ? ' FOR UPDATE' : ''}`,
   );
   const [{ n }] = await scoped.query(
@@ -116,7 +118,7 @@ async function memberUsage(scoped, { lock = false } = {}) {
  */
 async function listingUsage(scoped, { lock = false } = {}) {
   const [office] = await scoped.query(
-    `SELECT o.id, p.max_listings FROM offices o LEFT JOIN plans p ON p.id = o.plan_id
+    `SELECT o.id, p.max_listings FROM offices o ${planJoin()}
       WHERE o.id = :office_id${lock ? ' FOR UPDATE' : ''}`,
   );
   const [{ n }] = await scoped.query(

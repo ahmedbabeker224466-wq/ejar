@@ -190,7 +190,7 @@ metadata under random file names. Requirements:
 
 ## 8. Pre-launch checklist
 
-The live version of this list is **Admin > جاهزية الإطلاق** (`/admin/launch`): 19 checks with pass / warn / fail, no secret ever shown. Items the app cannot see (secrets and DB password rotated, backup codes regenerated, restore drill, Ejar rules verified, lawyer review, last `npm audit`) are recorded there by hand with a reason. In production the app also logs the ids of failing checks at start-up. Open it before opening the platform to real users and keep going until nothing is red.
+The live version of this list is **Admin > جاهزية الإطلاق** (`/admin/launch`): 20 checks with pass / warn / fail, no secret ever shown. Items the app cannot see (secrets and DB password rotated, backup codes regenerated, restore drill, Ejar rules verified, lawyer review, last `npm audit`) are recorded there by hand with a reason. In production the app also logs the ids of failing checks at start-up. Open it before opening the platform to real users and keep going until nothing is red.
 
 Do every item, in this order. Tick it in your copy.
 
@@ -203,7 +203,7 @@ Do every item, in this order. Tick it in your copy.
 - [ ] Admin > Settings: fill the seller details (legal name, commercial register, VAT number if registered, address), bank details for transfers, support phone and email. Invoices say "إيصال دفع" until a VAT number is set; nothing is hard-coded.
 - [ ] **Legal review** of `/privacy`, `/terms` and `/disclaimer` by a lawyer (each page says so until reviewed). Then edit the text and remove the notice.
 - [ ] Review the three seeded blog drafts (Admin > Blog); publish, edit or delete them. They are marked "يحتاج مراجعة قبل النشر".
-- [ ] Plans: check names, prices (VAT-exclusive), limits and the `listings` / `whatsapp` / `telegram` / `reports_csv` / `ai_reading` switches in Admin > Plans.
+- [ ] Plans: check names, prices (VAT-exclusive), limits and the `listings` / `whatsapp` / `telegram` / `reports_csv` / `ai_reading` switches in Admin > Plans. Keep a `trial` plan active: it is the default plan for new offices and for any office without one. "باقات المكاتب" on `/admin/launch` must be green (restart the app once after the plans exist; the start-up migration gives every office without a plan the default plan and a subscription row).
 - [ ] Moyasar stays in TEST mode until the commercial entity is decided; bank transfer works without it.
 - [ ] Backups: set `BACKUP_DIR` (outside `public_html`, mode 0700), run one backup from `/admin/ops`, download it through File Manager to another machine, keep `SECRET_BOX_KEY` in a password manager **apart from the backups**, and do the restore drill of section 6b once before launch. Also copy `UPLOAD_DIR` (photos and receipts are not in the database dump). cPanel's own account backup is a good second layer.
 - [ ] Monitoring: an external uptime check on `https://your-domain/healthz` (every 1-5 minutes) with an alert to your phone; optionally `HEALTHCHECK_PING_URL` and `BACKUP_WEBHOOK_URL`; read `/health/detail` after every deploy and `/admin/ops` weekly.

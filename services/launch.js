@@ -257,6 +257,12 @@ async function runChecks({ pool = db.pool, env = process.env, now = new Date(), 
   else if (!seller.vat_number) out.push(result('seller_details', WARN, 'بيانات الجهة البائعة', 'الاسم والعنوان موجودان. الرقم الضريبي فارغ، لذلك تبقى المستندات «إيصال دفع» وليست فاتورة ضريبية مبسطة.'));
   else out.push(result('seller_details', PASS, 'بيانات الجهة البائعة', 'الاسم والعنوان والرقم الضريبي مضبوطة.'));
 
+  // 7b. every office has a plan (NULL is read as the default plan; the start-up migration fills it in)
+  const [[noPlan]] = await pool.query('SELECT COUNT(*) AS n FROM offices WHERE plan_id IS NULL');
+  out.push(Number(noPlan.n) > 0
+    ? result('office_plans', WARN, 'باقات المكاتب', `${Number(noPlan.n)} مكتب بدون باقة محددة، ويُعامَل مؤقتاً على الباقة الافتراضية. أعد تشغيل التطبيق ليكمل الترحيل تلقائياً، أو اختر باقة لكل مكتب من صفحة المكاتب.`)
+    : result('office_plans', PASS, 'باقات المكاتب', 'كل المكاتب لها باقة محددة.'));
+
   // 8. Ejar rules verification (the rules themselves are never changed here)
   const fromConfig = RULES.verifiedAt && RULES.verifiedSource && String(RULES.verifiedSource).trim().length >= 10 ? { on: RULES.verifiedAt, source: RULES.verifiedSource } : null;
   const ejar = records.ejar_rules || fromConfig;
