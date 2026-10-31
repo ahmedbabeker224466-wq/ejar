@@ -65,6 +65,8 @@ async function ensureSchema(targetPool = pool) {
     await makeColumnsNullable(targetPool, NULLABLE_CHANGES);
     current = 'index additions';
     await addMissingIndexes(targetPool, INDEX_ADDITIONS);
+    current = 'user email index';
+    await ensureUserEmailIndex(targetPool);
     current = 'enum additions';
     await addMissingEnumValues(targetPool, ENUM_ADDITIONS);
     current = 'payment entries backfill';
@@ -224,6 +226,35 @@ async function addMissingIndexes(targetPool, additions) {
 }
 
 /**
+ * users.email: stored trimmed and lower-case, empty text becomes NULL, and a
+ * UNIQUE index (several NULLs are allowed). When older rows share an address
+ * the index is not added (a warning with the count is logged, never the
+ * addresses) so start-up never fails; email sign-in then refuses those
+ * addresses as ambiguous. Idempotent. Returns 'added' | 'present' | 'duplicates'.
+ */
+async function ensureUserEmailIndex(targetPool) {
+  await targetPool.query("UPDATE users SET email = NULL WHERE email IS NOT NULL AND TRIM(email) = ''");
+  await targetPool.query('UPDATE users SET email = LOWER(TRIM(email)) WHERE email IS NOT NULL AND BINARY email <> BINARY LOWER(TRIM(email))');
+  const [found] = await targetPool.query(
+    `SELECT 1 FROM information_schema.statistics
+      WHERE table_schema = DATABASE() AND table_name = 'users' AND index_name = 'uq_users_email'`,
+  );
+  if (found.length) return 'present';
+  const [[dup]] = await targetPool.query(
+    'SELECT COUNT(*) AS n FROM (SELECT email FROM users WHERE email IS NOT NULL GROUP BY email HAVING COUNT(*) > 1) d',
+  );
+  if (Number(dup.n) > 0) {
+    logger.warn(`users.email: ${dup.n} addresses are shared by several users; unique index not added until they are fixed`);
+    return 'duplicates';
+  }
+  if (await alterUnlessDone(targetPool, 'ALTER TABLE `users` ADD UNIQUE INDEX `uq_users_email` (email)', 'ER_DUP_KEYNAME')) {
+    logger.info('Added index users.uq_users_email');
+    return 'added';
+  }
+  return 'present';
+}
+
+/**
  * Runs an ALTER; returns false instead of failing when the change already
  * exists (errorCode), which happens when two workers start together.
  */
@@ -238,5 +269,5 @@ async function alterUnlessDone(targetPool, sql, errorCode) {
 }
 
 module.exports = {
-  pool, ping, ensureSchema, countTables, addMissingColumns, addMissingIndexes, addMissingEnumValues, makeColumnsNullable, backfillPaymentEntries, replaceSkeletonTables,
+  pool, ping, ensureSchema, countTables, addMissingColumns, addMissingIndexes, addMissingEnumValues, makeColumnsNullable, backfillPaymentEntries, replaceSkeletonTables, ensureUserEmailIndex,
 };

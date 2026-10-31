@@ -52,6 +52,8 @@ application root). `.env` is never committed.
 | `CRON_SECRET` | yes | long random string; `X-Cron-Secret` header for `/cron/run/*` and `/health/detail` |
 | `PLATFORM_ADMIN_PHONE` | yes | your Saudi mobile; signing in with it gives the platform_admin role |
 | `REQUIRE_ADMIN_2FA` | **leave unset** | testing only; ignored in production and flagged by the self-check |
+| `AUTH_EMAIL_TEST` | **leave unset** | testing only: `true` turns `/login` and `/register` into an email form with **no code**. Red banner on every page and a FAIL on `/admin/launch` while on. The app **refuses to start** with it in production unless `LAUNCH_MODE=testing`. platform_admin keeps phone + 2FA (`/login?method=phone`). See "Email test login" below |
+| `LAUNCH_MODE` | no | `testing` while the site is closed to the public; empty / anything else = `open` |
 | `RUN_CRON` | no | `false` when cPanel Cron Jobs call the URLs instead of the built-in scheduler |
 | `BACKUP_DIR` | recommended | absolute folder for the encrypted backups, **outside** `public/`, e.g. `/home/USER/aqdi_backups` (empty = `./backups` in the application root, ignored by git and by the deploy rsync). Created with mode `0700` |
 | `BACKUP_WEBHOOK_URL` | optional | `https://...` monitor that receives `{ ok, size, sha256, filename, at }` after each backup (never the file) |
@@ -86,6 +88,27 @@ default, not an environment variable.
    **save the backup codes** (shown once).
 6. SMS: Production mode never uses the console driver. Set `SMS_PROVIDER` and its
    key **before** switching Application mode to Production, or nobody can sign in.
+
+### Email test login (AUTH_EMAIL_TEST)
+
+A versioned replacement for the old server-side email hack. Never edit files on
+the server: every deploy from GitHub overwrites them.
+
+1. While the site is closed to the public, set in the environment:
+   `AUTH_EMAIL_TEST=true` and `LAUNCH_MODE=testing` (with `NODE_ENV=production`
+   the app refuses to start without `LAUNCH_MODE=testing`; the reason is in the
+   error log). Restart the app.
+2. Give the existing owner an email once, from the cPanel Terminal in the
+   application root (no SQL needed):
+   `node scripts/set-user-email.js 0588624755 owner@example.com`
+3. `/login` now asks only for the email; `/register` creates a new account by
+   email and continues to the normal "create your office" page (trial plan).
+   Every email sign-in and registration is in the audit log (without the
+   address); 10 attempts per IP per 15 minutes.
+4. **Before opening to the public:** remove `AUTH_EMAIL_TEST` (and set
+   `LAUNCH_MODE` empty or `open`), restart, and check that `/admin/launch` shows
+   "الدخول التجريبي بالبريد" green and the red banner is gone. Phone + SMS code
+   login works again exactly as before.
 
 ## 5. Scheduled jobs
 
@@ -190,7 +213,7 @@ metadata under random file names. Requirements:
 
 ## 8. Pre-launch checklist
 
-The live version of this list is **Admin > جاهزية الإطلاق** (`/admin/launch`): 21 checks with pass / warn / fail, no secret ever shown. Items the app cannot see (secrets and DB password rotated, backup codes regenerated, restore drill, Ejar rules verified, lawyer review, last `npm audit`) are recorded there by hand with a reason. In production the app also logs the ids of failing checks at start-up. Open it before opening the platform to real users and keep going until nothing is red.
+The live version of this list is **Admin > جاهزية الإطلاق** (`/admin/launch`): 22 checks with pass / warn / fail, no secret ever shown. Items the app cannot see (secrets and DB password rotated, backup codes regenerated, restore drill, Ejar rules verified, lawyer review, last `npm audit`) are recorded there by hand with a reason. In production the app also logs the ids of failing checks at start-up. Open it before opening the platform to real users and keep going until nothing is red.
 
 Do every item, in this order. Tick it in your copy.
 
@@ -198,6 +221,8 @@ Do every item, in this order. Tick it in your copy.
 - [ ] Generate **new** `JWT_SECRET`, `SECRET_BOX_KEY` and `CRON_SECRET`. (Changing `JWT_SECRET` signs everyone out; changing `SECRET_BOX_KEY` after offices saved WhatsApp/Telegram settings or admins enabled 2FA makes those unreadable: do it **before** launch, not after.)
 - [ ] Platform admin: sign in, enable 2FA, and **regenerate the 2FA backup codes**; store them offline.
 - [ ] `REQUIRE_ADMIN_2FA` is **not set** in the environment (the self-check reports it otherwise).
+- [ ] `AUTH_EMAIL_TEST` is **not set** and `LAUNCH_MODE` is empty or `open` (no red "وضع تجريبي" banner; "الدخول التجريبي بالبريد" is green on `/admin/launch`).
+- [ ] Notifications: follow [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) and press "إرسال رسالة تجريبية" for each channel you use (Office > Settings > Reminders); every one must say "تم إرسال رسالة التجربة ✓".
 - [ ] `SMS_PROVIDER` is a real provider with a sender name; send yourself a login code; only then set Application mode to Production.
 - [ ] **Verify every rule in `config/ejarRules.js` against the official Ejar / REGA source** (60-day non-renewal notice, 90-day rent-change notice, auto-renew default, the Riyadh rent freeze dates, the 30/7-day stages). The numbers are placeholders until a person confirms them.
 - [ ] Admin > Settings: fill the seller details (legal name, commercial register, VAT number if registered, address), bank details for transfers, support phone and email. Invoices say "إيصال دفع" until a VAT number is set; nothing is hard-coded.

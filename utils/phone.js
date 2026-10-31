@@ -32,9 +32,10 @@ function toE164(canonical) {
   return `+${canonical}`;
 }
 
-/** '9665XXXXXXXX' -> '05XXXXXXXX', the form people recognise. */
+/** '9665XXXXXXXX' -> '05XXXXXXXX', the form people recognise. No phone (email test account) -> ''. */
 function toLocal(canonical) {
-  return `0${canonical.slice(3)}`;
+  if (!canonical) return '';
+  return `0${String(canonical).slice(3)}`;
 }
 
 /** '9665XXXXXXXX' -> '050****567': enough to recognise, not enough to call. */

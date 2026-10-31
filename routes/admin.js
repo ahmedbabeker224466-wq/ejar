@@ -71,7 +71,7 @@ function twoFactorGuard(req, res, next) {
 router.use('/admin', noStore, sameOrigin, requireAuth, requirePerm('platform.access'), twoFactorGuard, (req, res, next) => {
   res.locals.layout = 'layouts/admin';
   res.locals.adminNav = NAV.map((item) => ({ ...item, current: isCurrent(item, req.baseUrl + req.path) }));
-  res.locals.userDisplay = req.user.name || req.user.phone;
+  res.locals.userDisplay = req.user.name || req.user.phone || req.user.email;
   res.locals.fmt = money.formatHalalas;
   res.locals.fmtDec = (value) => money.formatHalalas(money.fromDecimal(value));
   res.locals.stamp = (at) => (at ? riyadhDate(new Date(at)) : '—');

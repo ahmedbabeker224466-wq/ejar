@@ -125,13 +125,18 @@ const EMAIL = /^[^\s@<>"']{1,64}@[^\s@<>"']{1,180}\.[A-Za-z]{2,}$/;
 
 router.post('/settings/notifications', signedIn, wrap(async (req, res) => {
   const { values, errors } = notifications.validatePrefs(req.body);
-  const email = String(req.body.email || '').trim().slice(0, 190);
+  const email = String(req.body.email || '').trim().toLowerCase().slice(0, 190);
   if (email && !EMAIL.test(email)) errors.email = 'اكتب بريداً إلكترونياً صحيحاً أو اتركه فارغاً.';
   if (Object.keys(errors).length) {
     return renderSettings(req, res, { status: 422, errors, values: { ...values, email } });
   }
+  try {
+    await db.pool.query('UPDATE users SET email = ? WHERE id = ?', [email || null, req.user.id]);
+  } catch (err) {
+    if (err.code !== 'ER_DUP_ENTRY') throw err;
+    return renderSettings(req, res, { status: 422, errors: { email: 'هذا البريد مستخدم في حساب آخر. اكتب بريداً آخر.' }, values: { ...values, email } });
+  }
   await notifications.savePrefs(db.pool, req.user.id, values);
-  await db.pool.query('UPDATE users SET email = ? WHERE id = ?', [email || null, req.user.id]);
   return res.redirect('/settings/notifications?done=saved');
 }));
 

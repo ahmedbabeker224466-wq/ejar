@@ -112,7 +112,8 @@ No new environment variables.
 | `GET /notifications` | Notification center (all roles): filter by kind, 20 per page |
 | `POST /notifications/:id/read`, `/:id/open`, `/read-all` | Mark read (only your own notifications) |
 | `GET/POST /settings/notifications` | Channels, quiet hours, email, WhatsApp number (login phone or SMS code), Telegram link code |
-| `GET /office/settings/reminders` | Reminder rules, WhatsApp / Telegram settings (secrets write-only), test message (owner, manager) |
+| `GET /office/settings/reminders` | Reminder rules, WhatsApp / Telegram settings (secrets write-only), Telegram bot link and linking steps with your own link status, "إرسال رسالة تجريبية" per channel (owner, manager) |
+| `POST /office/settings/reminders/test/:channel` | Sends a short test message to **you** on `email`, `whatsapp` or `telegram` and shows the exact result: sent, not sent because not configured (and what is missing), or failed with a safe reason (never a token). 5 per 10 minutes; audit `channel.test` with channel, outcome and the short error code |
 | `POST /webhooks/telegram/:secret` | Telegram bot updates (random per-office secret) |
 | `POST /cron/run/:job` | Run a job now; header `X-Cron-Secret: $CRON_SECRET`; answers `{ ok, processed }` |
 
@@ -125,6 +126,8 @@ Environment:
 | `CRON_SECRET` | Required by `POST /cron/run/:job` (and `/health/detail`) |
 
 WhatsApp (Meta Cloud API, template messages) and Telegram (Bot API) settings are entered per office in the app and stored encrypted with `SECRET_BOX_KEY`.
+
+The office dashboard ("آخر الإشعارات المرسلة") shows, under each notification, why a channel was not sent (not configured: SMTP missing, office channel not set, no confirmed address, switched off; or failed: provider rejected the credentials, timeout, ...) with a link to the settings. Step-by-step setup in Arabic (Telegram bot with BotFather, linking a chat, WhatsApp templates, SMTP, the test button): [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md).
 
 cPanel Cron Jobs fallback (with `RUN_CRON=false`):
 
@@ -238,9 +241,13 @@ New offices get an automatic `office-xxxxxx` slug with the page switched off; ex
 
 Environment (all optional): `BACKUP_DIR`, `BACKUP_WEBHOOK_URL`, `HEALTHCHECK_PING_URL`, `SMS_BALANCE_WARN`. Backups cannot be downloaded from the app; see [`DEPLOY.md`](DEPLOY.md) for the restore steps and the quarterly drill.
 
+## Email test login (testing only)
+
+`AUTH_EMAIL_TEST=true` (default off) replaces the phone form on `/login` and `/register` with an email form that signs in **without a code**: login gives an existing user with that email the normal session (same cookie, role routing, inactive check and the owner's 2FA step); register creates a user with no role who continues on `/office/new` (trial plan). `users.email` is unique and stored lower-case; `users.phone` is nullable for such accounts. Safety: never for platform_admin (phone + 2FA through `/login?method=phone`), a red banner "وضع تجريبي: الدخول بالبريد بدون رمز" on every page, 10 attempts per IP per 15 minutes, audit rows `auth.email_login` / `auth.email_register` (outcome only, never the address), a FAIL on `/admin/launch`, and the server refuses to start with `NODE_ENV=production` unless `LAUNCH_MODE=testing`. Give an existing phone account an email with `node scripts/set-user-email.js <phone> <email>`. Steps in [`DEPLOY.md`](DEPLOY.md).
+
 ## Launch readiness
 
-`GET /admin/launch` (platform admin only) shows 21 pass / warn / fail checks for opening the platform to real users (environment, secrets strength, 2FA, backups and restore drill, seller details, offices without a plan (warn), Ejar rules verification, lawyer review, SMTP test, Moyasar keys, APP_URL/HSTS, office public links domain, cron, directories, npm audit date). Secret values are never shown. Hand confirmations need a reason and are audit-logged; in production the failing check ids are logged at start-up.
+`GET /admin/launch` (platform admin only) shows 22 pass / warn / fail checks for opening the platform to real users (environment, secrets strength, 2FA, backups and restore drill, seller details, offices without a plan (warn), Ejar rules verification, lawyer review, SMTP test, Moyasar keys, APP_URL/HSTS, office public links domain, cron, directories, npm audit date, email test login off). Secret values are never shown. Hand confirmations need a reason and are audit-logged; in production the failing check ids are logged at start-up.
 
 ## Project layout
 

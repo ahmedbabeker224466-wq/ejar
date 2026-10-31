@@ -1458,6 +1458,15 @@ img {
 .note__body { white-space: pre-line; margin: 0 0 var(--space-2); }
 .note__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .delivery-dots { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.delivery-reasons { list-style: none; margin: var(--space-2) 0 0; padding: 0; font-size: 0.95rem; }
+.delivery-reason { margin-top: var(--space-1); }
+.delivery-reason--failed { color: var(--color-danger); }
+.delivery-reason--not_configured { color: var(--color-warning); }
+.channel-steps { margin: var(--space-2) 0; padding-inline-start: 1.4rem; }
+.channel-steps li { margin-bottom: var(--space-1); }
+.channel-status { list-style: none; padding: 0; margin: var(--space-2) 0; }
+.channel-status li { margin-bottom: var(--space-1); }
+.email-test-banner { font-weight: 700; text-align: center; }
 .badge--delivery-sent { background: #dcfce7; color: #166534; }
 .badge--delivery-failed { background: #fee2e2; color: #991b1b; }
 .badge--delivery-skipped, .badge--delivery-pending { background: var(--stage-ended-soft); color: var(--stage-ended); }

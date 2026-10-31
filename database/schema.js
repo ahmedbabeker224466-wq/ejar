@@ -48,9 +48,9 @@ function fk(tableName, column, parent, onDelete) {
 const TABLES = [
   // ---------------------------------------------------------------- ACCOUNTS
   table('users', [
-    'phone VARCHAR(20) NOT NULL',
+    'phone VARCHAR(20) NULL', // NULL only for an email test account (AUTH_EMAIL_TEST)
     'name VARCHAR(120) NULL',
-    'email VARCHAR(190) NULL',
+    'email VARCHAR(190) NULL', // stored lower-case; unique (several NULLs allowed)
     "role ENUM('platform_admin','office_owner','office_manager','office_staff','landlord','tenant') NULL",
     'is_active TINYINT(1) NOT NULL DEFAULT 1',
     'phone_verified TINYINT(1) NOT NULL DEFAULT 0',
@@ -61,6 +61,7 @@ const TABLES = [
     'twofa_backup_codes JSON NULL', // HMAC hashes of unused backup codes
     'last_seen_at DATETIME NULL',
     'UNIQUE KEY uq_users_phone (phone)',
+    'UNIQUE KEY uq_users_email (email)',
   ]),
 
   table('otp_codes', [
@@ -1240,6 +1241,7 @@ const SKELETON_TABLES = [
 
 // A column that was created NOT NULL but must allow NULL now.
 const NULLABLE_CHANGES = [
+  { table: 'users', column: 'phone', definition: 'VARCHAR(20) NULL' },
   { table: 'backups', column: 'path', definition: 'VARCHAR(255) NULL' },
   { table: 'conversations', column: 'with_user_id', definition: 'BIGINT UNSIGNED NULL' },
   { table: 'listing_inquiries', column: 'name', definition: 'VARCHAR(120) NULL' },

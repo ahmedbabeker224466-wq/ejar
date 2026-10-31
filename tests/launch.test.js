@@ -115,12 +115,13 @@ test('everything in order: every check passes and the platform is ready', async 
   assert.deepEqual(checks.map((c) => c.id), [
     'node_env', 'sms_provider', 'secrets_strength', 'secrets_rotated', 'db_password_rotated', 'admin_2fa', 'admin_backup_codes', 'backup_recent', 'restore_drill',
     'backup_dir', 'seller_details', 'office_plans', 'ejar_rules', 'legal_review', 'smtp', 'moyasar', 'app_url', 'office_links', 'cron_heartbeat', 'uploads_dir', 'npm_audit',
+    'auth_email_test',
   ]);
   for (const c of checks) {
     assert.equal(c.status, 'pass', `${c.id}: ${c.detailAr}`);
     assert.ok(c.titleAr && c.detailAr, c.id);
   }
-  assert.deepEqual(launch.summarize(checks), { pass: 21, warn: 0, fail: 0, ready: true });
+  assert.deepEqual(launch.summarize(checks), { pass: 22, warn: 0, fail: 0, ready: true });
 });
 
 test('each check turns warn or fail for its own reason, and nothing else changes', async () => {
@@ -224,6 +225,10 @@ test('each check turns warn or fail for its own reason, and nothing else changes
   await expectOnly('npm_audit', 'fail', fakePool({ records: noAudit }));
   await expectOnly('npm_audit', 'warn', fakePool({ records: { ...ALL_RECORDS(), npm_audit: confirmed({ on: '2026-10-15' }) } }));
   await expectOnly('npm_audit', 'pass', fakePool({ records: { ...ALL_RECORDS(), npm_audit: confirmed({ on: '2026-11-05' }) } }));
+  // 16: the email test sign-in fails the launch while the flag is on, even with LAUNCH_MODE=testing
+  await expectOnly('auth_email_test', 'fail', null, { ...goodEnv(), AUTH_EMAIL_TEST: 'true' });
+  await expectOnly('auth_email_test', 'fail', null, { ...goodEnv(), AUTH_EMAIL_TEST: 'TRUE', LAUNCH_MODE: 'testing' });
+  await expectOnly('auth_email_test', 'pass', null, { ...goodEnv(), AUTH_EMAIL_TEST: 'false' });
 });
 
 test('no secret value appears in the results, whatever the secrets are', async () => {
@@ -352,7 +357,7 @@ test.describe('/admin/launch', { skip }, () => {
 
     const page = await http.request('/admin/launch', { cookie: admin.cookie });
     assert.equal(page.status, 200);
-    assert.equal((page.text.match(/id="check-/g) || []).length, 21);
+    assert.equal((page.text.match(/id="check-/g) || []).length, 22);
     assert.match(page.text, /جاهزية الإطلاق/);
     assert.match(page.text, /غير جاهز للإطلاق/);
     assert.match(page.text, /2025-09-25/, 'the Riyadh freeze value is shown for comparison');

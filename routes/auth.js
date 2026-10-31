@@ -4,10 +4,13 @@ const express = require('express');
 const otp = require('../services/otp');
 const auth = require('../services/auth');
 const twoFactor = require('../services/twoFactor');
+const emailAuth = require('../services/emailAuth');
+const platformSettings = require('../services/platformSettings');
 const db = require('../config/db');
 const { normalizeSaudi, toWesternDigits, toLocal } = require('../utils/phone');
 const { noStore, sameOrigin } = require('../middleware/security');
 const { requireAuth } = require('../middleware/auth');
+const { rateLimit } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
@@ -24,6 +27,19 @@ const MESSAGES = {
   signups_disabled: 'التسجيل الجديد متوقف مؤقتاً. حاول لاحقاً.',
   invalid_2fa: 'الرمز غير صحيح. اكتب الرمز الظاهر الآن في تطبيق المصادقة أو أحد رموز الاحتياط.',
 };
+
+// The email test sign-in (AUTH_EMAIL_TEST): its own wording, never mixed with the phone pages.
+const EMAIL_MESSAGES = {
+  invalid_email: 'البريد الإلكتروني غير صحيح. اكتبه بهذا الشكل: name@example.com',
+  unknown: 'لا يوجد حساب بهذا البريد الإلكتروني. تأكد من كتابته، أو سجّل مكتبك من صفحة التسجيل.',
+  ambiguous: 'لا يمكن الدخول بهذا البريد الإلكتروني. تواصل مع الدعم.',
+  platform_admin: 'حساب مدير المنصة لا يدخل بالبريد الإلكتروني. ادخل برقم الجوال والتحقق بخطوتين.',
+  inactive: 'لا يمكن الدخول بهذا الحساب حالياً. تواصل مع الدعم.',
+  exists: 'هذا البريد الإلكتروني مسجّل من قبل. سجّل الدخول به بدلاً من ذلك.',
+  signups_disabled: 'التسجيل الجديد متوقف مؤقتاً. حاول لاحقاً.',
+  rate_limited: 'محاولات كثيرة من هذا الجهاز. انتظر 15 دقيقة ثم حاول مرة أخرى.',
+};
+const EMAIL_STATUS = { invalid_email: 422, unknown: 422, ambiguous: 403, platform_admin: 403, inactive: 403, exists: 409, signups_disabled: 403 };
 
 function formatWait(seconds) {
   const s = Math.max(1, Math.ceil(seconds));
@@ -102,6 +118,32 @@ const PHONE_PAGES = {
   },
 };
 
+const EMAIL_PAGES = {
+  login: {
+    title: 'تسجيل الدخول',
+    heading: 'تسجيل الدخول',
+    lead: 'اكتب بريدك الإلكتروني المسجّل لتدخل إلى حسابك.',
+    button: 'دخول',
+  },
+  register: {
+    title: 'سجّل مكتبك',
+    heading: 'سجّل مكتبك',
+    lead: 'اكتب بريدك الإلكتروني، ثم تكتب بيانات مكتبك. التجربة مجانية 14 يوماً.',
+    button: 'متابعة',
+  },
+};
+
+function renderEmailPage(res, intent, email, error, status = 200, next = null) {
+  const mode = intent === 'register' ? 'register' : 'login';
+  return res.status(status).render('pages/login-email', { ...EMAIL_PAGES[mode], intent: mode, email, error, next: safeNext(next) });
+}
+
+// While the email test sign-in is on, /login and /register show the email form.
+// /login?method=phone keeps the phone page for the platform admin (phone + 2FA).
+function showEmailPage(req) {
+  return emailAuth.enabled() && req.query.method !== 'phone';
+}
+
 function renderPhonePage(res, intent, phone, error, status = 200, next = null) {
   const mode = intent === 'register' ? 'register' : 'login';
   return res.status(status).render('pages/login', { ...PHONE_PAGES[mode], intent: mode, phone, error, next: safeNext(next) });
@@ -110,12 +152,65 @@ function renderPhonePage(res, intent, phone, error, status = 200, next = null) {
 // Step 1: phone number
 router.get('/login', (req, res) => {
   if (req.user) return res.redirect(safeNext(req.query.next) || auth.homeFor(req.user.role));
+  if (showEmailPage(req)) return renderEmailPage(res, 'login', '', null, 200, req.query.next);
   return renderPhonePage(res, 'login', '', null, 200, req.query.next);
 });
 
 router.get('/register', (req, res) => {
   if (req.user) return res.redirect(auth.homeFor(req.user.role));
+  if (emailAuth.enabled()) return renderEmailPage(res, 'register', '', null);
   return renderPhonePage(res, 'register', '', null);
+});
+
+// ------------------------------------------------------------ email test sign-in
+// TESTING ONLY (AUTH_EMAIL_TEST=true): no code is sent. Login gives an existing
+// user the normal session (same cookie, role routing and checks, and the 2FA
+// step for an owner who turned it on). Register creates a user with no role,
+// who then creates the office on /office/new like everyone else. Every attempt
+// is counted per IP (also invalid ones) and audited without the address.
+
+const emailLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  keyFor: (req) => `email-login:${req.ip}`,
+  onLimit: (req, res, next) => {
+    if (!emailAuth.enabled()) return next();
+    emailAuth.audit(db.pool, { action: 'auth.email_login', outcome: 'rate_limited', ip: req.ip });
+    const intent = req.body.intent === 'register' ? 'register' : 'login';
+    return renderEmailPage(res, intent, '', EMAIL_MESSAGES.rate_limited, 429, req.body.next);
+  },
+});
+
+router.post('/login/email', (req, res, next) => (emailAuth.enabled() ? next() : next('router')), emailLimit, async (req, res, next) => {
+  try {
+    const intent = req.body.intent === 'register' ? 'register' : 'login';
+    const nextPath = safeNext(req.body.next);
+    const typed = String(req.body.email || '').trim().slice(0, 190);
+    const refuse = (error, userId = null) => {
+      emailAuth.audit(db.pool, { action: intent === 'register' ? 'auth.email_register' : 'auth.email_login', userId, outcome: error, ip: req.ip });
+      return renderEmailPage(res, intent, error === 'invalid_email' ? typed : emailAuth.normalizeEmail(typed) || typed, EMAIL_MESSAGES[error], EMAIL_STATUS[error] || 422, nextPath);
+    };
+
+    if (intent === 'register') {
+      const made = await emailAuth.register(db.pool, typed, { signupsDisabled: () => platformSettings.signupsDisabled(db.pool) });
+      if (!made.ok) return refuse(made.error);
+      await emailAuth.audit(db.pool, { action: 'auth.email_register', userId: made.user.id, outcome: 'ok', ip: req.ip });
+      return finishLogin(req, res, made.user, nextPath);
+    }
+
+    const found = await emailAuth.findForLogin(db.pool, typed);
+    if (!found.ok) return refuse(found.error, found.user ? found.user.id : null);
+    const { user } = found;
+    await db.pool.query('UPDATE users SET last_seen_at = UTC_TIMESTAMP() WHERE id = ?', [user.id]);
+    await emailAuth.audit(db.pool, { action: 'auth.email_login', userId: user.id, outcome: 'ok', ip: req.ip });
+    if (auth.needsTwoFactor(user)) {
+      stepCookie(res, MFA_COOKIE, auth.signStepToken({ sub: String(user.id) }, 'mfa', STEP_SECONDS));
+      return res.redirect('/login/2fa');
+    }
+    return finishLogin(req, res, user, nextPath);
+  } catch (err) {
+    return next(err);
+  }
 });
 
 router.post('/login', async (req, res, next) => {
@@ -289,3 +384,4 @@ router.post('/logout-all', requireAuth, async (req, res, next) => {
 module.exports = router;
 module.exports.formatWait = formatWait;
 module.exports.messageFor = messageFor;
+module.exports.emailLimit = emailLimit;

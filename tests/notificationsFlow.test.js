@@ -429,12 +429,12 @@ test('channel secrets: encrypted at rest, never returned, "مضبوط ✓"; per 
   // Test message: WhatsApp needs my confirmed number first.
   const noContact = await http.request('/office/settings/reminders/test/whatsapp', { method: 'POST', cookie: o.cookie });
   assert.equal(noContact.status, 422);
-  assert.match(noContact.text, /لا يوجد لديك عنوان/);
+  assert.match(noContact.text, /لم تؤكد رقم واتساب بعد/);
   await http.request('/settings/notifications/whatsapp/login-phone', { method: 'POST', cookie: o.cookie });
   calls.length = 0;
   const sent = await http.request('/office/settings/reminders/test/whatsapp', { method: 'POST', cookie: o.cookie });
   assert.equal(sent.status, 200);
-  assert.match(sent.text, /تم إرسال رسالة تجربة/);
+  assert.match(sent.text, /تم إرسال رسالة التجربة/);
   assert.equal(calls.filter((c) => c.url.includes('graph.facebook.com/')).length, 1);
   const mail = await http.request('/office/settings/reminders/test/email', { method: 'POST', cookie: o.cookie });
   assert.match(mail.text, /البريد غير مضبوط/);
@@ -633,4 +633,144 @@ test('office dashboard shows the latest sent notifications with delivery counts'
   assert.match(home.text, /تذكير اللوحة/);
   assert.match(home.text, /class="delivery-skipped">3</);
   assert.match(home.text, /class="bell__count">1</);
+});
+
+// ------------------------------------------------------------ test-send button and delivery reasons
+
+test('test-send button: owner and manager only, exact result per channel, audit row, never a secret', { skip }, async () => {
+  const email = require('../services/channels/email');
+  const { testLimit } = require('../routes/officeReminders');
+  const o = await office(90, 'مكتب التجربة');
+  testLimit.counter.reset();
+
+  // Staff cannot open the page nor send.
+  const staffCookie = await http.addMember(o.office.id, phone(91), 'office_staff');
+  assert.equal((await http.request('/office/settings/reminders', { cookie: staffCookie })).status, 403);
+  assert.equal((await http.request('/office/settings/reminders/test/email', { method: 'POST', cookie: staffCookie })).status, 403);
+  const managerCookie = await http.addMember(o.office.id, phone(92), 'office_manager');
+  const page = await http.request('/office/settings/reminders', { cookie: managerCookie });
+  assert.equal(page.status, 200);
+  assert.match(page.text, /إرسال رسالة تجريبية: البريد الإلكتروني/);
+  assert.match(page.text, /حالة ربط محادثتك:[\s\S]*غير مربوطة/);
+  assert.match(page.text, /احفظ رمز البوت أعلاه أولاً/);
+
+  // Not configured: skipped with the reason, nothing sent anywhere.
+  calls.length = 0;
+  const tg = await http.request('/office/settings/reminders/test/telegram', { method: 'POST', cookie: o.cookie });
+  assert.equal(tg.status, 422);
+  assert.match(tg.text, /تيليجرام: لم تُرسل لأن القناة غير مضبوطة\. لم تُضبط إعدادات تيليجرام لهذا المكتب بعد\./);
+  const mailSkip = await http.request('/office/settings/reminders/test/email', { method: 'POST', cookie: o.cookie });
+  assert.match(mailSkip.text, /البريد الإلكتروني: لم تُرسل لأن القناة غير مضبوطة\. البريد غير مضبوط على الخادم/);
+  assert.equal(calls.length, 0, 'nothing leaves the machine');
+
+  // Telegram set up: the bot link and the steps; my chat still unlinked = skipped.
+  await http.request('/office/settings/reminders/telegram', { method: 'POST', cookie: o.cookie, form: { token: TG_TOKEN } });
+  const withBot = await http.request('/office/settings/reminders', { cookie: o.cookie });
+  assert.match(withBot.text, /href="https:\/\/t\.me\/aqdi_test_bot"/);
+  assert.match(withBot.text, /أظهر رمز الربط/);
+  const unlinked = await http.request('/office/settings/reminders/test/telegram', { method: 'POST', cookie: o.cookie });
+  assert.match(unlinked.text, /لم تربط محادثتك في تيليجرام بعد/);
+  await db.pool.query(
+    'INSERT INTO user_contacts (user_id, telegram_chat_id, telegram_verified_at) VALUES (?, ?, UTC_TIMESTAMP()) ON DUPLICATE KEY UPDATE telegram_chat_id = VALUES(telegram_chat_id), telegram_verified_at = VALUES(telegram_verified_at)',
+    [o.user.id, '555000111'],
+  );
+  assert.match((await http.request('/office/settings/reminders', { cookie: o.cookie })).text, /حالة ربط محادثتك:[\s\S]*مربوطة ✓/);
+
+  // Sent.
+  testLimit.counter.reset(); // 5 tests per 10 minutes per person
+  calls.length = 0;
+  const sent = await http.request('/office/settings/reminders/test/telegram', { method: 'POST', cookie: o.cookie });
+  assert.equal(sent.status, 200);
+  assert.match(sent.text, /تيليجرام: تم إرسال رسالة التجربة ✓/);
+  assert.equal(calls.filter((c) => c.url.endsWith('/sendMessage')).length, 1);
+
+  // Failed with a safe reason: the provider answers 401; the token never appears.
+  transport.setMock(async (url, options) => {
+    calls.push({ url, options });
+    return { status: 401, body: JSON.stringify({ ok: false, description: `Unauthorized ${TG_TOKEN}` }) };
+  });
+  try {
+    const failed = await http.request('/office/settings/reminders/test/telegram', { method: 'POST', cookie: o.cookie });
+    assert.equal(failed.status, 422);
+    assert.match(failed.text, /تيليجرام: فشل الإرسال\. رفض مزود الخدمة بيانات الدخول/);
+    assert.ok(!failed.text.includes(TG_TOKEN) && !failed.text.includes(TG_TOKEN.split(':')[1]), 'never the token');
+  } finally {
+    transport.setMock(async (url, options) => {
+      calls.push({ url, options });
+      if (url.includes('/getMe')) return { status: 200, body: JSON.stringify({ ok: true, result: { username: 'aqdi_test_bot' } }) };
+      return { status: 200, body: '{"ok":true}' };
+    });
+  }
+
+  // Email through a mock mailer: sent to my saved address; a mail server error is explained.
+  process.env.SMTP_HOST = 'smtp.example.test';
+  process.env.MAIL_FROM = 'no-reply@example.test';
+  const outbox = [];
+  email.setMailer({ sendMail: async (m) => { outbox.push(m); } });
+  try {
+    const noAddress = await http.request('/office/settings/reminders/test/email', { method: 'POST', cookie: o.cookie });
+    assert.match(noAddress.text, /لا يوجد بريد إلكتروني في حسابك/);
+    await db.pool.query('UPDATE users SET email = ? WHERE id = ?', ['owner-test@aqdi-test.example', o.user.id]);
+    const ok = await http.request('/office/settings/reminders/test/email', { method: 'POST', cookie: o.cookie });
+    assert.match(ok.text, /البريد الإلكتروني: تم إرسال رسالة التجربة ✓/);
+    assert.equal(outbox.length, 1);
+    assert.equal(outbox[0].to, 'owner-test@aqdi-test.example');
+    assert.ok(outbox[0].text.includes(DISCLAIMER));
+    email.setMailer({ sendMail: async () => { const e = new Error('Invalid login: secret-pass'); e.code = 'EAUTH'; throw e; } });
+    const bad = await http.request('/office/settings/reminders/test/email', { method: 'POST', cookie: o.cookie });
+    assert.match(bad.text, /فشل الإرسال\. رفض خادم البريد اسم المستخدم أو كلمة المرور/);
+    assert.ok(!bad.text.includes('secret-pass'));
+  } finally {
+    email.setMailer(null);
+    delete process.env.SMTP_HOST;
+    delete process.env.MAIL_FROM;
+    await db.pool.query('UPDATE users SET email = NULL WHERE id = ?', [o.user.id]);
+  }
+
+  // One audit row per test: channel, outcome and the short code only.
+  const [rows] = await db.pool.query("SELECT actor_id, after_json FROM audit_logs WHERE office_id = ? AND action = 'channel.test' ORDER BY id", [o.office.id]);
+  const after = rows.map((r) => (typeof r.after_json === 'string' ? JSON.parse(r.after_json) : r.after_json));
+  assert.deepEqual(after.map((a) => `${a.channel}:${a.outcome}:${a.error_code || ''}`), [
+    'telegram:skipped:channel_not_configured', 'email:skipped:smtp_not_configured', 'telegram:skipped:no_contact',
+    'telegram:sent:', 'telegram:failed:http_401', 'email:skipped:no_contact', 'email:sent:', 'email:failed:EAUTH',
+  ]);
+  assert.ok(rows.every((r) => Number(r.actor_id) === Number(o.user.id)));
+  const raw = JSON.stringify(rows);
+  for (const secret of [TG_TOKEN, 'owner-test@', '555000111', 'secret-pass']) assert.ok(!raw.includes(secret), `audit holds no ${secret}`);
+});
+
+test('dashboard: the latest notifications say why a channel was not sent, with a link to the settings', { skip }, async () => {
+  const o = await office(93, 'مكتب الأسباب');
+  const [made] = await db.pool.query(
+    "INSERT INTO notifications (user_id, office_id, kind, title, body) VALUES (?, ?, 'decision_60', 'تذكير موعد القرار', 'نص')",
+    [o.user.id, o.office.id],
+  );
+  await db.pool.query(
+    `INSERT INTO delivery_log (notification_id, office_id, channel, status, error_code, attempts) VALUES
+       (?, ?, 'email', 'skipped', 'smtp_not_configured', 1),
+       (?, ?, 'telegram', 'failed', 'http_401', 4),
+       (?, ?, 'whatsapp', 'skipped', 'channel_not_configured', 1)`,
+    [made.insertId, o.office.id, made.insertId, o.office.id, made.insertId, o.office.id],
+  );
+  const home = await http.request('/office', { cookie: o.cookie });
+  assert.equal(home.status, 200);
+  assert.match(home.text, /بريد:<\/strong> لم يُرسل لأن القناة غير مضبوطة\. البريد غير مضبوط على الخادم/);
+  assert.match(home.text, /تيليجرام:<\/strong> فشل الإرسال\. رفض مزود الخدمة بيانات الدخول/);
+  assert.match(home.text, /واتساب:<\/strong> لم يُرسل لأن القناة غير مضبوطة\. لم تُضبط إعدادات واتساب لهذا المكتب بعد/);
+  assert.match(home.text, /href="\/office\/settings\/reminders">راجع إعدادات القنوات/);
+
+  const staffCookie = await http.addMember(o.office.id, phone(94), 'office_staff');
+  const staffHome = await http.request('/office', { cookie: staffCookie });
+  assert.match(staffHome.text, /href="\/settings\/notifications">راجع إعدادات القنوات/, 'staff get their own settings link');
+});
+
+test('delivery reasons are pure Arabic text from the code only', () => {
+  const reasons = require('../services/deliveryReasons');
+  assert.equal(reasons.explain('email', 'sent', null).kind, 'sent');
+  assert.equal(reasons.explain('telegram', 'skipped', 'no_contact').kind, 'not_configured');
+  assert.equal(reasons.explain('telegram', 'failed', 'http_503').reason, 'خدمة المزود متعطلة الآن. حاول لاحقاً.');
+  assert.match(reasons.failureReason('weird code with spaces https://x'), /^رفض مزود الخدمة الرسالة\.$/, 'odd codes are not echoed');
+  assert.match(reasons.failureReason('http_418'), /الرمز: http_418/);
+  assert.equal(reasons.describeTest('whatsapp', { ok: false, error: 'plan_lacks_channel', skip: true }).status, 'skipped');
+  assert.equal(reasons.describeTest('whatsapp', { ok: false, error: 'timeout', retryable: true }).status, 'failed');
 });

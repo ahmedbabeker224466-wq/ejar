@@ -19,6 +19,7 @@ const dates = require('./contractDates');
 const RULES = require('../config/ejarRules');
 const platformSettings = require('./platformSettings');
 const email = require('./channels/email');
+const emailAuth = require('./emailAuth');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const SETTING_PREFIX = 'launch.';
@@ -343,6 +344,11 @@ async function runChecks({ pool = db.pool, env = process.env, now = new Date(), 
   if (!audit) out.push(result('npm_audit', FAIL, 'فحص npm audit', 'لم يُسجَّل أي فحص. شغّل `npm audit --omit=dev` ثم سجّل التاريخ.', { confirm: 'npm_audit' }));
   else if (dates.compareYmd(audit.on, dates.riyadhDate(dates.daysAfter(now, -30))) < 0) out.push(result('npm_audit', WARN, 'فحص npm audit', `آخر فحص مسجّل بتاريخ ${audit.on} (أقدم من 30 يوماً). أعد الفحص.`, { confirm: 'npm_audit', record: audit }));
   else out.push(result('npm_audit', PASS, 'فحص npm audit', `آخر فحص مسجّل بتاريخ ${audit.on}.${audit.note ? ` ${audit.note}` : ''}`, { confirm: 'npm_audit', record: audit }));
+
+  // 16. email test sign-in (AUTH_EMAIL_TEST): always a failure while it is on
+  out.push(emailAuth.flagOn(env)
+    ? result('auth_email_test', FAIL, 'الدخول التجريبي بالبريد', 'AUTH_EMAIL_TEST مفعّل: أي شخص يعرف بريد حساب يدخل إليه بدون رمز. احذفه من ملف البيئة وأعد تشغيل التطبيق قبل الإطلاق.')
+    : result('auth_email_test', PASS, 'الدخول التجريبي بالبريد', 'الدخول التجريبي بالبريد متوقف؛ الدخول برقم الجوال ورمز التحقق فقط.'));
 
   return out;
 }

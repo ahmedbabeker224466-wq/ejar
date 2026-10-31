@@ -89,7 +89,7 @@ function loadOffice(pool = db.pool) {
       res.locals.office = req.office;
       res.locals.memberRole = req.memberRole;
       res.locals.roleLabel = ROLE_LABELS[req.memberRole];
-      res.locals.userDisplay = req.user.name || toLocal(req.user.phone);
+      res.locals.userDisplay = req.user.name || toLocal(req.user.phone) || req.user.email || '';
       res.locals.officeNav = navFor(req.memberRole, path);
       res.locals.access = req.officeAccess;
       res.locals.can = (capability) => can(req.memberRole, capability);

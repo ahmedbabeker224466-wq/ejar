@@ -37,7 +37,7 @@ async function contactsView(pool, user) {
     whatsapp: row.whatsapp_verified_at && row.whatsapp_e164 ? maskPhone(canonical(row.whatsapp_e164)) : null,
     whatsappIsLogin: Boolean(row.whatsapp_e164 && canonical(row.whatsapp_e164) === user.phone),
     whatsappPending: row.whatsapp_pending ? maskPhone(canonical(row.whatsapp_pending)) : null,
-    loginPhone: maskPhone(user.phone),
+    loginPhone: user.phone ? maskPhone(user.phone) : null,
     telegramLinked: Boolean(row.telegram_verified_at && row.telegram_chat_id),
   };
 }
@@ -100,7 +100,7 @@ async function botsFor(pool, userId) {
       `SELECT JSON_UNQUOTE(JSON_EXTRACT(public_json, '$.bot_username')) AS bot FROM channel_settings
         WHERE channel = 'telegram' AND enabled = 1 AND office_id = :office_id`,
     );
-    if (row && row.bot && row.bot !== 'null') bots.push(row.bot);
+    if (row && row.bot && /^[A-Za-z0-9_]{3,64}$/.test(row.bot)) bots.push(row.bot); // safe inside a t.me link
   }
   return [...new Set(bots)];
 }
@@ -109,6 +109,7 @@ async function botsFor(pool, userId) {
 
 /** Uses the login phone (verified when the person signed in). */
 async function useLoginPhone(pool, user) {
+  if (!user.phone) return false; // an email test account has no login phone
   await ensureRow(pool, user.id);
   await pool.query(
     'UPDATE user_contacts SET whatsapp_e164 = ?, whatsapp_verified_at = UTC_TIMESTAMP(), whatsapp_pending = NULL WHERE user_id = ?',

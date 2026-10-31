@@ -16,6 +16,7 @@ const email = require('./channels/email');
 const whatsapp = require('./channels/whatsapp');
 const telegram = require('./channels/telegram');
 const { toE164 } = require('../utils/phone');
+const { explain } = require('./deliveryReasons');
 const logger = require('../utils/logger');
 
 const BACKOFF_MINUTES = [1, 10, 60];
@@ -146,10 +147,14 @@ async function sendTest(pool, { officeId, user, channel, officeName }) {
     "INSERT INTO notifications (user_id, office_id, kind, title, body) VALUES (?, ?, 'test', ?, ?)",
     [user.id, officeId, title, body],
   );
-  const officeChannel = channel === 'email' ? null : await officeChannelLoader(pool)(officeId, channel);
   let result;
   try {
-    result = await sendOne({ channel, user, contacts: await contactsFor(pool, user.id), officeChannel, title, body });
+    if (channel !== 'email' && !(await features.officeAllows(pool, officeId, channel))) {
+      result = { ok: false, error: 'plan_lacks_channel', skip: true };
+    } else {
+      const officeChannel = channel === 'email' ? null : await officeChannelLoader(pool)(officeId, channel);
+      result = await sendOne({ channel, user, contacts: await contactsFor(pool, user.id), officeChannel, title, body });
+    }
   } catch (err) {
     result = { ok: false, error: 'internal_error' };
   }
@@ -173,7 +178,7 @@ async function officeDeliverySummary(pool, officeId, { days = 7, limit = 5 } = {
   for (const r of rows) counts[r.status] = Number(r.n);
   const latest = await scoped.query(
     `SELECT n.id, n.kind, n.title, n.created_at,
-            (SELECT GROUP_CONCAT(CONCAT(d.channel, ':', d.status) ORDER BY d.channel) FROM delivery_log d WHERE d.notification_id = n.id) AS deliveries
+            (SELECT GROUP_CONCAT(CONCAT(d.channel, ':', d.status, ':', COALESCE(d.error_code, '')) ORDER BY d.channel SEPARATOR '|') FROM delivery_log d WHERE d.notification_id = n.id) AS deliveries
        FROM notifications n
       WHERE n.office_id = :office_id AND n.kind <> 'test'
       ORDER BY n.id DESC LIMIT ${Number(limit)}`,
@@ -182,9 +187,11 @@ async function officeDeliverySummary(pool, officeId, { days = 7, limit = 5 } = {
     counts,
     latest: latest.map((n) => ({
       ...n,
-      deliveries: String(n.deliveries || '').split(',').filter(Boolean).map((pair) => {
-        const [channel, status] = pair.split(':');
-        return { channel, status };
+      // Each delivery with why it was not sent (not configured vs failed), from the stored code only.
+      deliveries: String(n.deliveries || '').split('|').filter(Boolean).map((item) => {
+        const [channel, status, ...rest] = item.split(':');
+        const { kind, reason } = explain(channel, status, rest.join(':'));
+        return { channel, status, kind, reason };
       }),
     })),
   };

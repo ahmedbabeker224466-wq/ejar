@@ -51,7 +51,7 @@ function createTwoFactorService({ pool = db.pool, now = () => Date.now() } = {})
   /** Secret waiting to be confirmed during setup; created on first call. */
   async function pendingSetup(user) {
     const [[row]] = await pool.query(
-      'SELECT phone, twofa_secret, twofa_enabled FROM users WHERE id = ?',
+      'SELECT phone, email, twofa_secret, twofa_enabled FROM users WHERE id = ?',
       [user.id],
     );
     if (row.twofa_enabled) return null;
@@ -63,7 +63,7 @@ function createTwoFactorService({ pool = db.pool, now = () => Date.now() } = {})
         user.id,
       ]);
     }
-    return { secret, uri: totp.otpauthUri(secret, row.phone) };
+    return { secret, uri: totp.otpauthUri(secret, row.phone || row.email || 'aqdi') };
   }
 
   /** Confirms setup with a first code. Returns the backup codes (shown once) or null. */

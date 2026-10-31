@@ -1,7 +1,7 @@
 <p class="back-link"><a href="/office/settings">→ الإعدادات</a></p>
 <% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
 <% if (warning) { %><div class="flash flash--warning" role="alert"><%= warning %></div><% } %>
-<% if (test) { %><div class="flash flash--<%= test.ok ? 'success' : 'danger' %>" role="status"><%= test.text %></div><% } %>
+<% if (test) { %><div class="flash flash--<%= test.ok ? 'success' : (test.status === 'skipped' ? 'warning' : 'danger') %> channel-test-result" role="status" id="test-result"><%= test.text %></div><% } %>
 
 <section class="card form-card">
   <h1>قواعد التذكير</h1>
@@ -71,14 +71,42 @@
   <% if (channels.telegram.configured) { %>
     <form method="post" action="/office/settings/reminders/telegram/remove"><button type="submit" class="btn btn--secondary btn--block">حذف إعدادات تيليجرام</button></form>
   <% } %>
+
+  <h3>ربط محادثتك في تيليجرام</h3>
+  <p>حالة ربط محادثتك:
+    <% if (myStatus.telegram.linked) { %><span class="badge badge--link-joined">مربوطة ✓</span><% } else { %><span class="badge badge--link-not_invited">غير مربوطة</span><% } %>
+  </p>
+  <% if (botLink) { %>
+    <p>بوت المكتب: <a href="<%= botLink %>" dir="ltr" target="_blank" rel="noopener noreferrer">@<%= botName %></a></p>
+  <% } else { %>
+    <p class="muted">احفظ رمز البوت أعلاه أولاً، ثم يظهر هنا رابط البوت.</p>
+  <% } %>
+  <ol class="channel-steps">
+    <li>افتح <a href="/settings/notifications#telegram">إعدادات الإشعارات</a> واضغط «أظهر رمز الربط».</li>
+    <li>افتح بوت المكتب في تيليجرام واضغط «ابدأ» (Start).</li>
+    <li>أرسل رمز الربط في محادثة البوت كما هو، فيرد البوت: «تم ربط حسابك».</li>
+    <li>ارجع إلى هذه الصفحة واضغط «إرسال رسالة تجريبية» في قسم تيليجرام بالأسفل.</li>
+  </ol>
+  <p class="field-hint">كل شخص في المكتب يربط محادثته بنفسه. الرمز صالح 15 دقيقة.</p>
 </section>
 
-<section class="card form-card">
-  <h2>رسالة تجربة إليّ</h2>
-  <p class="muted">تصلك على عنوانك المؤكد في <a href="/settings/notifications">إعدادات الإشعارات</a>.</p>
+<section class="card form-card" id="test">
+  <h2>إرسال رسالة تجريبية إليّ</h2>
+  <p class="muted">تصل الرسالة إليك أنت فقط، على عنوانك في <a href="/settings/notifications">إعدادات الإشعارات</a>. تظهر النتيجة أعلى الصفحة: أُرسلت، أو لم تُرسل لأن القناة غير مضبوطة، أو فشل الإرسال مع السبب.</p>
+  <ul class="channel-status">
+    <li><strong>البريد الإلكتروني:</strong>
+      <%= myStatus.email.smtp ? 'خادم البريد مضبوط' : 'خادم البريد غير مضبوط' %>،
+      <%= myStatus.email.hasAddress ? 'وبريدك محفوظ.' : 'ولا يوجد بريد في حسابك.' %></li>
+    <li><strong>واتساب:</strong>
+      <%= channels.whatsapp.configured ? 'إعدادات المكتب مضبوطة' : 'إعدادات المكتب غير مضبوطة' %>،
+      <%= myStatus.whatsapp.confirmed ? 'ورقمك مؤكد.' : 'ولم تؤكد رقمك بعد.' %></li>
+    <li><strong>تيليجرام:</strong>
+      <%= channels.telegram.configured ? 'بوت المكتب مضبوط' : 'بوت المكتب غير مضبوط' %>،
+      <%= myStatus.telegram.linked ? 'ومحادثتك مربوطة.' : 'ومحادثتك غير مربوطة.' %></li>
+  </ul>
   <div class="button-row">
     <% Object.entries(channelLabels).forEach(function ([key, label]) { %>
-      <form method="post" action="/office/settings/reminders/test/<%= key %>"><button type="submit" class="btn btn--secondary"><%= label %></button></form>
+      <form method="post" action="/office/settings/reminders/test/<%= key %>"><button type="submit" class="btn btn--secondary">إرسال رسالة تجريبية: <%= label %></button></form>
     <% }) %>
   </div>
 </section>

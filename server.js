@@ -6,6 +6,15 @@
 
 require('dotenv').config({ quiet: true });
 
+// TESTING ONLY feature guard: email sign-in without a code (AUTH_EMAIL_TEST)
+// must never run on a production site that is open to the public. Checked
+// before anything else loads, so the process refuses to start.
+const startupProblem = require('./services/emailAuth').startupProblem();
+if (startupProblem) {
+  console.error(`${new Date().toISOString()} [ERROR] ${startupProblem}`);
+  process.exit(1);
+}
+
 const app = require('./app');
 const logger = require('./utils/logger');
 const selfCheck = require('./services/selfCheck');

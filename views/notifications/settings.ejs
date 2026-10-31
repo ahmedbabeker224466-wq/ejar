@@ -48,8 +48,12 @@
     <p>الرقم المؤكد: <strong dir="ltr"><%= contacts.whatsapp %></strong> <span class="badge badge--link-joined">مؤكد ✓</span></p>
     <form method="post" action="/settings/notifications/whatsapp/remove"><button type="submit" class="btn btn--secondary btn--block">حذف الرقم</button></form>
   <% } else { %>
-    <p>رقم دخولك: <strong dir="ltr"><%= contacts.loginPhone %></strong></p>
-    <form method="post" action="/settings/notifications/whatsapp/login-phone"><button type="submit" class="btn btn--primary btn--block">استخدم رقم الدخول لواتساب</button></form>
+    <% if (contacts.loginPhone) { %>
+      <p>رقم دخولك: <strong dir="ltr"><%= contacts.loginPhone %></strong></p>
+      <form method="post" action="/settings/notifications/whatsapp/login-phone"><button type="submit" class="btn btn--primary btn--block">استخدم رقم الدخول لواتساب</button></form>
+    <% } else { %>
+      <p class="muted">لا يوجد رقم جوال في حسابك. أضف رقم واتساب من «استخدام رقم آخر».</p>
+    <% } %>
   <% } %>
   <% if (whatsappStep) { %>
     <form method="post" action="/settings/notifications/whatsapp/verify" novalidate>
@@ -80,11 +84,25 @@
     <p><span class="badge badge--link-joined">مربوط ✓</span></p>
     <form method="post" action="/settings/notifications/telegram/unlink"><button type="submit" class="btn btn--secondary btn--block">إلغاء الربط</button></form>
   <% } else if (telegramCode) { %>
-    <p>أرسل هذا الرمز في محادثة بوت مكتبك<% if (bots.length) { %> (<% bots.forEach(function (b, i) { %><span dir="ltr">@<%= b %></span><%= i < bots.length - 1 ? '، ' : '' %><% }) %>)<% } %>. صالح لمدة <%= codeMinutes %> دقيقة.</p>
+    <p>رمز الربط (صالح لمدة <%= codeMinutes %> دقيقة):</p>
     <div class="invite-code"><output id="tg-code" dir="ltr"><%= telegramCode %></output></div>
-    <p class="muted">بعد الإرسال حدّث هذه الصفحة.</p>
+    <ol class="channel-steps">
+      <li>افتح بوت مكتبك في تيليجرام<% if (bots.length) { %>: <% bots.forEach(function (b, i) { %><a href="https://t.me/<%= b %>?start=<%= telegramCode %>" dir="ltr" target="_blank" rel="noopener noreferrer">@<%= b %></a><%= i < bots.length - 1 ? '، ' : '' %><% }) %><% } %>.</li>
+      <li>اضغط «ابدأ» (Start). إذا فتحت الرابط أعلاه يُرسل الرمز تلقائياً، وإلا فأرسل الرمز في المحادثة كما هو.</li>
+      <li>يرد البوت: «تم ربط حسابك». ثم حدّث هذه الصفحة لترى «مربوط ✓».</li>
+    </ol>
   <% } else { %>
-    <% if (!bots.length) { %><p class="muted">لم يضبط مكتبك بوت تيليجرام بعد.</p><% } %>
+    <p>الحالة: <span class="badge badge--link-not_invited">غير مربوط</span></p>
+    <% if (!bots.length) { %>
+      <p class="muted">لم يضبط مكتبك بوت تيليجرام بعد. يضبطه مالك المكتب أو المدير من «إعدادات التذكيرات».</p>
+    <% } else { %>
+      <p>بوت مكتبك: <% bots.forEach(function (b, i) { %><a href="https://t.me/<%= b %>" dir="ltr" target="_blank" rel="noopener noreferrer">@<%= b %></a><%= i < bots.length - 1 ? '، ' : '' %><% }) %></p>
+      <ol class="channel-steps">
+        <li>اضغط «أظهر رمز الربط» بالأسفل.</li>
+        <li>افتح بوت المكتب واضغط «ابدأ» (Start)، ثم أرسل الرمز.</li>
+        <li>حدّث هذه الصفحة بعد رد البوت.</li>
+      </ol>
+    <% } %>
     <form method="post" action="/settings/notifications/telegram/code"><button type="submit" class="btn btn--primary btn--block">أظهر رمز الربط</button></form>
   <% } %>
 </section>

@@ -11,6 +11,9 @@ const db = require('../config/db');
 const reminders = require('../services/reminders');
 const channelSettings = require('../services/channelSettings');
 const delivery = require('../services/delivery');
+const contacts = require('../services/contacts');
+const deliveryReasons = require('../services/deliveryReasons');
+const email = require('../services/channels/email');
 const features = require('../services/features');
 const { scopeToOffice } = require('../services/scopeToOffice');
 const { createAudit } = require('../services/audit');
@@ -31,22 +34,29 @@ const DONE = {
   telegram: 'تم حفظ إعدادات تيليجرام وربط البوت.',
   removed: 'تم حذف إعدادات القناة.',
 };
-const CHANNEL_LABELS = { email: 'البريد الإلكتروني', whatsapp: 'واتساب', telegram: 'تيليجرام' };
-const TEST_ERRORS = {
-  smtp_not_configured: 'البريد غير مضبوط على الخادم (SMTP).',
-  no_contact: 'لا يوجد لديك عنوان لهذه القناة. أضفه من "إعدادات الإشعارات".',
-  channel_not_configured: 'القناة غير مضبوطة لهذا المكتب.',
-  timeout: 'انتهت مهلة الاتصال. حاول مرة أخرى.',
-};
+const { CHANNEL_LABELS } = deliveryReasons;
+const BOT_NAME = /^[A-Za-z0-9_]{3,64}$/;
 
 async function render(req, res, { status = 200, errors = {}, values = null, message = null, warning = null, test = null } = {}) {
   const scoped = scopeToOffice(db.pool, req.office.id);
   const rules = await reminders.rulesFor(scoped);
+  const channels = await channelSettings.summary(scoped);
+  const [[me]] = await db.pool.query('SELECT email FROM users WHERE id = ?', [req.user.id]);
+  const mine = await contacts.contactsView(db.pool, req.user);
+  const bot = channels.telegram.settings.bot_username;
   return res.status(status).render('office/reminders', {
     title: 'إعدادات التذكيرات',
     kinds: reminders.RULE_KINDS,
     values: values || Object.fromEntries(Object.entries(rules).map(([k, r]) => [k, { enabled: r.enabled, days: r.days.join(', ') }])),
-    channels: await channelSettings.summary(scoped),
+    channels,
+    // Where the test message would go for the signed-in person (no address shown in full).
+    myStatus: {
+      email: { hasAddress: Boolean(me && me.email), smtp: Boolean(email.smtpConfig()) },
+      whatsapp: { confirmed: Boolean(mine.whatsapp) },
+      telegram: { linked: mine.telegramLinked },
+    },
+    botLink: bot && BOT_NAME.test(bot) ? `https://t.me/${bot}` : null,
+    botName: bot && BOT_NAME.test(bot) ? bot : null,
     errors,
     message: message || DONE[req.query.done] || null,
     warning,
@@ -112,10 +122,12 @@ router.post(`${BASE}/test/:channel`, guard, testLimit, wrap(async (req, res, nex
   if (!Object.hasOwn(CHANNEL_LABELS, channel)) return next();
   const [[user]] = await db.pool.query('SELECT id, phone, email FROM users WHERE id = ?', [req.user.id]);
   const result = await delivery.sendTest(db.pool, { officeId: req.office.id, user, channel, officeName: req.office.name });
-  const text = result.ok
-    ? `تم إرسال رسالة تجربة عبر ${CHANNEL_LABELS[channel]}.`
-    : `لم تُرسل رسالة التجربة عبر ${CHANNEL_LABELS[channel]}: ${TEST_ERRORS[result.error] || 'رفض مزود الخدمة الرسالة. راجع الإعدادات.'}`;
-  return render(req, res, { status: result.ok ? 200 : 422, test: { ok: result.ok, text } });
+  const shown = deliveryReasons.describeTest(channel, result);
+  // The audit row holds the channel, the outcome and the short code only (never an address or a token).
+  await createAudit(db.pool).log(req.user.id, req.office.id, 'channel.test', 'office', req.office.id, null,
+    { channel, outcome: shown.status, error_code: result.ok ? null : String(result.error || '').slice(0, 40) }, req.ip);
+  return render(req, res, { status: result.ok ? 200 : 422, test: { ok: shown.ok, status: shown.status, text: shown.text } });
 }));
 
 module.exports = router;
+module.exports.testLimit = testLimit;
