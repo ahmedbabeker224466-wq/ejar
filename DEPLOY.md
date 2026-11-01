@@ -8,23 +8,30 @@ dependencies in `package.json` are fixed and no new one may be added.
 
 ## 1. How the code reaches the server
 
-Two supported ways. Use one.
+**Automatic (normal path): [`docs/DEPLOY_AUTO.md`](docs/DEPLOY_AUTO.md).** After CI
+passes on `main`, `.github/workflows/deploy.yml` calls the cPanel UAPI:
+`VersionControl/update` (pull `main` into `~/aqdi-src`), then
+`VersionControlDeployment/create`, which runs `.cpanel.yml` ->
+`deploy/cpanel-deploy.sh`:
 
-**A. cPanel "Git Version Control" (pull from GitHub inside cPanel)**
+- rsync (`--checksum`, no `--delete`) of the app files to `~/aqdi`. It never
+  copies `.env`, `node_modules`, `storage/` (uploads), `uploads/`, `backups/`,
+  `tmp/`, `tests/`, `docs/`, `reference/` or `*.md`, and deletes nothing there;
+- `npm install --omit=dev` inside `~/aqdi` with the cPanel Node.js environment
+  (`NODE_VERSION` at the top of `.cpanel.yml`; a missing environment stops the
+  deploy before anything is copied);
+- `touch ~/aqdi/tmp/restart.txt` (Passenger restart).
 
-1. cPanel > Git Version Control > Create > clone URL of the repository, branch `main`.
-2. `.cpanel.yml` (in the repository) rsyncs the code to the application root and
-   touches `tmp/restart.txt`. It never deletes `.env`, `uploads/` or `backups/`
-   and skips `tests/`, `reference/` and `*.md`. Change `DEPLOYPATH` in it to your
-   application root first.
-3. Each time: Git Version Control > Update from Remote > Deploy HEAD Commit.
+The job succeeds only when `/health` answers `status: "ok"` from a fresh
+process. It needs the secrets `CPANEL_HOST`, `CPANEL_USER` and
+`CPANEL_API_TOKEN`; without them it is skipped with a notice. The old FTPS
+workflow is gone.
 
-**B. GitHub Actions over FTPS** (`.github/workflows/deploy.yml`): a push to
-`main` runs the tests and, if they pass, uploads the files.
-
-`node_modules/` is installed once with *Setup Node.js App > Run NPM Install*
-(Node 20). After a deploy that changes `package.json` this must be done by hand;
-this project never changes it.
+**Manual fallback only** (when the automatic deploy cannot run): cPanel > Git
+Version Control > Manage > Pull or Deploy > **Update from Remote**, then
+**Deploy HEAD Commit** (this runs the same `.cpanel.yml`, including `npm
+install` and the restart). If that deploy fails at the Node.js environment
+step, run *Setup Node.js App > Run NPM Install*, then **Restart**.
 
 ## 2. Application setup (Setup Node.js App)
 
@@ -243,8 +250,8 @@ The deploy only copies files; the database changes made by `ensureSchema()` are
 **additive** (new tables, columns, indexes), so an older version of the code runs
 on the newer schema.
 
-1. cPanel > Git Version Control > the repository > History (or `git log`): note the last good commit.
-2. Check it out and deploy it: either `git revert <bad commit>` on `main` and deploy, or on the server `git reset --hard <good commit>` then Deploy HEAD Commit. (Reverting keeps history; prefer it.)
+1. Preferred: `git revert <bad commit>` and push to `main`; CI and the automatic deploy do the rest. Re-running an old deploy run does NOT roll back (cPanel always deploys the current `main`).
+2. Urgent: on the server `git reset --hard <good commit>` in `~/aqdi-src` (or check it out in Git Version Control) then Deploy HEAD Commit; push the revert afterwards so the next automatic deploy does not bring the bad commit back.
 3. Touch `tmp/restart.txt` (or *Restart* in Setup Node.js App) and check `/health` and `/health/detail`.
 4. If a migration itself was the problem, restore the database backup taken before the deploy (section 6b); take one from `/admin/ops` before every deploy that adds tables.
 5. Uploads are never touched by a deploy; no action needed.

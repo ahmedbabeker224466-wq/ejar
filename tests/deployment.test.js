@@ -199,11 +199,16 @@ test('every view that routes render exists', () => {
 });
 
 test('deployment excludes secrets, dependencies and user files', () => {
-  const workflow = fs.readFileSync(path.join(ROOT, '.github/workflows/deploy.yml'), 'utf8');
-  for (const pattern of ['.env', '**/node_modules/**', 'uploads/**', 'backups/**', 'tests/**']) {
-    assert.ok(workflow.includes(`\n            ${pattern}\n`), `deploy.yml must exclude ${pattern}`);
+  // The copy step of the cPanel deploy (see tests/deployAuto.test.js for the run).
+  const script = fs.readFileSync(path.join(ROOT, 'deploy/cpanel-deploy.sh'), 'utf8');
+  for (const pattern of ['.env', '.env.*', 'node_modules', 'uploads', 'storage', 'backups', 'tests', '.git']) {
+    assert.ok(script.includes(`--exclude='${pattern}'`), `cpanel-deploy.sh must exclude ${pattern}`);
   }
-  for (const secret of ['FTP_HOST', 'FTP_USER', 'FTP_PASSWORD']) {
+  const rsync = script.slice(script.indexOf('rsync -a'), script.indexOf('./ "$DEPLOYPATH/"'));
+  assert.ok(rsync.length > 0);
+  assert.doesNotMatch(rsync, /--delete/, 'nothing on the server is deleted');
+  const workflow = fs.readFileSync(path.join(ROOT, '.github/workflows/deploy.yml'), 'utf8');
+  for (const secret of ['CPANEL_HOST', 'CPANEL_USER', 'CPANEL_API_TOKEN']) {
     assert.ok(workflow.includes(`secrets.${secret}`), secret);
   }
 });

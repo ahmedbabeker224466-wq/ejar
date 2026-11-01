@@ -1,63 +1,67 @@
 name: Deploy to cPanel
 
-# Runs after the CI workflow finishes on main, and only if the tests passed,
-# so a failing commit never reaches the live site.
+# After CI passes on main (or when started by hand): cPanel pulls main and runs
+# .cpanel.yml (copy files, npm install --omit=dev, restart), then the job waits
+# until /health answers from a freshly started process. All of it is in
+# deploy/cpanel-trigger.sh. Steps and secrets: docs/DEPLOY_AUTO.md.
 on:
   workflow_run:
     workflows: [CI]
     types: [completed]
     branches: [main]
+  workflow_dispatch:
 
+# One deploy at a time; a running deploy is never cancelled.
 concurrency:
   group: deploy-cpanel
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   deploy:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    env:
-      HAS_FTP: ${{ secrets.FTP_HOST != '' && secrets.FTP_USER != '' && secrets.FTP_PASSWORD != '' }}
+    timeout-minutes: 15
     steps:
-      - name: Skip until the FTP secrets are added
-        if: env.HAS_FTP != 'true'
-        run: |
-          echo "::notice::Deployment skipped. Add FTP_HOST, FTP_USER and FTP_PASSWORD in Settings > Secrets and variables > Actions."
-
       - uses: actions/checkout@v4
-        if: env.HAS_FTP == 'true'
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-
-      # A changed tmp/restart.txt makes Passenger restart the app after upload.
-      - name: Mark the app for restart
-        if: env.HAS_FTP == 'true'
-        run: mkdir -p tmp && date -u +%Y-%m-%dT%H:%M:%SZ > tmp/restart.txt
-
-      - name: Upload changed files over FTPS
-        if: env.HAS_FTP == 'true'
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          local-dir: ./
-          # The application root, relative to where the FTP account lands.
-          # Optional secret FTP_SERVER_DIR, e.g. "./aqdi/"; default is the FTP root.
-          server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
-          exclude: |
-            **/.git*
-            **/.git*/**
-            .github/**
-            **/node_modules/**
-            .env
-            .env.*
-            uploads/**
-            backups/**
-            tests/**
-            reference/**
-            deploy/*.md
-            **/*.md
-            .cpanel.yml
+          ref: main
+          sparse-checkout: deploy
+      # cPanel always pulls the CURRENT main, so deploy only when that commit
+      # is the one CI passed: after a CI run, main must not have moved on (the
+      # newer commit gets its own deploy); by hand, main's CI must be green.
+      - name: Check that main is the commit CI passed
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          main_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+            if [ "$main_sha" != "$TESTED_SHA" ]; then
+              echo "::notice::Skipped: main moved on after this CI run; the newer commit is deployed by its own run."
+              echo "go=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          else
+            ci=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${main_sha}&per_page=1" --jq '.workflow_runs[0].conclusion // "none"')
+            if [ "$ci" != "success" ]; then
+              echo "::error::Not deployed: CI for the current main (${main_sha:0:7}) is '${ci}', not success."
+              exit 1
+            fi
+          fi
+          echo "Deploying main ${main_sha:0:7}."
+          echo "go=true" >> "$GITHUB_OUTPUT"
+      - name: Deploy through the cPanel API
+        if: steps.guard.outputs.go == 'true'
+        env:
+          CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
+          CPANEL_USER: ${{ secrets.CPANEL_USER }}
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
+          HEALTH_URL: ${{ vars.HEALTH_URL || 'https://aqdi.phillote.com/health' }}
+        run: bash deploy/cpanel-trigger.sh

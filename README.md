@@ -86,8 +86,11 @@ cPanel hosting, so the dependency list is fixed; see `CLAUDE.md` before adding o
 ## Deploy to cPanel
 
 Step-by-step guide in Arabic: [`deploy/DEPLOY-CPANEL.md`](deploy/DEPLOY-CPANEL.md). Technical reference, cron lines, pre-launch checklist and rollback: [`DEPLOY.md`](DEPLOY.md).
-Pushes to `main` are tested by `.github/workflows/ci.yml` and, when the tests
-pass, uploaded over FTPS by `.github/workflows/deploy.yml`.
+Pushes to `main` are tested by `.github/workflows/ci.yml`; when the tests pass,
+`.github/workflows/deploy.yml` asks cPanel (UAPI) to pull `main` and run
+`.cpanel.yml` (copy, `npm install --omit=dev`, restart), then waits for a fresh
+`/health`. Setup (three GitHub secrets, `NODE_VERSION` in `.cpanel.yml`),
+manual runs and rollback: [`docs/DEPLOY_AUTO.md`](docs/DEPLOY_AUTO.md).
 
 ## Landlord and tenant areas
 
