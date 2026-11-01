@@ -39,7 +39,7 @@
 
 الإعداد مرة واحدة (التفاصيل في [`docs/DEPLOY_AUTO.md`](../docs/DEPLOY_AUTO.md)):
 
-1. اكتب رقم نسخة Node.js في أول سطر من `.cpanel.yml` (مثل `export NODE_VERSION=20`).
+1. أول سطر في `.cpanel.yml` فيه رقم نسخة Node.js للتطبيق، وهو الآن `export NODE_VERSION=22`. إذا غيّرت النسخة في cPanel فغيّر هذا السطر أيضاً.
 2. أنشئ رمز API من cPanel: **Security** ← **Manage API Tokens** ← **Create**، وانسخه فوراً.
 3. في GitHub افتح **Settings** ← **Secrets and variables** ← **Actions** وأضف ثلاثة أسرار: `CPANEL_HOST` و `CPANEL_USER` و `CPANEL_API_TOKEN`.
 

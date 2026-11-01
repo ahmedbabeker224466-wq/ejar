@@ -20,19 +20,19 @@ the deploy skips and the newer commit's own run deploys it.
 
 ## One-time setup
 
-### 1. Set the Node.js version in `.cpanel.yml`
+### 1. The Node.js version in `.cpanel.yml`
 
-Open cPanel > **Setup Node.js App** and note the Node.js version of the `aqdi`
-app. In cPanel > **File Manager**, check the folder name under
-`/home/<your user>/nodevenv/aqdi/` (for example `20`). Put that name in the
-first line of `.cpanel.yml`:
+The first line of `.cpanel.yml` holds the Node.js version of the `aqdi` app in
+cPanel > **Setup Node.js App**. It is set to `22`:
 
 ```yaml
-    - export NODE_VERSION=20
+    - export NODE_VERSION=22
 ```
 
-Commit and push. Until this is set, every deploy stops with
-"Node.js activate script not found" and copies nothing.
+The folder `/home/<your user>/nodevenv/aqdi/22/` must exist (check it in File
+Manager). If you ever change the version in cPanel, change this line too. A
+wrong value stops the deploy with "Node.js activate script not found" before
+anything is copied.
 
 ### 2. Create the cPanel API token
 

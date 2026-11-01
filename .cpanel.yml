@@ -4,12 +4,12 @@
 # VersionControlDeployment/create. The work is in deploy/cpanel-deploy.sh.
 #
 # NODE_VERSION: the Node.js version of the app in cPanel > Setup Node.js App,
-# exactly as the folder under ~/nodevenv/aqdi/ is named (for example 20).
-# It is not guessed: until it is set, the deploy stops with a clear message
-# and copies nothing.
+# exactly as the folder under ~/nodevenv/aqdi/ is named (22 on the live server).
+# If the version changes in cPanel, change it here too: a wrong value stops the
+# deploy with a clear message before anything is copied.
 deployment:
   tasks:
-    - export NODE_VERSION=SET_ME
+    - export NODE_VERSION=22
     - export DEPLOYPATH=$HOME/aqdi
     - export NODEVENV_ACTIVATE=$HOME/nodevenv/aqdi/$NODE_VERSION/bin/activate
     - /bin/bash deploy/cpanel-deploy.sh

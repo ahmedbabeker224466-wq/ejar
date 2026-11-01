@@ -36,7 +36,7 @@ test('the YAML files parse and have the expected shape', { skip: PYYAML ? false 
   const cpanel = load('.cpanel.yml');
   const tasks = cpanel.deployment.tasks;
   assert.ok(Array.isArray(tasks) && tasks.length >= 2);
-  assert.match(tasks[0], /^export NODE_VERSION=\S+$/, 'NODE_VERSION is the first, single setting');
+  assert.match(tasks[0], /^export NODE_VERSION=\d+(\.\d+)*$/, 'NODE_VERSION is the first, single setting, and a real version');
   assert.ok(tasks.includes('/bin/bash deploy/cpanel-deploy.sh'));
 
   const wf = load('.github/workflows/deploy.yml');
