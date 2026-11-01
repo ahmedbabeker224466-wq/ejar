@@ -173,9 +173,9 @@ const emailLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   keyFor: (req) => `email-login:${req.ip}`,
-  onLimit: (req, res, next) => {
+  onLimit: async (req, res, next) => {
     if (!emailAuth.enabled()) return next();
-    emailAuth.audit(db.pool, { action: 'auth.email_login', outcome: 'rate_limited', ip: req.ip });
+    await emailAuth.audit(db.pool, { action: 'auth.email_login', outcome: 'rate_limited', ip: req.ip });
     const intent = req.body.intent === 'register' ? 'register' : 'login';
     return renderEmailPage(res, intent, '', EMAIL_MESSAGES.rate_limited, 429, req.body.next);
   },
@@ -186,20 +186,20 @@ router.post('/login/email', (req, res, next) => (emailAuth.enabled() ? next() : 
     const intent = req.body.intent === 'register' ? 'register' : 'login';
     const nextPath = safeNext(req.body.next);
     const typed = String(req.body.email || '').trim().slice(0, 190);
-    const refuse = (error, userId = null) => {
-      emailAuth.audit(db.pool, { action: intent === 'register' ? 'auth.email_register' : 'auth.email_login', userId, outcome: error, ip: req.ip });
+    const refuse = async (error, userId = null) => {
+      await emailAuth.audit(db.pool, { action: intent === 'register' ? 'auth.email_register' : 'auth.email_login', userId, outcome: error, ip: req.ip });
       return renderEmailPage(res, intent, error === 'invalid_email' ? typed : emailAuth.normalizeEmail(typed) || typed, EMAIL_MESSAGES[error], EMAIL_STATUS[error] || 422, nextPath);
     };
 
     if (intent === 'register') {
       const made = await emailAuth.register(db.pool, typed, { signupsDisabled: () => platformSettings.signupsDisabled(db.pool) });
-      if (!made.ok) return refuse(made.error);
+      if (!made.ok) return await refuse(made.error);
       await emailAuth.audit(db.pool, { action: 'auth.email_register', userId: made.user.id, outcome: 'ok', ip: req.ip });
       return finishLogin(req, res, made.user, nextPath);
     }
 
     const found = await emailAuth.findForLogin(db.pool, typed);
-    if (!found.ok) return refuse(found.error, found.user ? found.user.id : null);
+    if (!found.ok) return await refuse(found.error, found.user ? found.user.id : null);
     const { user } = found;
     await db.pool.query('UPDATE users SET last_seen_at = UTC_TIMESTAMP() WHERE id = ?', [user.id]);
     await emailAuth.audit(db.pool, { action: 'auth.email_login', userId: user.id, outcome: 'ok', ip: req.ip });

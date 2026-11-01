@@ -286,11 +286,11 @@ test('email attempts are limited per IP (invalid ones count too)', { skip }, asy
 
 test('migration: phone nullable, unique case-insensitive email, idempotent', { skip }, async () => {
   const [[col]] = await db.pool.query(
-    "SELECT is_nullable FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'phone'",
+    "SELECT is_nullable AS is_nullable FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'phone'",
   );
   assert.equal(col.is_nullable, 'YES');
   const [[idx]] = await db.pool.query(
-    "SELECT non_unique FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'users' AND index_name = 'uq_users_email'",
+    "SELECT non_unique AS non_unique FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'users' AND index_name = 'uq_users_email'",
   );
   assert.equal(Number(idx.non_unique), 0);
 
