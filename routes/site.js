@@ -14,6 +14,7 @@ const listings = require('../services/listings');
 const officeLink = require('../services/officeLink');
 const plans = require('../services/plans');
 const pricing = require('../services/pricing');
+const officialPricing = require('../services/officialPricing');
 const inquiries = require('../services/inquiries');
 const images = require('../services/images');
 const markdown = require('../services/markdown');
@@ -28,18 +29,20 @@ const { wrap, publicPage, privatePage, hourly, notFound } = require('./publicHel
 const router = express.Router();
 const contactIp = hourly('contact-ip', rules.CONTACT_PER_IP_PER_HOUR, (req) => req.ip);
 
+// The public plan cards: buyable plans (active, public, priced) from the plans table.
 async function planCards() {
   const list = await plans.listPlans(db.pool, { onlyBuyable: true });
-  return list.map((p) => ({
-    name: p.name_ar,
-    monthly: pricing.planPrice(p, 'monthly'),
-    yearly: pricing.planPrice(p, 'yearly'),
-    limits: plans.usageRows(p, { units: 0, contracts: 0, members: 0, aiReads: 0, photos: 0, listings: 0 }).map((r) => ({ label: r.label, unit: r.unit, limit: r.limit })),
-    features: Object.entries(plans.normalizeFeatures(p.features)).map(([flag, on]) => ({ label: plans.FEATURE_FLAGS[flag], on })),
-  }));
+  const addon = await officialPricing.customDomainAddon(db.pool);
+  return list.map((p) => {
+    const monthly = pricing.planPrice(p, 'monthly');
+    const yearly = pricing.planPrice(p, 'yearly');
+    return { code: p.code, name: p.name_ar, monthly, yearly, paidMonths: officialPricing.paidMonths(monthly, yearly), lines: officialPricing.cardLines(p, addon, money.formatHalalas) };
+  });
 }
 
-const shared = () => ({ fmt: money.formatHalalas, trialDays: TRIAL_DAYS, vatPercent: billing.VAT_RATE_BP / 100 });
+const shared = () => ({
+  fmt: money.formatHalalas, trialDays: TRIAL_DAYS, vatPercent: billing.VAT_RATE_BP / 100, customFromUnits: officialPricing.CUSTOM_PLAN_FROM_UNITS,
+});
 
 // ------------------------------------------------------------ home and pages
 

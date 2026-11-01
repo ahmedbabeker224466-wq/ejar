@@ -126,6 +126,10 @@ const TABLES = [
     'max_listings INT UNSIGNED NULL DEFAULT 5', // public listings (not rented) per office (NULL = unlimited)
     'is_public TINYINT(1) NOT NULL DEFAULT 1', // shown to offices on the billing page
     'features JSON NULL',
+    // Shown on the pricing page only (no enforcement): see services/officialPricing.js.
+    "custom_domain ENUM('none','addon','included') NOT NULL DEFAULT 'none'",
+    "audit_level ENUM('basic','full') NOT NULL DEFAULT 'full'",
+    "support_level ENUM('email','email_whatsapp','priority') NOT NULL DEFAULT 'email'",
     'is_active TINYINT(1) NOT NULL DEFAULT 1',
     'sort_order INT NOT NULL DEFAULT 0',
     'UNIQUE KEY uq_plans_code (code)',
@@ -1124,6 +1128,9 @@ const TABLES = [
 // already includes them for new databases; ensureSchema() adds them to older
 // databases that are missing them.
 const COLUMN_ADDITIONS = [
+  { table: 'plans', column: 'custom_domain', definition: "ENUM('none','addon','included') NOT NULL DEFAULT 'none' AFTER features" },
+  { table: 'plans', column: 'audit_level', definition: "ENUM('basic','full') NOT NULL DEFAULT 'full' AFTER custom_domain" },
+  { table: 'plans', column: 'support_level', definition: "ENUM('email','email_whatsapp','priority') NOT NULL DEFAULT 'email' AFTER audit_level" },
   { table: 'offices', column: 'public_slug', definition: 'VARCHAR(40) NULL AFTER listings_banned' },
   { table: 'offices', column: 'public_page_enabled', definition: 'TINYINT(1) NOT NULL DEFAULT 0 AFTER public_slug' },
   { table: 'offices', column: 'public_description', definition: 'VARCHAR(300) NULL AFTER public_page_enabled' },

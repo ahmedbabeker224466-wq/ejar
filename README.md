@@ -195,6 +195,8 @@ Plans, the subscription lifecycle, checkout (Moyasar **test mode only**, or bank
 
 **Default plan.** An office with `plan_id` NULL (created before any plan existed) is read as being on the default plan: the `trial` plan when it is active, otherwise the cheapest active plan (`services/defaultPlan.js`). At start-up `ensureSchema` (and `node database/seed.js`) store that plan once and create the matching subscription row (idempotent, one transaction per office, audit action `office.plan_backfill`). New offices get the same default plan.
 
+**Approved pricing.** Basic 149 / Pro 349 / Enterprise 799 SAR a month (a year = 10 months), VAT-exclusive; trial 14 days with Pro limits; above 600 units a custom plan via the contact form. The start-up migration moves the old placeholder plans to these values without overwriting admin edits. `/pricing` shows the plans with a monthly/yearly toggle (CSS only), the office settings page shows the plan, its limits and usage, and `/admin/launch` checks «الباقات والأسعار». Table and enforced vs stored-only limits: [`docs/PRICING.md`](docs/PRICING.md).
+
 **Plan features.** `plans.features` holds on/off switches (`whatsapp`, `telegram`, `reports_csv`, `ai_reading`); a missing key, null or the older array form means allowed. They are enforced on the server (AI reading, CSV downloads, WhatsApp/Telegram settings and delivery). `max_members` is the "max staff" limit.
 
 **Kill switches** (`/admin/settings`): disable signups (existing users keep signing in), disable AI reading, and a banner message shown on every page.
@@ -247,7 +249,7 @@ Environment (all optional): `BACKUP_DIR`, `BACKUP_WEBHOOK_URL`, `HEALTHCHECK_PIN
 
 ## Launch readiness
 
-`GET /admin/launch` (platform admin only) shows 22 pass / warn / fail checks for opening the platform to real users (environment, secrets strength, 2FA, backups and restore drill, seller details, offices without a plan (warn), Ejar rules verification, lawyer review, SMTP test, Moyasar keys, APP_URL/HSTS, office public links domain, cron, directories, npm audit date, email test login off). Secret values are never shown. Hand confirmations need a reason and are audit-logged; in production the failing check ids are logged at start-up.
+`GET /admin/launch` (platform admin only) shows 23 pass / warn / fail checks for opening the platform to real users (environment, secrets strength, 2FA, backups and restore drill, seller details, offices without a plan (warn), plans and prices, Ejar rules verification, lawyer review, SMTP test, Moyasar keys, APP_URL/HSTS, office public links domain, cron, directories, npm audit date, email test login off). Secret values are never shown. Hand confirmations need a reason and are audit-logged; in production the failing check ids are logged at start-up.
 
 ## Project layout
 

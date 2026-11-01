@@ -20,6 +20,7 @@ const RULES = require('../config/ejarRules');
 const platformSettings = require('./platformSettings');
 const email = require('./channels/email');
 const emailAuth = require('./emailAuth');
+const officialPricing = require('./officialPricing');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const SETTING_PREFIX = 'launch.';
@@ -263,6 +264,16 @@ async function runChecks({ pool = db.pool, env = process.env, now = new Date(), 
   out.push(Number(noPlan.n) > 0
     ? result('office_plans', WARN, 'باقات المكاتب', `${Number(noPlan.n)} مكتب بدون باقة محددة، ويُعامَل مؤقتاً على الباقة الافتراضية. أعد تشغيل التطبيق ليكمل الترحيل تلقائياً، أو اختر باقة لكل مكتب من صفحة المكاتب.`)
     : result('office_plans', PASS, 'باقات المكاتب', 'كل المكاتب لها باقة محددة.'));
+
+  // 7b. plans and prices: no free paid plan, no missing limit (active plans only)
+  const [planRows] = await pool.query(
+    `SELECT code, price_monthly, price_yearly, max_units, max_members, max_ai_reads_monthly, max_listings, is_active, is_public
+       FROM plans WHERE is_active = 1`,
+  );
+  const planIssues = officialPricing.planProblems(planRows);
+  out.push(planIssues.length
+    ? result('plans_pricing', FAIL, 'الباقات والأسعار', `${planIssues.join(' ')} عدّلها من صفحة الباقات.`)
+    : result('plans_pricing', PASS, 'الباقات والأسعار', `${planRows.length} باقة فعّالة، كلها بسعر وحدود كاملة (التجربة مجانية).`));
 
   // 8. Ejar rules verification (the rules themselves are never changed here)
   const fromConfig = RULES.verifiedAt && RULES.verifiedSource && String(RULES.verifiedSource).trim().length >= 10 ? { on: RULES.verifiedAt, source: RULES.verifiedSource } : null;

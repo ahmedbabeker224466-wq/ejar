@@ -2,73 +2,18 @@
 
 // Default rows: plans, platform message templates and settings.
 // Idempotent: existing rows are never changed, so running it twice (or after an
-// admin edits a price or a template) changes nothing.
+// admin edits a price or a template) changes nothing. The one exception is the
+// plan migration in services/officialPricing.js, which replaces only values that
+// still equal the old seeded placeholders.
 //
 //   node database/seed.js
 
-// Feature switches of a plan (see services/plans.js FEATURE_FLAGS). The trial
-// has everything on so a new office can try it all.
-const ALL_FEATURES = { whatsapp: true, telegram: true, reports_csv: true, ai_reading: true, listings: true };
+// The approved plans (SAR, VAT-exclusive) live in services/officialPricing.js;
+// the seed inserts missing rows with them and then runs the same migration
+// that moves older placeholder rows (never an admin's edits).
+const { OFFICIAL, applyOfficialPricing } = require('../services/officialPricing');
 
-// Placeholder prices in SAR (VAT-exclusive); set real prices from the admin panel later.
-const PLANS = [
-  {
-    code: 'trial',
-    name_ar: 'تجربة مجانية',
-    price_monthly: 0,
-    price_yearly: 0,
-    max_contracts: 20,
-    max_units: 20,
-    max_members: 2,
-    max_ai_reads_monthly: 10,
-    max_photos: 30,
-    max_listings: 3,
-    features: ALL_FEATURES,
-    sort_order: 1,
-  },
-  {
-    code: 'basic',
-    name_ar: 'الأساسية',
-    price_monthly: 99,
-    price_yearly: 990,
-    max_contracts: 100,
-    max_units: 100,
-    max_members: 3,
-    max_ai_reads_monthly: 100,
-    max_photos: 200,
-    max_listings: 10,
-    features: { whatsapp: false, telegram: false, reports_csv: true, ai_reading: true, listings: true },
-    sort_order: 2,
-  },
-  {
-    code: 'pro',
-    name_ar: 'الاحترافية',
-    price_monthly: 249,
-    price_yearly: 2490,
-    max_contracts: 500,
-    max_units: 500,
-    max_members: 10,
-    max_ai_reads_monthly: 500,
-    max_photos: 1000,
-    max_listings: 50,
-    features: ALL_FEATURES,
-    sort_order: 3,
-  },
-  {
-    code: 'enterprise',
-    name_ar: 'المؤسسات',
-    price_monthly: 599,
-    price_yearly: 5990,
-    max_contracts: null, // null = unlimited
-    max_units: null,
-    max_members: null,
-    max_ai_reads_monthly: 2000,
-    max_photos: null,
-    max_listings: null,
-    features: ALL_FEATURES,
-    sort_order: 4,
-  },
-];
+const PLANS = Object.entries(OFFICIAL).map(([code, p]) => ({ code, ...p }));
 
 // Wording stays cautious: reminders, never legal statements.
 const REMINDER_BODIES = {
@@ -211,8 +156,9 @@ async function seed(pool) {
     const [result] = await pool.query(
       `INSERT IGNORE INTO plans
          (code, name_ar, price_monthly, price_yearly, currency, max_contracts, max_units,
-          max_members, max_ai_reads_monthly, max_photos, max_listings, features, is_active, sort_order)
-       VALUES (?, ?, ?, ?, 'SAR', ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+          max_members, max_ai_reads_monthly, max_photos, max_listings, features, custom_domain, audit_level, support_level,
+          is_public, is_active, sort_order)
+       VALUES (?, ?, ?, ?, 'SAR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
       [
         plan.code,
         plan.name_ar,
@@ -225,11 +171,16 @@ async function seed(pool) {
         plan.max_photos,
         plan.max_listings,
         JSON.stringify(plan.features),
+        plan.custom_domain,
+        plan.audit_level,
+        plan.support_level,
+        plan.code === 'trial' ? 0 : 1,
         plan.sort_order,
       ],
     );
     counts.plans += result.affectedRows;
   }
+  await applyOfficialPricing(pool);
 
   // Platform defaults have office_id NULL, which a unique key cannot dedupe,
   // so insert only when no default exists for that code and channel.

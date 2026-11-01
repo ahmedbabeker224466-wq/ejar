@@ -111,7 +111,7 @@ function validatePlan(body = {}, { creating = false } = {}) {
 // ------------------------------------------------------------ CRUD (platform admin)
 
 const PLAN_COLUMNS = `id, code, name_ar, price_monthly, price_yearly, currency, max_contracts, max_units, max_members,
-  max_ai_reads_monthly, max_photos, max_listings, is_public, features, is_active, sort_order`;
+  max_ai_reads_monthly, max_photos, max_listings, is_public, features, custom_domain, audit_level, support_level, is_active, sort_order`;
 
 async function listPlans(pool, { onlyBuyable = false } = {}) {
   const [rows] = await pool.query(

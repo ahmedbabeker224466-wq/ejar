@@ -71,6 +71,9 @@ async function ensureSchema(targetPool = pool) {
     await addMissingEnumValues(targetPool, ENUM_ADDITIONS);
     current = 'payment entries backfill';
     await backfillPaymentEntries(targetPool);
+    current = 'official pricing';
+    // Required here, not at the top, like the backfills below.
+    await require('../services/officialPricing').applyOfficialPricing(targetPool);
     current = 'office plan backfill';
     // Required here, not at the top: services/defaultPlan.js loads modules that load this file.
     await require('../services/defaultPlan').backfillOfficePlans(targetPool);

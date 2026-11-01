@@ -30,6 +30,28 @@
   <% } %>
 </section>
 
+<% if (planInfo) { %>
+<section class="card detail-card" id="plan">
+  <h2>باقتك: <%= planInfo.name %></h2>
+  <% if (planInfo.trial) { %><p class="muted">أنت في التجربة المجانية بحدود الباقة الاحترافية.</p><% } %>
+  <h3>الحدود والاستخدام</h3>
+  <ul class="usage-list">
+    <% planInfo.usage.forEach(function (u) { %>
+      <li class="usage" id="usage-<%= u.key %>">
+        <div class="usage__head"><span><%= u.label %></span>
+          <strong><%= u.used %><%= u.limit === null ? ' (بلا حد)' : ' من ' + u.limit %></strong></div>
+        <% if (u.limit !== null) { %><meter class="usage__meter" min="0" max="<%= u.limit %>" value="<%= Math.min(u.used, u.limit) %>" low="<%= Math.floor(u.limit * 0.7) %>" high="<%= Math.floor(u.limit * 0.9) %>" optimum="0"><%= u.used %> / <%= u.limit %></meter><% } %>
+      </li>
+    <% }) %>
+  </ul>
+  <h3>تشمل باقتك</h3>
+  <ul class="plan-card__limits">
+    <% planInfo.lines.forEach(function (line) { %><li>✓ <%= line %></li><% }) %>
+  </ul>
+  <% if (canBilling) { %><p><a href="/office/billing" class="btn btn--secondary">الاشتراك وتغيير الباقة</a></p><% } %>
+</section>
+<% } %>
+
 <% if (link) { %>
 <section class="card form-card" id="office-link">
   <h2>رابط مكتبك</h2>

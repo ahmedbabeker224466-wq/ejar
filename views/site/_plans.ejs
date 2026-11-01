@@ -1,15 +1,34 @@
-<ul class="plan-grid">
-  <% plans.forEach(function (p) { %>
-    <li class="plan-card">
-      <h3><%= p.name %></h3>
-      <p class="plan-card__price"><strong><%= fmt(p.monthly) %></strong> ريال / شهر</p>
-      <% if (p.yearly > 0) { %><p class="muted"><%= fmt(p.yearly) %> ريال / سنة</p><% } %>
-      <ul class="plan-card__limits">
-        <% p.limits.forEach(function (l) { %><li><%= l.label %>: <%= l.limit === null ? 'بلا حد' : l.limit %></li><% }) %>
-        <% p.features.forEach(function (f) { %><li class="<%= f.on ? '' : 'is-off' %>"><%= f.on ? '✓' : '✗' %> <%= f.label %></li><% }) %>
-      </ul>
-    </li>
-  <% }) %>
-</ul>
-<% if (!plans.length) { %><p class="empty-state">تُعلَن الباقات قريباً.</p><% } %>
-<p class="muted">الأسعار قبل ضريبة القيمة المضافة (<%= vatPercent %>%) وتظهر كاملة قبل الدفع. تجربة مجانية <%= trialDays %> يوماً بدون بطاقة.</p>
+<% if (plans.length) { %>
+  <div class="pricing">
+    <input type="radio" name="billing-period" id="period-monthly" class="period-toggle__input" checked>
+    <input type="radio" name="billing-period" id="period-yearly" class="period-toggle__input">
+    <div class="period-toggle" role="group" aria-label="مدة الاشتراك">
+      <label for="period-monthly" class="period-toggle__option period-toggle__option--monthly">شهري</label>
+      <label for="period-yearly" class="period-toggle__option period-toggle__option--yearly">سنوي</label>
+    </div>
+    <ul class="plan-grid">
+      <% plans.forEach(function (p) { %>
+        <li class="plan-card" id="plan-<%= p.code %>">
+          <h3><%= p.name %></h3>
+          <p class="plan-card__price price--monthly"><strong><%= fmt(p.monthly) %></strong> ريال / شهرياً</p>
+          <p class="plan-card__price price--yearly"><strong><%= fmt(p.yearly) %></strong> ريال / سنوياً</p>
+          <% if (p.paidMonths) { %><p class="muted price--yearly">تدفع <%= p.paidMonths %> أشهر وتشترك 12 شهراً.</p><% } %>
+          <ul class="plan-card__limits">
+            <% p.lines.forEach(function (line) { %><li>✓ <%= line %></li><% }) %>
+          </ul>
+          <a href="/register" class="btn btn--primary btn--block">ابدأ التجربة المجانية</a>
+        </li>
+      <% }) %>
+      <li class="plan-card plan-card--custom" id="plan-custom">
+        <h3>باقة مخصصة</h3>
+        <p class="plan-card__price">لأكثر من <%= customFromUnits %> وحدة</p>
+        <p class="muted">نتفق معك على الحدود والسعر حسب حجم مكتبك.</p>
+        <a href="/contact" class="btn btn--secondary btn--block">تواصل معنا</a>
+      </li>
+    </ul>
+  </div>
+<% } else { %>
+  <p class="empty-state">لا توجد باقات منشورة حالياً. <a href="/contact">تواصل معنا</a>.</p>
+<% } %>
+<p class="muted">الأسعار لا تشمل ضريبة القيمة المضافة <%= vatPercent %>%، وتظهر كاملة قبل الدفع.</p>
+<p class="muted">التجربة المجانية <%= trialDays %> يوماً بدون بطاقة، بحدود الباقة الاحترافية.</p>

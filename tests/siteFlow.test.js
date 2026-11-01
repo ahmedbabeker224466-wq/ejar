@@ -178,7 +178,7 @@ test('pricing comes from the database: public active plans only, prices before V
   assert.match(pricing, /770\.00/);
   assert.doesNotMatch(pricing, /اختبار-باقة-مخفية/);
   assert.doesNotMatch(pricing, /اختبار-باقة-موقوفة/);
-  assert.match(pricing, /قبل ضريبة القيمة المضافة \(15%\)/);
+  assert.match(pricing, /الأسعار لا تشمل ضريبة القيمة المضافة 15%/);
   assert.match(await text('/'), /اختبار-باقة-معروضة/);
   // The FAQ comes from the faqs table (the built-in answers are only a fallback).
   await db.pool.query("INSERT INTO faqs (question_ar, answer_ar, sort_order, is_active) VALUES ('اختبار-سؤال-ظاهر؟', 'جواب-ظاهر', 999, 1), ('اختبار-سؤال-مخفي؟', 'جواب-مخفي', 1000, 0)");

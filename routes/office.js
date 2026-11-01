@@ -32,6 +32,11 @@ const contractsService = require('../services/contracts');
 const officeTenants = require('../services/officeTenants');
 const officeAudit = require('../services/officeAudit');
 const officeLink = require('../services/officeLink');
+const plans = require('../services/plans');
+const officialPricing = require('../services/officialPricing');
+const { scopeToOffice } = require('../services/scopeToOffice');
+const money = require('../services/money');
+const { effectivePlanIdSql } = require('../services/defaultPlan');
 const seo = require('../services/seo');
 const contractStatus = require('../services/contractStatus');
 const { riyadhDate } = require('../services/contractDates');
@@ -227,7 +232,19 @@ async function renderSettings(req, res, { values, errors = {}, saved = false, st
   const current = values || formValues(await offices.officeDetails(db.pool, req.office.id));
   const canEditOffice = can(req.memberRole, 'settings.office');
   const linkState = canEditOffice ? await officeLink.linkSettings(db.pool, req.office.id) : null;
+  // The office's plan, its limits and the current usage (read live from the plan row).
+  const [planRow] = await scopeToOffice(db.pool, req.office.id).query(`SELECT ${effectivePlanIdSql('o')} AS plan_id FROM offices o WHERE o.id = :office_id`);
+  const plan = planRow && planRow.plan_id ? await plans.getPlan(db.pool, planRow.plan_id) : null;
+  const usage = plans.usageRows(plan, await plans.usageFor(db.pool, req.office.id));
+  const planInfo = plan ? {
+    name: plan.name_ar,
+    trial: plan.code === 'trial',
+    usage,
+    lines: officialPricing.cardLines(plan, await officialPricing.customDomainAddon(db.pool), money.formatHalalas).slice(4),
+  } : null;
   return res.status(status).render('office/settings', {
+    planInfo,
+    canBilling: can(req.memberRole, 'billing'),
     title: 'الإعدادات',
     cities: offices.SAUDI_CITIES,
     values: current,
