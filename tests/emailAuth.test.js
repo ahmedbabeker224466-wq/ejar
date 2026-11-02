@@ -95,8 +95,8 @@ async function cleanup() {
   const owners = `SELECT id FROM users WHERE phone IN (${marks}) OR email LIKE 'ea-%@aqdi-test.example'`;
   await db.pool.query(`DELETE FROM audit_logs WHERE actor_id IN (${owners}) OR (entity_type = 'user' AND entity_id IN (${owners}))`, [...PHONES, ...PHONES]);
   await retryOnDeadlock(() => db.pool.query(`DELETE FROM offices WHERE owner_id IN (${owners})`, PHONES), { retries: 5 });
-  await db.pool.query(`DELETE FROM users WHERE phone IN (${marks}) OR email LIKE 'ea-%@aqdi-test.example'`, PHONES);
-  await db.pool.query(`DELETE FROM otp_codes WHERE phone IN (${marks})`, PHONES);
+  await retryOnDeadlock(() => db.pool.query(`DELETE FROM users WHERE phone IN (${marks}) OR email LIKE 'ea-%@aqdi-test.example'`, PHONES), { retries: 5 });
+  await retryOnDeadlock(() => db.pool.query(`DELETE FROM otp_codes WHERE phone IN (${marks})`, PHONES), { retries: 5 });
 }
 
 test.after(async () => {

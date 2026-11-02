@@ -52,8 +52,8 @@ test.before(async () => {
 async function cleanup() {
   const marks = PHONES.map(() => '?').join(',');
   await retryOnDeadlock(() => db.pool.query(`DELETE FROM offices WHERE owner_id IN (SELECT id FROM users WHERE phone IN (${marks}))`, PHONES), { retries: 5 });
-  await db.pool.query(`DELETE FROM users WHERE phone IN (${marks})`, PHONES);
-  await db.pool.query(`DELETE FROM otp_codes WHERE phone IN (${marks})`, PHONES);
+  await retryOnDeadlock(() => db.pool.query(`DELETE FROM users WHERE phone IN (${marks})`, PHONES), { retries: 5 });
+  await retryOnDeadlock(() => db.pool.query(`DELETE FROM otp_codes WHERE phone IN (${marks})`, PHONES), { retries: 5 });
 }
 
 test.after(async () => {

@@ -174,7 +174,7 @@ async function cleanup() {
   const marks = PHONES.map(() => '?').join(',');
   await retryOnDeadlock(() => db.pool.query(`DELETE FROM offices WHERE owner_id IN (SELECT id FROM users WHERE phone IN (${marks}))`, PHONES), { retries: 5 });
   await db.pool.query(`DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE phone IN (${marks}))`, PHONES);
-  await db.pool.query(`DELETE FROM users WHERE phone IN (${marks})`, PHONES);
+  await retryOnDeadlock(() => db.pool.query(`DELETE FROM users WHERE phone IN (${marks})`, PHONES), { retries: 5 });
   await db.pool.query('DELETE FROM backups');
 }
 

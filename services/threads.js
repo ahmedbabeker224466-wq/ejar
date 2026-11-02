@@ -11,6 +11,7 @@
 // within 5 minutes (soft delete: the text is blanked, the row stays).
 
 const { scopeToOffice } = require('./scopeToOffice');
+const { withTransaction } = require('./transaction');
 const { createNotification } = require('./notifications');
 const { createAudit } = require('./audit');
 const { hoursAfter } = require('./contractDates');
@@ -196,25 +197,29 @@ async function participants(pool, officeId, contract, conversation) {
 async function send(pool, officeId, { contract, userId, role, body, ip }) {
   const checked = validateBody(body);
   if (checked.error) return { ok: false, error: 'invalid', message: checked.error };
-  const scoped = scopeToOffice(pool, officeId);
-  const conversation = await conversationFor(pool, officeId, contract.id);
-  const id = await scoped.insert('messages', { conversation_id: conversation.id, sender_id: userId, sender_role: role, body: checked.value });
-  await scoped.query('UPDATE conversations SET last_message_at = UTC_TIMESTAMP() WHERE id = ? AND office_id = :office_id', [conversation.id]);
-  await markRead(pool, officeId, conversation.id, userId);
-  for (const person of await participants(pool, officeId, contract, conversation)) {
-    if (person.userId === Number(userId)) continue;
-    await createNotification(pool, {
-      userId: person.userId,
-      officeId,
-      kind: 'message_new',
-      title: `رسالة جديدة: ${contract.unit_label || 'عقد'}`,
-      body: `وصلتك رسالة جديدة في محادثة عقد ${contract.unit_label || ''}. افتحها للرد.`,
-      link: LINKS[person.kind](contract.id),
-      contractId: contract.id,
-      dedupeKey: `message_new:m${id}:u${person.userId}`,
-    });
-  }
-  return { ok: true, id };
+  // One transaction: a deadlock victim is rolled back and retried whole
+  // (withTransaction), so the message is stored and notified exactly once.
+  return withTransaction(pool, async (conn) => {
+    const scoped = scopeToOffice(conn, officeId);
+    const conversation = await conversationFor(conn, officeId, contract.id);
+    const id = await scoped.insert('messages', { conversation_id: conversation.id, sender_id: userId, sender_role: role, body: checked.value });
+    await scoped.query('UPDATE conversations SET last_message_at = UTC_TIMESTAMP() WHERE id = ? AND office_id = :office_id', [conversation.id]);
+    await markRead(conn, officeId, conversation.id, userId);
+    for (const person of await participants(conn, officeId, contract, conversation)) {
+      if (person.userId === Number(userId)) continue;
+      await createNotification(conn, {
+        userId: person.userId,
+        officeId,
+        kind: 'message_new',
+        title: `رسالة جديدة: ${contract.unit_label || 'عقد'}`,
+        body: `وصلتك رسالة جديدة في محادثة عقد ${contract.unit_label || ''}. افتحها للرد.`,
+        link: LINKS[person.kind](contract.id),
+        contractId: contract.id,
+        dedupeKey: `message_new:m${id}:u${person.userId}`,
+      });
+    }
+    return { ok: true, id };
+  });
 }
 
 /** The author deletes their own message within 5 minutes. Returns true when it changed. */
