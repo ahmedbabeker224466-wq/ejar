@@ -11,6 +11,7 @@
 require('dotenv').config({ quiet: true });
 if (process.env.TEST_DB_NAME) process.env.DB_NAME = process.env.TEST_DB_NAME;
 
+const { retryOnDeadlock } = require('../services/transaction');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
@@ -93,7 +94,7 @@ async function cleanup() {
   const marks = PHONES.map(() => '?').join(',');
   const owners = `SELECT id FROM users WHERE phone IN (${marks}) OR email LIKE 'ea-%@aqdi-test.example'`;
   await db.pool.query(`DELETE FROM audit_logs WHERE actor_id IN (${owners}) OR (entity_type = 'user' AND entity_id IN (${owners}))`, [...PHONES, ...PHONES]);
-  await db.pool.query(`DELETE FROM offices WHERE owner_id IN (${owners})`, PHONES);
+  await retryOnDeadlock(() => db.pool.query(`DELETE FROM offices WHERE owner_id IN (${owners})`, PHONES), { retries: 5 });
   await db.pool.query(`DELETE FROM users WHERE phone IN (${marks}) OR email LIKE 'ea-%@aqdi-test.example'`, PHONES);
   await db.pool.query(`DELETE FROM otp_codes WHERE phone IN (${marks})`, PHONES);
 }

@@ -13,6 +13,7 @@
 require('dotenv').config({ quiet: true });
 if (process.env.TEST_DB_NAME) process.env.DB_NAME = process.env.TEST_DB_NAME;
 
+const { retryOnDeadlock } = require('../services/transaction');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -79,7 +80,7 @@ test.before(async () => {
 
 async function cleanup() {
   const marks = PHONES.map(() => '?').join(',');
-  await db.pool.query(`DELETE FROM offices WHERE owner_id IN (SELECT id FROM users WHERE phone IN (${marks}))`, PHONES);
+  await retryOnDeadlock(() => db.pool.query(`DELETE FROM offices WHERE owner_id IN (SELECT id FROM users WHERE phone IN (${marks}))`, PHONES), { retries: 5 });
   await db.pool.query(`DELETE FROM users WHERE phone IN (${marks})`, PHONES);
   await db.pool.query(`DELETE FROM otp_codes WHERE phone IN (${marks})`, PHONES);
   await db.pool.query("DELETE FROM promo_codes WHERE code LIKE 'ADM%'");
