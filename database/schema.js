@@ -154,7 +154,9 @@ const TABLES = [
     'public_slug VARCHAR(40) NULL', // the office's public link /<slug> (services/officeLink.js)
     'public_page_enabled TINYINT(1) NOT NULL DEFAULT 0',
     'public_description VARCHAR(300) NULL', // plain text the owner writes for the public page
+    'custom_domain VARCHAR(253) NULL', // set by the platform admin on activation; routing is manual for now
     'UNIQUE KEY uq_offices_public_slug (public_slug)',
+    'UNIQUE KEY uq_offices_custom_domain (custom_domain)',
     fk('offices', 'owner_id', 'users', 'SET NULL'),
     fk('offices', 'plan_id', 'plans', 'SET NULL'),
   ]),
@@ -177,6 +179,31 @@ const TABLES = [
     'UNIQUE KEY uq_office_slug_history_slug (slug)',
     'KEY idx_office_slug_history_office (office_id, created_at)',
     fk('office_slug_history', 'office_id', 'offices', 'CASCADE'),
+  ]),
+
+  // Custom domain requests (services/domains.js). One open request per office
+  // (checked in code under the office row lock). Domains are stored lower-case
+  // ASCII (punycode). The nameserver fields and dns_zone_ref are filled by the
+  // platform admin by hand for now (later by the Cloudflare integration).
+  table('office_domain_requests', [
+    `office_id ${REF} NOT NULL`,
+    "type ENUM('own','reserve') NOT NULL",
+    "connection_method ENUM('nameservers','records') NOT NULL DEFAULT 'nameservers'",
+    'domain VARCHAR(253) NOT NULL',
+    'alt_domains JSON NULL', // reserve only: up to 2 alternatives
+    "status ENUM('pending_setup','pending_purchase','awaiting_nameservers','awaiting_dns','active','rejected','cancelled') NOT NULL",
+    'assigned_ns_1 VARCHAR(253) NULL',
+    'assigned_ns_2 VARCHAR(253) NULL',
+    'dns_zone_ref VARCHAR(255) NULL',
+    'admin_note VARCHAR(500) NULL', // private to the platform admin
+    "plan_mode ENUM('none','addon','included') NULL", // the plan's custom_domain mode when requested
+    'addon_monthly_halalas INT UNSIGNED NULL', // the add-on price shown at request time (recorded, never charged here)
+    'price_cost_halalas INT UNSIGNED NULL', // reserve: the real domain cost, set by the admin
+    'service_fee_halalas INT UNSIGNED NOT NULL DEFAULT 4000',
+    'activated_at DATETIME NULL',
+    'KEY idx_office_domain_requests_office (office_id, status)',
+    'KEY idx_office_domain_requests_status (status, updated_at)',
+    fk('office_domain_requests', 'office_id', 'offices', 'CASCADE'),
   ]),
 
   table('office_branches', [
@@ -1128,6 +1155,7 @@ const TABLES = [
 // already includes them for new databases; ensureSchema() adds them to older
 // databases that are missing them.
 const COLUMN_ADDITIONS = [
+  { table: 'offices', column: 'custom_domain', definition: 'VARCHAR(253) NULL AFTER public_description' },
   { table: 'plans', column: 'custom_domain', definition: "ENUM('none','addon','included') NOT NULL DEFAULT 'none' AFTER features" },
   { table: 'plans', column: 'audit_level', definition: "ENUM('basic','full') NOT NULL DEFAULT 'full' AFTER custom_domain" },
   { table: 'plans', column: 'support_level', definition: "ENUM('email','email_whatsapp','priority') NOT NULL DEFAULT 'email' AFTER audit_level" },
@@ -1258,6 +1286,7 @@ const NULLABLE_CHANGES = [
 
 const INDEX_ADDITIONS = [
   { table: 'offices', index: 'uq_offices_public_slug', columns: 'public_slug', unique: true },
+  { table: 'offices', index: 'uq_offices_custom_domain', columns: 'custom_domain', unique: true },
   { table: 'backups', index: 'idx_backups_created', columns: 'created_at' },
   { table: 'otp_codes', index: 'idx_otp_codes_ip_created', columns: 'ip, created_at' },
   { table: 'notifications', index: 'uq_notifications_dedupe', columns: 'dedupe_key', unique: true },

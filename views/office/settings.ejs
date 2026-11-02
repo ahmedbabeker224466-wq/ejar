@@ -52,6 +52,8 @@
 </section>
 <% } %>
 
+<%- include('_domain') %>
+
 <% if (link) { %>
 <section class="card form-card" id="office-link">
   <h2>رابط مكتبك</h2>
@@ -87,6 +89,6 @@
   </form>
   <p class="disclaimer">تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط</p>
 </section>
-<script src="<%= assetUrl('/js/copy.js') %>" defer></script>
 <script src="<%= assetUrl('/js/officeLink.js') %>" defer></script>
 <% } %>
+<script src="<%= assetUrl('/js/copy.js') %>" defer></script>

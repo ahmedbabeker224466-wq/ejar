@@ -71,6 +71,7 @@ application root). `.env` is never committed.
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | optional | email reminders; empty = email skipped |
 | `CLAUDE_API_KEY`, `CLAUDE_MODEL` | optional | AI contract reading; empty = feature off |
 | `MOYASAR_SECRET_KEY`, `MOYASAR_PUBLISHABLE_KEY`, `MOYASAR_WEBHOOK_SECRET` | optional | card payments, **test keys only** until the commercial entity is decided (`MOYASAR_ALLOW_LIVE=1` is the explicit opt-in for live keys) |
+| `APP_DOMAIN_TARGET`, `APP_DOMAIN_IP` | optional | the CNAME target and A address offices use with the "DNS records" domain method; empty = offices are told the values will be sent (docs/DOMAINS.md) |
 | `TEST_DB_NAME` | never on the server | separate empty database for `npm test` on a developer machine |
 
 WhatsApp and Telegram credentials are **not** environment variables: each office
@@ -220,7 +221,7 @@ metadata under random file names. Requirements:
 
 ## 8. Pre-launch checklist
 
-The live version of this list is **Admin > جاهزية الإطلاق** (`/admin/launch`): 23 checks with pass / warn / fail, no secret ever shown. Items the app cannot see (secrets and DB password rotated, backup codes regenerated, restore drill, Ejar rules verified, lawyer review, last `npm audit`) are recorded there by hand with a reason. In production the app also logs the ids of failing checks at start-up. Open it before opening the platform to real users and keep going until nothing is red.
+The live version of this list is **Admin > جاهزية الإطلاق** (`/admin/launch`): 24 checks with pass / warn / fail, no secret ever shown. Items the app cannot see (secrets and DB password rotated, backup codes regenerated, restore drill, Ejar rules verified, lawyer review, last `npm audit`) are recorded there by hand with a reason. In production the app also logs the ids of failing checks at start-up. Open it before opening the platform to real users and keep going until nothing is red.
 
 Do every item, in this order. Tick it in your copy.
 

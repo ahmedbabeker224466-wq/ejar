@@ -159,7 +159,8 @@ test('no page claims an affiliation with, approval by or compliance with Ejar, R
 
 test('legal pages: marked for lawyer review, and the operator details come from the platform settings', { skip }, async () => {
   for (const p of ['/privacy', '/terms', '/disclaimer']) assert.match(await text(p), /يراجعها محامٍ قبل الإطلاق/, p);
-  assert.doesNotMatch(await text('/privacy'), /ريال|\b\d{10}\b/, 'no company number is hardcoded');
+  // Asset version hashes (?v=...) can be all digits by chance: not a company number.
+  assert.doesNotMatch((await text('/privacy')).replace(/\?v=[0-9a-f]+/g, ''), /ريال|\b\d{10}\b/, 'no company number is hardcoded');
   await mod.settings.save(db.pool, { [mod.settings.KEYS.sellerCr]: '1234567890' });
   try {
     const html = await text('/about');

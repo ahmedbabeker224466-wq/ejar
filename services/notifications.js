@@ -41,6 +41,7 @@ const KIND_LABELS = {
   sms_low: 'رصيد الرسائل منخفض',
   ops_report: 'التقرير الشهري للمنصة',
   contact_new: 'رسالة من نموذج التواصل',
+  domain_update: 'تحديث طلب نطاق المكتب',
   test: 'رسالة تجربة',
 };
 

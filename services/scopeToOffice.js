@@ -20,6 +20,7 @@ class OfficeScopeError extends Error {
 const OFFICE_TABLES = new Set([
   'office_members',
   'office_slug_history',
+  'office_domain_requests',
   'office_branches',
   'office_settings',
   'office_secrets',

@@ -35,6 +35,7 @@ const officeLink = require('../services/officeLink');
 const plans = require('../services/plans');
 const officialPricing = require('../services/officialPricing');
 const { scopeToOffice } = require('../services/scopeToOffice');
+const domains = require('../services/domains');
 const money = require('../services/money');
 const { effectivePlanIdSql } = require('../services/defaultPlan');
 const seo = require('../services/seo');
@@ -227,8 +228,9 @@ router.get('/office/audit', requirePerm('audit'), async (req, res, next) => {
 // ------------------------------------------------------------ settings
 
 const LINK_NOTICES = { link: 'تم تغيير رابط مكتبك. الرابط القديم يحوّل الزوار إلى الجديد.', page: 'تم حفظ إعدادات صفحة المكتب.' };
+const DOMAIN_NOTICES = { created: 'تم إرسال طلب النطاق. سنتابع معك وتصلك التحديثات في الإشعارات.', cancelled: 'تم إلغاء طلب النطاق.' };
 
-async function renderSettings(req, res, { values, errors = {}, saved = false, status = 200, link = {} } = {}) {
+async function renderSettings(req, res, { values, errors = {}, saved = false, status = 200, link = {}, domain = {} } = {}) {
   const current = values || formValues(await offices.officeDetails(db.pool, req.office.id));
   const canEditOffice = can(req.memberRole, 'settings.office');
   const linkState = canEditOffice ? await officeLink.linkSettings(db.pool, req.office.id) : null;
@@ -242,7 +244,17 @@ async function renderSettings(req, res, { values, errors = {}, saved = false, st
     usage,
     lines: officialPricing.cardLines(plan, await officialPricing.customDomainAddon(db.pool), money.formatHalalas).slice(4),
   } : null;
+  const domainView = await domains.officeView(db.pool, req.office.id);
   return res.status(status).render('office/settings', {
+    domain: {
+      ...domainView,
+      freeLink: domainView.slug ? `${seo.baseUrl(req).replace(/^https?:\/\//, '')}/${domainView.slug}` : null,
+      canRequest: can(req.memberRole, 'billing'),
+      fmt: money.formatHalalas,
+      errors: domain.errors || {},
+      values: domain.values || {},
+      notice: DOMAIN_NOTICES[req.query.domain] || null,
+    },
     planInfo,
     canBilling: can(req.memberRole, 'billing'),
     title: 'الإعدادات',
@@ -295,6 +307,38 @@ router.post('/office/settings', requirePerm('settings.office'), async (req, res,
 });
 
 // The office's public link (owner and manager). Open while the office is locked, like the rest of settings.
+// Custom domain requests (services/domains.js): the owner only ('billing').
+router.post('/office/settings/domain', requirePerm('billing'), async (req, res, next) => {
+  try {
+    const values = {
+      type: String(req.body.type || ''),
+      domain: String(req.body.domain || '').slice(0, 260),
+      connection_method: String(req.body.connection_method || ''),
+      alt_1: String(req.body.alt_1 || '').slice(0, 260),
+      alt_2: String(req.body.alt_2 || '').slice(0, 260),
+    };
+    if (values.type === 'none') return res.redirect('/office/settings#domain');
+    if (req.officeAccess && (req.officeAccess.locked || req.officeAccess.readOnly)) {
+      return await renderSettings(req, res, { status: 402, domain: { values, errors: { form: 'اشتراكك منتهي. جدّد الاشتراك لطلب نطاق.' } } });
+    }
+    const result = await domains.createRequest(db.pool, { officeId: req.office.id, userId: req.user.id, body: req.body, ip: req.ip });
+    if (!result.ok) return await renderSettings(req, res, { status: 422, domain: { values, errors: result.errors } });
+    return res.redirect('/office/settings?domain=created#domain');
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post('/office/settings/domain/:id/cancel', requirePerm('billing'), async (req, res, next) => {
+  try {
+    const ok = await domains.cancelRequest(db.pool, { officeId: req.office.id, userId: req.user.id, requestId: req.params.id, ip: req.ip });
+    if (!ok) return res.status(404).render('errors/404', { title: 'الصفحة غير موجودة' });
+    return res.redirect('/office/settings?domain=cancelled#domain');
+  } catch (err) {
+    return next(err);
+  }
+});
+
 router.post('/office/settings/link', requirePerm('settings.office'), async (req, res, next) => {
   try {
     const result = await officeLink.changeSlug(db.pool, { officeId: req.office.id, actorId: req.user.id, slug: req.body.slug, ip: req.ip });

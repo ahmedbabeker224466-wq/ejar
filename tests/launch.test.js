@@ -48,7 +48,7 @@ const GOOD_PLANS = () => Object.entries(require('../services/officialPricing').O
 function fakePool(o = {}) {
   const opts = {
     records: ALL_RECORDS(), seller: { 'seller.legal_name': 'شركة', 'seller.address': 'الرياض', 'seller.vat_number': '300000000000003' },
-    admins: { total: 1, enabled: 1 }, backupAt: new Date('2026-12-01T00:00:00Z'), cronAt: new Date('2026-12-01T08:50:00Z'), stuck: 0, failed: 0, noPlan: 0, plans: GOOD_PLANS(), ...o,
+    admins: { total: 1, enabled: 1 }, backupAt: new Date('2026-12-01T00:00:00Z'), cronAt: new Date('2026-12-01T08:50:00Z'), stuck: 0, failed: 0, noPlan: 0, plans: GOOD_PLANS(), staleDomains: 0, ...o,
   };
   const pool = {
     async query(sql) {
@@ -59,6 +59,7 @@ function fakePool(o = {}) {
       if (sql.includes('FROM cron_runs')) return [[{ at: opts.cronAt }]];
       if (sql.includes('FROM offices WHERE plan_id IS NULL')) return [[{ n: opts.noPlan }]];
       if (sql.includes('FROM plans WHERE is_active = 1')) return [opts.plans];
+      if (sql.includes('FROM office_domain_requests')) return [[{ n: opts.staleDomains }]];
       if (sql.includes("status = 'pending'")) return [[{ n: opts.stuck }]];
       if (sql.includes("status = 'failed'")) return [[{ n: opts.failed }]];
       throw new Error(`unexpected query: ${sql}`);
@@ -120,13 +121,13 @@ test('everything in order: every check passes and the platform is ready', async 
   assert.deepEqual(checks.map((c) => c.id), [
     'node_env', 'sms_provider', 'secrets_strength', 'secrets_rotated', 'db_password_rotated', 'admin_2fa', 'admin_backup_codes', 'backup_recent', 'restore_drill',
     'backup_dir', 'seller_details', 'office_plans', 'plans_pricing', 'ejar_rules', 'legal_review', 'smtp', 'moyasar', 'app_url', 'office_links', 'cron_heartbeat', 'uploads_dir', 'npm_audit',
-    'auth_email_test',
+    'domain_requests', 'auth_email_test',
   ]);
   for (const c of checks) {
     assert.equal(c.status, 'pass', `${c.id}: ${c.detailAr}`);
     assert.ok(c.titleAr && c.detailAr, c.id);
   }
-  assert.deepEqual(launch.summarize(checks), { pass: 23, warn: 0, fail: 0, ready: true });
+  assert.deepEqual(launch.summarize(checks), { pass: 24, warn: 0, fail: 0, ready: true });
 });
 
 test('each check turns warn or fail for its own reason, and nothing else changes', async () => {
@@ -238,6 +239,8 @@ test('each check turns warn or fail for its own reason, and nothing else changes
   await expectOnly('plans_pricing', 'fail', withPlans((ps) => ps.map((p) => (p.code === 'trial' ? { ...p, max_members: null } : p))));
   await expectOnly('plans_pricing', 'fail', withPlans((ps) => ps.filter((p) => p.code === 'trial')));
   await expectOnly('plans_pricing', 'pass', withPlans((ps) => ps.filter((p) => p.code !== 'enterprise')));
+  // 15b: domain requests pending for more than 3 days
+  await expectOnly('domain_requests', 'warn', fakePool({ staleDomains: 2 }));
   // 16: the email test sign-in fails the launch while the flag is on, even with LAUNCH_MODE=testing
   await expectOnly('auth_email_test', 'fail', null, { ...goodEnv(), AUTH_EMAIL_TEST: 'true' });
   await expectOnly('auth_email_test', 'fail', null, { ...goodEnv(), AUTH_EMAIL_TEST: 'TRUE', LAUNCH_MODE: 'testing' });
@@ -370,7 +373,7 @@ test.describe('/admin/launch', { skip }, () => {
 
     const page = await http.request('/admin/launch', { cookie: admin.cookie });
     assert.equal(page.status, 200);
-    assert.equal((page.text.match(/id="check-/g) || []).length, 23);
+    assert.equal((page.text.match(/id="check-/g) || []).length, 24);
     assert.match(page.text, /جاهزية الإطلاق/);
     assert.match(page.text, /غير جاهز للإطلاق/);
     assert.match(page.text, /2025-09-25/, 'the Riyadh freeze value is shown for comparison');

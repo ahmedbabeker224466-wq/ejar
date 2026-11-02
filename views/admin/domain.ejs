@@ -1,0 +1,70 @@
+<p class="back-link"><a href="/admin/domains">→ طلبات الدومين</a></p>
+<div class="page-head"><h1 dir="ltr"><%= request.domain %></h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+
+<div class="flash flash--warning" role="note">التفعيل هنا يسجّل الدومين للمكتب فقط ولا يغيّر توجيه الموقع. الربط الفعلي (DNS وشهادة SSL وإعداد الخادم) يتم يدوياً حتى ترقية الخادم. راجع docs/DOMAINS.md.</div>
+
+<section class="card detail-card">
+  <h2>الطلب</h2>
+  <dl class="details">
+    <dt>المكتب</dt><dd><a href="/admin/offices/<%= request.office_id %>"><%= request.office_name %></a></dd>
+    <dt>الحالة</dt><dd><span class="badge badge--domain-<%= request.status %>"><%= request.statusLabel %></span></dd>
+    <dt>النوع</dt><dd><%= request.type === 'own' ? 'لدي دومين' : 'احجز لي دوميناً' %></dd>
+    <% if (request.type === 'own') { %><dt>طريقة الربط</dt><dd><%= request.connection_method === 'records' ? 'سجلات DNS (CNAME و A)' : 'Nameservers' %></dd><% } %>
+    <% if (request.alt_domains.length) { %><dt>البدائل</dt><dd dir="ltr"><%= request.alt_domains.join(', ') %></dd><% } %>
+    <dt>الباقة الآن</dt><dd><%= request.plan_name || '—' %> (<%= { none: 'غير متاح', addon: 'إضافة مدفوعة', included: 'مشمول' }[request.current_plan_mode] || '—' %>)</dd>
+    <dt>عند الطلب</dt><dd><%= { none: 'غير متاح', addon: 'إضافة مدفوعة', included: 'مشمول' }[request.plan_mode] || '—' %><% if (request.addon_monthly_halalas) { %> · سعر الإضافة المعروض: <%= fmt(request.addon_monthly_halalas) %> ريال شهرياً (لم يُخصم شيء)<% } %></dd>
+    <dt>رسم الخدمة</dt><dd><%= fmt(request.service_fee_halalas) %> ريال</dd>
+    <dt>نطاق المكتب الفعّال</dt><dd dir="ltr"><%= request.office_domain || '—' %></dd>
+    <dt>تاريخ الطلب</dt><dd dir="ltr"><%= stamp(request.created_at) %></dd>
+    <dt>آخر تحديث</dt><dd dir="ltr"><%= stamp(request.updated_at) %></dd>
+    <% if (request.activated_at) { %><dt>تاريخ التفعيل</dt><dd dir="ltr"><%= stamp(request.activated_at) %></dd><% } %>
+  </dl>
+</section>
+
+<section class="card detail-card" id="propagation">
+  <h2>فحص الانتشار (NS)</h2>
+  <p class="muted">استعلام DNS عادي عن سجلات NS للدومين. لا يغيّر شيئاً.</p>
+  <% if (check) { %>
+    <% if (check.ok) { %>
+      <p>سجلات NS الحالية:</p>
+      <ul dir="ltr" class="ns-list"><% check.ns.forEach(function (n) { %><li><%= n %></li><% }) %></ul>
+      <% if (check.matches === true) { %><p><span class="badge badge--domain-active">مطابقة للقيم المسندة ✓</span></p>
+      <% } else if (check.matches === false) { %><p><span class="badge badge--domain-rejected">غير مطابقة بعد</span> المتوقع: <span dir="ltr"><%= check.expected.join(', ') %></span></p>
+      <% } else { %><p class="muted">لم تُسند قيم Nameservers بعد للمقارنة.</p><% } %>
+    <% } else { %>
+      <p class="field-error" role="alert"><%= lookupErrors[check.error] || 'تعذّر الاستعلام.' %> <span dir="ltr">(<%= check.error %>)</span></p>
+    <% } %>
+  <% } %>
+  <form method="post" action="/admin/domains/<%= request.id %>/check"><button type="submit" class="btn btn--secondary">فحص الانتشار</button></form>
+</section>
+
+<section class="card form-card">
+  <h2>تحديث الطلب (يحتاج سبباً ويُسجَّل)</h2>
+  <form method="post" action="/admin/domains/<%= request.id %>" novalidate>
+    <div class="field">
+      <label for="status">الحالة</label>
+      <select id="status" name="status" class="select" <%= next.length ? '' : 'disabled' %>>
+        <option value="<%= request.status %>"><%= labels[request.status] %> (الحالية)</option>
+        <% next.forEach(function (s) { %><option value="<%= s %>" <%= values.status === s ? 'selected' : '' %>><%= s === 'active' ? 'تفعيل: ' : '' %><%= labels[s] %></option><% }) %>
+      </select>
+      <% if (errors.status) { %><p class="field-error" role="alert"><%= errors.status %></p><% } %>
+      <% if (!next.length) { %><p class="field-hint">حالة نهائية.</p><% } %>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label for="ns1">Nameserver 1</label><input id="ns1" name="assigned_ns_1" class="input" dir="ltr" maxlength="253" value="<%= values.assigned_ns_1 %>" <%= errors.assigned_ns_1 ? 'aria-invalid=true' : '' %>>
+        <% if (errors.assigned_ns_1) { %><p class="field-error"><%= errors.assigned_ns_1 %></p><% } %></div>
+      <div class="field"><label for="ns2">Nameserver 2</label><input id="ns2" name="assigned_ns_2" class="input" dir="ltr" maxlength="253" value="<%= values.assigned_ns_2 %>" <%= errors.assigned_ns_2 ? 'aria-invalid=true' : '' %>>
+        <% if (errors.assigned_ns_2) { %><p class="field-error"><%= errors.assigned_ns_2 %></p><% } %></div>
+    </div>
+    <div class="field"><label for="zone">مرجع المنطقة (dns_zone_ref)</label><input id="zone" name="dns_zone_ref" class="input" dir="ltr" maxlength="255" value="<%= values.dns_zone_ref %>">
+      <% if (errors.dns_zone_ref) { %><p class="field-error"><%= errors.dns_zone_ref %></p><% } %></div>
+    <div class="field"><label for="cost">تكلفة الدومين بالريال (للحجز)</label><input id="cost" name="price_cost" class="input" inputmode="decimal" dir="ltr" maxlength="12" value="<%= values.price_cost %>">
+      <% if (errors.price_cost) { %><p class="field-error"><%= errors.price_cost %></p><% } %></div>
+    <div class="field"><label for="note">ملاحظة خاصة (لا يراها المكتب)</label><textarea id="note" name="admin_note" class="input" rows="3" maxlength="500"><%= values.admin_note %></textarea>
+      <% if (errors.admin_note) { %><p class="field-error"><%= errors.admin_note %></p><% } %></div>
+    <div class="field"><label for="reason">السبب</label><input id="reason" name="reason" class="input" maxlength="200" required></div>
+    <button type="submit" class="btn btn--primary btn--block">حفظ</button>
+  </form>
+</section>

@@ -1,0 +1,119 @@
+<section class="card form-card" id="domain">
+  <h2>نطاق مكتبك</h2>
+  <% if (domain.notice) { %><div class="flash flash--success" role="status"><%= domain.notice %></div><% } %>
+  <% if (domain.errors.form) { %><div class="flash flash--danger" role="alert"><%= domain.errors.form %></div><% } %>
+
+  <% if (domain.freeLink) { %>
+    <p>رابطك المجاني يعمل دائماً، حتى مع النطاق الخاص:</p>
+    <div class="invite-code office-link"><output id="domain-free-link" dir="ltr"><%= domain.freeLink %></output><button type="button" class="btn btn--secondary" data-copy="#domain-free-link" data-copied="تم النسخ">نسخ</button></div>
+  <% } %>
+
+  <% if (domain.activeDomain) { %>
+    <p>نطاق مكتبك: <strong dir="ltr"><%= domain.activeDomain %></strong> <span class="badge badge--domain-active">فعّال</span></p>
+    <p class="muted">ربط الموقع بالنطاق يتم يدوياً من فريق المنصة، وسنبلغك عند اكتماله. لتغيير النطاق تواصل مع الدعم.</p>
+  <% } else if (domain.request && domain.request.open) { %>
+    <% const r = domain.request; %>
+    <div class="domain-status" id="domain-request">
+      <p>طلبك: <strong dir="ltr"><%= r.domain %></strong>
+        <span class="badge badge--domain-<%= r.status %>"><%= r.statusLabel %></span></p>
+      <p class="muted"><%= r.type === 'own' ? 'لدي دومين' : 'احجز لي دوميناً' %></p>
+
+      <% if (r.type === 'own' && r.connection_method === 'nameservers') { %>
+        <% if (r.assigned_ns_1 && r.assigned_ns_2) { %>
+          <p>غيّر Nameservers الدومين عند مزودك إلى القيمتين التاليتين:</p>
+          <div class="copy-box" dir="ltr">
+            <div class="invite-code"><output id="domain-ns-1"><%= r.assigned_ns_1 %></output><button type="button" class="btn btn--secondary" data-copy="#domain-ns-1" data-copied="تم النسخ">نسخ</button></div>
+            <div class="invite-code"><output id="domain-ns-2"><%= r.assigned_ns_2 %></output><button type="button" class="btn btn--secondary" data-copy="#domain-ns-2" data-copied="تم النسخ">نسخ</button></div>
+          </div>
+          <p class="muted">قد يستغرق التغيير من ساعات إلى يومين حتى يظهر في كل مكان.</p>
+        <% } else { %>
+          <p class="muted">سيرسل لك الدعم القيم قريباً.</p>
+        <% } %>
+      <% } else if (r.type === 'own') { %>
+        <% if (domain.records.target || domain.records.ip) { %>
+          <p>أضف السجلات التالية عند مزود الدومين:</p>
+          <div class="copy-box" dir="ltr">
+            <% if (domain.records.target) { %><div class="invite-code"><span>CNAME www →</span><output id="domain-cname"><%= domain.records.target %></output><button type="button" class="btn btn--secondary" data-copy="#domain-cname" data-copied="تم النسخ">نسخ</button></div><% } %>
+            <% if (domain.records.ip) { %><div class="invite-code"><span>A @ →</span><output id="domain-a"><%= domain.records.ip %></output><button type="button" class="btn btn--secondary" data-copy="#domain-a" data-copied="تم النسخ">نسخ</button></div><% } %>
+          </div>
+        <% } else { %>
+          <p class="muted">سيرسل لك الدعم القيم قريباً.</p>
+        <% } %>
+      <% } else { %>
+        <% if (r.alt_domains.length) { %><p>البدائل: <% r.alt_domains.forEach(function (a, i) { %><span dir="ltr"><%= a %></span><%= i < r.alt_domains.length - 1 ? '، ' : '' %><% }) %></p><% } %>
+        <p>تكلفة الدومين الفعلية + رسم خدمة <%= domain.fmt(r.service_fee_halalas) %> ريال، ويُسجَّل باسم المكتب.</p>
+        <% if (r.price_cost_halalas) { %><p>تكلفة الدومين حسب المراجعة: <strong><%= domain.fmt(r.price_cost_halalas) %> ريال</strong> + رسم الخدمة.</p><% } %>
+        <p class="muted">نتحقق من توفر الاسم بعد الطلب، ولا نضمن توفره قبل ذلك.</p>
+      <% } %>
+
+      <% if (domain.canRequest) { %>
+        <form method="post" action="/office/settings/domain/<%= r.id %>/cancel">
+          <button type="submit" class="btn btn--secondary btn--block">إلغاء الطلب</button>
+        </form>
+      <% } %>
+    </div>
+  <% } else if (domain.mode === 'none') { %>
+    <div class="domain-locked">
+      <p><strong>🔒 النطاق الخاص غير متاح في باقتك الحالية.</strong></p>
+      <p class="muted">رقِّ باقتك لتربط مكتبك بنطاق خاص مثل myoffice.sa.</p>
+      <% if (domain.canRequest) { %><a href="/office/billing" class="btn btn--primary">ترقية الباقة</a><% } else { %><p class="muted">الترقية متاحة لمالك المكتب.</p><% } %>
+    </div>
+  <% } else { %>
+    <% if (domain.request && domain.request.status === 'rejected') { %><p class="muted">طلبك السابق (<span dir="ltr"><%= domain.request.domain %></span>) مرفوض. يمكنك تقديم طلب جديد.</p><% } %>
+    <% if (domain.mode === 'addon' && domain.addonHalalas) { %>
+      <p>النطاق الخاص إضافة اختيارية بـ <strong><%= domain.fmt(domain.addonHalalas) %> ريال شهرياً</strong>. لا تُخصم تلقائياً: نراجع الطلب ونتواصل معك قبل أي رسوم.</p>
+    <% } else if (domain.mode === 'included') { %>
+      <p>باقتك تشمل نطاقاً خاصاً واحداً.</p>
+    <% } %>
+
+    <% if (domain.canRequest) { %>
+      <% const v = domain.values; const e = domain.errors; %>
+      <form method="post" action="/office/settings/domain" novalidate class="domain-form">
+        <fieldset class="field domain-choice">
+          <legend>ماذا تريد؟</legend>
+          <input type="radio" id="domain-type-own" name="type" value="own" class="choice-input" <%= v.type === 'own' ? 'checked' : '' %>>
+          <label for="domain-type-own" class="choice">لدي دومين</label>
+          <input type="radio" id="domain-type-reserve" name="type" value="reserve" class="choice-input" <%= v.type === 'reserve' ? 'checked' : '' %>>
+          <label for="domain-type-reserve" class="choice">احجز لي دوميناً</label>
+          <input type="radio" id="domain-type-none" name="type" value="none" class="choice-input" <%= v.type !== 'own' && v.type !== 'reserve' ? 'checked' : '' %>>
+          <label for="domain-type-none" class="choice">ليس الآن</label>
+
+          <div class="domain-fields">
+            <div class="field">
+              <label for="domain-name">اسم الدومين</label>
+              <input id="domain-name" name="domain" class="input" type="text" dir="ltr" inputmode="url" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="253" placeholder="myoffice.sa" value="<%= v.domain || '' %>" <%= e.domain ? 'aria-invalid=true' : '' %>>
+              <% if (e.domain) { %><p class="field-error" role="alert"><%= e.domain %></p><% } %>
+            </div>
+
+            <div class="domain-own">
+              <fieldset class="field">
+                <legend>طريقة الربط</legend>
+                <label class="check"><input type="radio" name="connection_method" value="nameservers" <%= v.connection_method !== 'records' ? 'checked' : '' %>> تغيير Nameservers (الأسهل: نرسل لك قيمتين تضعهما عند مزودك)</label>
+                <label class="check"><input type="radio" name="connection_method" value="records" <%= v.connection_method === 'records' ? 'checked' : '' %>> إضافة سجلات DNS (CNAME و A) مع إبقاء Nameservers كما هي</label>
+              </fieldset>
+            </div>
+
+            <div class="domain-reserve">
+              <div class="field">
+                <label for="domain-alt-1">بديل أول (اختياري)</label>
+                <input id="domain-alt-1" name="alt_1" class="input" type="text" dir="ltr" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="253" value="<%= v.alt_1 || '' %>" <%= e.alt_1 ? 'aria-invalid=true' : '' %>>
+                <% if (e.alt_1) { %><p class="field-error" role="alert"><%= e.alt_1 %></p><% } %>
+              </div>
+              <div class="field">
+                <label for="domain-alt-2">بديل ثانٍ (اختياري)</label>
+                <input id="domain-alt-2" name="alt_2" class="input" type="text" dir="ltr" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="253" value="<%= v.alt_2 || '' %>" <%= e.alt_2 ? 'aria-invalid=true' : '' %>>
+                <% if (e.alt_2) { %><p class="field-error" role="alert"><%= e.alt_2 %></p><% } %>
+              </div>
+              <p>تكلفة الدومين الفعلية + رسم خدمة <%= domain.fmt(domain.serviceFeeHalalas) %> ريال، ويُسجَّل باسم المكتب.</p>
+              <p class="muted">نتحقق من توفر الاسم بعد الطلب، ولا نضمن توفره قبل ذلك.</p>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--block">إرسال الطلب</button>
+          </div>
+        </fieldset>
+      </form>
+    <% } else { %>
+      <p class="muted">طلب النطاق الخاص متاح لمالك المكتب فقط.</p>
+    <% } %>
+  <% } %>
+</section>

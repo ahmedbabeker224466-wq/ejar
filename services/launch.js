@@ -356,6 +356,12 @@ async function runChecks({ pool = db.pool, env = process.env, now = new Date(), 
   else if (dates.compareYmd(audit.on, dates.riyadhDate(dates.daysAfter(now, -30))) < 0) out.push(result('npm_audit', WARN, 'فحص npm audit', `آخر فحص مسجّل بتاريخ ${audit.on} (أقدم من 30 يوماً). أعد الفحص.`, { confirm: 'npm_audit', record: audit }));
   else out.push(result('npm_audit', PASS, 'فحص npm audit', `آخر فحص مسجّل بتاريخ ${audit.on}.${audit.note ? ` ${audit.note}` : ''}`, { confirm: 'npm_audit', record: audit }));
 
+  // 15b. custom domain requests waiting too long (handled by hand for now)
+  const stale = await require('./domains').staleCount(pool);
+  out.push(stale > 0
+    ? result('domain_requests', WARN, 'طلبات الدومين', `${stale} طلب دومين مفتوح دون تحديث منذ أكثر من 3 أيام. افتح صفحة طلبات الدومين.`)
+    : result('domain_requests', PASS, 'طلبات الدومين', 'لا توجد طلبات دومين متأخرة.'));
+
   // 16. email test sign-in (AUTH_EMAIL_TEST): always a failure while it is on
   out.push(emailAuth.flagOn(env)
     ? result('auth_email_test', FAIL, 'الدخول التجريبي بالبريد', 'AUTH_EMAIL_TEST مفعّل: أي شخص يعرف بريد حساب يدخل إليه بدون رمز. احذفه من ملف البيئة وأعد تشغيل التطبيق قبل الإطلاق.')

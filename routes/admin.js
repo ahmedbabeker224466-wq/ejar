@@ -45,6 +45,7 @@ const NAV = [
   { key: 'transfers', href: '/admin/transfers', label: 'الحوالات البنكية' },
   { key: 'promos', href: '/admin/promos', label: 'أكواد الخصم' },
   { key: 'plans', href: '/admin/plans', label: 'الباقات' },
+  { key: 'domains', href: '/admin/domains', label: 'طلبات الدومين' },
   { key: 'reports', href: '/admin/reports', label: 'بلاغات الإعلانات' },
   { key: 'messages', href: '/admin/messages', label: 'رسائل التواصل' },
   { key: 'blog', href: '/admin/blog', label: 'المدونة' },
@@ -107,6 +108,7 @@ const DONE = {
   backup_ok: 'اكتمل النسخ الاحتياطي.',
   backup_failed: 'فشل النسخ الاحتياطي. راجع رمز الخطأ في الجدول.',
   backup_locked: 'نسخة احتياطية أخرى تعمل الآن. حاول بعد قليل.',
+  domain_saved: 'تم حفظ طلب الدومين.',
 };
 const doneText = (key) => (Object.hasOwn(DONE, key) ? DONE[key] : null);
 
@@ -549,6 +551,7 @@ router.get('/admin/audit', wrap(async (req, res) => {
 
 require('./adminContent')(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText });
 require('./adminLaunch')(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText });
+require('./adminDomains')(router, { wrap, notFound, reasonOf, REASON_ERROR, doneText });
 require('./adminOps')(router, { wrap, reasonOf, REASON_ERROR, audit, doneText });
 
 module.exports = router;
