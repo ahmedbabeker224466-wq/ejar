@@ -60,7 +60,7 @@ router.get('/listings', wrap(async (req, res) => {
 // ------------------------------------------------------------ photos (published listings only)
 
 router.get('/listings/photos/:id/:variant', wrap(async (req, res) => {
-  const photo = await listingPhotos.photoForPublic(db.pool, req.params.id, req.params.variant === 'thumb' ? 'thumb' : 'full');
+  const photo = await listingPhotos.photoForPublic(db.pool, req.params.id, req.params.variant === 'thumb' ? 'thumb' : 'full', new Date(), req.customOffice ? req.customOffice.id : null);
   const file = photo ? images.imagePath(photo.name) : null;
   if (!file) return res.status(404).type('text/plain').send('Not found');
   res.set({ 'Content-Type': 'image/jpeg', 'Content-Disposition': 'inline', 'X-Content-Type-Options': 'nosniff' });
@@ -103,6 +103,15 @@ async function renderListing(req, res, found, { values = {}, errors = {}, status
 
 async function find(req, res) {
   const found = await listings.getPublic(db.pool, req.params.id);
+  // On an office's own domain only that office's listings exist (another office's id is a plain 404).
+  if (req.customOffice && found.listing && found.listing.officeId !== req.customOffice.id) {
+    notFound(res);
+    return null;
+  }
+  if (req.customOffice && found.state !== 'ok') {
+    notFound(res);
+    return null;
+  }
   if (found.state === 'none') {
     notFound(res);
     return null;

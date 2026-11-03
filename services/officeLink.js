@@ -267,6 +267,7 @@ async function publicIndex(pool, now = new Date(), limit = 5000) {
 }
 
 module.exports = {
+  VISIBLE_SQL,
   MIN_LENGTH,
   MAX_LENGTH,
   DESCRIPTION_MAX,

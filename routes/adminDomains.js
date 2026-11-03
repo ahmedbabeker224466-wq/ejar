@@ -30,7 +30,7 @@ module.exports = function registerDomains(router, { wrap, notFound, reasonOf, RE
     });
   }));
 
-  async function renderDetail(req, res, { status = 200, errors = {}, values = null, check = null, error = null } = {}) {
+  async function renderDetail(req, res, { status = 200, errors = {}, values = null, check = null, probe = null, error = null } = {}) {
     const request = await domains.getRequest(db.pool, req.params.id);
     if (!request) return notFound(res);
     return res.status(status).render('admin/domain', {
@@ -48,6 +48,7 @@ module.exports = function registerDomains(router, { wrap, notFound, reasonOf, RE
         dns_zone_ref: request.dns_zone_ref || '',
       },
       check,
+      probe,
       lookupErrors: domains.LOOKUP_ERRORS,
       done: doneText(req.query.done),
     });
@@ -70,6 +71,14 @@ module.exports = function registerDomains(router, { wrap, notFound, reasonOf, RE
     if (result.notFound) return notFound(res);
     if (!result.ok) return renderDetail(req, res, { status: 422, values, errors: result.errors, error: 'راجع الحقول المظللة بالأحمر.' });
     return res.redirect(`/admin/domains/${Number(req.params.id)}?done=domain_saved`);
+  }));
+
+  // The live domain check (active requests): DNS A/CNAME and an HTTPS HEAD. Changes nothing.
+  router.post('/admin/domains/:id/probe', CHECK_LIMIT, wrap(async (req, res) => {
+    const request = await domains.getRequest(db.pool, req.params.id);
+    if (!request) return notFound(res);
+    const probe = await domains.probeDomain(request.domain, { slug: request.public_slug });
+    return renderDetail(req, res, { probe });
   }));
 
   router.post('/admin/domains/:id/check', CHECK_LIMIT, wrap(async (req, res) => {

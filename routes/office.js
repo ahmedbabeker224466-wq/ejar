@@ -36,6 +36,7 @@ const plans = require('../services/plans');
 const officialPricing = require('../services/officialPricing');
 const { scopeToOffice } = require('../services/scopeToOffice');
 const domains = require('../services/domains');
+const customHosts = require('../services/customHosts');
 const money = require('../services/money');
 const { effectivePlanIdSql } = require('../services/defaultPlan');
 const seo = require('../services/seo');
@@ -342,6 +343,7 @@ router.post('/office/settings/domain/:id/cancel', requirePerm('billing'), async 
 router.post('/office/settings/link', requirePerm('settings.office'), async (req, res, next) => {
   try {
     const result = await officeLink.changeSlug(db.pool, { officeId: req.office.id, actorId: req.user.id, slug: req.body.slug, ip: req.ip });
+    if (result.ok) customHosts.clear();
     if (result.ok) return res.redirect('/office/settings?link=link#office-link');
     return await renderSettings(req, res, { status: result.error === 'limit' ? 429 : 422, link: { typed: String(req.body.slug || '').slice(0, 60), error: result.error } });
   } catch (err) {
@@ -359,6 +361,7 @@ router.post('/office/settings/public-page', requirePerm('settings.office'), asyn
       });
     }
     await officeLink.savePublicPage(db.pool, { officeId: req.office.id, actorId: req.user.id, ...values, ip: req.ip });
+    customHosts.clear(); // a page switched off stops serving on its custom domain at once
     return res.redirect('/office/settings?link=page#office-link');
   } catch (err) {
     return next(err);

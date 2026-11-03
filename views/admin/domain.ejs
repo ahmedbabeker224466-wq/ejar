@@ -3,7 +3,24 @@
 <% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
 <% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
 
-<div class="flash flash--warning" role="note">التفعيل هنا يسجّل الدومين للمكتب فقط ولا يغيّر توجيه الموقع. الربط الفعلي (DNS وشهادة SSL وإعداد الخادم) يتم يدوياً حتى ترقية الخادم. راجع docs/DOMAINS.md.</div>
+<div class="flash flash--warning" role="note">بعد التفعيل يعرض التطبيق صفحة المكتب العامة على هذا الدومين بمجرد وصول طلباته إلى الخادم. ربط الدومين بالخادم (إضافته في cPanel، وسجلات DNS، وشهادة SSL) يتم يدوياً. راجع docs/DOMAINS.md.</div>
+
+<% if (request.status === 'active') { %>
+<section class="card detail-card" id="live">
+  <h2>الدومين الفعّال</h2>
+  <p><a href="https://<%= request.domain %>/" dir="ltr" target="_blank" rel="noopener noreferrer">https://<%= request.domain %>/</a></p>
+  <% if (probe) { %>
+    <dl class="details">
+      <dt>سجل A</dt><dd dir="ltr"><%= probe.a.ok ? probe.a.values.join(', ') || '—' : (lookupErrors[probe.a.error] || probe.a.error) %></dd>
+      <dt>سجل CNAME</dt><dd dir="ltr"><%= probe.cname.ok ? probe.cname.values.join(', ') || '—' : (lookupErrors[probe.cname.error] || probe.cname.error) %></dd>
+      <dt>HTTPS</dt><dd dir="ltr"><%= probe.https.status ? 'HTTP ' + probe.https.status : (probe.https.error + (probe.https.message ? ': ' + probe.https.message : '')) %></dd>
+      <dt>يصل إلى عقدي؟</dt><dd><% if (probe.isApp) { %><span class="badge badge--domain-active">نعم، صفحة هذا المكتب ✓</span><% } else { %><span class="badge badge--domain-rejected">لا</span><% } %></dd>
+    </dl>
+    <% if (!probe.isApp) { %><p class="muted">إذا كان الخطأ شهادة SSL فانتظر AutoSSL أو شغّله من cPanel. إذا لم يصل الطلب فراجع إضافة الدومين في cPanel وسجلات DNS.</p><% } %>
+  <% } %>
+  <form method="post" action="/admin/domains/<%= request.id %>/probe"><button type="submit" class="btn btn--secondary">فحص الدومين</button></form>
+</section>
+<% } %>
 
 <section class="card detail-card">
   <h2>الطلب</h2>

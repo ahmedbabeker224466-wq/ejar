@@ -9,8 +9,8 @@
   <% } %>
 
   <% if (domain.activeDomain) { %>
-    <p>نطاق مكتبك: <strong dir="ltr"><%= domain.activeDomain %></strong> <span class="badge badge--domain-active">فعّال</span></p>
-    <p class="muted">ربط الموقع بالنطاق يتم يدوياً من فريق المنصة، وسنبلغك عند اكتماله. لتغيير النطاق تواصل مع الدعم.</p>
+    <p>نطاق مكتبك: <a href="https://<%= domain.activeDomain %>/" dir="ltr" target="_blank" rel="noopener noreferrer"><strong>https://<%= domain.activeDomain %></strong></a> <span class="badge badge--domain-active">فعّال</span></p>
+    <p class="muted">يعرض هذا العنوان صفحة مكتبك العامة وإعلاناتك. إذا لم يفتح بعد فقد يحتاج ساعات حتى تكتمل إعدادات الدومين. لتغيير النطاق تواصل مع الدعم.</p>
   <% } else if (domain.request && domain.request.open) { %>
     <% const r = domain.request; %>
     <div class="domain-status" id="domain-request">

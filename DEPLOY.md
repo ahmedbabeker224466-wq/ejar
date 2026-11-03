@@ -71,6 +71,7 @@ application root). `.env` is never committed.
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | optional | email reminders; empty = email skipped |
 | `CLAUDE_API_KEY`, `CLAUDE_MODEL` | optional | AI contract reading; empty = feature off |
 | `MOYASAR_SECRET_KEY`, `MOYASAR_PUBLISHABLE_KEY`, `MOYASAR_WEBHOOK_SECRET` | optional | card payments, **test keys only** until the commercial entity is decided (`MOYASAR_ALLOW_LIVE=1` is the explicit opt-in for live keys) |
+| `ALLOWED_HOSTS` | optional | extra host names of the platform itself (comma separated); every other host is treated as an office's custom domain (docs/DOMAINS.md). The `APP_URL` host and localhost are always included |
 | `APP_DOMAIN_TARGET`, `APP_DOMAIN_IP` | optional | the CNAME target and A address offices use with the "DNS records" domain method; empty = offices are told the values will be sent (docs/DOMAINS.md) |
 | `TEST_DB_NAME` | never on the server | separate empty database for `npm test` on a developer machine |
 

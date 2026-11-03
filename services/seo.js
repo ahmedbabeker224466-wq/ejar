@@ -7,6 +7,8 @@ const { riyadhDate } = require('./contractDates');
 
 /** The public base URL: APP_URL when set, otherwise what the request says. No trailing slash. */
 function baseUrl(req) {
+  // On an office's own domain (Prompt 24) every absolute URL stays on that domain.
+  if (req && req.customOffice && req.customOffice.host) return `https://${req.customOffice.host}`;
   const configured = String(process.env.APP_URL || '').trim().replace(/\/+$/, '');
   if (/^https?:\/\/[^\s/]+$/i.test(configured)) return configured;
   return `${req.protocol}://${req.get('host')}`;

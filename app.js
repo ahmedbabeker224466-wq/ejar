@@ -16,6 +16,8 @@ const authRoutes = require('./routes/auth');
 const areaRoutes = require('./routes/areas');
 const officeRoutes = require('./routes/office');
 const officePage = require('./routes/officePage');
+const customDomainRoutes = require('./routes/customDomain');
+const { hostResolver } = require('./middleware/customHost');
 const { loadUser, loadUnreadCount } = require('./middleware/auth');
 const maintenance = require('./middleware/maintenance');
 const { sameOrigin } = require('./middleware/security');
@@ -58,6 +60,11 @@ app.use(
     referrerPolicy: { policy: 'same-origin' },
   }),
 );
+// Host resolution FIRST (before cookies, sessions and the same-origin check):
+// a request on an office's own domain gets req.customOffice, an unknown host
+// a plain 404 (middleware/customHost.js). The raw Host header only.
+app.use(hostResolver());
+
 // The optional analytics snippet (empty by default): the page gets the sanitized
 // tag and the policy allows only that provider's own origins.
 app.use((req, res, next) => {
@@ -107,9 +114,21 @@ app.use(
 // touching the database. After static files so the page keeps its CSS.
 app.use(maintenance);
 
+// An office's own domain: its public page, listings, sitemap and robots only;
+// everything else answers 302 to the main host. Before sessions, so no session
+// or login cookie is ever read or set on a custom domain.
+app.use(customDomainRoutes);
+
 // After static files, so serving CSS/JS never touches the database.
-app.use(loadUser());
-app.use(loadUnreadCount());
+// Never on a custom domain (e.g. /health there): no session is read or cleared.
+const sessionUser = loadUser();
+const unread = loadUnreadCount();
+app.use(function loadUserMiddleware(req, res, next) {
+  return req.isCustomHost ? next() : sessionUser(req, res, next);
+});
+app.use(function loadUnreadCountMiddleware(req, res, next) {
+  return req.isCustomHost ? next() : unread(req, res, next);
+});
 
 // The platform admin's banner message (empty = none), read from memory.
 app.use((req, res, next) => {

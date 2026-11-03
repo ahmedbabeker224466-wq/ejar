@@ -156,13 +156,14 @@ async function removePhoto(pool, { officeId, unitId, photoId, actorId, ip }) {
 }
 
 /** File names of a photo for the public: only while its listing is public. Returns { name, updatedAt } or null. */
-async function photoForPublic(pool, photoId, variant, now = new Date()) {
+async function photoForPublic(pool, photoId, variant, now = new Date(), officeId = null) {
   if (!/^[1-9]\d{0,17}$/.test(String(photoId))) return null;
+  // officeId: on an office's own domain, only that office's photos.
   const [[row]] = await pool.query(
     `SELECT p.path, p.thumb_path, p.updated_at FROM unit_photos p
        JOIN listings l ON l.unit_id = p.unit_id JOIN offices o ON o.id = l.office_id
-      WHERE p.id = ? AND ${PUBLIC_WHERE}`,
-    [photoId, now, now],
+      WHERE p.id = ? AND ${PUBLIC_WHERE}${officeId ? ' AND l.office_id = ?' : ''}`,
+    officeId ? [photoId, now, now, officeId] : [photoId, now, now],
   );
   if (!row) return null;
   return { name: variant === 'thumb' && row.thumb_path ? row.thumb_path : row.path, updatedAt: row.updated_at };

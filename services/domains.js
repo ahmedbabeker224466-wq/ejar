@@ -361,6 +361,8 @@ async function adminUpdate(pool, { id, adminId, body, reason, ip = null, now = n
       updates.status ? { status: current.status } : null, after, ip);
     return { ok: true, changed };
   });
+  // A changed request (status, values) must not keep serving from the host cache.
+  if (outcome.ok) require('./customHosts').clear();
   if (outcome.ok && values.status && current.owner_id) {
     await createNotification(pool, {
       userId: current.owner_id,
@@ -408,6 +410,66 @@ const LOOKUP_ERRORS = {
   ECONNREFUSED: 'تعذّر الاتصال بخادم DNS.',
 };
 
+// ------------------------------------------------------------ live domain check (Prompt 24)
+
+let probeOverride = null;
+/** For tests: { resolve4, resolveCname, head(url) } replacing DNS and HTTPS; null restores them. */
+function setProbe(probe) {
+  probeOverride = probe;
+}
+
+/** HTTPS HEAD with a 5 s timeout, no redirects followed: { status, header } or { error, message }. */
+function httpsHead(url, timeoutMs = 5000) {
+  const https = require('node:https');
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (v) => {
+      if (!done) {
+        done = true;
+        resolve(v);
+      }
+    };
+    const req = https.request(url, { method: 'HEAD', timeout: timeoutMs, headers: { 'User-Agent': 'aqdi-domain-check' } }, (res) => {
+      finish({ status: res.statusCode, header: res.headers['x-aqdi-office-host'] || null });
+      res.resume();
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      finish({ error: 'ETIMEDOUT', message: 'timeout' });
+    });
+    req.on('error', (err) => finish({ error: String(err.code || 'request_failed').slice(0, 60), message: String(err.message || '').slice(0, 200) }));
+    req.end();
+  });
+}
+
+/**
+ * Does the domain reach this app? A and CNAME lookups (node:dns) and an HTTPS
+ * HEAD to https://<domain>/ (5 s). isApp = the answer carries our
+ * X-Aqdi-Office-Host header with this office's slug. Never changes anything.
+ */
+async function probeDomain(domain, { slug, timeoutMs = 5000 } = {}) {
+  const p = probeOverride || {};
+  const resolver = new dns.promises.Resolver({ timeout: timeoutMs, tries: 1 });
+  const lookup = async (fn, fallback) => {
+    try {
+      return { ok: true, values: await (fn || fallback)(domain) };
+    } catch (err) {
+      return { ok: false, error: String(err.code || 'lookup_failed').slice(0, 40) };
+    }
+  };
+  const [a, cname] = await Promise.all([
+    lookup(p.resolve4, (d) => resolver.resolve4(d)),
+    lookup(p.resolveCname, (d) => resolver.resolveCname(d)),
+  ]);
+  const head = await (p.head || ((u) => httpsHead(u, timeoutMs)))(`https://${domain}/`);
+  return {
+    a,
+    cname,
+    https: head,
+    isApp: Boolean(head && head.header && slug && String(head.header).toLowerCase() === String(slug).toLowerCase()),
+  };
+}
+
 /** Open requests whose last change is older than STALE_DAYS (launch check). */
 async function staleCount(pool, { days = STALE_DAYS } = {}) {
   const [[row]] = await pool.query(
@@ -442,5 +504,7 @@ module.exports = {
   adminUpdate,
   checkNameservers,
   setResolver,
+  probeDomain,
+  setProbe,
   staleCount,
 };

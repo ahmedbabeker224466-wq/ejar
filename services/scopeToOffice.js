@@ -9,6 +9,8 @@
 //   await scoped.insert('landlords', { label: 'أبو فهد' });
 //   await scoped.query('SELECT COUNT(*) AS n FROM contracts WHERE office_id = :office_id');
 
+const { retryOnDeadlock } = require('./transaction');
+
 class OfficeScopeError extends Error {
   constructor(message) {
     super(message);
@@ -104,6 +106,11 @@ function assertScopedTable(table) {
  */
 function scopeToOffice(pool, officeId) {
   const id = assertOfficeId(officeId);
+  // One auto-committed statement on the pool that InnoDB picked as a deadlock
+  // victim was fully rolled back, so it is run again. On a transaction's
+  // connection (no getConnection) never: withTransaction retries the whole work.
+  const autocommit = typeof pool.getConnection === 'function';
+  const run = (sql, params) => (autocommit ? retryOnDeadlock(() => pool.query(sql, params), { retries: 3 }) : pool.query(sql, params));
 
   /** WHERE clause that limits a table to this office, plus extra equality filters. */
   function scopedWhere(table, where) {
@@ -134,7 +141,7 @@ function scopeToOffice(pool, officeId) {
   /** For child tables: the parent row must belong to this office. */
   async function assertParentInOffice(table, parentId) {
     const child = CHILD_TABLES[table];
-    const [rows] = await pool.query(
+    const [rows] = await run(
       `SELECT 1 FROM ${identifier(child.parent)} WHERE id = ? AND office_id = ? LIMIT 1`,
       [parentId, id],
     );
@@ -166,7 +173,7 @@ function scopeToOffice(pool, officeId) {
         if (!Number.isInteger(limit) || limit < 1) throw new OfficeScopeError('Invalid limit');
         query += ` LIMIT ${limit}`;
       }
-      const [rows] = await pool.query(query, params);
+      const [rows] = await run(query, params);
       return rows;
     },
 
@@ -188,7 +195,7 @@ function scopeToOffice(pool, officeId) {
       }
       const columns = Object.keys(row);
       if (columns.length === 0) throw new OfficeScopeError('Nothing to insert');
-      const [result] = await pool.query(
+      const [result] = await run(
         `INSERT INTO ${identifier(table)} (${columns.map(identifier).join(', ')}) VALUES (${columns
           .map(() => '?')
           .join(', ')})`,
@@ -210,7 +217,7 @@ function scopeToOffice(pool, officeId) {
       const columns = Object.keys(changes);
       if (columns.length === 0) throw new OfficeScopeError('Nothing to update');
       const { sql, params } = scopedWhere(table, where);
-      const [result] = await pool.query(
+      const [result] = await run(
         `UPDATE ${identifier(table)} SET ${columns.map((c) => `${identifier(c)} = ?`).join(', ')} WHERE ${sql}`,
         [...columns.map((c) => changes[c]), ...params],
       );
@@ -223,7 +230,7 @@ function scopeToOffice(pool, officeId) {
         throw new OfficeScopeError('Refusing to delete without a WHERE condition');
       }
       const { sql, params } = scopedWhere(table, where);
-      const [result] = await pool.query(`DELETE FROM ${identifier(table)} WHERE ${sql}`, params);
+      const [result] = await run(`DELETE FROM ${identifier(table)} WHERE ${sql}`, params);
       return result.affectedRows;
     },
 
@@ -248,7 +255,7 @@ function scopeToOffice(pool, officeId) {
         text += '?' + parts[i];
       }
       bound.push(...params.slice(positional));
-      const [rows] = await pool.query(text, bound);
+      const [rows] = await run(text, bound);
       return rows;
     },
   };

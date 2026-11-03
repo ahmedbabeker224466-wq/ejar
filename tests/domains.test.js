@@ -269,7 +269,7 @@ test('admin: queue, reason required, status flow with notification, NS values sh
   assert.equal(list.status, 200);
   assert.match(list.text, new RegExp(`id="domain-request-${ra.id}"[\\s\\S]*tdom-live\\.com[\\s\\S]*تجربة-نطاق-10`));
   const detail = await get(`/admin/domains/${ra.id}`, admin.cookie);
-  assert.match(detail.text, /لا يغيّر توجيه الموقع/);
+  assert.match(detail.text, /ربط الدومين بالخادم[\s\S]*يتم يدوياً/);
 
   const noReason = await post(`/admin/domains/${ra.id}`, admin.cookie, { status: 'awaiting_nameservers' });
   assert.equal(noReason.status, 422);
@@ -311,7 +311,7 @@ test('admin: queue, reason required, status flow with notification, NS values sh
   const [[offA]] = await db.pool.query('SELECT custom_domain FROM offices WHERE id = ?', [a.office.id]);
   assert.equal(offA.custom_domain, 'tdom-live.com');
   assert.ok((await requestsOf(a.office.id))[0].activated_at);
-  assert.match((await get('/office/settings', a.cookie)).text, /نطاق مكتبك: <strong dir="ltr">tdom-live\.com<\/strong>/);
+  assert.match((await get('/office/settings', a.cookie)).text, /نطاق مكتبك: <a href="https:\/\/tdom-live\.com\/"[^>]*><strong>https:\/\/tdom-live\.com<\/strong>/);
   assert.equal((await db.pool.query("SELECT COUNT(*) AS n FROM notifications WHERE user_id = ? AND kind = 'domain_update'", [a.user.id]))[0][0].n, 2);
 
   // The same domain cannot become active for a second office, nor be requested again.

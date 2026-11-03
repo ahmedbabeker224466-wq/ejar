@@ -14,9 +14,9 @@
   </ul>
   <% if (pages > 1) { %>
     <nav class="pager" aria-label="الصفحات">
-      <% if (page > 1) { %><a href="/<%= office.slug %><%= page - 1 > 1 ? '?page=' + (page - 1) : '' %>">السابق</a><% } %>
+      <% if (page > 1) { %><a href="<%= pageBase %><%= page - 1 > 1 ? '?page=' + (page - 1) : '' %>">السابق</a><% } %>
       <span>صفحة <%= page %> من <%= pages %></span>
-      <% if (page < pages) { %><a href="/<%= office.slug %>?page=<%= page + 1 %>">التالي</a><% } %>
+      <% if (page < pages) { %><a href="<%= pageBase %>?page=<%= page + 1 %>">التالي</a><% } %>
     </nav>
   <% } %>
 <% } else { %>

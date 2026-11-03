@@ -143,11 +143,13 @@ test('middleware runs in the required order', () => {
   const names = app._router.stack.map((layer) => layer.name);
   const order = [
     'helmetMiddleware',
+    'resolveHost', // custom domains: before cookies, sessions and the same-origin check
     'cookieParser',
     'urlencodedParser',
     'jsonParser',
     'serveStatic',
     'maintenance',
+    'router', // the custom-domain router, before sessions
     'loadUserMiddleware',
     'router',
     'notFound',
@@ -155,12 +157,12 @@ test('middleware runs in the required order', () => {
   ];
   let last = -1;
   for (const name of order) {
-    const index = names.indexOf(name);
+    const index = names.indexOf(name, last + 1); // in order, so a name may appear more than once
     assert.ok(index > last, `${name} is out of order: ${names.join(' > ')}`);
     last = index;
   }
   assert.equal(names.at(-1), 'errorHandler', 'the error handler is last');
-  assert.equal(names.filter((n) => n === 'router').length, 5, 'index, auth, office, area and office-page routers are mounted');
+  assert.equal(names.filter((n) => n === 'router').length, 6, 'custom-domain, index, auth, office, area and office-page routers are mounted');
 });
 
 test('forwarding headers are trusted only from a local proxy', () => {

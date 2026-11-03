@@ -124,3 +124,26 @@ test('every table with office_id NOT NULL is covered by scopeToOffice', () => {
     assert.ok(OFFICE_TABLES.has(parent), `${name}'s parent ${parent} is not office-owned`);
   }
 });
+
+test('an auto-committed statement picked as a deadlock victim is retried; inside a transaction it never is', async () => {
+  const { scopeToOffice: scope } = require('../services/scopeToOffice');
+  const deadlockOnce = () => {
+    let calls = 0;
+    return {
+      get calls() { return calls; },
+      async query() {
+        calls += 1;
+        if (calls === 1) throw Object.assign(new Error('Deadlock found'), { code: 'ER_LOCK_DEADLOCK' });
+        return [{ insertId: 7, affectedRows: 1 }];
+      },
+    };
+  };
+  const pool = deadlockOnce();
+  pool.getConnection = async () => null; // a pool: statements auto-commit
+  assert.equal(await scope(pool, 3).insert('units', { label: 'x' }), 7);
+  assert.equal(pool.calls, 2, 'retried once');
+
+  const conn = deadlockOnce(); // a transaction's connection: no getConnection
+  await assert.rejects(scope(conn, 3).insert('units', { label: 'x' }), { code: 'ER_LOCK_DEADLOCK' });
+  assert.equal(conn.calls, 1, 'never retried inside a transaction');
+});
