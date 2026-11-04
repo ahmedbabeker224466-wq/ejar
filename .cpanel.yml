@@ -10,6 +10,6 @@
 deployment:
   tasks:
     - export NODE_VERSION=22
-    - export DEPLOYPATH=$HOME/aqdi
-    - export NODEVENV_ACTIVATE=$HOME/nodevenv/aqdi/$NODE_VERSION/bin/activate
+    - export DEPLOYPATH=$HOME/mi3aad/ejar-main
+    - export NODEVENV_ACTIVATE=$HOME/nodevenv/mi3aad/ejar-main/$NODE_VERSION/bin/activate
     - /bin/bash deploy/cpanel-deploy.sh

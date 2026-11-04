@@ -7,10 +7,10 @@ After a push to `main`, GitHub runs the tests (CI). When they pass, the
    (UAPI `VersionControl/update`).
 2. cPanel runs `.cpanel.yml` (UAPI `VersionControlDeployment/create`), which
    runs `deploy/cpanel-deploy.sh`:
-   - copies the app files to `~/aqdi` (never `.env`, uploads, backups or
+   - copies the app files to `~/mi3aad/ejar-main` (never `.env`, uploads, backups or
      `node_modules`; nothing on the server is deleted),
    - runs `npm install --omit=dev` in the cPanel Node.js environment,
-   - touches `~/aqdi/tmp/restart.txt` so Passenger restarts the app.
+   - touches `~/mi3aad/ejar-main/tmp/restart.txt` so Passenger restarts the app.
 3. GitHub checks `https://mi3aad.com/health` every 10 seconds for about
    2 minutes. It succeeds only when the app answers `status: "ok"` from a
    process that started after this deploy (`uptimeSeconds` small).
@@ -29,7 +29,7 @@ cPanel > **Setup Node.js App**. It is set to `22`:
     - export NODE_VERSION=22
 ```
 
-The folder `/home/<your user>/nodevenv/aqdi/22/` must exist (check it in File
+The folder `/home/<your user>/nodevenv/mi3aad/ejar-main/22/` must exist (check it in File
 Manager). If you ever change the version in cPanel, change this line too. A
 wrong value stops the deploy with "Node.js activate script not found" before
 anything is copied.
