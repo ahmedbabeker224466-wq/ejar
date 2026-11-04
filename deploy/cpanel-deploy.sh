@@ -65,4 +65,12 @@ if command -v cloudlinux-selector >/dev/null 2>&1; then
     echo "cloudlinux-selector restart did not succeed; relying on tmp/restart.txt."
   fi
 fi
+# LiteSpeed (lsnode) keeps the old process alive even after restart.txt and
+# cloudlinux-selector, so stop this app's own process; LiteSpeed starts a fresh
+# one on the next request. Only the exact "lsnode:<app root>" process is matched.
+if command -v pkill >/dev/null 2>&1; then
+  if pkill -TERM -u "$(id -un)" -f "^lsnode:${DEPLOYPATH%/}/?\$"; then
+    echo "Stopped the old lsnode process; the next request starts the new version."
+  fi
+fi
 echo "Deploy done: tmp/restart.txt touched, Passenger restarts the app on its next request."
