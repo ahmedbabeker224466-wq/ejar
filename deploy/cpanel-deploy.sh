@@ -55,4 +55,14 @@ npm install --omit=dev --no-audit --no-fund || fail "npm install failed in $DEPL
 
 mkdir -p tmp
 touch tmp/restart.txt
+# CloudLinux/LiteSpeed hosts (Namecheap) do not always pick up tmp/restart.txt,
+# so restart through the Node.js selector when it is available.
+if command -v cloudlinux-selector >/dev/null 2>&1; then
+  APP_ROOT_REL="${DEPLOYPATH#"$HOME"/}"
+  if cloudlinux-selector restart --json --interpreter nodejs --app-root "$APP_ROOT_REL" >/dev/null 2>&1; then
+    echo "App restarted with cloudlinux-selector."
+  else
+    echo "cloudlinux-selector restart did not succeed; relying on tmp/restart.txt."
+  fi
+fi
 echo "Deploy done: tmp/restart.txt touched, Passenger restarts the app on its next request."
