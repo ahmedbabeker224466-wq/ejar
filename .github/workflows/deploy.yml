@@ -63,5 +63,5 @@ jobs:
           CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
           CPANEL_USER: ${{ secrets.CPANEL_USER }}
           CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
-          HEALTH_URL: ${{ vars.HEALTH_URL || 'https://aqdi.phillote.com/health' }}
+          HEALTH_URL: ${{ vars.HEALTH_URL || 'https://mi3aad.com/health' }}
         run: bash deploy/cpanel-trigger.sh

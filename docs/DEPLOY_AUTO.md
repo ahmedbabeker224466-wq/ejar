@@ -11,7 +11,7 @@ After a push to `main`, GitHub runs the tests (CI). When they pass, the
      `node_modules`; nothing on the server is deleted),
    - runs `npm install --omit=dev` in the cPanel Node.js environment,
    - touches `~/aqdi/tmp/restart.txt` so Passenger restarts the app.
-3. GitHub checks `https://aqdi.phillote.com/health` every 10 seconds for about
+3. GitHub checks `https://mi3aad.com/health` every 10 seconds for about
    2 minutes. It succeeds only when the app answers `status: "ok"` from a
    process that started after this deploy (`uptimeSeconds` small).
 
@@ -59,7 +59,7 @@ Without these three secrets the workflow does not fail: it shows the notice
 "Deploy skipped" and does nothing.
 
 Optional: a repository **variable** (not a secret) `HEALTH_URL` changes the
-checked address. The default is `https://aqdi.phillote.com/health`.
+checked address. The default is `https://mi3aad.com/health`.
 
 ### 4. The cPanel repository
 
