@@ -1,7 +1,10 @@
 <section class="auth card">
+  <div class="auth__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 9.5h18"/><path d="m9 15 2 2 4-4"/></svg>
+  </div>
   <h1><%= heading %></h1>
   <p class="lead"><%= lead %></p>
-  <div class="flash flash--warning" role="note">هذه نسخة تجريبية: الدخول بالبريد الإلكتروني فقط وبدون رمز تحقق.</div>
+  <p class="auth__note" role="note">نسخة تجريبية: الدخول بالبريد الإلكتروني دون رمز تحقق.</p>
 
   <% if (error) { %>
     <div class="flash flash--danger" role="alert"><%= error %></div>
@@ -33,14 +36,13 @@
     <button type="submit" class="btn btn--primary btn--block btn--large"><%= button %></button>
   </form>
 
-  <p class="auth__link">
-    <% if (intent === 'register') { %>
-      لديك حساب؟ <a href="/login">سجّل الدخول</a>
-    <% } else { %>
-      مكتب عقار جديد؟ <a href="/register">سجّل مكتبك</a>
-    <% } %>
-  </p>
+  <div class="auth__divider"><span>أو</span></div>
+  <% if (intent === 'register') { %>
+    <a href="/login" class="btn btn--outline btn--block">لديك حساب؟ سجّل الدخول</a>
+  <% } else { %>
+    <a href="/register" class="btn btn--outline btn--block">مكتب عقار جديد؟ سجّل مكتبك</a>
+  <% } %>
   <% if (intent === 'login') { %>
-    <p class="auth__link muted"><a href="/login?method=phone">دخول مدير المنصة</a></p>
+    <p class="auth__admin"><a href="/login?method=phone">دخول مدير المنصة</a></p>
   <% } %>
 </section>
