@@ -731,7 +731,7 @@ test('sitemap and robots: published listings and public pages only; private area
   for (const p of ['/', '/offices', '/features', '/pricing', '/about', '/contact', '/blog', '/privacy', '/terms', '/disclaimer']) {
     assert.match(xml, new RegExp(`<loc>https://aqdi\\.example${p === '/' ? '/' : p}</loc>`), p);
   }
-  for (const secret of ['/office', '/admin', '/login', '/maintenance', 'office/billing']) assert.equal(xml.includes(`aqdi.example${secret}`), false, secret);
+  for (const secret of ['/office', '/admin', '/login', '/maintenance', '/office/billing']) assert.equal(new RegExp(`aqdi\\.example${secret}(<|/|\\?)`).test(xml), false, secret);
   const robots = await getPublic('/robots.txt');
   assert.equal(robots.headers.get('content-type'), 'text/plain; charset=utf-8');
   const text = await robots.text();
