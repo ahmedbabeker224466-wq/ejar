@@ -1862,3 +1862,31 @@ img {
 @media (max-width: 480px) {
   .auth.card { padding: 32px 20px 24px; border-radius: 16px; }
 }
+
+/* Listings search (home page): every filter in one compact row on wide screens. */
+.search-hero { margin-bottom: var(--space-5); }
+.search-hero h1 { margin: 0 0 var(--space-1); font-size: 1.75rem; }
+.search-hero__lead { margin: 0 0 var(--space-4); color: var(--color-text-muted); }
+.search-bar {
+  background: #fff;
+  border: 1px solid #e3e8e7;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 24, 0.04), 0 12px 30px -22px rgba(16, 24, 24, 0.3);
+}
+.search-bar__main { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) auto; gap: 8px; align-items: center; }
+.search-bar__field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.search-bar__field label { font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); padding-inline: 4px; }
+.search-bar .select, .search-bar .input { height: 48px; min-height: 48px; padding-block: 0; padding-inline: 10px; border-radius: 10px; border-width: 1px; font-size: 0.95rem; }
+.search-bar .input::placeholder { text-align: right; color: var(--color-text-muted); }
+.search-bar .input:placeholder-shown { direction: rtl; }
+.search-bar__submit { min-height: 48px; height: 48px; padding-inline: 22px; border-radius: 10px; gap: 8px; }
+.results-count { margin: 0 0 var(--space-3); color: var(--color-text-muted); font-size: 0.95rem; }
+@media (max-width: 1060px) {
+  .search-bar__main { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .search-hero h1 { font-size: 1.45rem; }
+  .search-bar__main { grid-template-columns: 1fr 1fr; }
+  .search-bar__submit { grid-column: 1 / -1; }
+}
