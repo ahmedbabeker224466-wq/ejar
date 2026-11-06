@@ -30,7 +30,7 @@ const AUTO_ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
 // or for the platform itself.
 const MOUNTED = [
   'about', 'admin', 'blog', 'contact', 'cron', 'disclaimer', 'features', 'health', 'healthz', 'join', 'landlord',
-  'listings', 'login', 'logout', 'logout-all', 'maintenance', 'notifications', 'office', 'platform', 'pricing',
+  'listings', 'login', 'logout', 'logout-all', 'maintenance', 'notifications', 'office', 'offices', 'platform', 'pricing',
   'privacy', 'register', 'robots', 'settings', 'sitemap', 'tenant', 'terms', 'webhooks', 'css', 'js',
 ];
 const FIXED = [

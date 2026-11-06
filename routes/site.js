@@ -46,10 +46,12 @@ const shared = () => ({
 
 // ------------------------------------------------------------ home and pages
 
-router.get('/', wrap(async (req, res) => {
+// The platform's page for real-estate offices (it was the home page until Nov 2026).
+router.get('/offices', wrap(async (req, res) => {
   const base = publicPage(req, res, {
     description: 'عقدي يساعد مكاتب العقار على متابعة عقود الإيجار ومواعيد التجديد والدفعات، ويذكّر الملاك والمستأجرين قبل كل موعد مهم.',
     jsonLd: { '@context': 'https://schema.org', '@type': 'Organization', name: 'عقدي', url: seo.baseUrl(req) },
+    path: '/offices',
   });
   return res.render('site/home', { ...shared(), title: 'عقدي', metaTitle: 'عقدي | متابعة عقود الإيجار ومواعيدها لمكاتب العقار', plans: await planCards(), faqs: await siteContent.faqs(db.pool), base });
 }));

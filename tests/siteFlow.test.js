@@ -100,7 +100,7 @@ const getPublic = (p) => fetch(`${http.base()}${p}`, { redirect: 'manual' });
 const text = async (p) => (await getPublic(p)).text();
 const afterOf = (row) => (typeof row.after_json === 'string' ? JSON.parse(row.after_json) : row.after_json);
 
-const PAGES = ['/', '/features', '/pricing', '/about', '/contact', '/privacy', '/terms', '/disclaimer', '/blog', '/listings'];
+const PAGES = ['/', '/offices', '/features', '/pricing', '/about', '/contact', '/privacy', '/terms', '/disclaimer', '/blog', '/listings'];
 
 // ------------------------------------------------------------ the pages
 
@@ -115,7 +115,7 @@ test('every public page: 200, one h1, title, description, canonical, robots, the
     assert.match(html, /<title>[^<]{3,}<\/title>/, p);
     assert.match(html, /<meta name="description" content="[^"]{20,}">/, p);
     assert.match(html, /<meta name="robots" content="index,follow">/, p);
-    assert.match(html, new RegExp(`<link rel="canonical" href="https://aqdi\\.example${p === '/' ? '/' : p}">`), p);
+    assert.match(html, new RegExp(`<link rel="canonical" href="https://aqdi\\.example${p === '/listings' ? '/' : p}">`), p);
     assert.match(html, /property="og:title"/, p);
     assert.ok(html.includes(DISCLAIMER), `${p}: the disclaimer is visible`);
     assert.equal(res.headers.get('set-cookie'), null, `${p}: no cookie`);
@@ -124,8 +124,8 @@ test('every public page: 200, one h1, title, description, canonical, robots, the
     assert.ok(!/ style="/.test(html), `${p}: no inline style`);
     assert.ok(!/(googletagmanager|google-analytics|facebook\.net|hotjar)/.test(html), `${p}: no tracker by default`);
   }
-  // Blocking scripts: none at all on the home page (deferred own-origin files only elsewhere).
-  const home = await text('/');
+  // Blocking scripts: none at all on the offices page (deferred own-origin files only elsewhere).
+  const home = await text('/offices');
   assert.equal((home.match(/<script(?![^>]*application\/ld\+json)/g) || []).length, 0);
   // Images carry their size and load lazily.
   const html = await text('/listings');
@@ -181,10 +181,10 @@ test('pricing comes from the database: public active plans only, prices before V
   assert.doesNotMatch(pricing, /اختبار-باقة-مخفية/);
   assert.doesNotMatch(pricing, /اختبار-باقة-موقوفة/);
   assert.match(pricing, /الأسعار لا تشمل ضريبة القيمة المضافة 15%/);
-  assert.match(await text('/'), /اختبار-باقة-معروضة/);
+  assert.match(await text('/offices'), /اختبار-باقة-معروضة/);
   // The FAQ comes from the faqs table (the built-in answers are only a fallback).
   await db.pool.query("INSERT INTO faqs (question_ar, answer_ar, sort_order, is_active) VALUES ('اختبار-سؤال-ظاهر؟', 'جواب-ظاهر', 999, 1), ('اختبار-سؤال-مخفي؟', 'جواب-مخفي', 1000, 0)");
-  const home = await text('/');
+  const home = await text('/offices');
   assert.match(home, /اختبار-سؤال-ظاهر/);
   assert.doesNotMatch(home, /اختبار-سؤال-مخفي/);
   assert.match(home, /<details class="faq__item">/);
