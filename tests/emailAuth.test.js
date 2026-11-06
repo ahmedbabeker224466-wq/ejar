@@ -127,6 +127,7 @@ const auditRows = async (action, userId) => (await db.pool.query(
 ))[0];
 const jsonOf = (v) => (typeof v === 'string' ? JSON.parse(v) : v);
 const BANNER = 'وضع تجريبي: الدخول بالبريد بدون رمز';
+// The red email-test banner was removed at the owner's request (Nov 2026); the launch check still fails while AUTH_EMAIL_TEST is on.
 
 test('flag off: /login and /register are the phone pages, the email route does not exist, phone login works', { skip }, async () => {
   flag(false);
@@ -153,7 +154,7 @@ test('flag on: email pages with consistent wording and the banner on every page'
     assert.match(login.text, /البريد الإلكتروني/);
     assert.match(login.text, /action="\/login\/email"/);
     assert.doesNotMatch(login.text, /رقم الجوال|رمز دخول|برسالة نصية/, 'no phone wording on the email page');
-    assert.ok(login.text.includes(BANNER));
+    assert.ok(!login.text.includes(BANNER));
 
     const register = await http.request('/register');
     assert.match(register.text, /سجّل مكتبك/);
@@ -162,15 +163,15 @@ test('flag on: email pages with consistent wording and the banner on every page'
 
     const phonePage = await http.request('/login?method=phone');
     assert.match(phonePage.text, /رقم الجوال/, 'the platform admin keeps the phone page');
-    assert.ok(phonePage.text.includes(BANNER));
+    assert.ok(!phonePage.text.includes(BANNER));
 
     for (const page of ['/', '/pricing', '/no-such-page-ea']) {
-      assert.ok((await http.request(page)).text.includes(BANNER), `banner on ${page}`);
+      assert.ok(!(await http.request(page)).text.includes(BANNER), `no banner on ${page}`);
     }
     const { cookie } = await http.login(phone(2));
     const created = await http.request('/office/new', { method: 'POST', cookie, form: { name: 'تجربة-بريد-لافتة', city: 'الرياض', phone: '0112345678' } });
     assert.equal(created.status, 302);
-    assert.ok((await http.request('/office', { cookie })).text.includes(BANNER), 'banner in the office area');
+    assert.ok(!(await http.request('/office', { cookie })).text.includes(BANNER), 'no banner in the office area');
   } finally {
     flag(false);
   }
