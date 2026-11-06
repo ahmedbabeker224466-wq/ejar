@@ -67,9 +67,9 @@ if command -v cloudlinux-selector >/dev/null 2>&1; then
 fi
 # LiteSpeed (lsnode) keeps the old process alive even after restart.txt and
 # cloudlinux-selector, so stop this app's own process; LiteSpeed starts a fresh
-# one on the next request. Only the exact "lsnode:<app root>" process is matched.
+# one on the next request. Only "lsnode:<app root>" is matched (the title may be padded with spaces).
 if command -v pkill >/dev/null 2>&1; then
-  if pkill -TERM -u "$(id -un)" -f "^lsnode:${DEPLOYPATH%/}/?\$"; then
+  if pkill -TERM -u "$(id -un)" -f "^lsnode:${DEPLOYPATH%/}/?([[:space:]]|\$)"; then
     echo "Stopped the old lsnode process; the next request starts the new version."
   fi
 fi
