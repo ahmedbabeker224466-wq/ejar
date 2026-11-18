@@ -378,7 +378,7 @@ test('email with SMTP set goes through the mailer (mocked)', { skip }, async () 
   const sent = [];
   email.setMailer({ async sendMail(message) { sent.push(message); } });
   process.env.SMTP_HOST = 'smtp.example.sa';
-  process.env.MAIL_FROM = 'عقدي <no-reply@example.sa>';
+  process.env.MAIL_FROM = 'ميعاد <no-reply@example.sa>';
   try {
     const o = await office(21, 'مكتب البريد');
     await db.pool.query('UPDATE users SET email = ? WHERE id = ?', ['mail@example.sa', o.user.id]);

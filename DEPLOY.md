@@ -1,4 +1,4 @@
-# Deploying Aqdi (عقدي) to cPanel: final guide
+# Deploying Mi3aad (ميعاد, internal name Aqdi) to cPanel: final guide
 
 The Arabic step-by-step walk-through for non-technical people is
 [`deploy/DEPLOY-CPANEL.md`](deploy/DEPLOY-CPANEL.md). This file is the

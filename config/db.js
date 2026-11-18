@@ -74,6 +74,8 @@ async function ensureSchema(targetPool = pool) {
     current = 'official pricing';
     // Required here, not at the top, like the backfills below.
     await require('../services/officialPricing').applyOfficialPricing(targetPool);
+    current = 'rebrand';
+    await require('../services/rebrand').applyRebrand(targetPool);
     current = 'office plan backfill';
     // Required here, not at the top: services/defaultPlan.js loads modules that load this file.
     await require('../services/defaultPlan').backfillOfficePlans(targetPool);

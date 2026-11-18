@@ -1,4 +1,5 @@
-# Project: Aqdi (عقدي)
+# Project: Aqdi (internal name); brand shown to users: ميعاد / Mi3aad (mi3aad.com)
+Every user-facing text says ميعاد (or Mi3aad in Latin script); never «عقدي» or "Aqdi" (tests/brand.test.js). Internal identifiers keep the old name on purpose: database, table and column names, cookies (aqdi_session), lock keys (aqdi:job:*), env names, file paths, the X-Aqdi-Office-Host header, the default WhatsApp template name aqdi_reminder and the repository. services/rebrand.js applyRebrand (ensureSchema and seed) updates seeded defaults in the database (platform message templates, FAQ, seeded blog drafts, settings site_name) only where they still equal the old default text.
 A Saudi SaaS platform for real-estate offices to manage rental contracts. Six roles on one platform:
 platform_admin (me), office_owner (pays), office_manager, office_staff, landlord, tenant.
 Offices pay a subscription. Landlords and tenants join free with an invite code.

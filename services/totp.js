@@ -90,7 +90,7 @@ function verifyCode(secretBase32, code, timeMs = Date.now()) {
 }
 
 /** otpauth:// URI that authenticator apps read from a QR code or a tap. */
-function otpauthUri(secretBase32, accountName, issuer = 'Aqdi') {
+function otpauthUri(secretBase32, accountName, issuer = 'Mi3aad') {
   const label = encodeURIComponent(`${issuer}:${accountName}`);
   const params = new URLSearchParams({
     secret: secretBase32,

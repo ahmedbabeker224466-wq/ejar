@@ -129,7 +129,7 @@ function createOtpService({ pool = db.pool, send = sendSms, key = null } = {}) {
       [phone, hashCode(phone, code, getKey()), purpose, CODE_TTL_MINUTES, ip],
     );
 
-    const message = `رمز الدخول إلى عقدي: ${code}\nصالح لمدة ${CODE_TTL_MINUTES} دقائق. لا تشاركه مع أحد.`;
+    const message = `رمز الدخول إلى ميعاد: ${code}\nصالح لمدة ${CODE_TTL_MINUTES} دقائق. لا تشاركه مع أحد.`;
     const sent = await send(toE164(phone), message);
     return sent.ok ? { ok: true, phone } : { ok: false, error: 'send_failed' };
   }

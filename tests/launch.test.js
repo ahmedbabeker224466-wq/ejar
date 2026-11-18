@@ -317,7 +317,7 @@ test.describe('/admin/launch', { skip }, () => {
     process.env.PLATFORM_ADMIN_PHONE = '0500002500';
     process.env.REQUIRE_ADMIN_2FA = 'false';
     process.env.SMTP_HOST = 'mail.example';
-    process.env.MAIL_FROM = 'عقدي <no-reply@example.com>';
+    process.env.MAIL_FROM = 'ميعاد <no-reply@example.com>';
     db = require('../config/db');
     await db.ensureSchema();
     await cleanup();

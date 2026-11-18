@@ -141,7 +141,7 @@ async function deliverPending({ pool, now = new Date(), limit = 100 }) {
  * ({ ok } or { ok: false, error }).
  */
 async function sendTest(pool, { officeId, user, channel, officeName }) {
-  const title = 'رسالة تجربة من عقدي';
+  const title = 'رسالة تجربة من ميعاد';
   const body = withDisclaimer(`هذه رسالة تجربة من إعدادات التذكيرات في ${officeName}. إذا وصلتك فالقناة تعمل.`);
   const [insert] = await pool.query(
     "INSERT INTO notifications (user_id, office_id, kind, title, body) VALUES (?, ?, 'test', ?, ?)",

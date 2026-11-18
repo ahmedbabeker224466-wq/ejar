@@ -196,8 +196,8 @@ router.post('/webhooks/telegram/:secret', wrap(async (req, res) => {
   if (chat && chat.type === 'private' && typeof message.text === 'string') {
     const userId = await contacts.linkTelegram(db.pool, { code: contacts.codeFromMessage(message.text), chatId: chat.id });
     const reply = userId
-      ? 'تم ربط حسابك في عقدي بنجاح. ستصلك التذكيرات هنا.'
-      : 'أرسل رمز الربط الظاهر في صفحة "إعدادات الإشعارات" في عقدي.';
+      ? 'تم ربط حسابك في ميعاد بنجاح. ستصلك التذكيرات هنا.'
+      : 'أرسل رمز الربط الظاهر في صفحة "إعدادات الإشعارات" في ميعاد.';
     const sent = await telegram.send({ token: office.token, chatId: chat.id, text: reply });
     if (!sent.ok) logger.warn(`Telegram reply failed for office ${office.officeId}: ${sent.error}`);
   }

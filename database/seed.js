@@ -36,22 +36,22 @@ const TEMPLATES = [
   {
     code: 'otp_login',
     channel: 'sms',
-    body_ar: 'رمز الدخول إلى عقدي: {{code}}. صالح لمدة 5 دقائق. لا تشاركه مع أحد.',
+    body_ar: 'رمز الدخول إلى ميعاد: {{code}}. صالح لمدة 5 دقائق. لا تشاركه مع أحد.',
   },
   {
     code: 'invite_landlord',
     channel: 'whatsapp',
-    body_ar: 'دعاك {{office}} لمتابعة عقاراتك على عقدي. كود الدعوة: {{code}} — ادخل من {{link}}',
+    body_ar: 'دعاك {{office}} لمتابعة عقاراتك على ميعاد. كود الدعوة: {{code}} — ادخل من {{link}}',
   },
   {
     code: 'invite_tenant',
     channel: 'whatsapp',
-    body_ar: 'دعاك {{office}} لمتابعة عقدك ومواعيده على عقدي. كود الدعوة: {{code}} — ادخل من {{link}}',
+    body_ar: 'دعاك {{office}} لمتابعة عقدك ومواعيده على ميعاد. كود الدعوة: {{code}} — ادخل من {{link}}',
   },
   {
     code: 'invite_staff',
     channel: 'whatsapp',
-    body_ar: 'دعاك {{office}} للانضمام إلى فريقه على عقدي. كود الدعوة: {{code}} — ادخل من {{link}}',
+    body_ar: 'دعاك {{office}} للانضمام إلى فريقه على ميعاد. كود الدعوة: {{code}} — ادخل من {{link}}',
   },
 ];
 
@@ -127,7 +127,7 @@ const BLOG_DRAFTS = [
 - طلب التخفيض يبقى ممكناً، ويحسن أن يُسجَّل بوضوح.
 - تذكيرات المكتب والمالك تتغير: لا معنى لتذكير بطلب زيادة لا تسري.
 
-## كيف يتعامل معه عقدي؟
+## كيف يتعامل معه ميعاد؟
 
 يعرض التطبيق تنبيهاً عندما يرى أن العقد داخل نطاق القاعدة، ويمنع اقتراح زيادة في التجديد. القاعدة مضبوطة في ملف واحد وتحتاج مراجعتك من المصدر الرسمي.
 
@@ -138,7 +138,7 @@ const BLOG_DRAFTS = [
 ];
 
 const SETTINGS = [
-  { key: 'site_name', value: 'عقدي' },
+  { key: 'site_name', value: 'ميعاد' },
   { key: 'default_currency', value: 'SAR' },
   { key: 'vat_percent', value: '15' },
   { key: 'trial_days', value: '30' },
@@ -247,6 +247,7 @@ if (require.main === module) {
     try {
       if (!(await db.ensureSchema()).ok) throw new Error('schema check failed');
       const counts = { ...(await seed(db.pool)), ...(await seedContent(db.pool)) };
+      await require('../services/rebrand').applyRebrand(db.pool);
       logger.info(
         `Seed complete: ${counts.plans} plans, ${counts.templates} templates, ${counts.settings} settings, ${counts.posts} draft posts, ${counts.faqs} FAQs added`,
       );

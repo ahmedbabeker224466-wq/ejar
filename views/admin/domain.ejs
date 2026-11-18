@@ -14,7 +14,7 @@
       <dt>سجل A</dt><dd dir="ltr"><%= probe.a.ok ? probe.a.values.join(', ') || '—' : (lookupErrors[probe.a.error] || probe.a.error) %></dd>
       <dt>سجل CNAME</dt><dd dir="ltr"><%= probe.cname.ok ? probe.cname.values.join(', ') || '—' : (lookupErrors[probe.cname.error] || probe.cname.error) %></dd>
       <dt>HTTPS</dt><dd dir="ltr"><%= probe.https.status ? 'HTTP ' + probe.https.status : (probe.https.error + (probe.https.message ? ': ' + probe.https.message : '')) %></dd>
-      <dt>يصل إلى عقدي؟</dt><dd><% if (probe.isApp) { %><span class="badge badge--domain-active">نعم، صفحة هذا المكتب ✓</span><% } else { %><span class="badge badge--domain-rejected">لا</span><% } %></dd>
+      <dt>يصل إلى ميعاد؟</dt><dd><% if (probe.isApp) { %><span class="badge badge--domain-active">نعم، صفحة هذا المكتب ✓</span><% } else { %><span class="badge badge--domain-rejected">لا</span><% } %></dd>
     </dl>
     <% if (!probe.isApp) { %><p class="muted">إذا كان الخطأ شهادة SSL فانتظر AutoSSL أو شغّله من cPanel. إذا لم يصل الطلب فراجع إضافة الدومين في cPanel وسجلات DNS.</p><% } %>
   <% } %>

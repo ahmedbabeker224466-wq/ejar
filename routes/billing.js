@@ -212,7 +212,7 @@ office.get('/office/billing/orders/:id/pay', billingGuard, wrap(async (req, res)
   if (!moyasar.config().enabled) return res.redirect('/office/billing');
   const config = moyasar.formConfig({
     order,
-    description: `اشتراك عقدي - طلب ${order.id}`,
+    description: `اشتراك ميعاد - طلب ${order.id}`,
     callbackUrl: `${siteUrl(req)}/office/billing/moyasar/callback`,
   });
   res.set('Content-Security-Policy', moyasarCsp());

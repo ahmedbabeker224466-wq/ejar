@@ -59,7 +59,7 @@ module.exports = function registerLaunch(router, { wrap, notFound, reasonOf, REA
     if (!reason) return render(req, res, { error: REASON_ERROR, status: 422, openKey: 'smtp' });
     const to = String(req.body.to || '').trim();
     if (!ADDRESS.test(to) || to.length > 190) return render(req, res, { error: 'اكتب بريداً إلكترونياً صحيحاً لاستلام الرسالة.', status: 422, openKey: 'smtp' });
-    const sent = await email.send({ to, subject: 'رسالة تجربة من عقدي', text: 'هذه رسالة تجربة للتأكد من إعدادات البريد قبل الإطلاق. لا حاجة للرد عليها.' });
+    const sent = await email.send({ to, subject: 'رسالة تجربة من ميعاد', text: 'هذه رسالة تجربة للتأكد من إعدادات البريد قبل الإطلاق. لا حاجة للرد عليها.' });
     const record = await launch.saveSmtpTest(db.pool, sent);
     await audit.write(req.user.id, null, 'admin.launch.smtp_test', 'launch', null, null, { ok: record.ok, reason }, req.ip);
     return res.redirect(`/admin/launch?done=${record.ok ? 'smtp_ok' : 'smtp_failed'}`);

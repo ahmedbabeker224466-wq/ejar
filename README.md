@@ -1,4 +1,6 @@
-# Aqdi (عقدي)
+# Mi3aad (ميعاد)
+
+The brand users see is **ميعاد / Mi3aad** (mi3aad.com). The internal name stays **Aqdi**: database, cookies (`aqdi_session`), lock keys (`aqdi:job:*`), env names, file names and the repository are not renamed, so sessions and deploys keep working.
 
 A Saudi SaaS platform that helps real-estate offices manage rental contracts.
 Offices upload the contract file they downloaded from Ejar; the app reads only

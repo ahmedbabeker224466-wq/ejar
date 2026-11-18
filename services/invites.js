@@ -288,7 +288,7 @@ function inviteShareLink({ code, officeName, baseUrl, phone = null, kind = 'land
     : kind === 'staff' ? 'للانضمام إلى فريق عمله'
       : 'لمتابعة عقاراتك وعقودها';
   const text = [
-    `مرحباً، يدعوك ${officeName} ${what} في تطبيق عقدي.`,
+    `مرحباً، يدعوك ${officeName} ${what} في تطبيق ميعاد.`,
     `رمز الدعوة: ${code}`,
     `ادخل من هنا واكتب الرمز: ${baseUrl}/join`,
   ].join('\n');

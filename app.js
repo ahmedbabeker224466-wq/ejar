@@ -93,7 +93,7 @@ app.use((req, res, next) => {
   res.locals.currentPath = req.path;
   res.locals.flash = [];
   res.locals.currentUser = null;
-  res.locals.title = 'عقدي';
+  res.locals.title = 'ميعاد';
   res.locals.unreadCount = 0;
   // TESTING ONLY: a red banner on every page while email sign-in without a code is on.
   res.locals.emailTestMode = emailAuth.enabled();

@@ -283,7 +283,7 @@ test('blog admin: create a draft with a reason, drafts are invisible, publishing
   assert.match(page, /<h2>عنوان فرعي<\/h2>/);
   assert.equal((page.match(/<h1[\s>]/g) || []).length, 1);
   assert.match(page, /<h1>مقال اختبار &amp; &lt;b&gt;عنوان&lt;\/b&gt;<\/h1>/, 'the title is escaped');
-  assert.match(page, /<title>عنوان الميتا \| عقدي<\/title>/);
+  assert.match(page, /<title>عنوان الميتا \| ميعاد<\/title>/);
   assert.match(page, /<meta name="description" content="وصف الميتا للمقال">/);
   assert.match(page, /"@type":"BlogPosting"/);
   assert.match(page, /<link rel="canonical" href="https:\/\/aqdi\.example\/blog\/site-test-one">/);

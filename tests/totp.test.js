@@ -55,9 +55,9 @@ test('new secrets are 160-bit base32', () => {
 
 test('builds an otpauth URI for authenticator apps', () => {
   const uri = totp.otpauthUri(RFC_SECRET, '966512345678');
-  assert.match(uri, /^otpauth:\/\/totp\/Aqdi%3A966512345678\?/);
+  assert.match(uri, /^otpauth:\/\/totp\/Mi3aad%3A966512345678\?/);
   assert.match(uri, new RegExp(`secret=${RFC_SECRET}`));
-  assert.match(uri, /issuer=Aqdi/);
+  assert.match(uri, /issuer=Mi3aad/);
   assert.match(uri, /digits=6/);
   assert.match(uri, /period=30/);
 });

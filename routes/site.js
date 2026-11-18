@@ -49,32 +49,32 @@ const shared = () => ({
 // The platform's page for real-estate offices (it was the home page until Nov 2026).
 router.get('/offices', wrap(async (req, res) => {
   const base = publicPage(req, res, {
-    description: 'عقدي يساعد مكاتب العقار على متابعة عقود الإيجار ومواعيد التجديد والدفعات، ويذكّر الملاك والمستأجرين قبل كل موعد مهم.',
-    jsonLd: { '@context': 'https://schema.org', '@type': 'Organization', name: 'عقدي', url: seo.baseUrl(req) },
+    description: 'ميعاد يساعد مكاتب العقار على متابعة عقود الإيجار ومواعيد التجديد والدفعات، ويذكّر الملاك والمستأجرين قبل كل موعد مهم.',
+    jsonLd: { '@context': 'https://schema.org', '@type': 'Organization', name: 'ميعاد', url: seo.baseUrl(req) },
     path: '/offices',
   });
-  return res.render('site/home', { ...shared(), title: 'عقدي', metaTitle: 'عقدي | متابعة عقود الإيجار ومواعيدها لمكاتب العقار', plans: await planCards(), faqs: await siteContent.faqs(db.pool), base });
+  return res.render('site/home', { ...shared(), title: 'ميعاد', metaTitle: 'ميعاد | متابعة عقود الإيجار ومواعيدها لمكاتب العقار', plans: await planCards(), faqs: await siteContent.faqs(db.pool), base });
 }));
 
 router.get('/features', (req, res) => {
-  publicPage(req, res, { description: 'مزايا عقدي: مواعيد التجديد، تتبع الدفعات، الصيانة، الرسائل، التقارير، والإعلانات العامة بخصوصية كاملة.' });
+  publicPage(req, res, { description: 'مزايا ميعاد: مواعيد التجديد، تتبع الدفعات، الصيانة، الرسائل، التقارير، والإعلانات العامة بخصوصية كاملة.' });
   return res.render('site/features', { title: 'المزايا' });
 });
 
 router.get('/pricing', wrap(async (req, res) => {
-  publicPage(req, res, { description: 'باقات عقدي لمكاتب العقار: أسعار شهرية وسنوية قبل ضريبة القيمة المضافة، وتجربة مجانية.' });
+  publicPage(req, res, { description: 'باقات ميعاد لمكاتب العقار: أسعار شهرية وسنوية قبل ضريبة القيمة المضافة، وتجربة مجانية.' });
   return res.render('site/pricing', { ...shared(), title: 'الأسعار', plans: await planCards(), faqs: await siteContent.faqs(db.pool) });
 }));
 
 router.get('/about', wrap(async (req, res) => {
-  publicPage(req, res, { description: 'من نحن: عقدي تطبيق خاص يساعد مكاتب العقار على تنظيم مواعيد عقود الإيجار.' });
+  publicPage(req, res, { description: 'من نحن: ميعاد تطبيق خاص يساعد مكاتب العقار على تنظيم مواعيد عقود الإيجار.' });
   return res.render('site/about', { title: 'من نحن', seller: await platformSettings.seller(), support: await platformSettings.support() });
 }));
 
 for (const [path, view, title, description] of [
-  ['/privacy', 'privacy', 'سياسة الخصوصية', 'سياسة الخصوصية في عقدي: ما نحفظه وما لا نحفظه.'],
-  ['/terms', 'terms', 'شروط الاستخدام', 'شروط استخدام تطبيق عقدي.'],
-  ['/disclaimer', 'disclaimer', 'إخلاء المسؤولية', 'عقدي تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط.'],
+  ['/privacy', 'privacy', 'سياسة الخصوصية', 'سياسة الخصوصية في ميعاد: ما نحفظه وما لا نحفظه.'],
+  ['/terms', 'terms', 'شروط الاستخدام', 'شروط استخدام تطبيق ميعاد.'],
+  ['/disclaimer', 'disclaimer', 'إخلاء المسؤولية', 'ميعاد تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط.'],
 ]) {
   router.get(path, wrap(async (req, res) => {
     publicPage(req, res, { description });
@@ -86,7 +86,7 @@ for (const [path, view, title, description] of [
 
 async function renderContact(req, res, { values = {}, errors = {}, status = 200, sent = false } = {}) {
   if (status !== 200 || sent) privatePage(res);
-  else publicPage(req, res, { description: 'تواصل مع فريق عقدي لأي سؤال عن التطبيق أو الاشتراك أو الإعلانات.' });
+  else publicPage(req, res, { description: 'تواصل مع فريق ميعاد لأي سؤال عن التطبيق أو الاشتراك أو الإعلانات.' });
   return res.status(status).render('site/contact', { title: 'تواصل معنا', values, errors, sent, support: await platformSettings.support() });
 }
 
@@ -106,7 +106,7 @@ router.post('/contact', contactIp, wrap(async (req, res) => {
 
 router.get('/blog', wrap(async (req, res) => {
   const result = await blog.listPublished(db.pool, { page: req.query.page });
-  const base = publicPage(req, res, { description: 'مقالات عقدي: كيف تتابع مواعيد عقود الإيجار وتنظم عملك في مكتب العقار.', page: result.page });
+  const base = publicPage(req, res, { description: 'مقالات ميعاد: كيف تتابع مواعيد عقود الإيجار وتنظم عملك في مكتب العقار.', page: result.page });
   res.locals.rssUrl = seo.absolute(base, '/blog/feed.xml');
   return res.render('site/blog', { title: 'المدونة', ...result });
 }));
@@ -117,8 +117,8 @@ router.get('/blog/feed.xml', wrap(async (req, res) => {
   res.set({ 'Content-Type': 'application/rss+xml; charset=utf-8', 'Cache-Control': 'public, max-age=300' });
   return res.send(seo.rssXml({
     base,
-    title: 'مدونة عقدي',
-    description: 'مقالات عقدي لمكاتب العقار',
+    title: 'مدونة ميعاد',
+    description: 'مقالات ميعاد لمكاتب العقار',
     items: rows.map((p) => ({ title: p.title, link: seo.absolute(base, `/blog/${p.slug}`), description: p.excerpt || markdown.plain(p.body, 280), date: p.publishedAt })),
   }));
 }));
@@ -145,7 +145,7 @@ router.get('/blog/:slug', wrap(async (req, res) => {
     jsonLd: {
       '@context': 'https://schema.org', '@type': 'BlogPosting', headline: post.title, datePublished: new Date(post.publishedAt).toISOString(),
       dateModified: new Date(post.updatedAt).toISOString(), inLanguage: 'ar', url: seo.absolute(base, `/blog/${post.slug}`), ...(cover ? { image: cover } : {}),
-      publisher: { '@type': 'Organization', name: 'عقدي' },
+      publisher: { '@type': 'Organization', name: 'ميعاد' },
     },
   });
   res.locals.metaTitle = post.metaTitle || post.title;

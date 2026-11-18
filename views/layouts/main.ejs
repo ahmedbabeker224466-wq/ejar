@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <% const pageTitle = locals.metaTitle || title; const pageDescription = locals.metaDescription || 'منصة عقدي لمكاتب العقار: متابعة عقود الإيجار ومواعيدها وتذكير الملاك والمستأجرين.'; %>
-  <title><%= pageTitle %><%= pageTitle === 'عقدي' ? '' : ' | عقدي' %></title>
+  <% const pageTitle = locals.metaTitle || title; const pageDescription = locals.metaDescription || 'منصة ميعاد لمكاتب العقار: متابعة عقود الإيجار ومواعيدها وتذكير الملاك والمستأجرين.'; %>
+  <title><%= pageTitle %><%= pageTitle === 'ميعاد' ? '' : ' | ميعاد' %></title>
   <meta name="description" content="<%= pageDescription %>">
   <meta name="robots" content="<%= locals.indexable ? 'index,follow' : 'noindex,nofollow' %>">
   <meta name="theme-color" content="#0f766e">
@@ -12,13 +12,13 @@
 
   <meta property="og:type" content="<%= locals.ogType || 'website' %>">
   <meta property="og:locale" content="ar_SA">
-  <meta property="og:site_name" content="عقدي">
+  <meta property="og:site_name" content="ميعاد">
   <meta property="og:title" content="<%= pageTitle %>">
   <meta property="og:description" content="<%= pageDescription %>">
   <% if (locals.canonicalUrl) { %><meta property="og:url" content="<%= canonicalUrl %>"><% } %>
   <% if (locals.ogImage) { %><meta property="og:image" content="<%= ogImage %>"><% } %>
   <meta name="twitter:card" content="<%= locals.ogImage ? 'summary_large_image' : 'summary' %>">
-  <% if (locals.rssUrl) { %><link rel="alternate" type="application/rss+xml" title="مدونة عقدي" href="<%= rssUrl %>"><% } %>
+  <% if (locals.rssUrl) { %><link rel="alternate" type="application/rss+xml" title="مدونة ميعاد" href="<%= rssUrl %>"><% } %>
   <% if (locals.jsonLd) { %><script type="application/ld+json"><%- jsonLd %></script><% } %>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
