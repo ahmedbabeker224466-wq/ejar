@@ -1,10 +1,121 @@
-<section class="card">
-  <h1>الأسعار</h1>
-  <p class="lead">اشتراك واحد للمكتب. الملّاك والمستأجرون مجاناً برمز دعوة.</p>
+<%
+  const yes = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
+  const no = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg>';
+  const num = (n) => Number(n).toLocaleString('en-US');
+  const price = (h) => String(fmt(h)).replace(/\.00$/, '');
+  const limit = (key, n) => (n === null || n === undefined ? t(key + 'Any') : t(key, { n: num(n) }));
+  const planName = (p) => { const k = 'plan.name.' + p.code; const v = t(k); return v === k ? p.name : v; };
+  const planDesc = (p) => { const k = 'plan.desc.' + p.code; const v = t(k); return v === k ? '' : v; };
+  const channels = (s) => [t('channel.app'), t('channel.email')].concat(s.telegram ? [t('channel.telegram')] : [], s.whatsapp ? [t('channel.whatsapp')] : []);
+  const joinList = (items) => items.length <= 1 ? items.join('') : items.slice(0, -1).join(lang === 'en' ? ', ' : '، ') + t('list.and') + items[items.length - 1];
+  const supportKey = { email: 'line.supportEmail', email_whatsapp: 'line.supportEmailWhatsapp', priority: 'line.supportPriority' };
+  const cmpSupport = { email: 'cmp.sEmail', email_whatsapp: 'cmp.sEmailWhatsapp', priority: 'cmp.sPriority' };
+  const cell = (n) => (n === null || n === undefined ? t('cmp.unlimited') : num(n));
+  const mark = (on) => on ? '<span class="mk-yes">' + yes + '<span class="mk-visually-hidden">' + t('cmp.yes') + '</span></span>' : '<span class="mk-no">' + no + '<span class="mk-visually-hidden">' + t('cmp.no') + '</span></span>';
+  const popular = plans.length >= 3 ? (plans.find((p) => p.code === 'pro') || plans[Math.floor(plans.length / 2)]).code : null;
+  const faqList = lang === 'en' ? [1, 2, 3, 4].map((i) => ({ q: t('faq.q' + i), a: t('faq.a' + i, { days: trialDays }) })) : faqs;
+%>
+<section class="mk-phero" aria-labelledby="pricing-title">
+  <div class="mk-wrap">
+    <h1 id="pricing-title"><%= t('pricing.title') %></h1>
+    <p><%= t('pricing.lead') %></p>
+  </div>
 </section>
-<section class="section"><%- include('_plans') %></section>
-<section class="section">
-  <h2>أسئلة عن الاشتراك</h2>
-  <%- include('_faq') %>
-  <p><a href="/register" class="btn btn--primary btn--large">سجّل مكتبك</a></p>
+
+<section class="mk-plans-sec">
+  <div class="mk-wrap">
+    <% if (plans.length) { %>
+      <div class="mk-pricing">
+        <input type="radio" name="billing-period" id="period-monthly" class="mk-period__input" checked>
+        <input type="radio" name="billing-period" id="period-yearly" class="mk-period__input">
+        <div class="mk-period" role="group" aria-label="<%= t('pricing.period') %>">
+          <label for="period-monthly" class="mk-period__opt mk-period__opt--monthly"><%= t('pricing.monthly') %></label>
+          <label for="period-yearly" class="mk-period__opt mk-period__opt--yearly"><%= t('pricing.yearly') %></label>
+        </div>
+        <ul class="mk-plans">
+          <% plans.forEach(function (p) { const s = p.spec; const pop = p.code === popular; %>
+            <li class="mk-plan<%= pop ? ' mk-plan--pop' : '' %>" id="plan-<%= p.code %>">
+              <% if (pop) { %><span class="mk-plan__badge"><%= t('pricing.popular') %></span><% } %>
+              <h2><%= planName(p) %></h2>
+              <p class="mk-plan__desc"><%= planDesc(p) %></p>
+              <p class="mk-plan__price price--monthly"><strong><%= price(p.monthly) %></strong> <span><%= t('pricing.perMonth') %></span></p>
+              <p class="mk-plan__price price--yearly"><strong><%= price(p.yearly) %></strong> <span><%= t('pricing.perYear') %></span></p>
+              <p class="mk-plan__vat price--monthly"><%= t('pricing.exVat') %></p>
+              <p class="mk-plan__vat price--yearly"><%= p.paidMonths ? t('pricing.paidMonths', { n: p.paidMonths }) : t('pricing.exVat') %></p>
+              <a href="/register" class="mk-btn mk-btn--block <%= pop ? 'mk-btn--accent' : 'mk-btn--ghost' %>"><%= t('pricing.start') %></a>
+              <ul class="mk-plan__lines">
+                <li><%- yes %><span><%= limit('line.units', s.units) %></span></li>
+                <li><%- yes %><span><%= limit('line.members', s.members) %></span></li>
+                <li><%- yes %><span><%= limit('line.ai', s.ai) %></span></li>
+                <li><%- yes %><span><%= limit('line.listings', s.listings) %></span></li>
+                <li><%- yes %><span><%= t('line.channels', { list: joinList(channels(s)) }) %></span></li>
+                <li><%- yes %><span><%= t('line.page') %></span></li>
+                <li><%- yes %><span><%= t(s.audit === 'basic' ? 'line.auditBasic' : 'line.auditFull') %></span></li>
+                <li><%- yes %><span><%= t(supportKey[s.support]) %></span></li>
+                <% if (s.domain === 'none') { %>
+                  <li class="is-off"><%- no %><span><%= t('line.domainNone') %></span></li>
+                <% } else { %>
+                  <li><%- yes %><span><%= s.domain === 'included' ? t('line.domainIncluded') : t('line.domainAddon', { price: String(s.addonPrice).replace(/\.00$/, '') }) %> <em class="mk-soon"><%= t('pricing.soon') %></em></span></li>
+                <% } %>
+              </ul>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+      <div class="mk-custom" id="plan-custom">
+        <div><h2><%= t('pricing.customTitle', { units: num(customFromUnits) }) %></h2><p><%= t('pricing.customText') %></p></div>
+        <a href="/contact" class="mk-btn mk-btn--ghost"><%= t('pricing.contact') %></a>
+      </div>
+    <% } else { %>
+      <p class="mk-empty"><%= t('pricing.none') %> <a href="/contact"><%= t('pricing.contact') %></a></p>
+    <% } %>
+    <p class="mk-note"><%= t('pricing.vatNote', { vat: vatPercent }) %></p>
+    <p class="mk-note"><%= t('pricing.trialNote', { days: trialDays }) %></p>
+  </div>
+</section>
+
+<% if (plans.length) { %>
+<section class="mk-sec mk-sec--alt" aria-labelledby="compare-title">
+  <div class="mk-wrap">
+    <div class="mk-head"><h2 id="compare-title"><%= t('pricing.compare') %></h2></div>
+    <div class="mk-table-wrap">
+      <table class="mk-cmp">
+        <thead><tr><th scope="col"><%= t('cmp.feature') %></th><% plans.forEach(function (p) { %><th scope="col" class="<%= p.code === popular ? 'is-pop' : '' %>"><%= planName(p) %></th><% }) %></tr></thead>
+        <tbody>
+          <tr><th scope="row"><%= t('cmp.units') %></th><% plans.forEach(function (p) { %><td class="<%= p.code === popular ? 'is-pop' : '' %>"><%= cell(p.spec.units) %></td><% }) %></tr>
+          <tr><th scope="row"><%= t('cmp.members') %></th><% plans.forEach(function (p) { %><td class="<%= p.code === popular ? 'is-pop' : '' %>"><%= cell(p.spec.members) %></td><% }) %></tr>
+          <tr><th scope="row"><%= t('cmp.ai') %></th><% plans.forEach(function (p) { %><td class="<%= p.code === popular ? 'is-pop' : '' %>"><%= cell(p.spec.ai) %></td><% }) %></tr>
+          <tr><th scope="row"><%= t('cmp.listings') %></th><% plans.forEach(function (p) { %><td class="<%= p.code === popular ? 'is-pop' : '' %>"><%= cell(p.spec.listings) %></td><% }) %></tr>
+          <tr><th scope="row"><%= t('cmp.telegram') %></th><% plans.forEach(function (p) { %><td class="<%= p.code === popular ? 'is-pop' : '' %>"><%- mark(p.spec.telegram) %></td><% }) %></tr>
+          <tr><th scope="row"><%= t('cmp.whatsapp') %></th><% plans.forEach(function (p) { %><td class="<%= p.code === popular ? 'is-pop' : '' %>"><%- mark(p.spec.whatsapp) %></td><% }) %></tr>
+          <tr><th scope="row"><%= t('cmp.audit') %></th><% plans.forEach(function (p) { %><td class="<%= p.code === popular ? 'is-pop' : '' %>"><%= t(p.spec.audit === 'basic' ? 'cmp.basic' : 'cmp.full') %></td><% }) %></tr>
+          <tr><th scope="row"><%= t('cmp.support') %></th><% plans.forEach(function (p) { %><td class="<%= p.code === popular ? 'is-pop' : '' %>"><%= t(cmpSupport[p.spec.support]) %></td><% }) %></tr>
+          <tr><th scope="row"><%= t('cmp.domain') %> <em class="mk-soon"><%= t('pricing.soon') %></em></th><% plans.forEach(function (p) { %><td class="<%= p.code === popular ? 'is-pop' : '' %>"><% if (p.spec.domain === 'none') { %><%- mark(false) %><% } else { %><%= p.spec.domain === 'included' ? t('cmp.dIncluded') : t('cmp.dAddon', { price: String(p.spec.addonPrice).replace(/\.00$/, '') }) %><% } %></td><% }) %></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (faqList.length) { %>
+<section class="mk-sec" aria-labelledby="faq-title">
+  <div class="mk-wrap">
+    <div class="mk-head"><h2 id="faq-title"><%= t('pricing.faq') %></h2></div>
+    <div class="mk-faq">
+      <% faqList.forEach(function (f, i) { %>
+        <details<%= i === 0 ? ' open' : '' %>><summary><%= f.q %></summary><p><%= f.a %></p></details>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<section class="mk-sec mk-sec--tight">
+  <div class="mk-wrap">
+    <div class="mk-cta">
+      <div><h2><%= t('cta.title') %></h2><p><%= t('cta.text', { days: trialDays }) %></p></div>
+      <a href="/register" class="mk-btn mk-btn--accent mk-btn--lg"><%= t('cta.button') %></a>
+    </div>
+  </div>
 </section>

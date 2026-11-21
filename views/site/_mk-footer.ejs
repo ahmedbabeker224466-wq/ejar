@@ -1,0 +1,30 @@
+<footer class="mk-footer">
+  <div class="mk-wrap">
+    <div class="mk-footer__cols">
+      <div>
+        <a href="<%= L('/') %>" class="mk-logo"><span class="mk-logo__mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 9.5h18"/><path d="m9 15 2 2 4-4"/></svg></span><span><%= t('brand') %></span></a>
+        <p class="mk-footer__about"><%= t('footer.about') %></p>
+      </div>
+      <nav aria-label="<%= t('footer.product') %>"><h2><%= t('footer.product') %></h2>
+        <a href="/features"><%= t('nav.features') %></a>
+        <a href="<%= L('/pricing') %>"><%= t('nav.pricing') %></a>
+        <a href="/listings"><%= t('nav.listings') %></a>
+        <a href="/blog"><%= t('footer.blog') %></a>
+      </nav>
+      <nav aria-label="<%= t('footer.company') %>"><h2><%= t('footer.company') %></h2>
+        <a href="/about"><%= t('footer.aboutUs') %></a>
+        <a href="/contact"><%= t('footer.contact') %></a>
+        <a href="/login"><%= t('nav.login') %></a>
+      </nav>
+      <nav aria-label="<%= t('footer.legal') %>"><h2><%= t('footer.legal') %></h2>
+        <a href="/privacy"><%= t('footer.privacy') %></a>
+        <a href="/terms"><%= t('footer.terms') %></a>
+        <a href="/disclaimer"><%= t('footer.disclaimerLink') %></a>
+      </nav>
+    </div>
+    <div class="mk-footer__base">
+      <p class="disclaimer"><%= t('footer.disclaimer') %></p>
+      <p>© <%= new Date().getFullYear() %> <%= t('brand') %></p>
+    </div>
+  </div>
+</footer>

@@ -3,6 +3,7 @@
 // Shared by the public routers (listings, marketing site, blog).
 
 const seo = require('../services/seo');
+const i18n = require('../services/i18n');
 const { rateLimit } = require('../middleware/rateLimit');
 
 function wrap(handler) {
@@ -16,7 +17,7 @@ function wrap(handler) {
  */
 function publicPage(req, res, { description, page = 1, ogImage = null, ogType = null, jsonLd = null, path = null, cache = true } = {}) {
   const base = seo.baseUrl(req);
-  const canonicalPath = `${path || req.path}${page > 1 ? `?page=${page}` : ''}`;
+  const canonicalPath = `${i18n.localizedPath(req.lang, path || req.path)}${page > 1 ? `?page=${page}` : ''}`;
   res.locals.indexable = true;
   res.locals.canonicalUrl = seo.absolute(base, canonicalPath);
   if (description) res.locals.metaDescription = description;

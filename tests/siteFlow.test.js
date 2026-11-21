@@ -115,7 +115,7 @@ test('every public page: 200, one h1, title, description, canonical, robots, the
     assert.match(html, /<title>[^<]{3,}<\/title>/, p);
     assert.match(html, /<meta name="description" content="[^"]{20,}">/, p);
     assert.match(html, /<meta name="robots" content="index,follow">/, p);
-    assert.match(html, new RegExp(`<link rel="canonical" href="https://aqdi\\.example${p === '/listings' ? '/' : p}">`), p);
+    assert.match(html, new RegExp(`<link rel="canonical" href="https://aqdi\\.example${p === '/offices' ? '/' : p}">`), p);
     assert.match(html, /property="og:title"/, p);
     assert.ok(html.includes(DISCLAIMER), `${p}: the disclaimer is visible`);
     assert.equal(res.headers.get('set-cookie'), null, `${p}: no cookie`);
@@ -176,8 +176,8 @@ test('legal pages: marked for lawyer review, and the operator details come from 
 test('pricing comes from the database: public active plans only, prices before VAT; the home page and FAQ too', { skip }, async () => {
   const pricing = await text('/pricing');
   assert.match(pricing, /اختبار-باقة-معروضة/);
-  assert.match(pricing, /77\.00/);
-  assert.match(pricing, /770\.00/);
+  assert.match(pricing, /<strong>77<\/strong>/);
+  assert.match(pricing, /<strong>770<\/strong>/);
   assert.doesNotMatch(pricing, /اختبار-باقة-مخفية/);
   assert.doesNotMatch(pricing, /اختبار-باقة-موقوفة/);
   assert.match(pricing, /الأسعار لا تشمل ضريبة القيمة المضافة 15%/);

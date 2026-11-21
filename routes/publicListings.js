@@ -29,8 +29,8 @@ const common = { types: listings.TYPE_LABELS, featureLabels: listings.FEATURES, 
 
 // ------------------------------------------------------------ search
 
-// The home page is the listings search (Nov 2026); /listings serves the same page.
-router.get(['/', '/listings'], wrap(async (req, res) => {
+// The listings search. (It was also the home page until the Nov 2026 redesign.)
+router.get('/listings', wrap(async (req, res) => {
   const filters = listings.parseFilters(req.query);
   const result = await listings.searchPublic(db.pool, filters);
   const query = new URLSearchParams();
@@ -42,7 +42,7 @@ router.get(['/', '/listings'], wrap(async (req, res) => {
   publicPage(req, res, {
     description: 'تصفح إعلانات العقارات للإيجار: شقق وفلل ومحلات ومكاتب في مدن المملكة، مع الصور والمواصفات والإيجار السنوي.',
     page: result.page,
-    path: '/',
+    path: '/listings',
     cache: !query.toString(),
   });
   if (query.toString()) res.locals.indexable = false; // filtered result lists are not indexed; the base list is

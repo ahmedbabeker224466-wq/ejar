@@ -30,13 +30,26 @@ const router = express.Router();
 const contactIp = hourly('contact-ip', rules.CONTACT_PER_IP_PER_HOUR, (req) => req.ip);
 
 // The public plan cards: buyable plans (active, public, priced) from the plans table.
+// `lines` are the Arabic card lines (unchanged); `spec` carries the raw limits so
+// the marketing pages can word them in either language.
 async function planCards() {
   const list = await plans.listPlans(db.pool, { onlyBuyable: true });
   const addon = await officialPricing.customDomainAddon(db.pool);
   return list.map((p) => {
     const monthly = pricing.planPrice(p, 'monthly');
     const yearly = pricing.planPrice(p, 'yearly');
-    return { code: p.code, name: p.name_ar, monthly, yearly, paidMonths: officialPricing.paidMonths(monthly, yearly), lines: officialPricing.cardLines(p, addon, money.formatHalalas) };
+    const features = officialPricing.planFeatures(p);
+    const addonHere = p.custom_domain === 'addon' && addon && Array.isArray(addon.plans) && addon.plans.includes(p.code);
+    return {
+      code: p.code, name: p.name_ar, monthly, yearly, paidMonths: officialPricing.paidMonths(monthly, yearly), lines: officialPricing.cardLines(p, addon, money.formatHalalas),
+      spec: {
+        units: p.max_units, members: p.max_members, ai: p.max_ai_reads_monthly, listings: p.max_listings,
+        telegram: features.telegram, whatsapp: features.whatsapp, audit: p.audit_level === 'basic' ? 'basic' : 'full',
+        support: ['email', 'email_whatsapp', 'priority'].includes(p.support_level) ? p.support_level : 'email',
+        domain: p.custom_domain === 'included' ? 'included' : addonHere ? 'addon' : 'none',
+        addonPrice: addonHere ? money.formatHalalas(Math.round(Number(addon.price_monthly) * 100)) : null,
+      },
+    };
   });
 }
 
@@ -46,14 +59,18 @@ const shared = () => ({
 
 // ------------------------------------------------------------ home and pages
 
-// The platform's page for real-estate offices (it was the home page until Nov 2026).
-router.get('/offices', wrap(async (req, res) => {
-  const base = publicPage(req, res, {
-    description: 'ميعاد يساعد مكاتب العقار على متابعة عقود الإيجار ومواعيد التجديد والدفعات، ويذكّر الملاك والمستأجرين قبل كل موعد مهم.',
-    jsonLd: { '@context': 'https://schema.org', '@type': 'Organization', name: 'ميعاد', url: seo.baseUrl(req) },
-    path: '/offices',
+// The home page (Nov 2026 redesign): the platform's page for real-estate offices,
+// in Arabic at / and in English at /en. /offices serves the same page (older links).
+router.get(['/', '/offices'], wrap(async (req, res) => {
+  const t = res.locals.t;
+  publicPage(req, res, {
+    description: t('meta.homeDescription'),
+    jsonLd: { '@context': 'https://schema.org', '@type': 'Organization', name: t('brand'), url: seo.baseUrl(req) },
+    path: '/',
   });
-  return res.render('site/home', { ...shared(), title: 'ميعاد', metaTitle: 'ميعاد | متابعة عقود الإيجار ومواعيدها لمكاتب العقار', plans: await planCards(), faqs: await siteContent.faqs(db.pool), base });
+  return res.render('site/landing', {
+    ...shared(), layout: 'layouts/site', title: t('brand'), metaTitle: t('meta.homeTitle'), plans: await planCards(), faqs: req.lang === 'en' ? [] : await siteContent.faqs(db.pool),
+  });
 }));
 
 router.get('/features', (req, res) => {
@@ -62,8 +79,9 @@ router.get('/features', (req, res) => {
 });
 
 router.get('/pricing', wrap(async (req, res) => {
-  publicPage(req, res, { description: 'باقات ميعاد لمكاتب العقار: أسعار شهرية وسنوية قبل ضريبة القيمة المضافة، وتجربة مجانية.' });
-  return res.render('site/pricing', { ...shared(), title: 'الأسعار', plans: await planCards(), faqs: await siteContent.faqs(db.pool) });
+  const t = res.locals.t;
+  publicPage(req, res, { description: t('meta.pricingDescription') });
+  return res.render('site/pricing', { ...shared(), layout: 'layouts/site', title: t('meta.pricingTitle'), plans: await planCards(), faqs: req.lang === 'en' ? [] : await siteContent.faqs(db.pool) });
 }));
 
 router.get('/about', wrap(async (req, res) => {

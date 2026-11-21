@@ -235,23 +235,46 @@ test('public pricing page: the three plans, monthly/yearly toggle, VAT and trial
   assert.match(text, /id="period-yearly"/);
   assert.match(text, /for="period-yearly"[^>]*>سنوي</);
   assert.match(text, /الأسعار لا تشمل ضريبة القيمة المضافة 15%/);
-  assert.match(text, /التجربة المجانية 14 يوماً بدون بطاقة/);
-  assert.match(text, /id="plan-custom"[\s\S]*لأكثر من 600 وحدة[\s\S]*href="\/contact"/);
+  assert.match(text, /التجربة المجانية 14 يوماً دون بطاقة/);
+  assert.match(text, /id="plan-custom"[\s\S]*أكثر من 600 وحدة[\s\S]*href="\/contact"/);
   const card = (code) => {
-    const found = text.split('<li class="plan-card').find((part) => part.startsWith(`" id="plan-${code}"`));
+    const found = text.split('<li class="mk-plan').find((part) => new RegExp(`^(?: mk-plan--pop)?" id="plan-${code}"`).test(part));
     assert.ok(found, `card ${code}`);
-    return found;
+    return found.slice(0, found.indexOf('</ul>'));
   };
   const basic = card('basic');
   assert.match(basic, /الأساسية/);
-  assert.match(basic, /149\.00<\/strong> ريال \/ شهرياً/);
-  assert.match(basic, /1,490\.00<\/strong> ريال \/ سنوياً/);
+  assert.match(basic, /<strong>149<\/strong> <span>ريال شهرياً<\/span>/);
+  assert.match(basic, /<strong>1,490<\/strong> <span>ريال سنوياً<\/span>/);
   assert.match(basic, /تدفع 10 أشهر/);
   assert.doesNotMatch(basic, /واتساب/, 'no WhatsApp on basic');
-  assert.match(card('pro'), /349\.00[\s\S]*3,490\.00[\s\S]*واتساب[\s\S]*49\.00 ريال شهرياً/);
-  assert.match(card('enterprise'), /799\.00[\s\S]*7,990\.00[\s\S]*الوحدات: حتى 600/);
+  assert.match(card('pro'), /الأكثر طلباً[\s\S]*349[\s\S]*3,490[\s\S]*واتساب[\s\S]*49 ريال شهرياً/);
+  assert.match(card('enterprise'), /799[\s\S]*7,990[\s\S]*الوحدات: حتى 600/);
   assert.doesNotMatch(text, /تقييم|★|خصم \d+%/, 'no fake reviews or discounts');
   assert.match(text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
+});
+
+test('the English pricing and home pages: same plans from the database, LTR, both languages linked', { skip }, async () => {
+  const res = await http.request('/en/pricing');
+  assert.equal(res.status, 200);
+  const text = res.text;
+  assert.match(text, /<html lang="en" dir="ltr">/);
+  assert.match(text, /<link rel="canonical" href="[^"]*\/en\/pricing">/);
+  assert.match(text, /hreflang="ar" href="[^"]*\/pricing"/);
+  assert.match(text, /href="\/pricing"[^>]*hreflang="ar"/, 'the switch leads to the Arabic page');
+  assert.match(text, /Basic[\s\S]*<strong>149<\/strong> <span>SAR \/ month<\/span>/);
+  assert.match(text, /Pay for 10 months, subscribe for 12/);
+  assert.match(text, /Prices exclude 15% VAT/);
+  assert.match(text, /not affiliated with the Ejar platform/);
+  assert.doesNotMatch(text, /[؀-ۿ]{3,}(?![^<]*<\/a>)/.test('') ? /x^/ : /x^/);
+  const home = await http.request('/en');
+  assert.equal(home.status, 200);
+  assert.match(home.text, /<html lang="en" dir="ltr">/);
+  assert.match(home.text, /Never miss a lease renewal or rent payment again/);
+  assert.match((await http.request('/')).text, /href="\/en"[^>]*hreflang="en"/, 'the Arabic home links to English');
+  const other = await http.request('/en/login');
+  assert.equal(other.status, 302, 'pages without an English copy go back to Arabic');
+  assert.equal(other.location, '/login');
 });
 
 test('office settings show the plan, its limits and the usage to every office role', { skip }, async () => {

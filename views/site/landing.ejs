@@ -1,0 +1,165 @@
+<% const check = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>'; %>
+<section class="mk-hero" aria-labelledby="hero-title">
+  <div class="mk-wrap mk-hero__inner">
+    <h1 id="hero-title"><%= t('hero.title') %></h1>
+    <p class="mk-hero__lead"><%= t('hero.lead') %></p>
+    <div class="mk-hero__actions">
+      <a href="/register" class="mk-btn mk-btn--accent mk-btn--lg"><%= t('hero.cta') %></a>
+      <a href="<%= L('/pricing') %>" class="mk-btn mk-btn--ghost mk-btn--lg"><%= t('hero.secondary') %></a>
+    </div>
+    <p class="mk-hero__note"><%= t('hero.trial', { days: trialDays }) %></p>
+
+    <figure class="mk-mock">
+      <div class="mk-mock__screen" aria-hidden="true">
+        <div class="mk-mock__side">
+          <div class="mk-mock__brand"><span class="mk-logo__mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 9.5h18"/></svg></span><%= t('brand') %></div>
+          <span class="is-on"><%= t('mock.overview') %></span>
+          <span><%= t('mock.nav.contracts') %></span><span><%= t('mock.nav.payments') %></span><span><%= t('mock.nav.landlords') %></span>
+          <span><%= t('mock.nav.tenants') %></span><span><%= t('mock.nav.maintenance') %></span><span><%= t('mock.nav.listings') %></span><span><%= t('mock.nav.team') %></span>
+        </div>
+        <div class="mk-mock__main">
+          <p class="mk-mock__title"><%= t('mock.overview') %></p>
+          <div class="mk-kpis">
+            <div><b>128</b><span><%= t('mock.units') %></span></div>
+            <div class="is-warn"><b>9</b><span><%= t('mock.ending') %></span></div>
+            <div><b>14</b><span><%= t('mock.due') %></span></div>
+            <div><b>94%</b><span><%= t('mock.occupancy') %></span></div>
+          </div>
+          <div class="mk-rows">
+            <div class="mk-rows__head"><span><%= t('mock.unit') %></span><span><%= t('mock.landlord') %></span><span><%= t('mock.date') %></span><span><%= t('mock.status') %></span></div>
+            <div><span><%= t('mock.r1.unit') %></span><span><%= t('mock.r1.owner') %></span><span><%= t('mock.r1.date') %></span><span><em class="mk-pill mk-pill--red"><%= t('mock.renewal') %></em></span></div>
+            <div><span><%= t('mock.r2.unit') %></span><span><%= t('mock.r2.owner') %></span><span><%= t('mock.r2.date') %></span><span><em class="mk-pill mk-pill--amber"><%= t('mock.payment') %></em></span></div>
+            <div><span><%= t('mock.r3.unit') %></span><span><%= t('mock.r3.owner') %></span><span><%= t('mock.r3.date') %></span><span><em class="mk-pill mk-pill--green"><%= t('mock.reminded') %></em></span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="mk-visually-hidden"><%= t('mock.caption') %></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="mk-facts">
+  <div class="mk-wrap mk-facts__grid">
+    <div class="mk-fact"><span class="mk-fact__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><div><b><%= t('facts.ai') %></b><span><%= t('facts.aiNote') %></span></div></div>
+    <div class="mk-fact"><span class="mk-fact__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><div><b><%= t('facts.remind') %></b><span><%= t('facts.remindNote') %></span></div></div>
+    <div class="mk-fact"><span class="mk-fact__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></span><div><b><%= t('facts.free') %></b><span><%= t('facts.freeNote') %></span></div></div>
+  </div>
+</section>
+
+<section class="mk-sec" id="features" aria-labelledby="features-title">
+  <div class="mk-wrap">
+    <div class="mk-head"><h2 id="features-title"><%= t('features.title') %></h2><p><%= t('features.lead') %></p></div>
+    <div class="mk-feat">
+      <article>
+        <div class="mk-art mk-art--1" aria-hidden="true"><div class="mk-mini">
+          <p class="mk-mini__t"><%= t('f1.card') %></p>
+          <p><span><%= t('f1.start') %></span><b><%= t('f1.startV') %></b></p>
+          <p><span><%= t('f1.end') %></span><b><%= t('f1.endV') %></b></p>
+          <p><span><%= t('f1.rent') %></span><b><%= t('f1.rentV') %></b></p>
+          <p><span><%= t('f1.notice') %></span><em class="mk-pill mk-pill--red"><%= t('mock.r1.date') %></em></p>
+        </div></div>
+        <h3><%= t('f1.title') %></h3><p><%= t('f1.text') %></p>
+        <ul class="mk-checks"><li><%- check %><%= t('f1.a') %></li><li><%- check %><%= t('f1.b') %></li><li><%- check %><%= t('f1.c') %></li></ul>
+      </article>
+      <article>
+        <div class="mk-art mk-art--2" aria-hidden="true"><div class="mk-mini">
+          <p class="mk-mini__t"><%= t('f2.card') %></p>
+          <p><span><%= t('f2.collected') %></span><b><%= t('f2.collectedV') %></b></p>
+          <span class="mk-bar"><i></i></span>
+          <p><span><%= t('mock.r2.unit') %></span><em class="mk-pill mk-pill--amber"><%= t('f2.due') %></em></p>
+          <p><span><%= t('f2.unit2') %></span><em class="mk-pill mk-pill--green"><%= t('f2.collected') %></em></p>
+        </div></div>
+        <h3><%= t('f2.title') %></h3><p><%= t('f2.text') %></p>
+        <ul class="mk-checks"><li><%- check %><%= t('f2.a') %></li><li><%- check %><%= t('f2.b') %></li><li><%- check %><%= t('f2.c') %></li></ul>
+      </article>
+      <article>
+        <div class="mk-art mk-art--3" aria-hidden="true"><div class="mk-mini">
+          <p class="mk-mini__t"><%= t('f3.card') %></p>
+          <p><span><%= t('mock.r1.owner') %></span><b><%= t('f3.u6') %></b></p>
+          <p><span><%= t('mock.r3.owner') %></span><b><%= t('f3.u3') %></b></p>
+          <p><span><%= t('mock.r2.owner') %></span><b><%= t('f3.u11') %></b></p>
+          <p><span><%= t('f3.invite') %></span><b class="mk-mini__link"><%= t('f3.send') %></b></p>
+        </div></div>
+        <h3><%= t('f3.title') %></h3><p><%= t('f3.text') %></p>
+        <ul class="mk-checks"><li><%- check %><%= t('f3.a') %></li><li><%- check %><%= t('f3.b') %></li><li><%- check %><%= t('f3.c') %></li></ul>
+      </article>
+      <article>
+        <div class="mk-art mk-art--4" aria-hidden="true"><div class="mk-mini">
+          <p class="mk-mini__t"><%= t('f4.card') %></p>
+          <p><span><%= t('mock.unit') %></span><b><%= t('mock.r1.unit') %></b></p>
+          <p><span><%= t('f4.issue') %></span><b><%= t('f4.issueV') %></b></p>
+          <p><span><%= t('f4.owner') %></span><b><%= t('f4.ownerV') %></b></p>
+          <p><span><%= t('mock.status') %></span><em class="mk-pill mk-pill--amber"><%= t('f4.progress') %></em></p>
+        </div></div>
+        <h3><%= t('f4.title') %></h3><p><%= t('f4.text') %></p>
+        <ul class="mk-checks"><li><%- check %><%= t('f4.a') %></li><li><%- check %><%= t('f4.b') %></li><li><%- check %><%= t('f4.c') %></li></ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="mk-sec mk-sec--alt" id="how" aria-labelledby="how-title">
+  <div class="mk-wrap">
+    <div class="mk-head"><h2 id="how-title"><%= t('steps.title') %></h2><p><%= t('steps.lead') %></p></div>
+    <ol class="mk-steps">
+      <li><b>1</b><h3><%= t('s1.title') %></h3><p><%= t('s1.text') %></p></li>
+      <li><b>2</b><h3><%= t('s2.title') %></h3><p><%= t('s2.text') %></p></li>
+      <li><b>3</b><h3><%= t('s3.title') %></h3><p><%= t('s3.text') %></p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="mk-sec" aria-labelledby="aud-title">
+  <div class="mk-wrap">
+    <div class="mk-head"><h2 id="aud-title"><%= t('aud.title') %></h2></div>
+    <div class="mk-aud">
+      <article><span><%= t('aud.office') %></span><h3><%= t('aud.officeT') %></h3><p><%= t('aud.officeP') %></p></article>
+      <article><span><%= t('aud.owner') %></span><h3><%= t('aud.ownerT') %></h3><p><%= t('aud.ownerP') %></p></article>
+      <article><span><%= t('aud.tenant') %></span><h3><%= t('aud.tenantT') %></h3><p><%= t('aud.tenantP') %></p></article>
+    </div>
+  </div>
+</section>
+
+<section class="mk-sec mk-sec--tight" aria-labelledby="privacy-title">
+  <div class="mk-wrap">
+    <div class="mk-privacy">
+      <h2 id="privacy-title"><%= t('privacy.title') %></h2>
+      <ul class="mk-checks"><li><%- check %><%= t('privacy.a') %></li><li><%- check %><%= t('privacy.b') %></li><li><%- check %><%= t('privacy.c') %></li></ul>
+    </div>
+  </div>
+</section>
+
+<% if (plans.length) { const price = (h) => String(fmt(h)).replace(/\.00$/, ''); %>
+<section class="mk-sec mk-sec--alt" id="pricing" aria-labelledby="home-pricing-title">
+  <div class="mk-wrap">
+    <div class="mk-head"><h2 id="home-pricing-title"><%= t('home.pricingTitle') %></h2><p><%= t('home.pricingLead') %></p></div>
+    <ul class="mk-mini-plans">
+      <% plans.forEach(function (p) { const k = 'plan.name.' + p.code; const name = t(k) === k ? p.name : t(k); %>
+        <li><h3><%= name %></h3><p><strong><%= price(p.monthly) %></strong> <span><%= t('pricing.perMonth') %></span></p></li>
+      <% }) %>
+    </ul>
+    <p class="mk-center"><a href="<%= L('/pricing') %>" class="mk-btn mk-btn--ghost"><%= t('home.pricingMore') %></a></p>
+  </div>
+</section>
+<% } %>
+
+<% const faqList = lang === 'en' ? [1, 2, 3, 4].map((i) => ({ q: t('faq.q' + i), a: t('faq.a' + i, { days: trialDays }) })) : faqs; %>
+<% if (faqList.length) { %>
+<section class="mk-sec" aria-labelledby="faq-title">
+  <div class="mk-wrap">
+    <div class="mk-head"><h2 id="faq-title"><%= t('home.faqTitle') %></h2></div>
+    <div class="mk-faq">
+      <% faqList.forEach(function (f) { %><details class="faq__item"><summary><%= f.q %></summary><p><%= f.a %></p></details><% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<section class="mk-sec mk-sec--tight" aria-labelledby="cta-title">
+  <div class="mk-wrap">
+    <div class="mk-cta">
+      <div><h2 id="cta-title"><%= t('cta.title') %></h2><p><%= t('cta.text', { days: trialDays }) %></p></div>
+      <a href="/register" class="mk-btn mk-btn--accent mk-btn--lg"><%= t('cta.button') %></a>
+    </div>
+  </div>
+</section>

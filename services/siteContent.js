@@ -18,10 +18,12 @@ const DEFAULT_FAQS = [
 
 // Public pages that belong in the sitemap (listings and blog posts are added from the database).
 const PUBLIC_PAGES = [
-  { path: '/', changefreq: 'daily', priority: '1.0' },
-  { path: '/offices', changefreq: 'weekly', priority: '0.9' },
+  { path: '/', changefreq: 'weekly', priority: '1.0' },
+  { path: '/en', changefreq: 'weekly', priority: '0.9' },
+  { path: '/listings', changefreq: 'daily', priority: '0.9' },
   { path: '/features', changefreq: 'monthly', priority: '0.7' },
   { path: '/pricing', changefreq: 'monthly', priority: '0.8' },
+  { path: '/en/pricing', changefreq: 'monthly', priority: '0.7' },
   { path: '/about', changefreq: 'yearly', priority: '0.4' },
   { path: '/contact', changefreq: 'yearly', priority: '0.4' },
   { path: '/blog', changefreq: 'weekly', priority: '0.6' },

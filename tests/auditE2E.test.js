@@ -294,7 +294,9 @@ test('mobile-first: every layout has the viewport tag and the stylesheet sets no
     const html = fs.readFileSync(path.join(ROOT, 'views', 'layouts', layout), 'utf8');
     if (layout === 'print.ejs') continue;
     assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1/, layout);
-    assert.match(html, /<html[^>]*dir="rtl"/, `${layout} is RTL`);
+    // The marketing layout takes its direction from the page language (RTL unless the page is English).
+    if (layout === 'site.ejs') assert.match(html, /<html lang="<%= lang %>" dir="<%= dir %>">/, layout);
+    else assert.match(html, /<html[^>]*dir="rtl"/, `${layout} is RTL`);
   }
   const css = fs.readFileSync(path.join(ROOT, 'public', 'css', 'main.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const offenders = [];

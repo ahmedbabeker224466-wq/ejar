@@ -216,6 +216,14 @@ function cardLines(plan, addon, fmt) {
   ];
 }
 
+/** Pure: the plan's feature switches with every missing key on (the same reading as cardLines). */
+function planFeatures(plan) {
+  const raw = parseFeatures(plan.features) || {};
+  const f = {};
+  for (const k of Object.keys(ALL_ON)) f[k] = raw[k] !== false;
+  return f;
+}
+
 /** Pure: how many months the yearly price equals (10 for 1490 / 149), or null when not a whole number below 12. */
 function paidMonths(monthlyHalalas, yearlyHalalas) {
   if (!(monthlyHalalas > 0) || !(yearlyHalalas > 0) || yearlyHalalas % monthlyHalalas !== 0) return null;
@@ -225,6 +233,7 @@ function paidMonths(monthlyHalalas, yearlyHalalas) {
 
 module.exports = {
   cardLines,
+  planFeatures,
   paidMonths,
   OFFICIAL,
   PLACEHOLDERS,
