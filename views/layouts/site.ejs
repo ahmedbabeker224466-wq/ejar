@@ -22,11 +22,13 @@
   <% if (locals.canonicalUrl) { %><meta property="og:url" content="<%= canonicalUrl %>"><% } %>
   <% if (locals.ogImage) { %><meta property="og:image" content="<%= ogImage %>"><% } %>
   <meta name="twitter:card" content="<%= locals.ogImage ? 'summary_large_image' : 'summary' %>">
+  <% if (locals.rssUrl) { %><link rel="alternate" type="application/rss+xml" title="<%= t('footer.blog') %>" href="<%= rssUrl %>"><% } %>
   <% if (locals.jsonLd) { %><script type="application/ld+json"><%- jsonLd %></script><% } %>
   <link rel="icon" href="<%= assetUrl('/favicon.svg') %>" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+  <% if (locals.mkStd) { %><link rel="stylesheet" href="<%= assetUrl('/css/main.css') %>"><% } %>
   <link rel="stylesheet" href="<%= assetUrl('/css/site.css') %>">
   <% if (locals.indexable && locals.analyticsSnippet) { %><%- analyticsSnippet %><% } %>
 </head>
@@ -34,8 +36,15 @@
   <%- include('../partials/platform-banner') %>
   <%- include('../site/_mk-header') %>
   <main id="main">
+    <% if (locals.mkStd) { %>
+    <div class="mk-std"><div class="mk-wrap mk-std__inner">
+      <%- include('../partials/flash') %>
+      <%- body %>
+    </div></div>
+    <% } else { %>
     <%- include('../partials/flash') %>
     <%- body %>
+    <% } %>
   </main>
   <%- include('../site/_mk-footer') %>
 </body>

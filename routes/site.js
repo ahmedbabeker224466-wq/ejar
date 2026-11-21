@@ -69,34 +69,32 @@ router.get(['/', '/offices'], wrap(async (req, res) => {
     path: '/',
   });
   return res.render('site/landing', {
-    ...shared(), layout: 'layouts/site', title: t('brand'), metaTitle: t('meta.homeTitle'), plans: await planCards(), faqs: req.lang === 'en' ? [] : await siteContent.faqs(db.pool),
+    ...shared(), layout: 'layouts/site', mkStd: false, title: t('brand'), metaTitle: t('meta.homeTitle'), plans: await planCards(), faqs: req.lang === 'en' ? [] : await siteContent.faqs(db.pool),
   });
 }));
 
 router.get('/features', (req, res) => {
-  publicPage(req, res, { description: 'مزايا ميعاد: مواعيد التجديد، تتبع الدفعات، الصيانة، الرسائل، التقارير، والإعلانات العامة بخصوصية كاملة.' });
-  return res.render('site/features', { title: 'المزايا' });
+  const t = res.locals.t;
+  publicPage(req, res, { description: t('meta.featuresDescription') });
+  return res.render('site/features', { layout: 'layouts/site', mkStd: false, title: t('meta.featuresTitle') });
 });
 
 router.get('/pricing', wrap(async (req, res) => {
   const t = res.locals.t;
   publicPage(req, res, { description: t('meta.pricingDescription') });
-  return res.render('site/pricing', { ...shared(), layout: 'layouts/site', title: t('meta.pricingTitle'), plans: await planCards(), faqs: req.lang === 'en' ? [] : await siteContent.faqs(db.pool) });
+  return res.render('site/pricing', { ...shared(), layout: 'layouts/site', mkStd: false, title: t('meta.pricingTitle'), plans: await planCards(), faqs: req.lang === 'en' ? [] : await siteContent.faqs(db.pool) });
 }));
 
-router.get('/about', wrap(async (req, res) => {
-  publicPage(req, res, { description: 'من نحن: ميعاد تطبيق خاص يساعد مكاتب العقار على تنظيم مواعيد عقود الإيجار.' });
-  return res.render('site/about', { title: 'من نحن', seller: await platformSettings.seller(), support: await platformSettings.support() });
-}));
-
-for (const [path, view, title, description] of [
-  ['/privacy', 'privacy', 'سياسة الخصوصية', 'سياسة الخصوصية في ميعاد: ما نحفظه وما لا نحفظه.'],
-  ['/terms', 'terms', 'شروط الاستخدام', 'شروط استخدام تطبيق ميعاد.'],
-  ['/disclaimer', 'disclaimer', 'إخلاء المسؤولية', 'ميعاد تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط.'],
+for (const [path, view, key] of [
+  ['/about', 'about', 'about'],
+  ['/privacy', 'privacy', 'privacy'],
+  ['/terms', 'terms', 'terms'],
+  ['/disclaimer', 'disclaimer', 'disclaimer'],
 ]) {
   router.get(path, wrap(async (req, res) => {
-    publicPage(req, res, { description });
-    return res.render(`site/${view}`, { title, seller: await platformSettings.seller(), support: await platformSettings.support() });
+    const t = res.locals.t;
+    publicPage(req, res, { description: t(`meta.${key}Description`) });
+    return res.render(`site/${view}`, { layout: 'layouts/site', mkStd: false, title: t(`meta.${key}Title`), seller: await platformSettings.seller(), support: await platformSettings.support() });
   }));
 }
 
@@ -104,20 +102,20 @@ for (const [path, view, title, description] of [
 
 async function renderContact(req, res, { values = {}, errors = {}, status = 200, sent = false } = {}) {
   if (status !== 200 || sent) privatePage(res);
-  else publicPage(req, res, { description: 'تواصل مع فريق ميعاد لأي سؤال عن التطبيق أو الاشتراك أو الإعلانات.' });
-  return res.status(status).render('site/contact', { title: 'تواصل معنا', values, errors, sent, support: await platformSettings.support() });
+  else publicPage(req, res, { description: res.locals.t('meta.contactDescription') });
+  return res.status(status).render('site/contact', { layout: 'layouts/site', mkStd: false, title: res.locals.t('meta.contactTitle'), values, errors, sent, support: await platformSettings.support() });
 }
 
 router.get('/contact', wrap((req, res) => renderContact(req, res, { sent: req.query.sent === '1' })));
 
 router.post('/contact', contactIp, wrap(async (req, res) => {
   const { values, errors, bot } = inquiries.validateContact(req.body, { messageMax: 1000, messageRequired: true });
-  if (bot) return res.redirect('/contact?sent=1');
+  if (bot) return res.redirect(`${res.locals.L('/contact')}?sent=1`);
   if (Object.keys(errors).length) {
     return renderContact(req, res, { values: { name: values.name, phone: String(req.body.phone || '').slice(0, 30), email: String(req.body.email || '').slice(0, 190), message: values.message }, errors, status: 422 });
   }
   await inquiries.createContactMessage(db.pool, { values });
-  return res.redirect('/contact?sent=1');
+  return res.redirect(`${res.locals.L('/contact')}?sent=1`);
 }));
 
 // ------------------------------------------------------------ blog

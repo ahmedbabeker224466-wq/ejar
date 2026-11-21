@@ -7,12 +7,15 @@
 
 const i18n = require('../services/i18n');
 
+// English pages that also accept a form post (the contact form).
+const POSTABLE = Object.freeze(['/contact']);
+
 function locale() {
   return function localeMiddleware(req, res, next) {
     // An office's own domain serves its own Arabic pages only.
     const { lang, path } = req.isCustomHost ? { lang: i18n.DEFAULT_LANG, path: req.path } : i18n.splitPath(req.path);
     if (lang === 'en') {
-      if (!i18n.LOCALIZED_PATHS.includes(path) || (req.method !== 'GET' && req.method !== 'HEAD')) {
+      if (!i18n.LOCALIZED_PATHS.includes(path) || (req.method !== 'GET' && req.method !== 'HEAD' && !(req.method === 'POST' && POSTABLE.includes(path)))) {
         const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
         return res.redirect(302, `${path}${query}`);
       }

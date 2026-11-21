@@ -1,15 +1,23 @@
-<section class="card">
-  <h1>من نحن</h1>
-  <p class="lead">ميعاد تطبيق يساعد مكاتب العقار على تنظيم مواعيد عقود الإيجار ومتابعتها. هو تطبيق خاص غير تابع لمنصة إيجار، ولا يتصل بها ولا يغني عنها.</p>
-  <p>فكرتنا بسيطة: المكتب ينشئ العقد في منصة إيجار، ونحن نحفظ التواريخ والمبالغ فقط، ونذكّر الجميع قبل المواعيد المهمة.</p>
-  <h2>بيانات الجهة المشغّلة</h2>
-  <% if (seller.legal_name || seller.cr_number || seller.vat_number || seller.address) { %>
-    <dl class="details">
-      <% if (seller.legal_name) { %><dt>الاسم القانوني</dt><dd><%= seller.legal_name %></dd><% } %>
-      <% if (seller.cr_number) { %><dt>السجل التجاري</dt><dd dir="ltr"><%= seller.cr_number %></dd><% } %>
-      <% if (seller.vat_number) { %><dt>الرقم الضريبي</dt><dd dir="ltr"><%= seller.vat_number %></dd><% } %>
-      <% if (seller.address) { %><dt>العنوان</dt><dd><%= seller.address %></dd><% } %>
-    </dl>
-  <% } else { %><p class="muted">ستُنشر بيانات الجهة المشغّلة هنا قبل الإطلاق.</p><% } %>
-  <p><a href="/contact" class="btn btn--secondary">تواصل معنا</a></p>
+<section class="mk-phero mk-phero--sm" aria-labelledby="page-title">
+  <div class="mk-wrap">
+    <h1 id="page-title"><%= t('about.title') %></h1>
+    <p><%= t('about.lead') %></p>
+  </div>
+</section>
+<section class="mk-lift">
+  <div class="mk-wrap">
+    <div class="mk-panel mk-prose">
+      <p class="mk-about-idea"><%= t('about.idea') %></p>
+      <h2><%= t('about.operator') %></h2>
+      <% if (seller.legal_name || seller.cr_number || seller.vat_number || seller.address) { %>
+        <dl class="mk-dl">
+          <% if (seller.legal_name) { %><dt><%= t('about.legalName') %></dt><dd><%= seller.legal_name %></dd><% } %>
+          <% if (seller.cr_number) { %><dt><%= t('about.cr') %></dt><dd dir="ltr"><%= seller.cr_number %></dd><% } %>
+          <% if (seller.vat_number) { %><dt><%= t('about.vat') %></dt><dd dir="ltr"><%= seller.vat_number %></dd><% } %>
+          <% if (seller.address) { %><dt><%= t('about.address') %></dt><dd><%= seller.address %></dd><% } %>
+        </dl>
+      <% } else { %><p class="mk-meta"><%= t('about.pending') %></p><% } %>
+      <p class="mk-page-cta"><a href="<%= L('/contact') %>" class="mk-btn mk-btn--brand mk-btn--lg"><%= t('contact.title') %></a></p>
+    </div>
+  </div>
 </section>

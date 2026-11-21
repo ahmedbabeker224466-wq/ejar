@@ -1,7 +1,13 @@
-<article class="card prose">
-  <h1>إخلاء المسؤولية</h1>
-  <%- include('_legal-note') %>
-  <p class="disclaimer">تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط</p>
-  <p>ميعاد لا يمثّل أي جهة حكومية أو رقابية، ولا يتحدث باسمها، وليس معتمداً منها. المعلومات في التطبيق وفي المدونة عامة وليست استشارة قانونية.</p>
-  <p>قواعد المواعيد في التطبيق مضبوطة وفق فهمنا للأنظمة المعلنة وتحتاج مراجعتك. تحقق دائماً من المصدر الرسمي ومن عقدك.</p>
-</article>
+<section class="mk-phero mk-phero--sm" aria-labelledby="page-title">
+  <div class="mk-wrap"><h1 id="page-title"><%= t('meta.disclaimerTitle') %></h1></div>
+</section>
+<section class="mk-lift">
+  <div class="mk-wrap">
+    <article class="mk-panel mk-prose">
+      <%- include('_legal-note') %>
+      <p class="mk-alert mk-alert--info"><%= t('footer.disclaimer') %></p>
+      <p><%= t('disc.p1') %></p>
+      <p><%= t('disc.p2') %></p>
+    </article>
+  </div>
+</section>

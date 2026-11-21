@@ -21,6 +21,7 @@ const { hostResolver } = require('./middleware/customHost');
 const { loadUser, loadUnreadCount } = require('./middleware/auth');
 const maintenance = require('./middleware/maintenance');
 const { locale } = require('./middleware/locale');
+const { siteLayout } = require('./middleware/siteLayout');
 const { sameOrigin } = require('./middleware/security');
 const platformSettings = require('./services/platformSettings');
 const emailAuth = require('./services/emailAuth');
@@ -113,6 +114,8 @@ app.use(
 
 // The page language from the URL (/en/... for the English marketing pages).
 app.use(locale());
+// Public pages share the marketing layout (middleware/siteLayout.js).
+app.use(siteLayout());
 
 // While the self-check reports a problem, show the maintenance page instead of
 // touching the database. After static files so the page keeps its CSS.
