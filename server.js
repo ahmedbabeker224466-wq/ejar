@@ -58,9 +58,13 @@ async function start() {
   // PORT or 3000 is for local runs.
   const port = Number(process.env.PORT) || 3000;
   const underPassenger = typeof global.PhusionPassenger !== 'undefined';
-  app.listen(port, () =>
+  const server = app.listen(port, () =>
     logger.info(underPassenger ? 'Aqdi started under Passenger' : `Aqdi listening on port ${port}`),
   );
+
+  // A newer tmp/restart.txt (written by every deploy) makes this process exit
+  // so the host starts it again with the new code (services/restartWatch.js).
+  require('./services/restartWatch').start({ server, logger });
 
   // The platform admin's banner message is kept in memory and refreshed here.
   require('./services/platformSettings').startBannerRefresh();
