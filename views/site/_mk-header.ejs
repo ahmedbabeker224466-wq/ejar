@@ -26,6 +26,7 @@
         <% if (locals.localized) { %>
           <a href="<%= altLangHref %>" class="mk-lang mk-lang--panel" hreflang="<%= lang === 'en' ? 'ar' : 'en' %>" lang="<%= lang === 'en' ? 'ar' : 'en' %>" aria-label="<%= t('lang.switchLabel') %>"><%- globe %><%= t('lang.switch') %></a>
         <% } %>
+        <a href="<%= L('/contact') %>" class="mk-nav__contact" <%- currentPath === '/contact' ? 'aria-current="page"' : '' %>><%= t('footer.contact') %></a>
         <% if (currentUser) { %>
           <a href="/logout" class="mk-btn mk-btn--quiet"><%= t('nav.logout') %></a>
           <a href="/login" class="mk-btn mk-btn--brand"><%= t('nav.dashboard') %></a>
