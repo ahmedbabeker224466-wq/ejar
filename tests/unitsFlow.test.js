@@ -478,6 +478,6 @@ test('dashboard unit numbers, checklist tick and sidebar highlight', { skip }, a
   assert.match(home.text, /<a href="\/office\/units" class="is-done">/);
 
   const page = await http.request(`/office/units/${ids[0]}`, { cookie: a.cookie });
-  assert.match(page.text, /<a href="\/office\/units" aria-current="page">العقارات والوحدات<\/a>/);
+  assert.match(page.text, /<a href="\/office\/units" aria-current="page">.*?<span>العقارات والوحدات<\/span><\/a>/);
   assert.equal((page.text.match(/aria-current="page"/g) || []).length, 1);
 });
