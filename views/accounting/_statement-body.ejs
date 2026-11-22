@@ -11,13 +11,13 @@
 </div>
 <% if (s.lines.length === 0) { %><p class="empty-state">لا توجد حركات في هذا الشهر.</p><% } else { %>
   <div class="table-wrap"><table class="table ac-table">
-    <thead><tr><th>التاريخ</th><th>البيان</th><th class="ac-amount">له</th><th class="ac-amount">عليه</th></tr></thead>
+    <thead><tr><th>التاريخ</th><th>البيان</th><th class="ac-amount ac-col-cd">له</th><th class="ac-amount ac-col-cd">عليه</th></tr></thead>
     <tbody>
       <% s.lines.forEach(function (l) { %>
-        <tr><td dir="ltr" class="ac-date"><%= l.day %></td><td><%= l.label %></td><td class="ac-amount ac-num ac-in"><%= l.credit ? fmt(l.credit) : '' %></td><td class="ac-amount ac-num ac-out"><%= l.debit ? fmt(l.debit) : '' %></td></tr>
+        <tr><td dir="ltr" class="ac-date"><%= l.day %></td><td><%= l.label %><div class="ac-only-m ac-num <%= l.credit ? 'ac-in' : 'ac-out' %>"><%= l.credit ? '+ ' + fmt(l.credit) : '- ' + fmt(l.debit) %></div></td><td class="ac-amount ac-num ac-in ac-col-cd"><%= l.credit ? fmt(l.credit) : '' %></td><td class="ac-amount ac-num ac-out ac-col-cd"><%= l.debit ? fmt(l.debit) : '' %></td></tr>
       <% }) %>
     </tbody>
-    <tfoot><tr><td></td><td>الإجمالي</td><td class="ac-amount ac-num"><%= fmt(s.credits) %></td><td class="ac-amount ac-num"><%= fmt(s.debits) %></td></tr></tfoot>
+    <tfoot><tr><td></td><td>الإجمالي<div class="ac-only-m">له <span class="ac-num"><%= fmt(s.credits) %></span> · عليه <span class="ac-num"><%= fmt(s.debits) %></span></div></td><td class="ac-amount ac-num ac-col-cd"><%= fmt(s.credits) %></td><td class="ac-amount ac-num ac-col-cd"><%= fmt(s.debits) %></td></tr></tfoot>
   </table></div>
 <% } %>
 <p class="muted ac-note">التحويلات إلى المالك من ضمن «عليه». المبالغ بالريال السعودي، وتُحسب عمولة المكتب بنسبة <%= s.percent %>% من الإيجار المحصّل.</p>

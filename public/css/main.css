@@ -2033,8 +2033,13 @@ img {
 .ld-card__row span[dir='ltr'], .ld-card__row .ac-num { white-space: nowrap; }
 .ld-move .btn { white-space: normal; line-height: 1.35; font-size: .85rem; }
 .office-main { min-width: 0; }
+.ac-only-m { display: none; }
 @media (max-width: 600px) {
-  .ac-table .ac-col-type { display: none; }
+  .table.ac-table { min-width: 0; }
+  .ac-table .ac-col-type, .ac-table .ac-col-cd { display: none; }
+  .ac-only-m { display: block !important; margin-top: 4px; text-align: right; }
+  .ac-table td { white-space: normal; }
+  .ac-table td.ac-date { white-space: nowrap; }
   .ac-table td, .ac-table th { padding-inline: 8px; }
   .ac-month .btn { padding-inline: 10px; }
 }
