@@ -2028,7 +2028,7 @@ img {
 .ld-move .btn { width: 100%; }
 .ld-stages { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 @media (min-width: 900px) {
-  .ld-board { grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); align-items: start; overflow-x: auto; padding-bottom: 8px; }
+  .ld-board { grid-auto-flow: column; grid-auto-columns: minmax(196px, 1fr); align-items: start; overflow-x: auto; padding-bottom: 8px; }
 }
 .ld-card__row span[dir='ltr'], .ld-card__row .ac-num { white-space: nowrap; }
 .ld-move .btn { white-space: normal; line-height: 1.35; font-size: .85rem; }
