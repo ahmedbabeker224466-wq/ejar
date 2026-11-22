@@ -136,7 +136,7 @@ const JOBS = {
   expire_invites: { schedule: '15 * * * *', label: 'تنظيف رموز الدعوة القديمة', run: runExpireInvites },
   plan_renewal: { schedule: '0 6 * * *', label: 'تجديد الاشتراكات وتذكيراتها', run: ({ pool, now }) => subscriptions.runDaily({ pool, now }) },
   listings_expiry: { schedule: '40 * * * *', label: 'إخفاء الإعلانات المنتهية وتذكير أصحابها', run: ({ pool, now }) => listings.runExpiry({ pool, now }) },
-  purge_inquiries: { schedule: '30 3 * * *', label: 'حذف استفسارات الإعلانات بعد 90 يوماً', run: ({ pool, now }) => inquiries.purgeOld({ pool, now }) },
+  purge_inquiries: { schedule: '30 3 * * *', label: 'حذف استفسارات الإعلانات بعد 90 يوماً', run: async ({ pool, now }) => (await inquiries.purgeOld({ pool, now })) + (await require('./leads').purgeContacts({ pool, now })) },
   trial_check: { schedule: '30 9 * * *', label: 'فحص انتهاء التجربة', run: runTrialCheck },
   purge_notifications: { schedule: '0 3 * * 5', label: 'حذف الإشعارات القديمة', run: runPurgeNotifications },
   purge_auth: { schedule: '*/10 * * * *', label: 'حذف رموز الدخول والجلسات المنتهية', run: runPurgeAuth },

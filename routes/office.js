@@ -26,6 +26,8 @@ const messageRoutes = require('./messages');
 const teamRoutes = require('./team');
 const taskRoutes = require('./tasks');
 const reportRoutes = require('./reports');
+const accountingRoutes = require('./accounting');
+const leadRoutes = require('./leads');
 const billingRoutes = require('./billing');
 const listingRoutes = require('./listings');
 const contractsService = require('../services/contracts');
@@ -173,6 +175,8 @@ router.use(messageRoutes.office);
 router.use(teamRoutes);
 router.use(taskRoutes);
 router.use(reportRoutes.office);
+router.use(accountingRoutes.office);
+router.use(leadRoutes);
 router.use(billingRoutes.office);
 router.use(listingRoutes);
 

@@ -1,0 +1,7 @@
+<div class="page-head"><h1>حسابي الشهري</h1></div>
+<p class="muted">ما حصّله المكتب من إيجار عقاراتك، وما خُصم منه، والرصيد المستحق لك.</p>
+<%- include('_monthnav', { navBase: '/landlord/account', period }) %>
+<% if (statements.length === 0) { %><p class="empty-state">لا توجد بيانات.</p><% } %>
+<% statements.forEach(function (item) { %>
+  <section class="card"><%- include('_statement-body', { statement: item.statement, officeName: item.officeName }) %></section>
+<% }) %>

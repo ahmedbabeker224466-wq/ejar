@@ -491,7 +491,7 @@ test('the sidebar shows only the items each role may open', { skip }, async () =
   const manager = await addMember(owner.office.id, phone(30), 'office_manager');
   const staff = await addMember(owner.office.id, phone(31), 'office_staff');
   const all = ['/office', '/office/contracts', '/office/landlords', '/office/units', '/office/tenants',
-    '/office/payments', '/office/maintenance', '/office/listings', '/office/reports', '/office/messages',
+    '/office/payments', '/office/accounting', '/office/leads', '/office/maintenance', '/office/listings', '/office/reports', '/office/messages',
     '/office/tasks', '/office/team', '/office/audit', '/office/settings', '/office/billing'];
 
   assert.deepEqual(navHrefs((await request('/office', { cookie: owner.cookie })).text), all);
@@ -501,7 +501,7 @@ test('the sidebar shows only the items each role may open', { skip }, async () =
   );
   assert.deepEqual(navHrefs((await request('/office', { cookie: staff })).text), [
     '/office', '/office/contracts', '/office/landlords', '/office/units', '/office/tenants',
-    '/office/payments', '/office/maintenance', '/office/messages', '/office/tasks', '/office/settings',
+    '/office/payments', '/office/leads', '/office/maintenance', '/office/messages', '/office/tasks', '/office/settings',
   ]);
 
   const page = await request('/office/payments', { cookie: staff });

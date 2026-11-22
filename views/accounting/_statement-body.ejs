@@ -1,0 +1,23 @@
+<% const s = statement; %>
+<div class="ac-st-head">
+  <div><h2><%= s.landlord.label %></h2><p class="muted"><%= officeName %><% if (s.landlord.city) { %> · <%= s.landlord.city %><% } %></p></div>
+  <div class="ac-st-meta"><p>الفترة: <span dir="ltr"><%= s.from %></span> إلى <span dir="ltr"><%= s.to %></span></p><p>رقم الكشف: <span dir="ltr"><%= s.number %></span></p></div>
+</div>
+<div class="ac-sum">
+  <div><span>الرصيد في بداية الشهر</span><strong class="ac-num"><%= fmt(s.opening) %></strong></div>
+  <div><span>الإيجار المحصّل</span><strong class="ac-num"><%= fmt(s.rent) %></strong></div>
+  <div><span>المصروفات والعمولة</span><strong class="ac-num"><%= fmt(s.expenses + s.commission) %></strong></div>
+  <div class="ac-sum__net"><span>الرصيد المستحق للمالك</span><strong class="ac-num"><%= fmt(s.closing) %></strong></div>
+</div>
+<% if (s.lines.length === 0) { %><p class="empty-state">لا توجد حركات في هذا الشهر.</p><% } else { %>
+  <div class="table-wrap"><table class="table ac-table">
+    <thead><tr><th>التاريخ</th><th>البيان</th><th class="ac-amount">له</th><th class="ac-amount">عليه</th></tr></thead>
+    <tbody>
+      <% s.lines.forEach(function (l) { %>
+        <tr><td dir="ltr" class="ac-date"><%= l.day %></td><td><%= l.label %></td><td class="ac-amount ac-num ac-in"><%= l.credit ? fmt(l.credit) : '' %></td><td class="ac-amount ac-num ac-out"><%= l.debit ? fmt(l.debit) : '' %></td></tr>
+      <% }) %>
+    </tbody>
+    <tfoot><tr><td></td><td>الإجمالي</td><td class="ac-amount ac-num"><%= fmt(s.credits) %></td><td class="ac-amount ac-num"><%= fmt(s.debits) %></td></tr></tfoot>
+  </table></div>
+<% } %>
+<p class="muted ac-note">التحويلات إلى المالك من ضمن «عليه». المبالغ بالريال السعودي، وتُحسب عمولة المكتب بنسبة <%= s.percent %>% من الإيجار المحصّل.</p>

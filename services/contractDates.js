@@ -236,7 +236,30 @@ function monthBounds(period) {
   return { start: riyadhMidnight(first), end: riyadhMidnight(addMonths(first, 1)) };
 }
 
+const PERIOD = /^(\d{4})-(0[1-9]|1[0-2])$/;
+
+/** Whether `period` is a month 'YYYY-MM' (years 1900-2200). */
+function isMonth(period) {
+  const m = PERIOD.exec(String(period || ''));
+  return Boolean(m) && Number(m[1]) >= 1900 && Number(m[1]) <= 2200;
+}
+
+/** The first and last calendar day of a month 'YYYY-MM': { from, to } as 'YYYY-MM-DD'. */
+function monthRange(period) {
+  if (!isMonth(period)) throw new ContractDateError('invalid_date', 'invalid month');
+  const from = `${period}-01`;
+  return { from, to: addDays(addMonths(from, 1), -1) };
+}
+
+/** The month `n` months after `period` (negative = before), as 'YYYY-MM'. */
+function shiftMonth(period, n) {
+  return addMonths(monthRange(period).from, n).slice(0, 7);
+}
+
 module.exports = {
+  isMonth,
+  monthRange,
+  shiftMonth,
   weekdayOf,
   previousMonthOf,
   monthBounds,

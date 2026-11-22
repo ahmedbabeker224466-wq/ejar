@@ -18,6 +18,8 @@ const OFFICE_NAV = [
   { key: 'units', href: '/office/units', label: 'العقارات والوحدات', capability: 'units' },
   { key: 'tenants', href: '/office/tenants', label: 'المستأجرون', capability: 'tenants' },
   { key: 'payments', href: '/office/payments', label: 'الدفعات', capability: 'payments.read' },
+  { key: 'accounting', href: '/office/accounting', label: 'المحاسبة', capability: 'accounting' },
+  { key: 'leads', href: '/office/leads', label: 'العملاء المحتملون', capability: 'leads' },
   { key: 'maintenance', href: '/office/maintenance', label: 'الصيانة', capability: 'maintenance' },
   { key: 'listings', href: '/office/listings', label: 'الإعلانات', capability: 'listings' },
   { key: 'reports', href: '/office/reports', label: 'التقارير', capability: 'reports' },

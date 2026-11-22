@@ -1,0 +1,27 @@
+<div class="page-head"><h1><%= lead ? 'بيانات العميل' : 'عميل جديد' %></h1><a class="btn btn--secondary btn--small" href="/office/leads">→ العملاء المحتملون</a></div>
+<% if (locals.message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (lead) { %>
+  <section class="card">
+    <p>المرحلة الحالية: <strong><%= lead.stageLabel %></strong></p>
+    <div class="ld-stages">
+      <% Object.entries(stages).forEach(function ([key, label]) { if (key === lead.stage) return; %>
+        <form method="post" action="/office/leads/<%= lead.id %>/stage"><input type="hidden" name="stage" value="<%= key %>"><input type="hidden" name="back" value="lead"><button type="submit" class="btn btn--small <%= key === 'won' ? 'btn--success' : key === 'lost' ? 'btn--danger' : 'btn--secondary' %>"><%= label %></button></form>
+      <% }) %>
+    </div>
+    <% if (lead.stage === 'awaiting_ejar' || lead.stage === 'won') { %><p class="muted">بعد توثيق العقد في منصة إيجار، أضفه من <a href="/office/contracts/new">عقد جديد</a>.</p><% } %>
+  </section>
+<% } %>
+<form class="card form-card" method="post" action="<%= action %>" novalidate>
+  <div class="field"><label for="label">ماذا يبحث عنه؟</label><input id="label" name="label" class="input" maxlength="<%= limits.label %>" value="<%= values.label %>" placeholder="شقة 3 غرف في حي الملقا" required><% if (errors.label) { %><p class="field-error"><%= errors.label %></p><% } %></div>
+  <div class="form-grid">
+    <div class="field"><label for="contact_label">الاسم أو اللقب (اختياري)</label><input id="contact_label" name="contact_label" class="input" maxlength="<%= limits.contact %>" value="<%= values.contact_label %>"><% if (errors.contact_label) { %><p class="field-error"><%= errors.contact_label %></p><% } %></div>
+    <div class="field"><label for="phone">الجوال (اختياري)</label><input id="phone" name="phone" class="input" type="tel" inputmode="tel" dir="ltr" maxlength="20" value="<%= values.phone %>"><% if (errors.phone) { %><p class="field-error"><%= errors.phone %></p><% } %></div>
+    <div class="field"><label for="source">المصدر</label><select id="source" name="source" class="select"><% Object.entries(sources).forEach(function ([k, v]) { %><option value="<%= k %>" <%= values.source === k ? 'selected' : '' %>><%= v %></option><% }) %></select></div>
+    <div class="field"><label for="budget">الميزانية السنوية (ريال، اختياري)</label><input id="budget" name="budget" class="input" inputmode="decimal" dir="ltr" value="<%= values.budget %>"><% if (errors.budget) { %><p class="field-error"><%= errors.budget %></p><% } %></div>
+    <div class="field"><label for="next_date">موعد المتابعة القادم</label><input id="next_date" name="next_date" class="input" type="date" value="<%= values.next_date %>"><% if (errors.next_date) { %><p class="field-error"><%= errors.next_date %></p><% } %></div>
+    <div class="field"><label for="assignee">المسؤول</label><select id="assignee" name="assignee" class="select"><option value="">بلا مسؤول</option><% members.forEach(function (m) { %><option value="<%= m.user_id %>" <%= String(values.assignee) === String(m.user_id) ? 'selected' : '' %>><%= m.display %></option><% }) %></select><% if (errors.assignee) { %><p class="field-error"><%= errors.assignee %></p><% } %></div>
+  </div>
+  <div class="field"><label for="unit_id">الوحدة المقترحة (اختياري)</label><select id="unit_id" name="unit_id" class="select"><option value="">بلا وحدة</option><% units.forEach(function (u) { %><option value="<%= u.id %>" <%= String(values.unit_id) === String(u.id) ? 'selected' : '' %>><%= u.label %><%= u.status === 'vacant' ? ' (شاغرة)' : '' %></option><% }) %></select><% if (errors.unit_id) { %><p class="field-error"><%= errors.unit_id %></p><% } %></div>
+  <div class="field"><label for="note">ملاحظات (اختياري)</label><textarea id="note" name="note" class="textarea" rows="3" maxlength="<%= limits.note %>"><%= values.note %></textarea><p class="muted ac-hint">لا تكتب رقم الهوية أو أرقام الحسابات.</p><% if (errors.note) { %><p class="field-error"><%= errors.note %></p><% } %></div>
+  <button type="submit" class="btn btn--primary btn--block"><%= lead ? 'حفظ التعديلات' : 'إضافة العميل' %></button>
+</form>

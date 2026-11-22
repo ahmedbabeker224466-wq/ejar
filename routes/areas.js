@@ -28,5 +28,6 @@ router.use(maintenanceRoutes.portal);
 router.use(maintenanceRoutes.photos);
 router.use(messageRoutes.portal);
 router.use(reportRoutes.portal);
+router.use(require('./accounting').portal);
 
 module.exports = router;

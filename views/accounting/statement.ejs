@@ -1,0 +1,10 @@
+<% const period = statement.period; %>
+<div class="page-head ac-head">
+  <div><h1>كشف حساب المالك</h1><p class="muted"><a href="/office/accounting/owners?month=<%= period %>">حسابات الملّاك</a> ‹ <%= statement.landlord.label %></p></div>
+  <div class="ac-actions">
+    <a class="btn btn--secondary" href="<%= base %>?month=<%= period %>&print=1">طباعة أو PDF</a>
+    <a class="btn btn--primary" href="/office/accounting/new?kind=owner_payout&landlord=<%= statement.landlord.id %>">+ تسجيل تحويل للمالك</a>
+  </div>
+</div>
+<%- include('_monthnav', { navBase: base, period }) %>
+<section class="card"><%- include('_statement-body') %></section>

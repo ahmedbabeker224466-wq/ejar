@@ -1,0 +1,5 @@
+<nav class="ac-month" aria-label="اختيار الشهر">
+  <a class="btn btn--secondary btn--small" href="<%= navBase %>?month=<%= nav.prev %>" aria-label="الشهر السابق">→ <%= monthName(nav.prev) %></a>
+  <strong><%= monthLabel(period) %></strong>
+  <% if (nav.next) { %><a class="btn btn--secondary btn--small" href="<%= navBase %>?month=<%= nav.next %>" aria-label="الشهر التالي"><%= monthName(nav.next) %> ←</a><% } else { %><span class="ac-month__spacer"></span><% } %>
+</nav>

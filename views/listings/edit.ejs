@@ -111,6 +111,7 @@
           </select>
           <button type="submit" class="btn btn--secondary btn--small">تحديث</button>
         </form>
+        <% if (can('leads')) { %><form method="post" action="/office/leads/from-inquiry/<%= q.id %>" class="inline-form"><button type="submit" class="btn btn--secondary btn--small">إضافة إلى العملاء المحتملين</button></form><% } %>
       </li>
     <% }) %>
   </ul>

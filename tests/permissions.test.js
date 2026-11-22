@@ -7,16 +7,16 @@ const { CAPABILITIES, can, requirePerm } = require('../middleware/permissions');
 const EXPECTED = {
   office_owner: [
     'contracts', 'contracts.ai', 'contracts.terminate', 'contracts.delete', 'landlords', 'units', 'tenants', 'payments.read',
-    'payments.write', 'maintenance', 'listings', 'reports', 'messages', 'tasks', 'team', 'audit',
+    'payments.write', 'maintenance', 'listings', 'reports', 'accounting', 'leads', 'messages', 'tasks', 'team', 'audit',
     'settings.basic', 'settings.office', 'settings.secure', 'billing', 'office.delete',
   ],
   office_manager: [
     'contracts', 'contracts.ai', 'contracts.terminate', 'contracts.delete', 'landlords', 'units', 'tenants', 'payments.read',
-    'payments.write', 'maintenance', 'listings', 'reports', 'messages', 'tasks', 'team', 'audit',
+    'payments.write', 'maintenance', 'listings', 'reports', 'accounting', 'leads', 'messages', 'tasks', 'team', 'audit',
     'settings.basic', 'settings.office',
   ],
   office_staff: [
-    'contracts', 'contracts.ai', 'landlords', 'units', 'tenants', 'payments.read', 'payments.write', 'maintenance', 'messages', 'tasks',
+    'contracts', 'contracts.ai', 'landlords', 'units', 'tenants', 'payments.read', 'payments.write', 'maintenance', 'leads', 'messages', 'tasks',
     'settings.basic',
   ],
   landlord: [

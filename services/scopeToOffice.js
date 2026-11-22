@@ -56,6 +56,8 @@ const OFFICE_TABLES = new Set([
   'staff_activity',
   'office_tasks',
   'internal_notes',
+  'ledger_entries',
+  'leads',
 ]);
 
 /** Office-owned tables without office_id: scoped through their parent row. */

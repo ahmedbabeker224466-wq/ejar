@@ -1031,6 +1031,67 @@ const TABLES = [
     fk('staff_activity', 'office_id', 'offices', 'CASCADE'),
   ]),
 
+  // Bookkeeping of an office (services/accounting.js). Rent received comes from
+  // payment_entries; this table holds the other movements: expenses (charged
+  // to a landlord or to the office), payouts to landlords and other income.
+  // The app never moves money: a row only records what the office did.
+  // A wrong row is voided (voided_at, reason), never deleted.
+  table('ledger_entries', [
+    `office_id ${REF} NOT NULL`,
+    "kind ENUM('expense','owner_payout','income') NOT NULL",
+    'category VARCHAR(30) NOT NULL',
+    'entry_date DATE NOT NULL',
+    `amount ${MONEY} NOT NULL`,
+    CURRENCY,
+    `landlord_id ${REF} NULL`,
+    `unit_id ${REF} NULL`,
+    `maintenance_request_id ${REF} NULL`,
+    'description VARCHAR(160) NULL',
+    `created_by ${REF} NULL`,
+    'voided_at DATETIME NULL',
+    `voided_by ${REF} NULL`,
+    'void_reason VARCHAR(200) NULL',
+    'KEY idx_ledger_office_date (office_id, entry_date)',
+    'KEY idx_ledger_office_landlord (office_id, landlord_id, entry_date)',
+    fk('ledger_entries', 'office_id', 'offices', 'CASCADE'),
+    fk('ledger_entries', 'landlord_id', 'landlords', 'SET NULL'),
+    fk('ledger_entries', 'unit_id', 'units', 'SET NULL'),
+    fk('ledger_entries', 'maintenance_request_id', 'maintenance_requests', 'SET NULL'),
+    fk('ledger_entries', 'created_by', 'users', 'SET NULL'),
+    fk('ledger_entries', 'voided_by', 'users', 'SET NULL'),
+  ]),
+
+  // Prospective tenants of an office, from the first inquiry until the lease
+  // is registered on Ejar (services/leads.js). A short label of what they
+  // want, an optional contact nickname and phone; never an ID number.
+  table('leads', [
+    `office_id ${REF} NOT NULL`,
+    'label VARCHAR(80) NOT NULL',
+    'contact_label VARCHAR(60) NULL',
+    'phone VARCHAR(20) NULL',
+    "stage ENUM('new','contacted','viewing','awaiting_ejar','won','lost') NOT NULL DEFAULT 'new'",
+    "source ENUM('listing','office_page','phone','walk_in','referral','other') NOT NULL DEFAULT 'other'",
+    `listing_id ${REF} NULL`,
+    `inquiry_id ${REF} NULL`,
+    `unit_id ${REF} NULL`,
+    `budget ${MONEY} NULL`,
+    CURRENCY,
+    'next_date DATE NULL',
+    'note VARCHAR(500) NULL',
+    `assigned_to ${REF} NULL`,
+    `created_by ${REF} NULL`,
+    'stage_changed_at DATETIME NULL',
+    'closed_at DATETIME NULL',
+    'UNIQUE KEY uq_leads_inquiry (inquiry_id)',
+    'KEY idx_leads_office_stage (office_id, stage)',
+    fk('leads', 'office_id', 'offices', 'CASCADE'),
+    fk('leads', 'listing_id', 'listings', 'SET NULL'),
+    fk('leads', 'inquiry_id', 'listing_inquiries', 'SET NULL'),
+    fk('leads', 'unit_id', 'units', 'SET NULL'),
+    fk('leads', 'assigned_to', 'users', 'SET NULL'),
+    fk('leads', 'created_by', 'users', 'SET NULL'),
+  ]),
+
   table('office_tasks', [
     `office_id ${REF} NOT NULL`,
     'title VARCHAR(160) NOT NULL',
