@@ -80,7 +80,7 @@ test('public pages, login, register, 404, robots and sitemap never show the old 
   }
   const home = await http.request('/');
   assert.match(home.text, /<meta property="og:site_name" content="ميعاد">/);
-  assert.match(home.text, /© \d{4} ميعاد/);
+  assert.match(home.text, /© \d{4} جميع الحقوق محفوظة لـ <a href="https:\/\/phillote\.com"/);
   assert.match((await http.request('/about')).text, /<title>[^<]*\| ميعاد<\/title>/);
 });
 

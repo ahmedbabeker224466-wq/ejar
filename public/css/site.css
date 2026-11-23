@@ -475,3 +475,4 @@ textarea.mk-input { min-height: 150px; resize: vertical; }
 .mk-std .auth__icon { background: none; box-shadow: none; border-radius: 0; }
 .mk-logo .brand-word { font-size: 27px; padding-block-end: 3px; }
 .mk-mock__brand .brand-word { font-size: 18px; }
+.mk-footer__credit { color: #fff; font-weight: 600; unicode-bidi: isolate; } .mk-footer__credit:hover { text-decoration: underline; }
