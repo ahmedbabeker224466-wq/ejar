@@ -152,6 +152,7 @@ module.exports = function register(router, { wrap, notFound, reasonOf, REASON_ER
     let id;
     try {
       id = await blog.create(db.pool, values, cover);
+      await platformSettings.refreshBanner(db.pool);
     } catch (err) {
       if (cover) await images.deleteImage(cover).catch(() => {});
       if (err.code === 'ER_DUP_ENTRY') return renderBlogForm(res, { values: { ...blogValues(null), ...req.body }, errors: { slug: 'هذا الرابط مستخدم من قبل.' }, status: 422 });
@@ -183,6 +184,7 @@ module.exports = function register(router, { wrap, notFound, reasonOf, REASON_ER
     }
     if (Object.keys(errors).length) return renderBlogForm(res, { post, values: { ...blogValues(post), ...req.body, needs_review: req.body.needs_review === '1' }, errors, status: 422 });
     await blog.update(db.pool, post.id, values, cover);
+    await platformSettings.refreshBanner(db.pool);
     await audit.write(req.user.id, null, 'admin.blog.update', 'blog_post', post.id, { status: post.status }, { status: values.status, reason }, req.ip);
     return res.redirect('/admin/blog?done=saved');
   }));
@@ -193,6 +195,7 @@ module.exports = function register(router, { wrap, notFound, reasonOf, REASON_ER
     const reason = reasonOf(req.body);
     if (!reason) return renderBlogForm(res, { post, values: blogValues(post), errors: { reason: REASON_ERROR }, status: 422 });
     await blog.remove(db.pool, post.id);
+    await platformSettings.refreshBanner(db.pool);
     await audit.write(req.user.id, null, 'admin.blog.delete', 'blog_post', post.id, { slug: post.slug }, { reason }, req.ip);
     return res.redirect('/admin/blog?done=deleted');
   }));

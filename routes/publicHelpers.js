@@ -21,7 +21,8 @@ function publicPage(req, res, { description, page = 1, ogImage = null, ogType = 
   res.locals.indexable = true;
   res.locals.canonicalUrl = seo.absolute(base, canonicalPath);
   if (description) res.locals.metaDescription = description;
-  if (ogImage) res.locals.ogImage = ogImage;
+  // Every public page gets a share image; a listing or a post passes its own.
+  res.locals.ogImage = ogImage || seo.absolute(base, '/img/og.jpg');
   if (ogType) res.locals.ogType = ogType;
   if (jsonLd) res.locals.jsonLd = seo.safeJson(jsonLd);
   if (cache) res.set('Cache-Control', 'public, max-age=60');

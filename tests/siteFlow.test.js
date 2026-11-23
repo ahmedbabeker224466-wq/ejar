@@ -132,6 +132,31 @@ test('every public page: 200, one h1, title, description, canonical, robots, the
   for (const tag of html.match(/<img [^>]*>/g) || []) assert.match(tag, /width="\d+" height="\d+"/);
 });
 
+test('launch fixes: share image, structured data, no admin link on /login, blog link only with published posts', { skip }, async () => {
+  const home = await text('/');
+  assert.match(home, /<meta property="og:image" content="https:\/\/aqdi\.example\/img\/og\.jpg">/);
+  assert.match(home, /summary_large_image/);
+  const ld = JSON.parse(home.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1]);
+  assert.deepEqual(ld['@graph'].map((n) => n['@type']), ['Organization', 'WebSite', 'SoftwareApplication']);
+  const img = await getPublic('/img/og.jpg');
+  assert.equal(img.status, 200);
+  const login = await text('/login');
+  assert.doesNotMatch(login, /دخول مدير المنصة/);
+  const platformSettings = require('../services/platformSettings');
+  const before = platformSettings.blogLiveNow();
+  try {
+    platformSettings.setBlogLive(false);
+    assert.doesNotMatch(await text('/about'), /href="\/blog"/);
+    platformSettings.setBlogLive(true);
+    assert.match(await text('/about'), /href="\/blog"/);
+  } finally {
+    platformSettings.setBlogLive(before);
+  }
+  // Neighborhood filter: only cities that have a list get a group.
+  const listings = await text('/listings');
+  assert.match(listings, /data-city="الرياض"/);
+});
+
 test('the disclaimer is visible on every kind of page: public, sign-in, office, admin, invoice', { skip }, async () => {
   const o = await fx.office(1, 'تجربة-موقع-1', { landlords: 0, units: 0 });
   for (const [p, cookie] of [['/login'], ['/register'], ['/office', o.cookie], ['/office/billing', o.cookie], ['/office/settings', o.cookie], ['/admin', admin.cookie], ['/notifications', o.cookie]]) {

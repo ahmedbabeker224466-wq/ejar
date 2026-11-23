@@ -20,7 +20,7 @@
         <%- navItem(L('/') + '#how', t('nav.how')) %>
         <%- navItem(L('/pricing'), t('nav.pricing'), '/pricing') %>
         <%- navItem('/listings', t('nav.listings'), '/listings') %>
-        <%- navItem('/blog', t('footer.blog'), '/blog') %>
+        <% if (locals.blogLive) { %><%- navItem('/blog', t('footer.blog'), '/blog') %><% } %>
       </nav>
       <div class="mk-nav__side">
         <% if (locals.localized) { %>

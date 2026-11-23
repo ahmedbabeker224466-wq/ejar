@@ -11,7 +11,7 @@
       <div class="search-bar__field"><label class="visually-hidden" for="f-hood">الحي</label>
           <select id="f-hood" name="neighborhood" class="select" data-hood-select>
             <option value="">كل الأحياء</option>
-            <% cities.forEach(function (c) { var list = (byCity[c] || []).concat([other]); %>
+            <% cities.forEach(function (c) { if (!(byCity[c] || []).length) return; var list = byCity[c].concat([other]); %>
               <optgroup label="<%= c %>" data-city="<%= c %>">
                 <% list.forEach(function (n) { %><option value="<%= n %>" <%= filters.neighborhood === n && (!filters.city || filters.city === c) ? 'selected' : '' %>><%= n %></option><% }) %>
               </optgroup>

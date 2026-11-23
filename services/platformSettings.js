@@ -36,6 +36,7 @@ let cache = null;
 let bannerText = '';
 // The analytics snippet is memory-only too (re-validated when loaded).
 let legalReviewed = false;
+let blogLive = false;
 let analyticsState = { snippet: '', origins: [] };
 
 /** Forgets the cached values (after a save, and in tests). */
@@ -168,6 +169,15 @@ function legalReviewedNow() {
   return legalReviewed;
 }
 
+/** Whether the blog has at least one published post (memory only; the header and footer link to it only then). */
+function blogLiveNow() {
+  return blogLive;
+}
+
+function setBlogLive(value) {
+  blogLive = Boolean(value);
+}
+
 function setLegalReviewed(value) {
   legalReviewed = Boolean(value);
 }
@@ -185,6 +195,8 @@ async function refreshBanner(pool = db.pool) {
     bannerText = all[KEYS.bannerMessage] || '';
     setAnalytics(all[KEYS.analyticsSnippet] || '');
     legalReviewed = Boolean(all[KEYS.legalReviewed]);
+    const [[row]] = await pool.query("SELECT COUNT(*) AS n FROM blog_posts WHERE status = 'published' AND published_at IS NOT NULL AND published_at <= ?", [new Date()]);
+    blogLive = Number(row.n) > 0;
   } catch {
     // Keep the last known message when the database is briefly unreachable.
   }
@@ -228,6 +240,8 @@ module.exports = {
   save,
   bannerNow,
   legalReviewedNow,
+  blogLiveNow,
+  setBlogLive,
   setLegalReviewed,
   analyticsNow,
   refreshBanner,

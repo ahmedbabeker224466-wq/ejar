@@ -53,6 +53,21 @@ async function planCards() {
   });
 }
 
+// Structured data for the home page: who runs the site, the site itself and the
+// web application it offers (no prices, they are VAT-exclusive on the page).
+function homeJsonLd(req, t) {
+  const base = seo.baseUrl(req);
+  const url = seo.absolute(base, req.lang === 'en' ? '/en' : '/');
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'Organization', '@id': `${base}/#org`, name: t('brand'), url: seo.absolute(base, '/'), logo: seo.absolute(base, '/favicon.svg') },
+      { '@type': 'WebSite', '@id': `${base}/#site`, name: t('brand'), url, inLanguage: req.lang === 'en' ? 'en' : 'ar', publisher: { '@id': `${base}/#org` } },
+      { '@type': 'SoftwareApplication', name: t('brand'), url, applicationCategory: 'BusinessApplication', operatingSystem: 'Web', description: t('meta.homeDescription'), publisher: { '@id': `${base}/#org` } },
+    ],
+  };
+}
+
 const shared = () => ({
   fmt: money.formatHalalas, trialDays: TRIAL_DAYS, vatPercent: billing.VAT_RATE_BP / 100, customFromUnits: officialPricing.CUSTOM_PLAN_FROM_UNITS,
 });
@@ -65,7 +80,7 @@ router.get(['/', '/offices'], wrap(async (req, res) => {
   const t = res.locals.t;
   publicPage(req, res, {
     description: t('meta.homeDescription'),
-    jsonLd: { '@context': 'https://schema.org', '@type': 'Organization', name: t('brand'), url: seo.baseUrl(req) },
+    jsonLd: homeJsonLd(req, t),
     path: '/',
   });
   return res.render('site/landing', {

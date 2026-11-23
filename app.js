@@ -141,6 +141,7 @@ app.use(function loadUnreadCountMiddleware(req, res, next) {
 app.use((req, res, next) => {
   res.locals.platformBanner = platformSettings.bannerNow();
   res.locals.legalReviewed = platformSettings.legalReviewedNow();
+  res.locals.blogLive = platformSettings.blogLiveNow();
   next();
 });
 

@@ -7,11 +7,14 @@
   if (!city || !hood) return;
   function apply() {
     var groups = hood.querySelectorAll('optgroup');
+    var any = false;
     for (var i = 0; i < groups.length; i += 1) {
       var show = groups[i].getAttribute('data-city') === city.value;
       groups[i].hidden = !show;
       groups[i].disabled = !show;
+      if (show) any = true;
     }
+    hood.disabled = !any;
     var selected = hood.options[hood.selectedIndex];
     if (selected && selected.parentNode.disabled) hood.value = '';
   }

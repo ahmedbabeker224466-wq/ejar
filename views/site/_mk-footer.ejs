@@ -27,7 +27,7 @@
       <nav aria-label="<%= t('footer.company') %>"><h2><%= t('footer.company') %></h2>
         <a href="<%= L('/about') %>"><%= t('footer.aboutUs') %></a>
         <a href="<%= L('/contact') %>"><%= t('footer.contact') %></a>
-        <a href="/blog"><%= t('footer.blog') %></a>
+        <% if (locals.blogLive) { %><a href="/blog"><%= t('footer.blog') %></a><% } %>
       </nav>
       <nav aria-label="<%= t('footer.account') %>"><h2><%= t('footer.account') %></h2>
         <a href="/login"><%= t('nav.login') %></a>
