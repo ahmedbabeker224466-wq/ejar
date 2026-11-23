@@ -49,6 +49,32 @@ function mailerFor(config) {
 
 const PERMANENT = new Set(['EAUTH', 'EENVELOPE', 'EMESSAGE']);
 
+const escapeHtml = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * The HTML version of a plain-text email: the logo on top, the text as
+ * paragraphs (escaped, line breaks kept), the site link at the bottom.
+ * Right to left when the text is Arabic. Built only from the text, so the
+ * two versions always say the same thing.
+ */
+function htmlFor({ subject, text }, env = process.env) {
+  const base = String(env.APP_URL || 'https://mi3aad.com').trim().replace(/\/+$/, '');
+  const rtl = /[\u0600-\u06FF]/.test(`${subject || ''}${text || ''}`);
+  const dir = rtl ? 'rtl' : 'ltr';
+  const align = rtl ? 'right' : 'left';
+  const paragraphs = String(text || '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
+    .map((p) => `<p style="margin:0 0 14px;font-size:16px;line-height:1.8;color:#0f1d45">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+  return `<!doctype html><html lang="${rtl ? 'ar' : 'en'}" dir="${dir}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(subject || '')}</title></head>`
+    + `<body style="margin:0;padding:0;background:#f4f7fd"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fd"><tr><td align="center" style="padding:28px 12px">`
+    + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e1e6f1;border-radius:16px">`
+    + `<tr><td style="padding:24px 28px 8px;text-align:${align}"><a href="${base}"><img src="${base}/img/email-logo.png" width="150" height="46" alt="miaad" style="display:inline-block;border:0;width:150px;height:auto"></a></td></tr>`
+    + `<tr><td dir="${dir}" style="padding:12px 28px 14px;text-align:${align};font-family:Tahoma,'Segoe UI',Arial,sans-serif">`
+    + (subject ? `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.5;color:#0f1d45">${escapeHtml(subject)}</h1>` : '')
+    + paragraphs + `</td></tr>`
+    + `<tr><td style="padding:14px 28px 22px;border-top:1px solid #e1e6f1;text-align:${align};font-family:Tahoma,Arial,sans-serif;font-size:13px;color:#8f9bbd"><a href="${base}" style="color:#1b6af5;text-decoration:none">mi3aad.com</a></td></tr>`
+    + `</table></td></tr></table></body></html>`;
+}
+
 /** Sends one plain-text email. Returns { ok } or { ok: false, error, retryable, skip }. */
 async function send({ to, subject, text }, env = process.env) {
   const config = smtpConfig(env);
@@ -57,7 +83,7 @@ async function send({ to, subject, text }, env = process.env) {
   const mailer = mailerFor(config);
   if (!mailer) return { ok: false, error: 'network_disabled_in_tests', retryable: false };
   try {
-    await mailer.sendMail({ from: config.from, to, subject, text });
+    await mailer.sendMail({ from: config.from, to, subject, text, html: htmlFor({ subject, text }, env) });
     return { ok: true };
   } catch (err) {
     const code = String(err.code || 'smtp_error').slice(0, 40);
@@ -65,4 +91,4 @@ async function send({ to, subject, text }, env = process.env) {
   }
 }
 
-module.exports = { send, smtpConfig, setMailer };
+module.exports = { send, smtpConfig, setMailer, htmlFor };
