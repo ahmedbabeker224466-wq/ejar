@@ -462,3 +462,9 @@ textarea.mk-input { min-height: 150px; resize: vertical; }
   .mk-endcta__card .mk-btn { width: 100%; }
   .mk-footer__base { flex-direction: column; align-items: flex-start; }
 }
+
+/* The Mi3aad mark on a white tile (Nov 2026). */
+.mk-logo__mark, .mk-nav .mk-logo__mark { background: #fff; box-shadow: 0 4px 12px -6px rgba(11, 40, 100, .35); }
+.mk-logo__mark .brand-mark { width: 84%; height: 84%; }
+.mk-mock__brand .mk-logo__mark { background: #fff; }
+.mk-mock__brand .mk-logo__mark .brand-mark { width: 21px; height: 21px; }
