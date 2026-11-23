@@ -2045,7 +2045,7 @@ img {
 }
 
 /* ------------------------------------------------------------ office theme (matches the public site) */
-body.office-body {
+body.office-body, body.app-body {
   --color-primary: #1b6af5;
   --color-primary-hover: #1452c7;
   --color-primary-soft: #eaf1ff;
@@ -2062,15 +2062,15 @@ body.office-body {
   background: var(--color-bg);
   font-family: var(--font-family);
 }
-.office-body .card { border-radius: 16px; border-color: var(--color-border); box-shadow: 0 1px 2px rgba(15, 29, 69, .04); }
-.office-body .btn { border-radius: 11px; }
-.office-body .btn--primary:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
-.office-body .input, .office-body .select, .office-body .textarea { border-radius: 11px; }
-.office-body .input:focus, .office-body .select:focus, .office-body .textarea:focus { border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(27, 106, 245, .14); }
-.office-body h1 { color: var(--color-text); }
+.office-body .card, .app-body .card { border-radius: 16px; border-color: var(--color-border); box-shadow: 0 1px 2px rgba(15, 29, 69, .04); }
+.office-body .btn, .app-body .btn { border-radius: 11px; }
+.office-body .btn--primary:hover, .app-body .btn--primary:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+.office-body .input, .office-body .select, .office-body .textarea, .app-body .input, .app-body .select, .app-body .textarea { border-radius: 11px; }
+.office-body .input:focus, .office-body .select:focus, .office-body .textarea:focus, .app-body .input:focus, .app-body .select:focus, .app-body .textarea:focus { border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(27, 106, 245, .14); }
+.office-body h1, .app-body h1 { color: var(--color-text); }
 .office-top { background: #fff; border-bottom-color: var(--color-border); }
 .office-top__name { color: var(--navy); }
-.office-body .badge--role { background: var(--color-primary-soft); color: var(--color-primary-hover); }
+.office-body .badge--role, .app-body .badge--role { background: var(--color-primary-soft); color: var(--color-primary-hover); }
 .office-body .office-banner--info { background: var(--color-primary-soft); color: var(--color-primary-hover); }
 .office-body .office-footer { background: transparent; border-top-color: var(--color-border); }
 /* Sidebar: navy, icons, brand */
@@ -2093,8 +2093,8 @@ body.office-body {
 .office-body .ac-kpi--dark .ac-kpi__label, .office-body .ac-kpi--dark .ac-kpi__hint, .office-body .ac-sum__net span { color: #b8c2de; }
 .office-body .ac-chart__bars i.ac-chart__out, .office-body .ac-legend i.ac-chart__out { background: #c9d6f2; }
 .office-body .ld-col { background: #eaeff9; }
-.office-body .btn--secondary { background: #fff; border-color: #dfe4f0; color: var(--navy); }
-.office-body .btn--secondary:hover { border-color: #c3cbe0; background: #fff; color: var(--navy); }
+.office-body .btn--secondary, .app-body .btn--secondary { background: #fff; border-color: #dfe4f0; color: var(--navy); }
+.office-body .btn--secondary:hover, .app-body .btn--secondary:hover { border-color: #c3cbe0; background: #fff; color: var(--navy); }
 
 /* The Mi3aad mark (roof over a clock), Nov 2026: drawn in colour on a white tile. */
 .brand-mark { display: block; width: 78%; height: 78%; }
@@ -2106,3 +2106,32 @@ body.office-body {
 .logo__mark .brand-mark, .office-nav__mark .brand-mark, .auth__icon .brand-mark { width: 100%; height: 100%; }
 /* The wordmark: "miaad" in Latin letters (owner's choice, Nov 2026). */
 .brand-word { font-family: 'Nunito', 'Inter', system-ui, sans-serif; font-weight: 800; letter-spacing: -0.01em; line-height: 1; direction: ltr; unicode-bidi: isolate; }
+
+/* Landlord, tenant and account pages (layouts/main) in the site colours. */
+.app-body .site-header { background: #fff; border-bottom: 1px solid var(--color-border); box-shadow: none; }
+.app-body .logo__text { color: var(--navy); font-size: 1.5rem; }
+.app-body .logo__mark { width: 38px; height: 38px; }
+.app-body .site-nav a { color: #4a536b; font-weight: 500; }
+.app-body .site-nav a:hover, .app-body .site-nav a[aria-current='page'] { color: var(--color-primary); }
+.app-body .area-nav a, .app-body .tabs a { border-radius: 999px; }
+.app-body .footer, .app-body .site-footer { background: var(--navy); color: #b8c2de; border: 0; }
+.app-body .site-footer a { color: #fff; }
+/* The admin sidebar brand. */
+.office-body .office-nav__brand .brand-word { font-size: 1.45rem; }
+.app-body .site-footer { padding-block: 40px 28px; }
+.app-body .footer-links a { color: #dbe3f5; font-weight: 500; }
+.app-body .footer-links a:hover { color: #fff; }
+.app-body .site-footer .disclaimer, .app-body .site-footer .copyright { color: #8f9bbd; font-size: .9rem; }
+.app-body .site-footer .copyright a { color: #fff; font-weight: 600; }
+.site-nav__logout { display: none !important; }
+.app-body .area-links__item { background: #fff; border: 1px solid var(--color-border); color: var(--navy); font-weight: 500; }
+.app-body .area-links__item.is-current { background: var(--color-primary); border-color: var(--color-primary); color: #fff; font-weight: 600; }
+@media (max-width: 860px) {
+  .app-body .site-header__inner { flex-wrap: wrap; }
+  .app-body .site-actions .btn--secondary { display: none; }
+  .site-nav__logout { display: inline-flex !important; color: #b91c1c !important; }
+}
+.app-body .area-links { scrollbar-width: none; } .app-body .area-links::-webkit-scrollbar { display: none; }
+.stat__value, .stat__label { display: block; }
+@media (min-width: 900px) { .office-body .stats:has(> .stat:nth-child(5)) { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.office-body .stats { margin-bottom: var(--space-4); }

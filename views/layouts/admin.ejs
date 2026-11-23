@@ -8,7 +8,8 @@
   <meta name="theme-color" content="#0f766e">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@800&text=miaad&display=swap">
   <link rel="stylesheet" href="<%= assetUrl('/css/main.css') %>">
   <script src="<%= assetUrl('/js/office.js') %>" defer></script>
 </head>
@@ -28,6 +29,7 @@
   </header>
   <div class="office-shell">
     <nav id="office-nav" class="office-nav" aria-label="قائمة الإدارة">
+      <div class="office-nav__brand"><span class="office-nav__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'adm' }) %></span><span class="brand-word" lang="en" dir="ltr">miaad</span></div>
       <ul>
         <% adminNav.forEach(function (item) { %>
           <li><a href="<%= item.href %>" <%- item.current ? 'aria-current="page"' : '' %>><%= item.label %></a></li>

@@ -16,8 +16,9 @@
       <a href="/" class="site-nav__home">الرئيسية</a>
       <a href="/listings" <%- currentPath.indexOf('/listings') === 0 ? 'aria-current="page"' : '' %>>الإعلانات</a>
       <a href="/pricing" <%- currentPath === '/pricing' ? 'aria-current="page"' : '' %>>الأسعار</a>
-      <a href="/blog" <%- currentPath.indexOf('/blog') === 0 ? 'aria-current="page"' : '' %>>المدونة</a>
+      <% if (locals.blogLive) { %><a href="/blog" <%- currentPath.indexOf('/blog') === 0 ? 'aria-current="page"' : '' %>>المدونة</a><% } %>
       <% if (!currentUser) { %><a href="/register" class="site-nav__register">سجّل مكتبك</a><% } %>
+      <% if (currentUser) { %><a href="/logout" class="site-nav__logout">تسجيل الخروج</a><% } %>
     </nav>
 
     <div class="site-actions">
