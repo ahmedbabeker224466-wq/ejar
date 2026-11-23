@@ -3,7 +3,7 @@
 <header class="mk-nav">
   <div class="mk-wrap mk-nav__inner">
     <a href="<%= L('/') %>" class="mk-logo" aria-label="<%= t('brand') %>">
-      <span class="mk-logo__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'h' }) %></span>
+      <span class="mk-logo__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'h', light: true }) %></span>
       <span><%= t('brand') %></span>
     </a>
     <% if (locals.localized) { %>
