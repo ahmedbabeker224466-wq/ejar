@@ -5,6 +5,7 @@ const otp = require('../services/otp');
 const auth = require('../services/auth');
 const twoFactor = require('../services/twoFactor');
 const emailAuth = require('../services/emailAuth');
+const emailCode = require('../services/emailCode');
 const platformSettings = require('../services/platformSettings');
 const db = require('../config/db');
 const { normalizeSaudi, toWesternDigits, toLocal } = require('../utils/phone');
@@ -16,6 +17,7 @@ const router = express.Router();
 
 const LOGIN_COOKIE = 'aqdi_login'; // phone entered, code sent
 const MFA_COOKIE = 'aqdi_mfa'; // phone verified, second factor pending
+const EMAIL_COOKIE = 'aqdi_login_email'; // email entered, code sent
 const STEP_SECONDS = 10 * 60;
 const RESEND_SECONDS = 60;
 
@@ -38,8 +40,9 @@ const EMAIL_MESSAGES = {
   exists: 'هذا البريد الإلكتروني مسجّل من قبل. سجّل الدخول به بدلاً من ذلك.',
   signups_disabled: 'التسجيل الجديد متوقف مؤقتاً. حاول لاحقاً.',
   rate_limited: 'محاولات كثيرة من هذا الجهاز. انتظر 15 دقيقة ثم حاول مرة أخرى.',
+  send_failed: 'تعذّر إرسال الرمز إلى بريدك الآن. حاول مرة أخرى بعد قليل.',
 };
-const EMAIL_STATUS = { invalid_email: 422, unknown: 422, ambiguous: 403, platform_admin: 403, inactive: 403, exists: 409, signups_disabled: 403 };
+const EMAIL_STATUS = { invalid_email: 422, unknown: 422, ambiguous: 403, platform_admin: 403, inactive: 403, exists: 409, signups_disabled: 403, send_failed: 503 };
 
 function formatWait(seconds) {
   const s = Math.max(1, Math.ceil(seconds));
@@ -91,6 +94,25 @@ function renderVerify(res, pending, error, status = 200) {
   });
 }
 
+function pendingEmail(req) {
+  return auth.verifyStepToken(req.cookies[EMAIL_COOKIE], 'login-email');
+}
+
+function renderEmailVerify(res, pending, error, status = 200) {
+  const elapsed = Math.floor((Date.now() - pending.sentAt) / 1000);
+  res.status(status).render('pages/login-verify', {
+    title: 'رمز الدخول',
+    phoneLocal: pending.email,
+    sentTo: 'email',
+    verifyAction: '/login/email/verify',
+    resendAction: '/login/email/resend',
+    changeHref: pending.intent === 'register' ? '/register' : '/login',
+    changeLabel: 'تغيير البريد الإلكتروني',
+    resendIn: Math.max(0, RESEND_SECONDS - elapsed),
+    error,
+  });
+}
+
 // Where a login may continue instead of the role's home page. Only these
 // exact paths are honoured, so ?next= can never redirect anywhere else.
 const NEXT_PATHS = new Set(['/join']);
@@ -122,26 +144,37 @@ const EMAIL_PAGES = {
   login: {
     title: 'تسجيل الدخول',
     heading: 'تسجيل الدخول',
-    lead: 'اكتب بريدك الإلكتروني المسجّل لتدخل إلى حسابك.',
+    lead: 'اكتب بريدك الإلكتروني المسجّل، وسنرسل إليه رمز دخول من 6 أرقام.',
     button: 'دخول',
   },
   register: {
     title: 'سجّل مكتبك',
     heading: 'سجّل مكتبك',
-    lead: 'اكتب بريدك الإلكتروني، ثم تكتب بيانات مكتبك. التجربة مجانية 14 يوماً.',
+    lead: 'اكتب بريدك الإلكتروني وسنرسل إليه رمز تحقق، ثم تكتب بيانات مكتبك ورقم رخصة فال.',
     button: 'متابعة',
   },
 };
 
+// The test sign-in (AUTH_EMAIL_TEST) sends no code, so its wording says nothing about one.
+const EMAIL_TEST_LEADS = {
+  login: 'اكتب بريدك الإلكتروني المسجّل لتدخل إلى حسابك.',
+  register: 'اكتب بريدك الإلكتروني، ثم تكتب بيانات مكتبك. التجربة مجانية 14 يوماً.',
+};
+
 function renderEmailPage(res, intent, email, error, status = 200, next = null) {
   const mode = intent === 'register' ? 'register' : 'login';
-  return res.status(status).render('pages/login-email', { ...EMAIL_PAGES[mode], intent: mode, email, error, next: safeNext(next) });
+  const page = emailAuth.enabled() ? { ...EMAIL_PAGES[mode], lead: EMAIL_TEST_LEADS[mode] } : EMAIL_PAGES[mode];
+  return res.status(status).render('pages/login-email', { ...page, intent: mode, email, error, next: safeNext(next) });
 }
 
 // While the email test sign-in is on, /login and /register show the email form.
 // /login?method=phone keeps the phone page for the platform admin (phone + 2FA).
+function emailPagesOn() {
+  return emailAuth.enabled() || emailCode.enabled();
+}
+
 function showEmailPage(req) {
-  return emailAuth.enabled() && req.query.method !== 'phone';
+  return emailPagesOn() && req.query.method !== 'phone';
 }
 
 function renderPhonePage(res, intent, phone, error, status = 200, next = null) {
@@ -158,7 +191,7 @@ router.get('/login', (req, res) => {
 
 router.get('/register', (req, res) => {
   if (req.user) return res.redirect(auth.homeFor(req.user.role));
-  if (emailAuth.enabled()) return renderEmailPage(res, 'register', '', null);
+  if (emailPagesOn()) return renderEmailPage(res, 'register', '', null);
   return renderPhonePage(res, 'register', '', null);
 });
 
@@ -174,15 +207,16 @@ const emailLimit = rateLimit({
   max: 10,
   keyFor: (req) => `email-login:${req.ip}`,
   onLimit: async (req, res, next) => {
-    if (!emailAuth.enabled()) return next();
+    if (!emailPagesOn()) return next();
     await emailAuth.audit(db.pool, { action: 'auth.email_login', outcome: 'rate_limited', ip: req.ip });
     const intent = req.body.intent === 'register' ? 'register' : 'login';
     return renderEmailPage(res, intent, '', EMAIL_MESSAGES.rate_limited, 429, req.body.next);
   },
 });
 
-router.post('/login/email', (req, res, next) => (emailAuth.enabled() ? next() : next('router')), emailLimit, async (req, res, next) => {
+router.post('/login/email', (req, res, next) => (emailPagesOn() ? next() : next('router')), emailLimit, async (req, res, next) => {
   try {
+    if (!emailAuth.enabled()) return await requestEmailCode(req, res);
     const intent = req.body.intent === 'register' ? 'register' : 'login';
     const nextPath = safeNext(req.body.next);
     const typed = String(req.body.email || '').trim().slice(0, 190);
@@ -208,6 +242,104 @@ router.post('/login/email', (req, res, next) => (emailAuth.enabled() ? next() : 
       return res.redirect('/login/2fa');
     }
     return finishLogin(req, res, user, nextPath);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// ------------------------------------------------------------ email sign-in code
+// The normal email sign-in (AUTH_EMAIL_TEST off): a six-digit code goes to the
+// address, and only the right code signs in or creates the account. A new
+// address becomes a user with no role, who then creates the office on
+// /office/new. The platform admin never signs in by email.
+
+function emailCodeError(result) {
+  if (result.error === 'invalid_phone') return EMAIL_MESSAGES.invalid_email;
+  return messageFor(result);
+}
+
+async function requestEmailCode(req, res) {
+  const intent = req.body.intent === 'register' ? 'register' : 'login';
+  const nextPath = safeNext(req.body.next);
+  const typed = String(req.body.email || '').trim().slice(0, 190);
+  const address = emailAuth.normalizeEmail(typed);
+  const action = intent === 'register' ? 'auth.email_register' : 'auth.email_login';
+  const refuse = async (error, userId = null) => {
+    await emailAuth.audit(db.pool, { action, userId, outcome: error, ip: req.ip, method: 'email_code' });
+    return renderEmailPage(res, intent, address || typed, EMAIL_MESSAGES[error], EMAIL_STATUS[error] || 422, nextPath);
+  };
+  if (!address) return refuse('invalid_email');
+
+  if (intent === 'register') {
+    const found = await emailAuth.findForLogin(db.pool, address);
+    if (found.ok || found.user || found.error === 'ambiguous') return refuse('exists');
+    if (await platformSettings.signupsDisabled(db.pool)) return refuse('signups_disabled');
+  } else {
+    const found = await emailAuth.findForLogin(db.pool, address);
+    if (!found.ok) return refuse(found.error, found.user ? found.user.id : null);
+  }
+
+  const result = await emailCode.request(address, 'login', req.ip, req.lang);
+  if (!result.ok) {
+    return renderEmailPage(res, intent, address, emailCodeError(result), result.error === 'send_failed' ? 503 : 429, nextPath);
+  }
+  stepCookie(res, EMAIL_COOKIE, auth.signStepToken({ email: address, intent, sentAt: Date.now(), next: nextPath }, 'login-email', STEP_SECONDS));
+  return res.redirect('/login/email/verify');
+}
+
+router.get('/login/email/verify', (req, res) => {
+  const pending = pendingEmail(req);
+  if (!pending) return res.redirect('/login');
+  return renderEmailVerify(res, pending, null);
+});
+
+router.post('/login/email/resend', emailLimit, async (req, res, next) => {
+  try {
+    const pending = pendingEmail(req);
+    if (!pending) return res.redirect('/login');
+    const result = await emailCode.request(pending.email, 'login', req.ip, req.lang);
+    if (!result.ok) return renderEmailVerify(res, pending, emailCodeError(result), 429);
+    const fresh = { email: pending.email, intent: pending.intent, sentAt: Date.now(), next: safeNext(pending.next) };
+    stepCookie(res, EMAIL_COOKIE, auth.signStepToken(fresh, 'login-email', STEP_SECONDS));
+    return res.redirect('/login/email/verify');
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post('/login/email/verify', async (req, res, next) => {
+  try {
+    const pending = pendingEmail(req);
+    if (!pending) return res.redirect('/login');
+    const typed = req.body.code || ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'].map((k) => req.body[k] || '').join('');
+    const code = toWesternDigits(String(typed)).replace(/\D/g, '');
+    const result = await emailCode.verify(pending.email, code, 'login');
+    if (!result.ok) return renderEmailVerify(res, pending, messageFor(result), 422);
+    clearStep(res, EMAIL_COOKIE);
+
+    const intent = pending.intent === 'register' ? 'register' : 'login';
+    const action = intent === 'register' ? 'auth.email_register' : 'auth.email_login';
+    let found = await emailAuth.findForLogin(db.pool, pending.email);
+    if (!found.ok && found.error === 'unknown' && intent === 'register') {
+      const made = await emailAuth.register(db.pool, pending.email, { signupsDisabled: () => platformSettings.signupsDisabled(db.pool) });
+      if (!made.ok && made.error !== 'exists') {
+        await emailAuth.audit(db.pool, { action, outcome: made.error, ip: req.ip, method: 'email_code' });
+        return renderEmailPage(res, intent, pending.email, EMAIL_MESSAGES[made.error], EMAIL_STATUS[made.error] || 422);
+      }
+      found = await emailAuth.findForLogin(db.pool, pending.email);
+    }
+    if (!found.ok) {
+      await emailAuth.audit(db.pool, { action, userId: found.user ? found.user.id : null, outcome: found.error, ip: req.ip, method: 'email_code' });
+      return renderEmailPage(res, 'login', pending.email, EMAIL_MESSAGES[found.error], EMAIL_STATUS[found.error] || 422);
+    }
+    const { user } = found;
+    await db.pool.query('UPDATE users SET last_seen_at = UTC_TIMESTAMP() WHERE id = ?', [user.id]);
+    await emailAuth.audit(db.pool, { action, userId: user.id, outcome: 'ok', ip: req.ip, method: 'email_code' });
+    if (auth.needsTwoFactor(user)) {
+      stepCookie(res, MFA_COOKIE, auth.signStepToken({ sub: String(user.id) }, 'mfa', STEP_SECONDS));
+      return res.redirect('/login/2fa');
+    }
+    return finishLogin(req, res, user, pending.next);
   } catch (err) {
     return next(err);
   }

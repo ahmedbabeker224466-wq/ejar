@@ -2144,3 +2144,42 @@ body.office-body, body.app-body {
 .office-top__title { overflow: hidden; }
 .office-top .lang-switch { flex: none; }
 @media (max-width: 480px) { .office-top__user .badge { display: none; } }
+
+/* Office waiting for the licence check (views/office/review.ejs) */
+.office-review { max-width: 560px; margin-inline: auto; }
+.office-review__icon {
+  width: 72px; height: 72px; margin: 0 auto var(--space-3);
+  display: grid; place-items: center; border-radius: 50%;
+  background: var(--color-primary-soft); color: var(--color-primary);
+}
+.office-review__icon--danger { background: var(--color-danger-soft); color: var(--color-danger); }
+.office-review__note {
+  margin: var(--space-3) 0; padding: var(--space-3); text-align: start;
+  border-radius: var(--radius-md); background: var(--color-danger-soft); color: var(--color-text);
+}
+.office-review__steps {
+  list-style: none; margin: var(--space-4) 0; padding: 0; text-align: start;
+  display: grid; gap: var(--space-2); counter-reset: rv;
+}
+.office-review__steps li {
+  counter-increment: rv; display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+}
+.office-review__steps li::before {
+  content: counter(rv); flex: none; width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700;
+  background: var(--color-bg); color: var(--color-text-muted);
+}
+.office-review__steps li.is-done { color: var(--color-text); }
+.office-review__steps li.is-done::before { content: '✓'; background: var(--color-success); color: #fff; }
+.office-review__steps li.is-current { color: var(--color-text); border-color: var(--color-primary); background: var(--color-primary-soft); }
+.office-review__steps li.is-current::before { background: var(--color-primary); color: #fff; }
+
+/* Admin: licence check card */
+.verify-box { border: 2px solid var(--color-primary); }
+.verify-box__nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3); margin: var(--space-3) 0; }
+.verify-box__num { padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-bg); }
+.verify-box__num span { display: block; color: var(--color-text-muted); font-size: .9rem; }
+.verify-box__num strong { font-size: 1.25rem; letter-spacing: .04em; }
+.verify-box__actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }

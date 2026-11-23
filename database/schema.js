@@ -155,6 +155,12 @@ const TABLES = [
     'public_page_enabled TINYINT(1) NOT NULL DEFAULT 0',
     'public_description VARCHAR(300) NULL', // plain text the owner writes for the public page
     'custom_domain VARCHAR(253) NULL', // set by the platform admin on activation; routing is manual for now
+    // New offices wait for the platform admin to check the FAL licence and the
+    // commercial registration; offices from before this check count as approved.
+    "verification ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved'",
+    'verification_note VARCHAR(200) NULL', // the admin's reason when rejected (shown to the owner)
+    'verified_at DATETIME NULL',
+    `verified_by ${REF} NULL`,
     'UNIQUE KEY uq_offices_public_slug (public_slug)',
     'UNIQUE KEY uq_offices_custom_domain (custom_domain)',
     fk('offices', 'owner_id', 'users', 'SET NULL'),
@@ -1223,6 +1229,10 @@ const COLUMN_ADDITIONS = [
   { table: 'offices', column: 'public_slug', definition: 'VARCHAR(40) NULL AFTER listings_banned' },
   { table: 'offices', column: 'public_page_enabled', definition: 'TINYINT(1) NOT NULL DEFAULT 0 AFTER public_slug' },
   { table: 'offices', column: 'public_description', definition: 'VARCHAR(300) NULL AFTER public_page_enabled' },
+  { table: 'offices', column: 'verification', definition: "ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved' AFTER custom_domain" },
+  { table: 'offices', column: 'verification_note', definition: 'VARCHAR(200) NULL AFTER verification' },
+  { table: 'offices', column: 'verified_at', definition: 'DATETIME NULL AFTER verification_note' },
+  { table: 'offices', column: 'verified_by', definition: 'BIGINT UNSIGNED NULL AFTER verified_at' },
   { table: 'backups', column: 'filename', definition: 'VARCHAR(80) NULL AFTER path' },
   { table: 'backups', column: 'sha256', definition: 'CHAR(64) NULL AFTER size_bytes' },
   { table: 'backups', column: 'tables_count', definition: 'INT UNSIGNED NULL AFTER sha256' },

@@ -1,12 +1,13 @@
 <section class="auth card">
   <h1><%= __("أدخل رمز الدخول") %></h1>
   <p class="lead"><%= __("أرسلنا رمزاً من 6 أرقام إلى") %> <bdi dir="ltr" class="nowrap"><%= __(phoneLocal) %></bdi></p>
+  <% if (locals.sentTo === 'email') { %><p class="muted"><%= __("تحقق من صندوق الوارد، وإن لم تجد الرسالة فانظر في الرسائل غير المرغوب فيها.") %></p><% } %>
 
   <% if (error) { %>
     <div class="flash flash--danger" role="alert"><%= __(error) %></div>
   <% } %>
 
-  <form method="post" action="/login/verify" id="otp-form" novalidate>
+  <form method="post" action="<%= locals.verifyAction || '/login/verify' %>" id="otp-form" novalidate>
     <fieldset class="otp" dir="ltr">
       <legend class="visually-hidden"><%= __("رمز الدخول") %></legend>
       <% for (let i = 1; i <= 6; i++) { %>
@@ -26,7 +27,7 @@
     <button type="submit" class="btn btn--primary btn--block btn--large"><%= __("تأكيد الدخول") %></button>
   </form>
 
-  <form method="post" action="/login/resend" class="auth__secondary">
+  <form method="post" action="<%= locals.resendAction || '/login/resend' %>" class="auth__secondary">
     <p class="muted" id="resend-wait" <%= __(resendIn > 0 ? '' : 'hidden') %>>
       <%= __("يمكنك طلب رمز جديد بعد") %> <span id="resend-seconds"><%= __(resendIn) %></span> <%= __("ثانية") %>
     </p>
@@ -35,6 +36,6 @@
     </button>
   </form>
 
-  <p class="auth__link"><a href="/login"><%= __("تغيير رقم الجوال") %></a></p>
+  <p class="auth__link"><a href="<%= locals.changeHref || '/login' %>"><%= __(locals.changeLabel || "تغيير رقم الجوال") %></a></p>
 </section>
 <script src="<%= assetUrl('/js/otp.js') %>" defer></script>

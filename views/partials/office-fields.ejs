@@ -32,16 +32,25 @@
   <% if (errors.email) { %><p id="email-error" class="field-error"><%= __(errors.email) %></p><% } %>
 </div>
 
+<% const licReq = Boolean(locals.licenceRequired); const licLocked = Boolean(locals.licenceLocked); %>
 <div class="field">
-  <label for="cr_number"><%= __("رقم السجل التجاري") %> <span class="muted">(<%= __("اختياري)") %></span></label>
-  <input id="cr_number" name="cr_number" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="20"
-         value="<%= __(values.cr_number) %>" <%- errors.cr_number ? 'aria-invalid="true" aria-describedby="cr-error"' : '' %>>
-  <% if (errors.cr_number) { %><p id="cr-error" class="field-error"><%= __(errors.cr_number) %></p><% } %>
+  <label for="rega_license"><%= __("رقم ترخيص فال من الهيئة العامة للعقار") %><% if (!licReq) { %> <span class="muted">(<%= __("اختياري)") %></span><% } %></label>
+  <input id="rega_license" name="rega_license" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="20" <%- licReq ? 'required' : '' %> <%- licLocked && values.rega_license ? 'readonly' : '' %>
+         value="<%= values.rega_license %>" <%- errors.rega_license ? 'aria-invalid="true" aria-describedby="rega-error"' : 'aria-describedby="rega-hint"' %>>
+  <% if (errors.rega_license) { %><p id="rega-error" class="field-error"><%= __(errors.rega_license) %></p><% } else if (licLocked && values.rega_license) { %>
+    <p id="rega-hint" class="field-hint"><%= __("لتغيير هذا الرقم تواصل مع الدعم.") %></p>
+  <% } else { %>
+    <p id="rega-hint" class="field-hint"><%= __("الرقم المكتوب في رخصة فال للوساطة والتسويق العقاري للمنشأة.") %></p>
+  <% } %>
 </div>
 
 <div class="field">
-  <label for="rega_license"><%= __("رقم ترخيص فال من الهيئة العامة للعقار") %> <span class="muted">(<%= __("اختياري)") %></span></label>
-  <input id="rega_license" name="rega_license" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="20"
-         value="<%= __(values.rega_license) %>" <%- errors.rega_license ? 'aria-invalid="true" aria-describedby="rega-error"' : '' %>>
-  <% if (errors.rega_license) { %><p id="rega-error" class="field-error"><%= __(errors.rega_license) %></p><% } %>
+  <label for="cr_number"><%= __("رقم السجل التجاري") %><% if (!licReq) { %> <span class="muted">(<%= __("اختياري)") %></span><% } %></label>
+  <input id="cr_number" name="cr_number" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="20" <%- licReq ? 'required' : '' %> <%- licLocked && values.cr_number ? 'readonly' : '' %>
+         value="<%= values.cr_number %>" <%- errors.cr_number ? 'aria-invalid="true" aria-describedby="cr-error"' : 'aria-describedby="cr-hint"' %>>
+  <% if (errors.cr_number) { %><p id="cr-error" class="field-error"><%= __(errors.cr_number) %></p><% } else if (licLocked && values.cr_number) { %>
+    <p id="cr-hint" class="field-hint"><%= __("لتغيير هذا الرقم تواصل مع الدعم.") %></p>
+  <% } else { %>
+    <p id="cr-hint" class="field-hint"><%= __("يتكون من 10 أرقام.") %></p>
+  <% } %>
 </div>

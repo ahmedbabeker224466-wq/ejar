@@ -395,7 +395,7 @@ async function runExpiry({ pool, now = new Date() }) {
 
 // A listing is public only while published, not expired, not hidden by the
 // platform admin, its office may still publish and its subscription is live.
-const PUBLIC_WHERE = `l.status = 'published' AND l.admin_hidden = 0 AND l.expires_at > ? AND o.listings_banned = 0
+const PUBLIC_WHERE = `l.status = 'published' AND l.admin_hidden = 0 AND l.expires_at > ? AND o.listings_banned = 0 AND o.verification = 'approved'
   AND (o.status IN ('active','past_due') OR (o.status = 'trial' AND o.trial_ends_at > ?))`;
 
 const PUBLIC_COLUMNS = `l.id, l.office_id, l.unit_id, l.title, l.description, l.status, l.price, l.currency, l.unit_type, l.city, l.neighborhood,

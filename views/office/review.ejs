@@ -1,0 +1,27 @@
+<section class="card office-locked office-review">
+  <% if (reason === 'rejected') { %>
+    <div class="office-review__icon office-review__icon--danger" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+    </div>
+    <h1><%= __("لم تتم الموافقة على المكتب") %></h1>
+    <p class="lead"><%= __("راجعنا بيانات مكتبك ولم نتمكن من التحقق منها.") %></p>
+    <% if (note) { %>
+      <div class="office-review__note"><strong><%= __("السبب:") %></strong> <%= note %></div>
+    <% } %>
+    <p class="muted"><%= __("إذا كان لديك ما يوضح الأمر فتواصل معنا، وسنعيد مراجعة الطلب.") %></p>
+    <a href="/contact" class="btn btn--primary btn--large btn--block"><%= __("تواصل معنا") %></a>
+  <% } else { %>
+    <div class="office-review__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    </div>
+    <h1><%= __("طلبك قيد المراجعة") %></h1>
+    <p class="lead"><%= __("استلمنا بيانات مكتبك، ونتحقق الآن من رخصة فال والسجل التجاري.") %></p>
+    <ol class="office-review__steps">
+      <li class="is-done"><%= __("أنشأت حساب المكتب") %></li>
+      <li class="is-current"><%= __("نراجع الرخصة والسجل التجاري") %></li>
+      <li><%= __("تصلك رسالة بالنتيجة وتبدأ تجربتك المجانية") %></li>
+    </ol>
+    <p class="muted"><%= __("تستغرق المراجعة عادة يوم عمل واحداً. تبدأ مدة التجربة المجانية من يوم الموافقة.") %></p>
+    <a href="/office" class="btn btn--secondary btn--block"><%= __("تحديث الصفحة") %></a>
+  <% } %>
+</section>

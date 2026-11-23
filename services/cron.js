@@ -50,7 +50,7 @@ async function runReminders({ pool, now }) {
 
 async function runDigest({ pool, now }) {
   const today = riyadhDate(now);
-  const [offices] = await pool.query('SELECT id, name, status, trial_ends_at, subscription_ends_at, owner_id FROM offices WHERE owner_id IS NOT NULL ORDER BY id');
+  const [offices] = await pool.query('SELECT id, name, status, trial_ends_at, subscription_ends_at, owner_id, verification FROM offices WHERE owner_id IS NOT NULL ORDER BY id');
   let sent = 0;
   for (const office of offices) {
     if (officeAccess(office, now).locked) continue;

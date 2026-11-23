@@ -59,7 +59,10 @@ function lockDecision({ wrongAttempts, sinceLastAttempt }) {
   return { locked: false, retryAfterSec: 0 };
 }
 
-function createOtpService({ pool = db.pool, send = sendSms, key = null } = {}) {
+// identify turns what the person typed into the stored key (a phone by
+// default; services/emailCode.js passes a hashed email key). deliver, when
+// given, sends the code instead of the SMS driver: deliver(raw, code, lang).
+function createOtpService({ pool = db.pool, send = sendSms, key = null, identify = normalizeSaudi, deliver = null } = {}) {
   const getKey = () => key || otpKey();
 
   // Wrong attempts since the phone's last successful login, in the lock window.
@@ -113,7 +116,7 @@ function createOtpService({ pool = db.pool, send = sendSms, key = null } = {}) {
    * The response is the same whether or not the phone has an account.
    */
   async function request(rawPhone, purpose = 'login', ip = null, lang = 'ar') {
-    const phone = normalizeSaudi(rawPhone);
+    const phone = identify(rawPhone);
     if (!phone) return { ok: false, error: 'invalid_phone' };
 
     const lock = await lockState(phone);
@@ -129,6 +132,10 @@ function createOtpService({ pool = db.pool, send = sendSms, key = null } = {}) {
       [phone, hashCode(phone, code, getKey()), purpose, CODE_TTL_MINUTES, ip],
     );
 
+    if (deliver) {
+      const delivered = await deliver(rawPhone, code, lang);
+      return delivered.ok ? { ok: true, phone } : { ok: false, error: 'send_failed' };
+    }
     // In the language of the page the code was asked from (services/tr).
     const message = require('./tr').translate(lang, `رمز الدخول إلى ميعاد: ${code}\nصالح لمدة ${CODE_TTL_MINUTES} دقائق. لا تشاركه مع أحد.`);
     const sent = await send(toE164(phone), message);
@@ -140,7 +147,7 @@ function createOtpService({ pool = db.pool, send = sendSms, key = null } = {}) {
    * phone for 15 minutes. A matching code is consumed and never works again.
    */
   async function verify(rawPhone, rawCode, purpose = 'login') {
-    const phone = normalizeSaudi(rawPhone);
+    const phone = identify(rawPhone);
     const code = String(rawCode || '').trim();
     if (!phone) return { ok: false, error: 'invalid' };
 

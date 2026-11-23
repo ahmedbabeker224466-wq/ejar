@@ -81,6 +81,8 @@ function loadOffice(pool = db.pool) {
         status: member.status,
         trial_ends_at: member.trial_ends_at,
         subscription_ends_at: member.subscription_ends_at,
+        verification: member.verification || 'approved',
+        verification_note: member.verification_note || null,
         plan: member.plan_code ? { code: member.plan_code, name: member.plan_name } : null,
       };
       req.memberRole = member.role;
@@ -110,6 +112,15 @@ function loadOffice(pool = db.pool) {
 function officeGate(req, res, next) {
   const access = req.officeAccess;
   if (!access || (!access.locked && !access.readOnly)) return next();
+  // Waiting for the licence check (or refused): no office page opens at all.
+  if (access.reason === 'pending_review' || access.reason === 'rejected') {
+    res.locals.officeNav = [];
+    return res.status(403).render('office/review', {
+      title: access.reason === 'rejected' ? 'لم تتم الموافقة على المكتب' : 'طلبك قيد المراجعة',
+      reason: access.reason,
+      note: req.office.verification_note,
+    });
+  }
   const path = req.baseUrl + req.path;
   if (OPEN_WHEN_LOCKED.some((open) => path === open || path.startsWith(`${open}/`))) return next();
   if (access.locked) return res.status(402).render('office/locked', { title: 'اشتراكك منتهي', reason: access.reason });

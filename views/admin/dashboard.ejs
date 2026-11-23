@@ -1,8 +1,9 @@
 <div class="page-head"><h1><%= __("لوحة المنصة") %></h1></div>
-<% if (data.pendingTransfers || data.suspiciousOrders) { %>
+<% if (data.pendingReview || data.pendingTransfers || data.suspiciousOrders) { %>
   <section class="card detail-card">
     <h2><%= __("يحتاج انتباهك") %></h2>
     <ul class="action-list">
+      <% if (data.pendingReview) { %><li><a href="/admin/offices?status=review"><%= __("مكاتب جديدة بانتظار مراجعة الرخصة:") %> <strong><%= __(data.pendingReview) %></strong></a></li><% } %>
       <% if (data.pendingTransfers) { %><li><a href="/admin/transfers?status=pending"><%= __("حوالات بنكية بانتظار المراجعة:") %> <strong><%= __(data.pendingTransfers) %></strong></a></li><% } %>
       <% if (data.suspiciousOrders) { %><li><a href="/admin/orders?suspicious=1"><%= __("طلبات مشبوهة (مبلغ لا يطابق):") %> <strong><%= __(data.suspiciousOrders) %></strong></a></li><% } %>
     </ul>

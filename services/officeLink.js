@@ -218,7 +218,7 @@ async function savePublicPage(pool, { officeId, actorId, enabled, description, i
 }
 
 // The office may be shown: page switched on and the subscription live (as for public listings).
-const VISIBLE_SQL = `o.public_page_enabled = 1
+const VISIBLE_SQL = `o.public_page_enabled = 1 AND o.verification = 'approved'
   AND (o.status IN ('active','past_due') OR (o.status = 'trial' AND o.trial_ends_at > ?))`;
 
 /**

@@ -61,10 +61,12 @@ function createOfficeHttp(db) {
     const created = await request('/office/new', {
       method: 'POST',
       cookie,
-      form: { name, city: 'الرياض', phone: '0112345678' },
+      form: { name, city: 'الرياض', phone: '0112345678', rega_license: '1200000001', cr_number: '7000000001' },
     });
     assert.equal(created.status, 302, created.text.slice(0, 200));
     const user = await userByPhone(phone);
+    // A new office waits for the licence check; tests approve it as the platform admin would.
+    await db.pool.query("UPDATE offices SET verification = 'approved' WHERE owner_id = ?", [user.id]);
     const [[office]] = await db.pool.query('SELECT * FROM offices WHERE owner_id = ?', [user.id]);
     return { cookie, user, office };
   }

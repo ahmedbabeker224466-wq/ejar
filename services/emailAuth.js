@@ -89,8 +89,8 @@ async function register(pool, input, { signupsDisabled } = {}) {
 }
 
 /** One audit row per email attempt: the user id and the outcome, never the address. */
-async function audit(pool, { action, userId = null, outcome, ip }) {
-  return createAudit(pool).log(userId, null, action, 'user', userId, null, { outcome, method: 'email_test' }, ip);
+async function audit(pool, { action, userId = null, outcome, ip, method = 'email_test' }) {
+  return createAudit(pool).log(userId, null, action, 'user', userId, null, { outcome, method }, ip);
 }
 
 /**

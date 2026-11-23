@@ -3,6 +3,40 @@
 <% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
 <% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 
+<% if (office.verification !== 'approved' || office.rega_license || office.cr_number) { %>
+<section class="card detail-card<%= office.verification === 'pending' ? ' verify-box' : '' %>">
+  <h2><%= __("التحقق من المكتب") %>
+    <% if (office.verification === 'pending') { %><span class="badge badge--bill-warning"><%= __("بانتظار المراجعة") %></span>
+    <% } else if (office.verification === 'rejected') { %><span class="badge badge--bill-danger"><%= __("مرفوض") %></span>
+    <% } else { %><span class="badge badge--bill-success"><%= __("موافق عليه") %></span><% } %></h2>
+  <div class="verify-box__nums">
+    <div class="verify-box__num"><span><%= __("رقم ترخيص فال") %></span><strong dir="ltr"><%= office.rega_license || '—' %></strong></div>
+    <div class="verify-box__num"><span><%= __("رقم السجل التجاري") %></span><strong dir="ltr"><%= office.cr_number || '—' %></strong></div>
+  </div>
+  <% if (office.verification !== 'approved') { %>
+    <p><%= __("افتح خدمة «استعلام عن رخص فال» في موقع الهيئة العامة للعقار، واكتب رقم الرخصة، ثم تأكد من ثلاثة أمور: الرخصة سارية، ونشاطها وساطة أو إدارة أملاك، واسم المنشأة فيها يطابق اسم المكتب.") %></p>
+    <a href="<%= falInquiryUrl %>" class="btn btn--secondary" target="_blank" rel="noopener noreferrer"><%= __("فتح الاستعلام في موقع الهيئة") %></a>
+    <% if (office.verification === 'rejected' && office.verification_note) { %>
+      <p class="muted"><%= __("سبب الرفض السابق:") %> <%= office.verification_note %></p>
+    <% } %>
+    <div class="verify-box__actions">
+      <form method="post" action="/admin/offices/<%= office.id %>/verify" novalidate>
+        <h3><%= __("الموافقة") %></h3>
+        <div class="field"><label for="reason-ok"><%= __("ملاحظة للسجل") %></label><input id="reason-ok" name="reason" class="input" maxlength="200" value="<%= __("الرخصة سارية والاسم مطابق") %>" required></div>
+        <button type="submit" class="btn btn--success btn--block"><%= __("الموافقة وتفعيل المكتب") %></button>
+      </form>
+      <% if (office.verification === 'pending') { %>
+      <form method="post" action="/admin/offices/<%= office.id %>/reject" novalidate>
+        <h3><%= __("الرفض") %></h3>
+        <div class="field"><label for="reason-no"><%= __("السبب (يظهر لصاحب المكتب)") %></label><input id="reason-no" name="reason" class="input" maxlength="200" required></div>
+        <button type="submit" class="btn btn--danger btn--block"><%= __("رفض الطلب") %></button>
+      </form>
+      <% } %>
+    </div>
+  <% } %>
+</section>
+<% } %>
+
 <section class="card detail-card">
   <h2><%= __("البيانات") %></h2>
   <dl class="details">

@@ -24,6 +24,7 @@ const DEFAULT_SETTINGS = {
 };
 
 const OFFICE_FIELDS = ['name', 'city', 'phone', 'email', 'cr_number', 'rega_license'];
+const LICENCE_FIELDS = ['cr_number', 'rega_license'];
 
 class OfficeCreateError extends Error {
   constructor(reason) {
@@ -54,7 +55,7 @@ function normalizeOfficePhone(input) {
  * Checks the office form. Returns { values, errors }: values are ready to
  * store, errors maps a field to an Arabic message. Never throws.
  */
-function validateOfficeFields(body = {}) {
+function validateOfficeFields(body = {}, { requireLicence = false } = {}) {
   const errors = {};
   const values = {};
 
@@ -76,13 +77,15 @@ function validateOfficeFields(body = {}) {
     errors.email = 'البريد الإلكتروني غير صحيح.';
   }
 
-  const cr = clean(body.cr_number, 40).replace(/\s/g, '');
+  const cr = clean(body.cr_number, 40).replace(/[\s-]/g, '');
   values.cr_number = cr || null;
   if (cr && !/^\d{10}$/.test(cr)) errors.cr_number = 'رقم السجل التجاري يتكون من 10 أرقام.';
+  else if (!cr && requireLicence) errors.cr_number = 'اكتب رقم السجل التجاري للمكتب (10 أرقام).';
 
-  const rega = clean(body.rega_license, 40).replace(/\s/g, '');
+  const rega = clean(body.rega_license, 40).replace(/[\s-]/g, '');
   values.rega_license = rega || null;
   if (rega && !/^\d{5,20}$/.test(rega)) errors.rega_license = 'رقم ترخيص فال أرقام فقط (من 5 إلى 20 رقماً).';
+  else if (!rega && requireLicence) errors.rega_license = 'اكتب رقم ترخيص فال الصادر من الهيئة العامة للعقار.';
 
   return { values, errors };
 }
@@ -97,6 +100,7 @@ async function membershipsFor(pool, userId) {
   const [rows] = await pool.query(
     `SELECT m.office_id, m.role, m.is_active,
             o.name, o.city, o.status, o.trial_ends_at, o.subscription_ends_at,
+            o.verification, o.verification_note,
             p.code AS plan_code, p.name_ar AS plan_name
        FROM office_members m
        JOIN offices o ON o.id = m.office_id
@@ -129,8 +133,8 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
     const trialEndsAt = contractDates.trialEndsAt(now);
     const [created] = await conn.query(
       `INSERT INTO offices
-         (name, city, phone, email, cr_number, rega_license, owner_id, plan_id, status, trial_ends_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'trial', ?)`,
+         (name, city, phone, email, cr_number, rega_license, owner_id, plan_id, status, trial_ends_at, verification)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'trial', ?, 'pending')`,
       [
         fields.name,
         fields.city,
@@ -170,6 +174,7 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
       name: fields.name,
       city: fields.city,
       status: 'trial',
+      verification: 'pending',
       plan_id: plan ? plan.id : null,
     }, ip);
 
@@ -185,6 +190,9 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
  */
 function officeAccess(office, now = new Date()) {
   const result = { locked: false, reason: null, pastDue: false, onTrial: false, trialDaysLeft: null };
+  // A new office waits for the platform admin to check its licence first.
+  if (office.verification === 'pending') return { ...result, locked: true, reason: 'pending_review' };
+  if (office.verification === 'rejected') return { ...result, locked: true, reason: 'rejected' };
   if (office.status === 'suspended') return { ...result, locked: true, reason: 'suspended' };
   if (office.status === 'trial') {
     if (contractDates.isTrialExpired(office.trial_ends_at, now)) {
@@ -258,6 +266,9 @@ async function updateOffice(pool, { officeId, actorId, fields, ip }) {
   const scoped = scopeToOffice(pool, officeId);
   const before = await officeDetails(pool, officeId);
   if (!before) throw new OfficeCreateError('no_office');
+  // The licence numbers the platform admin checked cannot be changed here once set.
+  fields = { ...fields };
+  for (const f of LICENCE_FIELDS) if (before[f]) fields[f] = before[f];
   const changed = OFFICE_FIELDS.filter((f) => (before[f] ?? null) !== (fields[f] ?? null));
   if (changed.length === 0) return [];
   await scoped.query(

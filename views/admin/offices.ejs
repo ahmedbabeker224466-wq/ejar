@@ -4,6 +4,8 @@
   <div class="field"><label for="status"><%= __("الحالة") %></label>
     <select id="status" name="status" class="select">
       <option value=""><%= __("الكل") %></option>
+      <option value="review" <%= status === 'review' ? 'selected' : '' %>><%= __("بانتظار المراجعة") %></option>
+      <option value="rejected" <%= status === 'rejected' ? 'selected' : '' %>><%= __("مرفوض") %></option>
       <% statuses.forEach(function (s) { %><option value="<%= __(s) %>" <%= __(status === s ? 'selected' : '') %>><%= __({ trial: __('تجربة'), active: __('فعّال'), past_due: __('غير مسدَّد'), suspended: __('موقوف') }[s]) %></option><% }) %>
     </select></div>
   <button type="submit" class="btn btn--primary"><%= __("بحث") %></button>
@@ -13,7 +15,8 @@
   <% rows.forEach(function (o) { %>
     <li class="item">
       <div class="item__title"><a href="/admin/offices/<%= __(o.id) %>"><strong><%= __(o.name) %></strong></a>
-        <span class="badge badge--bill-<%= __(o.status === 'active' ? 'success' : o.status === 'trial' ? 'info' : 'danger') %>"><%= __({ trial: __('تجربة'), active: __('فعّال'), past_due: __('غير مسدَّد'), suspended: __('موقوف') }[o.status]) %></span></div>
+        <span class="badge badge--bill-<%= __(o.status === 'active' ? 'success' : o.status === 'trial' ? 'info' : 'danger') %>"><%= __({ trial: __('تجربة'), active: __('فعّال'), past_due: __('غير مسدَّد'), suspended: __('موقوف') }[o.status]) %></span>
+        <% if (o.verification === 'pending') { %><span class="badge badge--bill-warning"><%= __("بانتظار المراجعة") %></span><% } else if (o.verification === 'rejected') { %><span class="badge badge--bill-danger"><%= __("مرفوض") %></span><% } %></div>
       <div class="item__meta"><%= __(o.city) %> · <%= __("الباقة:") %> <%= __(o.plan_name || '—') %> · <%= __("وحدات") %> <%= __(o.units) %> · <%= __("عقود") %> <%= __(o.contracts) %> · <%= __("سُجّل") %> <span dir="ltr"><%= __(stamp(o.created_at)) %></span></div>
     </li>
   <% }) %>

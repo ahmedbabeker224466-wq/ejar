@@ -112,6 +112,7 @@ async function registerOffice(p, form = OFFICE_FORM) {
   const created = await request('/office/new', { method: 'POST', cookie, form });
   assert.equal(created.status, 302, created.text.slice(0, 200));
   const user = await userByPhone(p);
+  await db.pool.query("UPDATE offices SET verification = 'approved' WHERE owner_id = ?", [user.id]);
   const [[office]] = await db.pool.query('SELECT * FROM offices WHERE owner_id = ?', [user.id]);
   return { cookie, user, office };
 }
@@ -193,6 +194,14 @@ test('register end to end: new phone -> code -> /office/new -> office, owner, me
   const [audits] = await db.pool.query("SELECT * FROM audit_logs WHERE office_id = ? AND action = 'office.create'", [office.id]);
   assert.equal(audits.length, 1);
   assert.equal(audits[0].actor_id, user.id);
+
+  // A new office waits for the licence check: every office page shows the review page.
+  assert.equal(office.verification, 'pending');
+  const waiting = await request('/office', { cookie });
+  assert.equal(waiting.status, 403);
+  assert.match(waiting.text, /طلبك قيد المراجعة/);
+  assert.equal((await request('/office/billing', { cookie })).status, 403, 'billing waits too');
+  await require('../services/officeReview').approve(db.pool, { officeId: office.id, adminId: null, reason: 'test', ip: null });
 
   const home = await request('/office', { cookie });
   assert.equal(home.status, 200);

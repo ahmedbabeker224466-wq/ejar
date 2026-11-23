@@ -169,7 +169,7 @@ test('flag on: email pages with consistent wording and the banner on every page'
       assert.ok(!(await http.request(page)).text.includes(BANNER), `no banner on ${page}`);
     }
     const { cookie } = await http.login(phone(2));
-    const created = await http.request('/office/new', { method: 'POST', cookie, form: { name: 'تجربة-بريد-لافتة', city: 'الرياض', phone: '0112345678' } });
+    const created = await http.request('/office/new', { method: 'POST', cookie, form: { name: 'تجربة-بريد-لافتة', city: 'الرياض', phone: '0112345678', rega_license: '1200000002', cr_number: '7000000002' } });
     assert.equal(created.status, 302);
     assert.ok(!(await http.request('/office', { cookie })).text.includes(BANNER), 'no banner in the office area');
   } finally {
@@ -195,9 +195,10 @@ test('register by email creates an owner through the normal office flow (trial p
 
     const form = await http.request('/office/new', { cookie });
     assert.equal(form.status, 200);
-    const created = await http.request('/office/new', { method: 'POST', cookie, form: { name: 'تجربة-بريد-مكتب', city: 'الرياض', phone: '0112345678' } });
+    const created = await http.request('/office/new', { method: 'POST', cookie, form: { name: 'تجربة-بريد-مكتب', city: 'الرياض', phone: '0112345678', rega_license: '1200000003', cr_number: '7000000003' } });
     assert.equal(created.status, 302);
     assert.equal(created.location, '/office');
+    await db.pool.query("UPDATE offices SET verification = 'approved' WHERE owner_id = ?", [user.id]);
     const [[office]] = await db.pool.query(
       'SELECT o.*, p.code AS plan_code FROM offices o LEFT JOIN plans p ON p.id = o.plan_id WHERE o.owner_id = ?', [user.id],
     );

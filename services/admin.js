@@ -54,6 +54,7 @@ async function overview(pool, now = new Date()) {
   const [[ai]] = await pool.query('SELECT COALESCE(SUM(`count`), 0) AS n FROM ai_reads_usage WHERE month = ?', [month]);
   const [[transfers]] = await pool.query("SELECT COUNT(*) AS n FROM bank_transfers WHERE status = 'pending'");
   const [[suspicious]] = await pool.query('SELECT COUNT(*) AS n FROM orders WHERE suspicious = 1');
+  const [[review]] = await pool.query("SELECT COUNT(*) AS n FROM offices WHERE verification = 'pending'");
 
   return {
     byStatus,
@@ -67,6 +68,7 @@ async function overview(pool, now = new Date()) {
     aiReads: Number(ai.n),
     pendingTransfers: Number(transfers.n),
     suspiciousOrders: Number(suspicious.n),
+    pendingReview: Number(review.n),
     month,
   };
 }
@@ -83,7 +85,11 @@ async function listOffices(pool, { q = '', status = '', page = 1 } = {}) {
     const like = `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
     params.push(like, like);
   }
-  if (OFFICE_STATUSES.includes(status)) {
+  if (status === 'review') {
+    where.push("o.verification = 'pending'");
+  } else if (status === 'rejected') {
+    where.push("o.verification = 'rejected'");
+  } else if (OFFICE_STATUSES.includes(status)) {
     where.push('o.status = ?');
     params.push(status);
   }
@@ -92,7 +98,7 @@ async function listOffices(pool, { q = '', status = '', page = 1 } = {}) {
   const total = Number(n);
   const { page: current, pages } = clampPage(page, total);
   const [rows] = await pool.query(
-    `SELECT o.id, o.name, o.city, o.phone, o.status, o.trial_ends_at, o.subscription_ends_at, o.created_at, p.name_ar AS plan_name,
+    `SELECT o.id, o.name, o.city, o.phone, o.status, o.verification, o.trial_ends_at, o.subscription_ends_at, o.created_at, p.name_ar AS plan_name,
             (SELECT COUNT(*) FROM units u WHERE u.office_id = o.id) AS units,
             (SELECT COUNT(*) FROM contracts c WHERE c.office_id = o.id) AS contracts
        FROM offices o ${planJoin()} ${clause}
@@ -106,7 +112,7 @@ async function listOffices(pool, { q = '', status = '', page = 1 } = {}) {
 async function officeDetail(pool, officeId, now = new Date()) {
   if (!/^\d+$/.test(String(officeId))) return null;
   const [[office]] = await pool.query(
-    `SELECT o.id, o.name, o.city, o.phone, o.email, o.status, ${effectivePlanIdSql()} AS plan_id, o.trial_ends_at, o.subscription_ends_at, o.created_at, o.listings_banned, p.name_ar AS plan_name
+    `SELECT o.id, o.name, o.city, o.phone, o.email, o.status, o.cr_number, o.rega_license, o.verification, o.verification_note, o.verified_at, ${effectivePlanIdSql()} AS plan_id, o.trial_ends_at, o.subscription_ends_at, o.created_at, o.listings_banned, p.name_ar AS plan_name
        FROM offices o ${planJoin()} WHERE o.id = ?`,
     [officeId],
   );

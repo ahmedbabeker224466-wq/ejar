@@ -12,6 +12,7 @@ const express = require('express');
 const db = require('../config/db');
 const auth = require('../services/auth');
 const admin = require('../services/admin');
+const officeReview = require('../services/officeReview');
 const plans = require('../services/plans');
 const promos = require('../services/promos');
 const invoices = require('../services/invoices');
@@ -109,6 +110,8 @@ const DONE = {
   backup_failed: 'فشل النسخ الاحتياطي. راجع رمز الخطأ في الجدول.',
   backup_locked: 'نسخة احتياطية أخرى تعمل الآن. حاول بعد قليل.',
   domain_saved: 'تم حفظ طلب الدومين.',
+  verified: 'تمت الموافقة على المكتب، وبدأت تجربته المجانية، وأُبلغ صاحبه.',
+  office_rejected: 'تم رفض الطلب، وأُبلغ صاحب المكتب بالسبب.',
 };
 const doneText = (key) => (Object.hasOwn(DONE, key) ? DONE[key] : null);
 
@@ -142,6 +145,7 @@ async function renderOffice(req, res, { error = null, status = 200, values = {} 
     title: detail.office.name,
     ...detail,
     allPlans: await plans.listPlans(db.pool),
+    falInquiryUrl: officeReview.FAL_INQUIRY_URL,
     error,
     values,
     done: doneText(req.query.done),
@@ -180,6 +184,26 @@ router.post('/admin/offices/:id/plan', officeAction(async ({ req, res, office, r
   await audit.write(req.user.id, office.id, 'admin.office.change_plan', 'office', office.id,
     { plan_id: office.plan_id }, { plan_id: Number(plan.id), reason }, req.ip);
   return res.redirect(`/admin/offices/${office.id}?done=plan`);
+}));
+
+router.post('/admin/offices/:id/verify', officeAction(async ({ req, res, office, reason }) => {
+  try {
+    await officeReview.approve(db.pool, { officeId: office.id, adminId: req.user.id, reason, ip: req.ip });
+  } catch (err) {
+    if (err instanceof officeReview.ReviewError) return renderOffice(req, res, { error: 'هذا المكتب موافق عليه من قبل.', status: 409 });
+    throw err;
+  }
+  return res.redirect(`/admin/offices/${office.id}?done=verified`);
+}));
+
+router.post('/admin/offices/:id/reject', officeAction(async ({ req, res, office, reason }) => {
+  try {
+    await officeReview.reject(db.pool, { officeId: office.id, adminId: req.user.id, reason, ip: req.ip });
+  } catch (err) {
+    if (err instanceof officeReview.ReviewError) return renderOffice(req, res, { error: 'يمكن رفض المكاتب التي بانتظار المراجعة فقط.', status: 409 });
+    throw err;
+  }
+  return res.redirect(`/admin/offices/${office.id}?done=office_rejected`);
 }));
 
 router.post('/admin/offices/:id/suspend', officeAction(async ({ req, res, office, reason }) => {

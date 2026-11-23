@@ -8,6 +8,7 @@ const express = require('express');
 const db = require('../config/db');
 const auth = require('../services/auth');
 const offices = require('../services/offices');
+const officeReview = require('../services/officeReview');
 const unitsService = require('../services/units');
 const logger = require('../utils/logger');
 const { toLocal } = require('../utils/phone');
@@ -85,6 +86,7 @@ async function onlyWithoutOffice(req, res, next) {
 function renderNewOffice(res, values, errors, status = 200) {
   return res.status(status).render('office/new', {
     title: 'إنشاء مكتبك',
+    licenceRequired: true,
     cities: offices.SAUDI_CITIES,
     values,
     errors,
@@ -96,7 +98,7 @@ const createOfficeLimit = rateLimit({
   max: 10,
   keyFor: (req) => `office-new:${req.user.id}`,
   onLimit: (req, res) =>
-    renderNewOffice(res, formValues(offices.validateOfficeFields(req.body).values), {
+    renderNewOffice(res, formValues(offices.validateOfficeFields(req.body, { requireLicence: true }).values), {
       form: 'حاولت مرات كثيرة. انتظر بضع دقائق ثم حاول مرة أخرى.',
     }, 429),
 });
@@ -106,7 +108,7 @@ router.get('/office/new', requireAuth, onlyWithoutOffice, (req, res) => {
 });
 
 router.post('/office/new', requireAuth, createOfficeLimit, onlyWithoutOffice, async (req, res, next) => {
-  const { values, errors } = offices.validateOfficeFields(req.body);
+  const { values, errors } = offices.validateOfficeFields(req.body, { requireLicence: true });
   if (Object.keys(errors).length > 0) {
     return renderNewOffice(res, { ...formValues(values), phone: String(req.body.phone || '').slice(0, 20) }, errors, 422);
   }
@@ -114,7 +116,13 @@ router.post('/office/new', requireAuth, createOfficeLimit, onlyWithoutOffice, as
     if (await platformSettings.signupsDisabled()) {
       return renderNewOffice(res, formValues(values), { form: 'التسجيل الجديد متوقف مؤقتاً. حاول لاحقاً.' }, 403);
     }
-    await offices.createOffice(db.pool, { userId: req.user.id, fields: values, ip: req.ip });
+    const officeId = await offices.createOffice(db.pool, { userId: req.user.id, fields: values, ip: req.ip });
+    // The platform admin checks the licence; a failed notice never blocks the sign-up.
+    try {
+      await officeReview.notifyNewOffice(db.pool, officeId);
+    } catch (err) {
+      logger.error(`Office review notice failed: ${err.code || err.name}`);
+    }
     return res.redirect('/office');
   } catch (err) {
     if (err instanceof offices.OfficeCreateError) return res.redirect('/office');
@@ -251,6 +259,7 @@ async function renderSettings(req, res, { values, errors = {}, saved = false, st
   } : null;
   const domainView = await domains.officeView(db.pool, req.office.id);
   return res.status(status).render('office/settings', {
+    licenceLocked: true,
     domain: {
       ...domainView,
       freeLink: domainView.slug ? `${seo.baseUrl(req).replace(/^https?:\/\//, '')}/${domainView.slug}` : null,
