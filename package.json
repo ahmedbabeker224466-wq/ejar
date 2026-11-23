@@ -11,7 +11,8 @@
     "start": "node server.js",
     "test": "node --test",
     "seed": "node database/seed.js",
-    "restart": "node deploy/restart.js"
+    "restart": "node deploy/restart.js",
+    "smtp-test": "node scripts/check-smtp.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
