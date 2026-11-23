@@ -473,3 +473,5 @@ textarea.mk-input { min-height: 150px; resize: vertical; }
 .mk-mock__brand .mk-logo__mark .brand-mark { width: 26px; height: 26px; }
 .mk-logo .mk-logo__mark { width: 40px; height: 40px; }
 .mk-std .auth__icon { background: none; box-shadow: none; border-radius: 0; }
+.mk-logo .brand-word { font-size: 27px; padding-block-end: 3px; }
+.mk-mock__brand .brand-word { font-size: 18px; }

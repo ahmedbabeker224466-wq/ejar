@@ -4,7 +4,7 @@
   <div class="mk-wrap mk-nav__inner">
     <a href="<%= L('/') %>" class="mk-logo" aria-label="<%= t('brand') %>">
       <span class="mk-logo__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'h', light: true }) %></span>
-      <span><%= t('brand') %></span>
+      <span class="brand-word" lang="en" dir="ltr">miaad</span>
     </a>
     <% if (locals.localized) { %>
       <a href="<%= altLangHref %>" class="mk-lang mk-lang--bar" hreflang="<%= lang === 'en' ? 'ar' : 'en' %>" lang="<%= lang === 'en' ? 'ar' : 'en' %>" aria-label="<%= t('lang.switchLabel') %>"><%- globe %><%= t('lang.switch') %></a>

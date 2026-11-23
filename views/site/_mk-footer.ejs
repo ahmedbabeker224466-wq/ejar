@@ -11,7 +11,7 @@
 <footer class="mk-footer">
   <div class="mk-wrap">
     <div class="mk-footer__top">
-      <a href="<%= L('/') %>" class="mk-logo"><span class="mk-logo__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'f' }) %></span><span><%= t('brand') %></span></a>
+      <a href="<%= L('/') %>" class="mk-logo"><span class="mk-logo__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'f' }) %></span><span class="brand-word" lang="en" dir="ltr">miaad</span></a>
       <% if (locals.localized) { %>
         <a href="<%= altLangHref %>" class="mk-footer__lang" hreflang="<%= lang === 'en' ? 'ar' : 'en' %>" lang="<%= lang === 'en' ? 'ar' : 'en' %>" aria-label="<%= t('lang.switchLabel') %>"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg><%= t('lang.switch') %></a>
       <% } %>

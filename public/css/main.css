@@ -2104,3 +2104,5 @@ body.office-body {
 /* No tile behind the mark (owner's request): the mark stands on its own. */
 .logo__mark, .office-nav__mark, .auth__icon, .mk-std .auth__icon { background: none; box-shadow: none; border-radius: 0; }
 .logo__mark .brand-mark, .office-nav__mark .brand-mark, .auth__icon .brand-mark { width: 100%; height: 100%; }
+/* The wordmark: "miaad" in Latin letters (owner's choice, Nov 2026). */
+.brand-word { font-family: 'Nunito', 'Inter', system-ui, sans-serif; font-weight: 800; letter-spacing: -0.01em; line-height: 1; direction: ltr; unicode-bidi: isolate; }
