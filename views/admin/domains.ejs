@@ -1,28 +1,28 @@
-<div class="page-head"><h1>طلبات الدومين</h1></div>
+<div class="page-head"><h1><%= __("طلبات الدومين") %></h1></div>
 <form method="get" action="/admin/domains" class="filter-bar" novalidate>
-  <div class="field"><label for="status">الحالة</label>
+  <div class="field"><label for="status"><%= __("الحالة") %></label>
     <select id="status" name="status" class="select">
-      <option value="">الكل</option>
-      <% filters.forEach(function (s) { %><option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s === 'open' ? 'المفتوحة فقط' : labels[s] %></option><% }) %>
+      <option value=""><%= __("الكل") %></option>
+      <% filters.forEach(function (s) { %><option value="<%= __(s) %>" <%= __(status === s ? 'selected' : '') %>><%= __(s === 'open' ? __('المفتوحة فقط') : labels[s]) %></option><% }) %>
     </select></div>
-  <button type="submit" class="btn btn--primary">عرض</button>
+  <button type="submit" class="btn btn--primary"><%= __("عرض") %></button>
 </form>
-<p class="muted"><%= total %> طلب. الربط والشراء يدويان حالياً.</p>
+<p class="muted"><%= __(total) %> <%= __("طلب. الربط والشراء يدويان حالياً.") %></p>
 <ul class="item-list">
   <% rows.forEach(function (r) { %>
-    <li class="item" id="domain-request-<%= r.id %>">
-      <div class="item__title"><a href="/admin/domains/<%= r.id %>"><strong dir="ltr"><%= r.domain %></strong></a>
-        <span class="badge badge--domain-<%= r.status %>"><%= r.statusLabel %></span></div>
-      <div class="item__meta"><%= r.office_name %> · <%= r.type === 'own' ? 'لدي دومين' : 'احجز لي دوميناً' %><%= r.type === 'own' ? (r.connection_method === 'records' ? ' (سجلات DNS)' : ' (Nameservers)') : '' %>
-        · طُلب <span dir="ltr"><%= stamp(r.created_at) %></span> · آخر تحديث <span dir="ltr"><%= stamp(r.updated_at) %></span><% if (r.activated_at) { %> · فُعّل <span dir="ltr"><%= stamp(r.activated_at) %></span><% } %></div>
+    <li class="item" id="domain-request-<%= __(r.id) %>">
+      <div class="item__title"><a href="/admin/domains/<%= __(r.id) %>"><strong dir="ltr"><%= __(r.domain) %></strong></a>
+        <span class="badge badge--domain-<%= __(r.status) %>"><%= __(r.statusLabel) %></span></div>
+      <div class="item__meta"><%= __(r.office_name) %> · <%= __(r.type === 'own' ? __('لدي دومين') : __('احجز لي دوميناً')) %><%= __(r.type === 'own' ? (r.connection_method === 'records' ? __(' (سجلات DNS)') : ' (Nameservers)') : '') %>
+        · <%= __("طُلب") %> <span dir="ltr"><%= __(stamp(r.created_at)) %></span> · <%= __("آخر تحديث") %> <span dir="ltr"><%= __(stamp(r.updated_at)) %></span><% if (r.activated_at) { %> · <%= __("فُعّل") %> <span dir="ltr"><%= __(stamp(r.activated_at)) %></span><% } %></div>
     </li>
   <% }) %>
 </ul>
-<% if (!rows.length) { %><p class="empty-state">لا توجد طلبات مطابقة.</p><% } %>
+<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد طلبات مطابقة.") %></p><% } %>
 <% if (pages > 1) { %>
-  <nav class="pager" aria-label="الصفحات">
-    <% if (page > 1) { %><a href="/admin/domains?status=<%= status %>&amp;page=<%= page - 1 %>">السابق</a><% } %>
-    <span>صفحة <%= page %> من <%= pages %></span>
-    <% if (page < pages) { %><a href="/admin/domains?status=<%= status %>&amp;page=<%= page + 1 %>">التالي</a><% } %>
+  <nav class="pager" aria-label="<%= __("الصفحات") %>">
+    <% if (page > 1) { %><a href="/admin/domains?status=<%= __(status) %>&amp;page=<%= __(page - 1) %>"><%= __("السابق") %></a><% } %>
+    <span><%= __("صفحة") %> <%= __(page) %> <%= __("من") %> <%= __(pages) %></span>
+    <% if (page < pages) { %><a href="/admin/domains?status=<%= __(status) %>&amp;page=<%= __(page + 1) %>"><%= __("التالي") %></a><% } %>
   </nav>
 <% } %>

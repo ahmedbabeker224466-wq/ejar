@@ -2,20 +2,20 @@
 <% const navItem = (href, label, path) => '<a href="' + href + '"' + (path && currentPath === path ? ' aria-current="page"' : '') + '>' + label + '</a>'; %>
 <header class="mk-nav">
   <div class="mk-wrap mk-nav__inner">
-    <a href="<%= L('/') %>" class="mk-logo" aria-label="<%= t('brand') %>">
+    <a href="<%= L('/') %>" class="mk-logo" aria-label="<%= __(t('brand')) %>">
       <span class="mk-logo__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'h', light: true }) %></span>
       <span class="brand-word" lang="en" dir="ltr">miaad</span>
     </a>
-    <% if (locals.localized) { %>
-      <a href="<%= altLangHref %>" class="mk-lang mk-lang--bar" hreflang="<%= lang === 'en' ? 'ar' : 'en' %>" lang="<%= lang === 'en' ? 'ar' : 'en' %>" aria-label="<%= t('lang.switchLabel') %>"><%- globe %><%= t('lang.switch') %></a>
+    <% if (locals.localized || locals.langSwitch) { %>
+      <a href="<%= __(altLangHref) %>" class="mk-lang mk-lang--bar" hreflang="<%= __(lang === 'en' ? 'ar' : 'en') %>" lang="<%= __(lang === 'en' ? 'ar' : 'en') %>" aria-label="<%= __(t('lang.switchLabel')) %>"><%- globe %><%= __(t('lang.switch')) %></a>
     <% } %>
     <input type="checkbox" id="mk-menu" class="mk-menu-toggle" aria-hidden="true" tabindex="-1">
-    <label for="mk-menu" class="mk-menu-button" aria-label="<%= t('nav.menu') %>">
+    <label for="mk-menu" class="mk-menu-button" aria-label="<%= __(t('nav.menu')) %>">
       <svg class="mk-menu-button__open" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       <svg class="mk-menu-button__close" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
     </label>
     <div class="mk-nav__panel">
-      <nav class="mk-nav__links" aria-label="<%= t('nav.main') %>">
+      <nav class="mk-nav__links" aria-label="<%= __(t('nav.main')) %>">
         <%- navItem(L('/features'), t('nav.features'), '/features') %>
         <%- navItem(L('/') + '#how', t('nav.how')) %>
         <%- navItem(L('/pricing'), t('nav.pricing'), '/pricing') %>
@@ -23,16 +23,16 @@
         <% if (locals.blogLive) { %><%- navItem('/blog', t('footer.blog'), '/blog') %><% } %>
       </nav>
       <div class="mk-nav__side">
-        <% if (locals.localized) { %>
-          <a href="<%= altLangHref %>" class="mk-lang mk-lang--panel" hreflang="<%= lang === 'en' ? 'ar' : 'en' %>" lang="<%= lang === 'en' ? 'ar' : 'en' %>" aria-label="<%= t('lang.switchLabel') %>"><%- globe %><%= t('lang.switch') %></a>
+        <% if (locals.localized || locals.langSwitch) { %>
+          <a href="<%= __(altLangHref) %>" class="mk-lang mk-lang--panel" hreflang="<%= __(lang === 'en' ? 'ar' : 'en') %>" lang="<%= __(lang === 'en' ? 'ar' : 'en') %>" aria-label="<%= __(t('lang.switchLabel')) %>"><%- globe %><%= __(t('lang.switch')) %></a>
         <% } %>
-        <a href="<%= L('/contact') %>" class="mk-nav__contact" <%- currentPath === '/contact' ? 'aria-current="page"' : '' %>><%= t('footer.contact') %></a>
+        <a href="<%= L('/contact') %>" class="mk-nav__contact" <%- currentPath === '/contact' ? 'aria-current="page"' : '' %>><%= __(t('footer.contact')) %></a>
         <% if (currentUser) { %>
-          <a href="/logout" class="mk-btn mk-btn--quiet"><%= t('nav.logout') %></a>
-          <a href="/login" class="mk-btn mk-btn--brand"><%= t('nav.dashboard') %></a>
+          <a href="/logout" class="mk-btn mk-btn--quiet"><%= __(t('nav.logout')) %></a>
+          <a href="/login" class="mk-btn mk-btn--brand"><%= __(t('nav.dashboard')) %></a>
         <% } else { %>
-          <a href="/login" class="mk-btn mk-btn--quiet"><%= t('nav.login') %></a>
-          <a href="/register" class="mk-btn mk-btn--accent"><%= t('nav.trial') %></a>
+          <a href="/login" class="mk-btn mk-btn--quiet"><%= __(t('nav.login')) %></a>
+          <a href="/register" class="mk-btn mk-btn--accent"><%= __(t('nav.trial')) %></a>
         <% } %>
       </div>
     </div>

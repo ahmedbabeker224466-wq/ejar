@@ -112,7 +112,7 @@ function createOtpService({ pool = db.pool, send = sendSms, key = null } = {}) {
    * Creates and sends a code. Returns { ok } or { ok: false, error, retryAfterSec }.
    * The response is the same whether or not the phone has an account.
    */
-  async function request(rawPhone, purpose = 'login', ip = null) {
+  async function request(rawPhone, purpose = 'login', ip = null, lang = 'ar') {
     const phone = normalizeSaudi(rawPhone);
     if (!phone) return { ok: false, error: 'invalid_phone' };
 
@@ -129,7 +129,8 @@ function createOtpService({ pool = db.pool, send = sendSms, key = null } = {}) {
       [phone, hashCode(phone, code, getKey()), purpose, CODE_TTL_MINUTES, ip],
     );
 
-    const message = `رمز الدخول إلى ميعاد: ${code}\nصالح لمدة ${CODE_TTL_MINUTES} دقائق. لا تشاركه مع أحد.`;
+    // In the language of the page the code was asked from (services/tr).
+    const message = require('./tr').translate(lang, `رمز الدخول إلى ميعاد: ${code}\nصالح لمدة ${CODE_TTL_MINUTES} دقائق. لا تشاركه مع أحد.`);
     const sent = await send(toE164(phone), message);
     return sent.ok ? { ok: true, phone } : { ok: false, error: 'send_failed' };
   }

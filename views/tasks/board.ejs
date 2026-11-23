@@ -1,36 +1,36 @@
 <div class="page-head">
-  <h1>مهام المكتب</h1>
-  <a href="/office/tasks<%= assignee === 'me' ? '' : '?assignee=me' %>" class="btn btn--secondary btn--small"><%= assignee === 'me' ? 'عرض الكل' : 'مهامي فقط' %></a>
+  <h1><%= __("مهام المكتب") %></h1>
+  <a href="/office/tasks<%= __(assignee === 'me' ? '' : '?assignee=me') %>" class="btn btn--secondary btn--small"><%= __(assignee === 'me' ? __('عرض الكل') : __('مهامي فقط')) %></a>
 </div>
-<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
 
-<details class="card detail-card" <%= Object.keys(errors).length ? 'open' : '' %>>
-  <summary><strong>إضافة مهمة</strong></summary>
-  <%- include('../partials/task-form', { action: '/office/tasks', values: values, errors: errors, members: members, linkTypes: linkTypes, limits: limits, submit: 'حفظ المهمة' }) %>
+<details class="card detail-card" <%= __(Object.keys(errors).length ? 'open' : '') %>>
+  <summary><strong><%= __("إضافة مهمة") %></strong></summary>
+  <%- include('../partials/task-form', { action: '/office/tasks', values: values, errors: errors, members: members, linkTypes: linkTypes, limits: limits, submit: __('حفظ المهمة') }) %>
 </details>
 
 <div class="kanban">
   <% ['todo', 'doing', 'done'].forEach(function (col) { %>
-    <section class="kanban__col card" aria-labelledby="col-<%= col %>">
-      <h2 id="col-<%= col %>"><%= statuses[col] %> <span class="badge badge--calm"><%= columns[col].length %></span></h2>
+    <section class="kanban__col card" aria-labelledby="col-<%= __(col) %>">
+      <h2 id="col-<%= __(col) %>"><%= __(statuses[col]) %> <span class="badge badge--calm"><%= __(columns[col].length) %></span></h2>
       <% if (columns[col].length === 0) { %>
-        <p class="empty-state"><%= col === 'todo' ? 'لا توجد مهام. أضف أول مهمة.' : 'لا شيء هنا.' %></p>
+        <p class="empty-state"><%= __(col === 'todo' ? __('لا توجد مهام. أضف أول مهمة.') : __('لا شيء هنا.')) %></p>
       <% } else { %>
         <ul class="item-list">
           <% columns[col].forEach(function (t) { %>
             <li class="item">
               <div class="item__title">
-                <a href="/office/tasks/<%= t.id %>"><%= t.title %></a>
-                <% if (t.overdue) { %><span class="badge badge--prio-high">متأخرة</span><% } %>
+                <a href="/office/tasks/<%= __(t.id) %>"><%= __(t.title) %></a>
+                <% if (t.overdue) { %><span class="badge badge--prio-high"><%= __("متأخرة") %></span><% } %>
               </div>
               <p class="item__meta">
-                <%= t.assigneeLabel ? `المسؤول: ${t.assigneeLabel}` : 'بدون مسؤول' %>
-                <% if (t.due) { %> · الاستحقاق <span dir="ltr"><%= t.due %></span><% } %>
-                <% if (t.linkLabel) { %> · <a href="<%= t.linkUrl %>"><%= t.linkLabel %> <%= t.entity_id %></a><% } %>
+                <%= __(t.assigneeLabel ? `المسؤول: ${t.assigneeLabel}` : __('بدون مسؤول')) %>
+                <% if (t.due) { %> · <%= __("الاستحقاق") %> <span dir="ltr"><%= __(t.due) %></span><% } %>
+                <% if (t.linkLabel) { %> · <a href="<%= __(t.linkUrl) %>"><%= __(t.linkLabel) %> <%= __(t.entity_id) %></a><% } %>
               </p>
               <div class="button-row">
                 <% next[col].forEach(function (n) { %>
-                  <form method="post" action="/office/tasks/<%= t.id %>/status"><input type="hidden" name="status" value="<%= n[0] %>"><button type="submit" class="btn btn--secondary btn--small"><%= n[1] %></button></form>
+                  <form method="post" action="/office/tasks/<%= __(t.id) %>/status"><input type="hidden" name="status" value="<%= __(n[0]) %>"><button type="submit" class="btn btn--secondary btn--small"><%= __(n[1]) %></button></form>
                 <% }) %>
               </div>
             </li>

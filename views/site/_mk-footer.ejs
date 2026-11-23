@@ -2,9 +2,9 @@
 <% if (footerCta) { %>
 <section class="mk-wrap mk-endcta" aria-labelledby="endcta-title">
   <div class="mk-endcta__card">
-    <h2 id="endcta-title"><%= t('footer.ctaTitle') %></h2>
-    <p><%= t('footer.ctaText') %></p>
-    <a href="/register" class="mk-btn mk-btn--accent mk-btn--lg"><%= t('nav.trial') %></a>
+    <h2 id="endcta-title"><%= __(t('footer.ctaTitle')) %></h2>
+    <p><%= __(t('footer.ctaText')) %></p>
+    <a href="/register" class="mk-btn mk-btn--accent mk-btn--lg"><%= __(t('nav.trial')) %></a>
   </div>
 </section>
 <% } %>
@@ -14,33 +14,33 @@
       <a href="<%= L('/') %>" class="mk-logo"><span class="mk-logo__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'f' }) %></span><span class="brand-word" lang="en" dir="ltr">miaad</span></a>
     </div>
     <div class="mk-footer__cols">
-      <div class="mk-footer__about"><p><%= t('footer.about') %></p></div>
-      <nav aria-label="<%= t('footer.product') %>"><h2><%= t('footer.product') %></h2>
-        <a href="<%= L('/features') %>"><%= t('nav.features') %></a>
-        <a href="<%= L('/') %>#how"><%= t('nav.how') %></a>
-        <a href="<%= L('/pricing') %>"><%= t('nav.pricing') %></a>
-        <a href="/listings"><%= t('nav.listings') %></a>
+      <div class="mk-footer__about"><p><%= __(t('footer.about')) %></p></div>
+      <nav aria-label="<%= __(t('footer.product')) %>"><h2><%= __(t('footer.product')) %></h2>
+        <a href="<%= L('/features') %>"><%= __(t('nav.features')) %></a>
+        <a href="<%= L('/') %>#how"><%= __(t('nav.how')) %></a>
+        <a href="<%= L('/pricing') %>"><%= __(t('nav.pricing')) %></a>
+        <a href="/listings"><%= __(t('nav.listings')) %></a>
       </nav>
-      <nav aria-label="<%= t('footer.company') %>"><h2><%= t('footer.company') %></h2>
-        <a href="<%= L('/about') %>"><%= t('footer.aboutUs') %></a>
-        <a href="<%= L('/contact') %>"><%= t('footer.contact') %></a>
-        <% if (locals.blogLive) { %><a href="/blog"><%= t('footer.blog') %></a><% } %>
+      <nav aria-label="<%= __(t('footer.company')) %>"><h2><%= __(t('footer.company')) %></h2>
+        <a href="<%= L('/about') %>"><%= __(t('footer.aboutUs')) %></a>
+        <a href="<%= L('/contact') %>"><%= __(t('footer.contact')) %></a>
+        <% if (locals.blogLive) { %><a href="/blog"><%= __(t('footer.blog')) %></a><% } %>
       </nav>
-      <nav aria-label="<%= t('footer.account') %>"><h2><%= t('footer.account') %></h2>
-        <a href="/login"><%= t('nav.login') %></a>
-        <a href="/register"><%= t('nav.trial') %></a>
-        <a href="/join"><%= t('footer.join') %></a>
+      <nav aria-label="<%= __(t('footer.account')) %>"><h2><%= __(t('footer.account')) %></h2>
+        <a href="/login"><%= __(t('nav.login')) %></a>
+        <a href="/register"><%= __(t('nav.trial')) %></a>
+        <a href="/join"><%= __(t('footer.join')) %></a>
       </nav>
     </div>
     <div class="mk-footer__base">
-      <nav class="mk-footer__legal" aria-label="<%= t('footer.legal') %>">
-        <a href="<%= L('/privacy') %>"><%= t('footer.privacy') %></a>
-        <a href="<%= L('/terms') %>"><%= t('footer.terms') %></a>
-        <a href="<%= L('/disclaimer') %>"><%= t('footer.disclaimerLink') %></a>
-        <a href="/sitemap.xml"><%= t('footer.sitemap') %></a>
+      <nav class="mk-footer__legal" aria-label="<%= __(t('footer.legal')) %>">
+        <a href="<%= L('/privacy') %>"><%= __(t('footer.privacy')) %></a>
+        <a href="<%= L('/terms') %>"><%= __(t('footer.terms')) %></a>
+        <a href="<%= L('/disclaimer') %>"><%= __(t('footer.disclaimerLink')) %></a>
+        <a href="/sitemap.xml"><%= __(t('footer.sitemap')) %></a>
       </nav>
-      <p>© <%= new Date().getFullYear() %> <%= t('footer.rights') %> <a href="https://phillote.com" class="mk-footer__credit" lang="en" dir="ltr" rel="noopener">Phillote</a></p>
+      <p>© <%= __(new Date().getFullYear()) %> <%= __(t('footer.rights')) %> <a href="https://phillote.com" class="mk-footer__credit" lang="en" dir="ltr" rel="noopener">Phillote</a></p>
     </div>
-    <p class="disclaimer mk-footer__disc"><%= t('footer.disclaimer') %></p>
+    <p class="disclaimer mk-footer__disc"><%= __(t('footer.disclaimer')) %></p>
   </div>
 </footer>

@@ -1,14 +1,14 @@
-<div class="page-head"><h1>أكواد الخصم</h1><a href="/admin/promos/new" class="btn btn--primary btn--small">كود جديد</a></div>
-<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
+<div class="page-head"><h1><%= __("أكواد الخصم") %></h1><a href="/admin/promos/new" class="btn btn--primary btn--small"><%= __("كود جديد") %></a></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
 <ul class="item-list">
   <% rows.forEach(function (p) { %>
     <li class="item">
-      <div class="item__title"><a href="/admin/promos/<%= p.id %>"><strong dir="ltr"><%= p.code %></strong></a>
-        <span class="badge badge--bill-<%= Number(p.is_active) ? 'success' : 'danger' %>"><%= Number(p.is_active) ? 'مفعّل' : 'موقوف' %></span></div>
-      <div class="item__meta"><%= p.discount_type === 'percent' ? (Number(p.percent_bp) / 100) + '%' : fmtDec(p.fixed_amount) + ' ريال' %> ·
-        استُخدم <%= p.used %><%= p.max_redemptions === null ? '' : ' من ' + p.max_redemptions %> (مدفوع <%= p.redeemed %>) ·
-        <span dir="ltr"><%= stamp(p.valid_from) %></span> → <span dir="ltr"><%= p.valid_to ? stamp(new Date(new Date(p.valid_to).getTime() - 1)) : '—' %></span></div>
+      <div class="item__title"><a href="/admin/promos/<%= __(p.id) %>"><strong dir="ltr"><%= __(p.code) %></strong></a>
+        <span class="badge badge--bill-<%= __(Number(p.is_active) ? 'success' : 'danger') %>"><%= __(Number(p.is_active) ? __('مفعّل') : __('موقوف')) %></span></div>
+      <div class="item__meta"><%= __(p.discount_type === 'percent' ? (Number(p.percent_bp) / 100) + '%' : fmtDec(p.fixed_amount) + __(' ريال')) %> ·
+        <%= __("استُخدم") %> <%= __(p.used) %><%= __(p.max_redemptions === null ? '' : __(' من ') + p.max_redemptions) %> (<%= __("مدفوع") %> <%= __(p.redeemed) %>) ·
+        <span dir="ltr"><%= __(stamp(p.valid_from)) %></span> <%= dir === 'rtl' ? '→' : '←' %> <span dir="ltr"><%= __(p.valid_to ? stamp(new Date(new Date(p.valid_to).getTime() - 1)) : '—') %></span></div>
     </li>
   <% }) %>
 </ul>
-<% if (!rows.length) { %><p class="empty-state">لا توجد أكواد بعد.</p><% } %>
+<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد أكواد بعد.") %></p><% } %>

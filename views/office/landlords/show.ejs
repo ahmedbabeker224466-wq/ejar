@@ -1,116 +1,116 @@
-<p class="back-link"><a href="/office/landlords">→ كل الملاك</a></p>
+<p class="back-link"><a href="/office/landlords"><%= dir === 'rtl' ? '→' : '←' %> <%= __("كل الملاك") %></a></p>
 
-<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
-<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 
 <section class="card detail-card">
   <div class="page-head">
-    <h1><%= landlord.label %></h1>
+    <h1><%= __(landlord.label) %></h1>
     <div class="item__badges">
-      <span class="badge badge--link-<%= landlord.status %>"><%= statusLabel %></span>
-      <% if (!landlord.is_active) { %><span class="badge badge--ended">موقوف</span><% } %>
+      <span class="badge badge--link-<%= __(landlord.status) %>"><%= __(statusLabel) %></span>
+      <% if (!landlord.is_active) { %><span class="badge badge--ended"><%= __("موقوف") %></span><% } %>
     </div>
   </div>
   <dl class="details">
-    <dt>المدينة</dt><dd><%= landlord.city || '—' %></dd>
-    <dt>الجوال</dt><dd dir="ltr"><%= landlord.phoneLocal || '—' %></dd>
-    <dt>الوحدات</dt><dd><%= landlord.units_count %></dd>
-    <% if (landlord.notes) { %><dt>ملاحظات</dt><dd class="pre-line"><%= landlord.notes %></dd><% } %>
+    <dt><%= __("المدينة") %></dt><dd><%= __(landlord.city || '—') %></dd>
+    <dt><%= __("الجوال") %></dt><dd dir="ltr"><%= __(landlord.phoneLocal || '—') %></dd>
+    <dt><%= __("الوحدات") %></dt><dd><%= __(landlord.units_count) %></dd>
+    <% if (landlord.notes) { %><dt><%= __("ملاحظات") %></dt><dd class="pre-line"><%= __(landlord.notes) %></dd><% } %>
   </dl>
   <div class="button-row">
-    <a href="/office/landlords/<%= landlord.id %>/edit" class="btn btn--secondary">تعديل</a>
+    <a href="/office/landlords/<%= __(landlord.id) %>/edit" class="btn btn--secondary"><%= __("تعديل") %></a>
     <% if (landlord.is_active) { %>
-      <form method="post" action="/office/landlords/<%= landlord.id %>/deactivate">
-        <button type="submit" class="btn btn--secondary">إيقاف المالك</button>
+      <form method="post" action="/office/landlords/<%= __(landlord.id) %>/deactivate">
+        <button type="submit" class="btn btn--secondary"><%= __("إيقاف المالك") %></button>
       </form>
     <% } else { %>
-      <form method="post" action="/office/landlords/<%= landlord.id %>/activate">
-        <button type="submit" class="btn btn--secondary">إعادة التفعيل</button>
+      <form method="post" action="/office/landlords/<%= __(landlord.id) %>/activate">
+        <button type="submit" class="btn btn--secondary"><%= __("إعادة التفعيل") %></button>
       </form>
     <% } %>
   </div>
   <% if (canDelete) { %>
     <details class="danger-zone">
-      <summary>حذف المالك</summary>
-      <p>الحذف نهائي ولا يمكن التراجع عنه. إن أردت إخفاءه فقط فاستخدم "إيقاف المالك".</p>
-      <form method="post" action="/office/landlords/<%= landlord.id %>/delete">
-        <button type="submit" class="btn btn--danger btn--block">نعم، احذف المالك نهائياً</button>
+      <summary><%= __("حذف المالك") %></summary>
+      <p><%= __("الحذف نهائي ولا يمكن التراجع عنه. إن أردت إخفاءه فقط فاستخدم") %> "<%= __("إيقاف المالك") %>".</p>
+      <form method="post" action="/office/landlords/<%= __(landlord.id) %>/delete">
+        <button type="submit" class="btn btn--danger btn--block"><%= __("نعم، احذف المالك نهائياً") %></button>
       </form>
     </details>
   <% } %>
 </section>
 
 <section class="card detail-card" id="invite">
-  <h2>رمز الدعوة</h2>
+  <h2><%= __("رمز الدعوة") %></h2>
   <% if (landlord.user_id) { %>
-    <p class="lead">انضم المالك إلى التطبيق، ولا يحتاج إلى رمز دعوة.</p>
+    <p class="lead"><%= __("انضم المالك إلى التطبيق، ولا يحتاج إلى رمز دعوة.") %></p>
   <% } else { %>
     <% if (invite && invite.code) { %>
-      <p class="muted">أرسل هذا الرمز للمالك ليدخل به إلى التطبيق. يُستخدم مرة واحدة فقط.</p>
+      <p class="muted"><%= __("أرسل هذا الرمز للمالك ليدخل به إلى التطبيق. يُستخدم مرة واحدة فقط.") %></p>
       <div class="invite-code">
-        <output id="invite-code" dir="ltr"><%= invite.code %></output>
-        <button type="button" class="btn btn--secondary" data-copy="#invite-code" data-copied="تم النسخ">نسخ الرمز</button>
+        <output id="invite-code" dir="ltr"><%= __(invite.code) %></output>
+        <button type="button" class="btn btn--secondary" data-copy="#invite-code" data-copied="<%= __("تم النسخ") %>"><%= __("نسخ الرمز") %></button>
       </div>
-      <p class="muted">الحالة: <span class="badge badge--calm"><%= invite.label %></span> · صالح حتى <span dir="ltr"><%= invite.expiresOn %></span></p>
+      <p class="muted"><%= __("الحالة:") %> <span class="badge badge--calm"><%= __(invite.label) %></span> · <%= __("صالح حتى") %> <span dir="ltr"><%= __(invite.expiresOn) %></span></p>
       <div class="button-row">
-        <a href="<%= invite.shareLink %>" class="btn btn--primary" target="_blank" rel="noopener noreferrer">إرسال عبر واتساب</a>
-        <form method="post" action="/office/landlords/<%= landlord.id %>/invite/revoke">
-          <button type="submit" class="btn btn--secondary">إلغاء الرمز</button>
+        <a href="<%= __(invite.shareLink) %>" class="btn btn--primary" target="_blank" rel="noopener noreferrer"><%= __("إرسال عبر واتساب") %></a>
+        <form method="post" action="/office/landlords/<%= __(landlord.id) %>/invite/revoke">
+          <button type="submit" class="btn btn--secondary"><%= __("إلغاء الرمز") %></button>
         </form>
         <% if (landlord.is_active) { %>
-          <form method="post" action="/office/landlords/<%= landlord.id %>/invite">
-            <button type="submit" class="btn btn--secondary">إنشاء رمز جديد</button>
+          <form method="post" action="/office/landlords/<%= __(landlord.id) %>/invite">
+            <button type="submit" class="btn btn--secondary"><%= __("إنشاء رمز جديد") %></button>
           </form>
         <% } %>
       </div>
     <% } else { %>
       <% if (invite) { %>
-        <p>آخر رمز: <span class="badge badge--ended"><%= invite.label %></span>
-          <% if (invite.usedBy) { %> بواسطة <span dir="ltr"><%= invite.usedBy %></span><% } %>
+        <p><%= __("آخر رمز:") %> <span class="badge badge--ended"><%= __(invite.label) %></span>
+          <% if (invite.usedBy) { %> <%= __("بواسطة") %> <span dir="ltr"><%= __(invite.usedBy) %></span><% } %>
         </p>
       <% } else { %>
-        <p class="muted">لم يُنشأ رمز دعوة لهذا المالك بعد.</p>
+        <p class="muted"><%= __("لم يُنشأ رمز دعوة لهذا المالك بعد.") %></p>
       <% } %>
       <% if (landlord.is_active) { %>
-        <form method="post" action="/office/landlords/<%= landlord.id %>/invite">
-          <button type="submit" class="btn btn--primary btn--large btn--block">إنشاء رمز دعوة</button>
+        <form method="post" action="/office/landlords/<%= __(landlord.id) %>/invite">
+          <button type="submit" class="btn btn--primary btn--large btn--block"><%= __("إنشاء رمز دعوة") %></button>
         </form>
       <% } else { %>
-        <p class="muted">أعد تفعيل المالك لإنشاء رمز دعوة.</p>
+        <p class="muted"><%= __("أعد تفعيل المالك لإنشاء رمز دعوة.") %></p>
       <% } %>
     <% } %>
   <% } %>
 </section>
 
 <section class="card detail-card" id="units">
-  <h2>الوحدات (<%= units.total %>)</h2>
+  <h2><%= __("الوحدات") %> (<%= __(units.total) %>)</h2>
   <% if (units.rows.length) { %>
     <ul class="action-list">
       <% units.rows.forEach(function (u) { %>
         <li>
-          <a href="/office/units/<%= u.id %>">
-            <span><%= u.label %><%= u.building_name ? ` · ${u.building_name}` : '' %></span>
-            <span class="badge badge--unit-<%= u.status %>"><%= unitStatusLabels[u.status] %></span>
+          <a href="/office/units/<%= __(u.id) %>">
+            <span><%= __(u.label) %><%= __(u.building_name ? ` · ${u.building_name}` : '') %></span>
+            <span class="badge badge--unit-<%= __(u.status) %>"><%= __(unitStatusLabels[u.status]) %></span>
           </a>
         </li>
       <% }) %>
     </ul>
     <% if (units.total > units.rows.length) { %>
-      <p><a href="/office/units?landlord=<%= landlord.id %>">عرض كل الوحدات</a></p>
+      <p><a href="/office/units?landlord=<%= __(landlord.id) %>"><%= __("عرض كل الوحدات") %></a></p>
     <% } %>
   <% } else { %>
-    <p class="muted">لا توجد وحدات لهذا المالك بعد.</p>
+    <p class="muted"><%= __("لا توجد وحدات لهذا المالك بعد.") %></p>
   <% } %>
   <% if (landlord.is_active) { %>
     <div class="button-row">
-      <a href="/office/units/new?landlord=<%= landlord.id %>" class="btn btn--primary">إضافة وحدة</a>
-      <a href="/office/units/bulk?landlord=<%= landlord.id %>" class="btn btn--secondary">إضافة عدة وحدات</a>
+      <a href="/office/units/new?landlord=<%= __(landlord.id) %>" class="btn btn--primary"><%= __("إضافة وحدة") %></a>
+      <a href="/office/units/bulk?landlord=<%= __(landlord.id) %>" class="btn btn--secondary"><%= __("إضافة عدة وحدات") %></a>
     </div>
   <% } %>
 </section>
 
 <section class="card detail-card" id="contracts">
-  <h2>العقود (<%= contracts.total %>)</h2>
+  <h2><%= __("العقود") %> (<%= __(contracts.total) %>)</h2>
   <%- include('../contracts/_mini-list', { list: contracts, stageLabels, more: `/office/contracts?landlord=${landlord.id}` }) %>
 </section>
 

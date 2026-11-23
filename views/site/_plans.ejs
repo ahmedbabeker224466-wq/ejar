@@ -2,33 +2,33 @@
   <div class="pricing">
     <input type="radio" name="billing-period" id="period-monthly" class="period-toggle__input" checked>
     <input type="radio" name="billing-period" id="period-yearly" class="period-toggle__input">
-    <div class="period-toggle" role="group" aria-label="مدة الاشتراك">
-      <label for="period-monthly" class="period-toggle__option period-toggle__option--monthly">شهري</label>
-      <label for="period-yearly" class="period-toggle__option period-toggle__option--yearly">سنوي</label>
+    <div class="period-toggle" role="group" aria-label="<%= __("مدة الاشتراك") %>">
+      <label for="period-monthly" class="period-toggle__option period-toggle__option--monthly"><%= __("شهري") %></label>
+      <label for="period-yearly" class="period-toggle__option period-toggle__option--yearly"><%= __("سنوي") %></label>
     </div>
     <ul class="plan-grid">
       <% plans.forEach(function (p) { %>
-        <li class="plan-card" id="plan-<%= p.code %>">
-          <h3><%= p.name %></h3>
-          <p class="plan-card__price price--monthly"><strong><%= fmt(p.monthly) %></strong> ريال / شهرياً</p>
-          <p class="plan-card__price price--yearly"><strong><%= fmt(p.yearly) %></strong> ريال / سنوياً</p>
-          <% if (p.paidMonths) { %><p class="muted price--yearly">تدفع <%= p.paidMonths %> أشهر وتشترك 12 شهراً.</p><% } %>
+        <li class="plan-card" id="plan-<%= __(p.code) %>">
+          <h3><%= __(p.name) %></h3>
+          <p class="plan-card__price price--monthly"><strong><%= __(fmt(p.monthly)) %></strong> <%= __("ريال / شهرياً") %></p>
+          <p class="plan-card__price price--yearly"><strong><%= __(fmt(p.yearly)) %></strong> <%= __("ريال / سنوياً") %></p>
+          <% if (p.paidMonths) { %><p class="muted price--yearly"><%= __("تدفع") %> <%= __(p.paidMonths) %> <%= __("أشهر وتشترك 12 شهراً.") %></p><% } %>
           <ul class="plan-card__limits">
-            <% p.lines.forEach(function (line) { %><li>✓ <%= line %></li><% }) %>
+            <% p.lines.forEach(function (line) { %><li>✓ <%= __(line) %></li><% }) %>
           </ul>
-          <a href="/register" class="btn btn--primary btn--block">ابدأ التجربة المجانية</a>
+          <a href="/register" class="btn btn--primary btn--block"><%= __("ابدأ التجربة المجانية") %></a>
         </li>
       <% }) %>
       <li class="plan-card plan-card--custom" id="plan-custom">
-        <h3>باقة مخصصة</h3>
-        <p class="plan-card__price">لأكثر من <%= customFromUnits %> وحدة</p>
-        <p class="muted">نتفق معك على الحدود والسعر حسب حجم مكتبك.</p>
-        <a href="/contact" class="btn btn--secondary btn--block">تواصل معنا</a>
+        <h3><%= __("باقة مخصصة") %></h3>
+        <p class="plan-card__price"><%= __("لأكثر من") %> <%= __(customFromUnits) %> <%= __("وحدة") %></p>
+        <p class="muted"><%= __("نتفق معك على الحدود والسعر حسب حجم مكتبك.") %></p>
+        <a href="/contact" class="btn btn--secondary btn--block"><%= __("تواصل معنا") %></a>
       </li>
     </ul>
   </div>
 <% } else { %>
-  <p class="empty-state">لا توجد باقات منشورة حالياً. <a href="/contact">تواصل معنا</a>.</p>
+  <p class="empty-state"><%= __("لا توجد باقات منشورة حالياً.") %> <a href="/contact"><%= __("تواصل معنا") %></a>.</p>
 <% } %>
-<p class="muted">الأسعار لا تشمل ضريبة القيمة المضافة <%= vatPercent %>%، وتظهر كاملة قبل الدفع.</p>
-<p class="muted">التجربة المجانية <%= trialDays %> يوماً بدون بطاقة، بحدود الباقة الاحترافية.</p>
+<p class="muted"><%= __("الأسعار لا تشمل ضريبة القيمة المضافة") %> <%= __(vatPercent) %>%<%= __("، وتظهر كاملة قبل الدفع.") %></p>
+<p class="muted"><%= __("التجربة المجانية") %> <%= __(trialDays) %> <%= __("يوماً بدون بطاقة، بحدود الباقة الاحترافية.") %></p>

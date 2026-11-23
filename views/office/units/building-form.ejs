@@ -1,65 +1,65 @@
-<p class="back-link"><a href="/office/units?tab=buildings">→ كل المباني</a></p>
+<p class="back-link"><a href="/office/units?tab=buildings"><%= dir === 'rtl' ? '→' : '←' %> <%= __("كل المباني") %></a></p>
 <section class="card form-card">
-  <h1><%= building ? 'تعديل المبنى' : 'إضافة مبنى' %></h1>
+  <h1><%= __(building ? __('تعديل المبنى') : __('إضافة مبنى')) %></h1>
 
   <% if (errors.form) { %>
-    <div class="flash flash--danger" role="alert"><%= errors.form %></div>
+    <div class="flash flash--danger" role="alert"><%= __(errors.form) %></div>
   <% } else if (Object.keys(errors).length) { %>
-    <div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div>
+    <div class="flash flash--danger" role="alert"><%= __("راجع الحقول المظللة بالأحمر.") %></div>
   <% } %>
 
-  <form method="post" action="<%= building ? `/office/units/buildings/${building.id}` : '/office/units/buildings' %>" novalidate>
+  <form method="post" action="<%= __(building ? `/office/units/buildings/${building.id}` : '/office/units/buildings') %>" novalidate>
     <div class="field">
-      <label for="landlord_id">المالك</label>
+      <label for="landlord_id"><%= __("المالك") %></label>
       <select id="landlord_id" name="landlord_id" class="select" required <%- errors.landlord_id ? 'aria-invalid="true"' : '' %>>
-        <option value="">اختر المالك</option>
+        <option value=""><%= __("اختر المالك") %></option>
         <% landlords.forEach(function (l) { %>
-          <option value="<%= l.id %>" <%= Number(values.landlord_id) === l.id ? 'selected' : '' %>><%= l.label %><%= l.is_active ? '' : ' (موقوف)' %></option>
+          <option value="<%= __(l.id) %>" <%= __(Number(values.landlord_id) === l.id ? 'selected' : '') %>><%= __(l.label) %><%= __(l.is_active ? '' : __(' (موقوف)')) %></option>
         <% }) %>
       </select>
-      <% if (errors.landlord_id) { %><p class="field-error"><%= errors.landlord_id %></p><% } %>
-      <% if (building && building.units_count > 0) { %><p class="field-hint">لا يمكن نقل المبنى إلى مالك آخر لأن فيه وحدات.</p><% } %>
+      <% if (errors.landlord_id) { %><p class="field-error"><%= __(errors.landlord_id) %></p><% } %>
+      <% if (building && building.units_count > 0) { %><p class="field-hint"><%= __("لا يمكن نقل المبنى إلى مالك آخر لأن فيه وحدات.") %></p><% } %>
     </div>
 
     <div class="field">
-      <label for="name">اسم المبنى</label>
-      <input id="name" name="name" class="input" type="text" maxlength="120" required value="<%= values.name %>"
+      <label for="name"><%= __("اسم المبنى") %></label>
+      <input id="name" name="name" class="input" type="text" maxlength="120" required value="<%= __(values.name) %>"
              aria-describedby="name-hint" <%- errors.name ? 'aria-invalid="true"' : '' %>>
-      <p id="name-hint" class="field-hint">اكتب اسماً مختصراً للتعريف، لا تكتب العنوان التفصيلي أو أرقام العدادات</p>
-      <% if (errors.name) { %><p class="field-error"><%= errors.name %></p><% } %>
+      <p id="name-hint" class="field-hint"><%= __("اكتب اسماً مختصراً للتعريف، لا تكتب العنوان التفصيلي أو أرقام العدادات") %></p>
+      <% if (errors.name) { %><p class="field-error"><%= __(errors.name) %></p><% } %>
     </div>
 
     <div class="field">
-      <label for="city">المدينة</label>
+      <label for="city"><%= __("المدينة") %></label>
       <select id="city" name="city" class="select" required <%- errors.city ? 'aria-invalid="true"' : '' %>>
-        <% cities.forEach(function (city) { %><option value="<%= city %>" <%= values.city === city ? 'selected' : '' %>><%= city %></option><% }) %>
+        <% cities.forEach(function (city) { %><option value="<%= __(city) %>" <%= __(values.city === city ? 'selected' : '') %>><%= __(city) %></option><% }) %>
       </select>
-      <% if (errors.city) { %><p class="field-error"><%= errors.city %></p><% } %>
+      <% if (errors.city) { %><p class="field-error"><%= __(errors.city) %></p><% } %>
     </div>
 
     <div class="field">
-      <label for="district">الحي <span class="muted">(اختياري)</span></label>
-      <input id="district" name="district" class="input" type="text" maxlength="80" value="<%= values.district || '' %>" <%- errors.district ? 'aria-invalid="true"' : '' %>>
-      <% if (errors.district) { %><p class="field-error"><%= errors.district %></p><% } %>
+      <label for="district"><%= __("الحي") %> <span class="muted">(<%= __("اختياري)") %></span></label>
+      <input id="district" name="district" class="input" type="text" maxlength="80" value="<%= __(values.district || '') %>" <%- errors.district ? 'aria-invalid="true"' : '' %>>
+      <% if (errors.district) { %><p class="field-error"><%= __(errors.district) %></p><% } %>
     </div>
 
     <div class="field">
-      <label for="notes">ملاحظات <span class="muted">(اختياري)</span></label>
-      <textarea id="notes" name="notes" class="textarea" maxlength="1000" <%- errors.notes ? 'aria-invalid="true"' : '' %>><%= values.notes || '' %></textarea>
-      <% if (errors.notes) { %><p class="field-error"><%= errors.notes %></p><% } %>
+      <label for="notes"><%= __("ملاحظات") %> <span class="muted">(<%= __("اختياري)") %></span></label>
+      <textarea id="notes" name="notes" class="textarea" maxlength="1000" <%- errors.notes ? 'aria-invalid="true"' : '' %>><%= __(values.notes || '') %></textarea>
+      <% if (errors.notes) { %><p class="field-error"><%= __(errors.notes) %></p><% } %>
     </div>
 
-    <button type="submit" class="btn btn--primary btn--block btn--large">حفظ</button>
+    <button type="submit" class="btn btn--primary btn--block btn--large"><%= __("حفظ") %></button>
   </form>
 
   <% if (building) { %>
-    <p class="muted"><a href="/office/units?building=<%= building.id %>"><%= building.units_count %> وحدة في هذا المبنى</a></p>
+    <p class="muted"><a href="/office/units?building=<%= __(building.id) %>"><%= __(building.units_count) %> <%= __("وحدة في هذا المبنى") %></a></p>
     <% if (can('contracts.delete') && building.units_count === 0) { %>
       <details class="danger-zone">
-        <summary>حذف المبنى</summary>
-        <p>الحذف نهائي ولا يمكن التراجع عنه.</p>
-        <form method="post" action="/office/units/buildings/<%= building.id %>/delete">
-          <button type="submit" class="btn btn--danger btn--block">نعم، احذف المبنى</button>
+        <summary><%= __("حذف المبنى") %></summary>
+        <p><%= __("الحذف نهائي ولا يمكن التراجع عنه.") %></p>
+        <form method="post" action="/office/units/buildings/<%= __(building.id) %>/delete">
+          <button type="submit" class="btn btn--danger btn--block"><%= __("نعم، احذف المبنى") %></button>
         </form>
       </details>
     <% } %>

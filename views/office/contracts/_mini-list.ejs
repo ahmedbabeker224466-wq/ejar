@@ -2,14 +2,14 @@
   <ul class="action-list">
     <% list.rows.forEach(function (c) { %>
       <li>
-        <a href="/office/contracts/<%= c.id %>">
-          <span><%= c.unit_label || 'وحدة' %><%= c.tenant_label ? ` · ${c.tenant_label}` : '' %> · <span dir="ltr"><%= c.start_date %></span> إلى <span dir="ltr"><%= c.end_date %></span></span>
-          <span class="badge badge--stage-<%= c.status %>"><%= stageLabels[c.status] %></span>
+        <a href="/office/contracts/<%= __(c.id) %>">
+          <span><%= __(c.unit_label || __('وحدة')) %><%= __(c.tenant_label ? ` · ${c.tenant_label}` : '') %> · <span dir="ltr"><%= __(c.start_date) %></span> <%= __("إلى") %> <span dir="ltr"><%= __(c.end_date) %></span></span>
+          <span class="badge badge--stage-<%= __(c.status) %>"><%= __(stageLabels[c.status]) %></span>
         </a>
       </li>
     <% }) %>
   </ul>
-  <% if (list.total > list.rows.length) { %><p><a href="<%= more %>">عرض كل العقود</a></p><% } %>
+  <% if (list.total > list.rows.length) { %><p><a href="<%= __(more) %>"><%= __("عرض كل العقود") %></a></p><% } %>
 <% } else { %>
-  <p class="muted">لا توجد عقود بعد.</p>
+  <p class="muted"><%= __("لا توجد عقود بعد.") %></p>
 <% } %>

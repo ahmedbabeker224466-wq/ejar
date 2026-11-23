@@ -6,6 +6,7 @@
 // keep the two copies apart. /en/<any other path> goes back to the Arabic page.
 
 const i18n = require('../services/i18n');
+const tr = require('../services/tr');
 
 // English pages that also accept a form post (the contact form).
 const POSTABLE = Object.freeze(['/contact']);
@@ -27,6 +28,7 @@ function locale() {
     res.locals.lang = lang;
     res.locals.dir = lang === 'en' ? 'ltr' : 'rtl';
     res.locals.t = (key, vars) => i18n.translate(lang, key, vars);
+    res.locals.__ = (text, vars) => tr.translate(lang, text, vars);
     res.locals.L = (p) => i18n.localizedPath(lang, p);
     res.locals.currentPath = path;
     res.locals.localized = !req.isCustomHost && i18n.LOCALIZED_PATHS.includes(path);

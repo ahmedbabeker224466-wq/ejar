@@ -4,25 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <% const pageTitle = locals.metaTitle || title; const brand = t('brand'); const pageDescription = locals.metaDescription || t('meta.homeDescription'); %>
-  <title><%= pageTitle %><%= pageTitle.indexOf(brand) === 0 ? '' : ' | ' + brand %></title>
-  <meta name="description" content="<%= pageDescription %>">
-  <meta name="robots" content="<%= locals.indexable ? 'index,follow' : 'noindex,nofollow' %>">
+  <title><%= __(pageTitle) %><%= __(pageTitle.indexOf(brand) === 0 ? '' : ' | ' + brand) %></title>
+  <meta name="description" content="<%= __(pageDescription) %>">
+  <meta name="robots" content="<%= __(locals.indexable ? 'index,follow' : 'noindex,nofollow') %>">
   <meta name="theme-color" content="#1b6af5">
-  <% if (locals.canonicalUrl) { %><link rel="canonical" href="<%= canonicalUrl %>"><% } %>
+  <% if (locals.canonicalUrl) { %><link rel="canonical" href="<%= __(canonicalUrl) %>"><% } %>
   <% if (locals.hreflang && locals.canonicalUrl) { const origin = canonicalUrl.replace(/^(https?:\/\/[^\/]+).*$/, '$1'); %>
-  <link rel="alternate" hreflang="ar" href="<%= origin + hreflang.ar %>">
-  <link rel="alternate" hreflang="en" href="<%= origin + hreflang.en %>">
-  <link rel="alternate" hreflang="x-default" href="<%= origin + hreflang.ar %>">
+  <link rel="alternate" hreflang="ar" href="<%= __(origin + hreflang.ar) %>">
+  <link rel="alternate" hreflang="en" href="<%= __(origin + hreflang.en) %>">
+  <link rel="alternate" hreflang="x-default" href="<%= __(origin + hreflang.ar) %>">
   <% } %>
-  <meta property="og:type" content="<%= locals.ogType || 'website' %>">
-  <meta property="og:locale" content="<%= lang === 'en' ? 'en_US' : 'ar_SA' %>">
-  <meta property="og:site_name" content="<%= brand %>">
-  <meta property="og:title" content="<%= pageTitle %>">
-  <meta property="og:description" content="<%= pageDescription %>">
-  <% if (locals.canonicalUrl) { %><meta property="og:url" content="<%= canonicalUrl %>"><% } %>
-  <% if (locals.ogImage) { %><meta property="og:image" content="<%= ogImage %>"><% } %>
-  <meta name="twitter:card" content="<%= locals.ogImage ? 'summary_large_image' : 'summary' %>">
-  <% if (locals.rssUrl) { %><link rel="alternate" type="application/rss+xml" title="<%= t('footer.blog') %>" href="<%= rssUrl %>"><% } %>
+  <meta property="og:type" content="<%= __(locals.ogType || 'website') %>">
+  <meta property="og:locale" content="<%= __(lang === 'en' ? 'en_US' : 'ar_SA') %>">
+  <meta property="og:site_name" content="<%= __(brand) %>">
+  <meta property="og:title" content="<%= __(pageTitle) %>">
+  <meta property="og:description" content="<%= __(pageDescription) %>">
+  <% if (locals.canonicalUrl) { %><meta property="og:url" content="<%= __(canonicalUrl) %>"><% } %>
+  <% if (locals.ogImage) { %><meta property="og:image" content="<%= __(ogImage) %>"><% } %>
+  <meta name="twitter:card" content="<%= __(locals.ogImage ? 'summary_large_image' : 'summary') %>">
+  <% if (locals.rssUrl) { %><link rel="alternate" type="application/rss+xml" title="<%= __(t('footer.blog')) %>" href="<%= __(rssUrl) %>"><% } %>
   <% if (locals.jsonLd) { %><script type="application/ld+json"><%- jsonLd %></script><% } %>
   <link rel="icon" href="<%= assetUrl('/favicon.svg') %>" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -1,69 +1,69 @@
 <div class="page-head">
-  <h1>الدفعات المتأخرة</h1>
-  <a href="<%= csvUrl %>" class="btn btn--secondary btn--small">تصدير CSV</a>
+  <h1><%= __("الدفعات المتأخرة") %></h1>
+  <a href="<%= __(csvUrl) %>" class="btn btn--secondary btn--small"><%= __("تصدير") %> CSV</a>
 </div>
 
 <form class="card filter-bar" method="get" action="/office/payments" role="search">
   <div class="field">
-    <label for="q">بحث باسم الوحدة</label>
-    <input id="q" name="q" class="input" type="search" maxlength="60" value="<%= filters.q %>">
+    <label for="q"><%= __("بحث باسم الوحدة") %></label>
+    <input id="q" name="q" class="input" type="search" maxlength="60" value="<%= __(filters.q) %>">
   </div>
   <div class="filter-grid">
     <div class="field">
-      <label for="landlord">المالك</label>
+      <label for="landlord"><%= __("المالك") %></label>
       <select id="landlord" name="landlord" class="select">
-        <option value="">الكل</option>
-        <% landlords.forEach(function (l) { %><option value="<%= l.id %>" <%= filters.landlordId === Number(l.id) ? 'selected' : '' %>><%= l.label %></option><% }) %>
+        <option value=""><%= __("الكل") %></option>
+        <% landlords.forEach(function (l) { %><option value="<%= __(l.id) %>" <%= __(filters.landlordId === Number(l.id) ? 'selected' : '') %>><%= __(l.label) %></option><% }) %>
       </select>
     </div>
     <div class="field">
-      <label for="days">تأخر لا يقل عن</label>
+      <label for="days"><%= __("تأخر لا يقل عن") %></label>
       <select id="days" name="days" class="select">
-        <option value="">أي مدة</option>
-        <% buckets.forEach(function (d) { %><option value="<%= d %>" <%= filters.minDays === d ? 'selected' : '' %>><%= d %> يوم</option><% }) %>
+        <option value=""><%= __("أي مدة") %></option>
+        <% buckets.forEach(function (d) { %><option value="<%= __(d) %>" <%= __(filters.minDays === d ? 'selected' : '') %>><%= __(d) %> <%= __("يوم") %></option><% }) %>
       </select>
     </div>
     <div class="field">
-      <label for="from">استحقاق من</label>
-      <input id="from" name="from" class="input" type="date" value="<%= filters.from %>">
+      <label for="from"><%= __("استحقاق من") %></label>
+      <input id="from" name="from" class="input" type="date" value="<%= __(filters.from) %>">
     </div>
     <div class="field">
-      <label for="to">استحقاق إلى</label>
-      <input id="to" name="to" class="input" type="date" value="<%= filters.to %>">
+      <label for="to"><%= __("استحقاق إلى") %></label>
+      <input id="to" name="to" class="input" type="date" value="<%= __(filters.to) %>">
     </div>
   </div>
-  <button type="submit" class="btn btn--secondary btn--block">عرض</button>
+  <button type="submit" class="btn btn--secondary btn--block"><%= __("عرض") %></button>
 </form>
 
-<section class="stats" aria-label="ملخص المتأخرات">
-  <div class="stat card"><p class="stat__value"><%= total %></p><p class="stat__label">دفعات متأخرة</p></div>
-  <div class="stat card"><p class="stat__value"><%= fmt(remainingHalalas) %></p><p class="stat__label">المتبقي (ريال)</p></div>
+<section class="stats" aria-label="<%= __("ملخص المتأخرات") %>">
+  <div class="stat card"><p class="stat__value"><%= __(total) %></p><p class="stat__label"><%= __("دفعات متأخرة") %></p></div>
+  <div class="stat card"><p class="stat__value"><%= __(fmt(remainingHalalas)) %></p><p class="stat__label"><%= __("المتبقي (ريال)") %></p></div>
 </section>
 
 <% if (rows.length === 0) { %>
   <section class="card empty-card">
-    <p class="lead"><%= filtered ? 'لا توجد دفعات متأخرة تطابق البحث.' : 'لا توجد دفعات متأخرة. ممتاز!' %></p>
-    <% if (filtered) { %><a href="/office/payments" class="btn btn--secondary">عرض الكل</a><% } %>
+    <p class="lead"><%= __(filtered ? __('لا توجد دفعات متأخرة تطابق البحث.') : __('لا توجد دفعات متأخرة. ممتاز!')) %></p>
+    <% if (filtered) { %><a href="/office/payments" class="btn btn--secondary"><%= __("عرض الكل") %></a><% } %>
   </section>
 <% } else { %>
   <ul class="item-list">
     <% rows.forEach(function (r) { %>
       <li class="item">
         <div class="item__title">
-          <a href="/office/contracts/<%= r.contract_id %>#payments"><%= r.unit_label || 'وحدة' %></a>
-          <span class="badge badge--pay-late">متأخرة <%= r.daysOverdue %> يوم</span>
-          <% if (r.status === 'tenant_reported') { %><span class="badge badge--pay-tenant_reported">أبلغ المستأجر بالدفع</span><% } %>
+          <a href="/office/contracts/<%= __(r.contract_id) %>#payments"><%= __(r.unit_label || __('وحدة')) %></a>
+          <span class="badge badge--pay-late"><%= __("متأخرة") %> <%= __(r.daysOverdue) %> <%= __("يوم") %></span>
+          <% if (r.status === 'tenant_reported') { %><span class="badge badge--pay-tenant_reported"><%= __("أبلغ المستأجر بالدفع") %></span><% } %>
         </div>
-        <p class="item__meta">المالك: <%= r.landlord_label || '—' %> · الاستحقاق <span dir="ltr"><%= String(r.due_date).slice(0, 10) %></span></p>
-        <p class="item__meta">المبلغ <%= fmt(r.totalHalalas) %> · المدفوع <%= fmt(r.paidHalalas) %> · <strong>المتبقي <%= fmt(r.remainingHalalas) %> ريال</strong></p>
+        <p class="item__meta"><%= __("المالك:") %> <%= __(r.landlord_label || '—') %> · <%= __("الاستحقاق") %> <span dir="ltr"><%= __(String(r.due_date).slice(0, 10)) %></span></p>
+        <p class="item__meta"><%= __("المبلغ") %> <%= __(fmt(r.totalHalalas)) %> · <%= __("المدفوع") %> <%= __(fmt(r.paidHalalas)) %> · <strong><%= __("المتبقي") %> <%= __(fmt(r.remainingHalalas)) %> <%= __("ريال") %></strong></p>
       </li>
     <% }) %>
   </ul>
   <% if (pages > 1) { %>
-    <nav class="pager" aria-label="الصفحات">
-      <% if (prevUrl) { %><a class="btn btn--secondary" href="<%= prevUrl %>">السابق</a><% } else { %><span></span><% } %>
-      <span>صفحة <%= page %> من <%= pages %></span>
-      <% if (nextUrl) { %><a class="btn btn--secondary" href="<%= nextUrl %>">التالي</a><% } else { %><span></span><% } %>
+    <nav class="pager" aria-label="<%= __("الصفحات") %>">
+      <% if (prevUrl) { %><a class="btn btn--secondary" href="<%= __(prevUrl) %>"><%= __("السابق") %></a><% } else { %><span></span><% } %>
+      <span><%= __("صفحة") %> <%= __(page) %> <%= __("من") %> <%= __(pages) %></span>
+      <% if (nextUrl) { %><a class="btn btn--secondary" href="<%= __(nextUrl) %>"><%= __("التالي") %></a><% } else { %><span></span><% } %>
     </nav>
   <% } %>
 <% } %>

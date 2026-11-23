@@ -1,108 +1,108 @@
-<p class="back-link"><a href="/admin/offices">→ المكاتب</a></p>
-<div class="page-head"><h1><%= office.name %></h1></div>
-<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
-<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<p class="back-link"><a href="/admin/offices"><%= dir === 'rtl' ? '→' : '←' %> <%= __("المكاتب") %></a></p>
+<div class="page-head"><h1><%= __(office.name) %></h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 
 <section class="card detail-card">
-  <h2>البيانات</h2>
+  <h2><%= __("البيانات") %></h2>
   <dl class="details">
-    <dt>المدينة</dt><dd><%= office.city %></dd>
-    <dt>الجوال</dt><dd dir="ltr"><%= office.phone %></dd>
-    <dt>الحالة</dt><dd><%= { trial: 'تجربة', active: 'فعّال', past_due: 'غير مسدَّد', suspended: 'موقوف' }[office.status] %><%= adminSuspended ? ' (موقوف من الإدارة)' : '' %></dd>
-    <dt>الباقة</dt><dd><%= office.plan_name || '—' %></dd>
-    <dt>نهاية التجربة</dt><dd dir="ltr"><%= stamp(office.trial_ends_at) %></dd>
-    <dt>نهاية الاشتراك</dt><dd dir="ltr"><%= stamp(office.subscription_ends_at) %></dd>
-    <dt>نشر الإعلانات</dt><dd><%= Number(office.listings_banned) ? 'موقوف من الإدارة' : 'مسموح' %></dd>
-    <dt>أعضاء الفريق</dt><dd><%= members.active %> فعّال من <%= members.total %></dd>
-    <dt>آخر نشاط</dt><dd dir="ltr"><%= stamp(lastSeen) %></dd>
-    <dt>تاريخ التسجيل</dt><dd dir="ltr"><%= stamp(office.created_at) %></dd>
+    <dt><%= __("المدينة") %></dt><dd><%= __(office.city) %></dd>
+    <dt><%= __("الجوال") %></dt><dd dir="ltr"><%= __(office.phone) %></dd>
+    <dt><%= __("الحالة") %></dt><dd><%= __({ trial: __('تجربة'), active: __('فعّال'), past_due: __('غير مسدَّد'), suspended: __('موقوف') }[office.status]) %><%= __(adminSuspended ? __(' (موقوف من الإدارة)') : '') %></dd>
+    <dt><%= __("الباقة") %></dt><dd><%= __(office.plan_name || '—') %></dd>
+    <dt><%= __("نهاية التجربة") %></dt><dd dir="ltr"><%= __(stamp(office.trial_ends_at)) %></dd>
+    <dt><%= __("نهاية الاشتراك") %></dt><dd dir="ltr"><%= __(stamp(office.subscription_ends_at)) %></dd>
+    <dt><%= __("نشر الإعلانات") %></dt><dd><%= __(Number(office.listings_banned) ? __('موقوف من الإدارة') : __('مسموح')) %></dd>
+    <dt><%= __("أعضاء الفريق") %></dt><dd><%= __(members.active) %> <%= __("فعّال من") %> <%= __(members.total) %></dd>
+    <dt><%= __("آخر نشاط") %></dt><dd dir="ltr"><%= __(stamp(lastSeen)) %></dd>
+    <dt><%= __("تاريخ التسجيل") %></dt><dd dir="ltr"><%= __(stamp(office.created_at)) %></dd>
   </dl>
-  <h3>الاستخدام</h3>
+  <h3><%= __("الاستخدام") %></h3>
   <ul class="usage-list">
     <% usage.forEach(function (u) { %>
-      <li class="usage"><div class="usage__head"><span><%= u.label %></span><strong><%= u.used %><%= u.limit === null ? ' (بلا حد)' : ' من ' + u.limit %></strong></div></li>
+      <li class="usage"><div class="usage__head"><span><%= __(u.label) %></span><strong><%= __(u.used) %><%= __(u.limit === null ? __(' (بلا حد)') : __(' من ') + u.limit) %></strong></div></li>
     <% }) %>
   </ul>
-  <p class="muted">لا تعرض هذه الصفحة بيانات الملاك أو المستأجرين أو العقود.</p>
+  <p class="muted"><%= __("لا تعرض هذه الصفحة بيانات الملاك أو المستأجرين أو العقود.") %></p>
 </section>
 
 <section class="card detail-card">
-  <h2>إجراءات (كل إجراء يحتاج سبباً ويُسجَّل)</h2>
+  <h2><%= __("إجراءات (كل إجراء يحتاج سبباً ويُسجَّل)") %></h2>
   <% if (office.status === 'trial') { %>
-    <form method="post" action="/admin/offices/<%= office.id %>/extend-trial" novalidate>
-      <h3>تمديد التجربة</h3>
+    <form method="post" action="/admin/offices/<%= __(office.id) %>/extend-trial" novalidate>
+      <h3><%= __("تمديد التجربة") %></h3>
       <div class="form-grid">
-        <div class="field"><label for="days">عدد الأيام</label><input id="days" name="days" class="input" inputmode="numeric" maxlength="2" value="<%= values.days || '' %>"></div>
-        <div class="field"><label for="reason-trial">السبب</label><input id="reason-trial" name="reason" class="input" maxlength="200" required></div>
+        <div class="field"><label for="days"><%= __("عدد الأيام") %></label><input id="days" name="days" class="input" inputmode="numeric" maxlength="2" value="<%= __(values.days || '') %>"></div>
+        <div class="field"><label for="reason-trial"><%= __("السبب") %></label><input id="reason-trial" name="reason" class="input" maxlength="200" required></div>
       </div>
-      <button type="submit" class="btn btn--primary">تمديد</button>
+      <button type="submit" class="btn btn--primary"><%= __("تمديد") %></button>
     </form>
   <% } %>
-  <form method="post" action="/admin/offices/<%= office.id %>/plan" novalidate>
-    <h3>تغيير الباقة</h3>
+  <form method="post" action="/admin/offices/<%= __(office.id) %>/plan" novalidate>
+    <h3><%= __("تغيير الباقة") %></h3>
     <div class="form-grid">
-      <div class="field"><label for="plan_id">الباقة</label>
+      <div class="field"><label for="plan_id"><%= __("الباقة") %></label>
         <select id="plan_id" name="plan_id" class="select">
-          <% allPlans.forEach(function (p) { %><option value="<%= p.id %>" <%= Number(p.id) === Number(office.plan_id) ? 'selected' : '' %>><%= p.name_ar %></option><% }) %>
+          <% allPlans.forEach(function (p) { %><option value="<%= __(p.id) %>" <%= __(Number(p.id) === Number(office.plan_id) ? 'selected' : '') %>><%= __(p.name_ar) %></option><% }) %>
         </select></div>
-      <div class="field"><label for="reason-plan">السبب</label><input id="reason-plan" name="reason" class="input" maxlength="200" required></div>
+      <div class="field"><label for="reason-plan"><%= __("السبب") %></label><input id="reason-plan" name="reason" class="input" maxlength="200" required></div>
     </div>
-    <button type="submit" class="btn btn--primary">تغيير</button>
+    <button type="submit" class="btn btn--primary"><%= __("تغيير") %></button>
   </form>
   <% if (office.status === 'suspended') { %>
-    <form method="post" action="/admin/offices/<%= office.id %>/unsuspend" novalidate>
-      <h3>إعادة التشغيل</h3>
-      <div class="field"><label for="reason-un">السبب</label><input id="reason-un" name="reason" class="input" maxlength="200" required></div>
-      <button type="submit" class="btn btn--primary">إعادة تشغيل المكتب</button>
+    <form method="post" action="/admin/offices/<%= __(office.id) %>/unsuspend" novalidate>
+      <h3><%= __("إعادة التشغيل") %></h3>
+      <div class="field"><label for="reason-un"><%= __("السبب") %></label><input id="reason-un" name="reason" class="input" maxlength="200" required></div>
+      <button type="submit" class="btn btn--primary"><%= __("إعادة تشغيل المكتب") %></button>
     </form>
   <% } else { %>
-    <form method="post" action="/admin/offices/<%= office.id %>/suspend" novalidate>
-      <h3>إيقاف المكتب</h3>
-      <div class="field"><label for="reason-su">السبب</label><input id="reason-su" name="reason" class="input" maxlength="200" required></div>
-      <button type="submit" class="btn btn--danger">إيقاف المكتب</button>
+    <form method="post" action="/admin/offices/<%= __(office.id) %>/suspend" novalidate>
+      <h3><%= __("إيقاف المكتب") %></h3>
+      <div class="field"><label for="reason-su"><%= __("السبب") %></label><input id="reason-su" name="reason" class="input" maxlength="200" required></div>
+      <button type="submit" class="btn btn--danger"><%= __("إيقاف المكتب") %></button>
     </form>
   <% } %>
-  <form method="post" action="/admin/offices/<%= office.id %>/listings-ban" novalidate>
-    <h3><%= Number(office.listings_banned) ? 'إعادة حق نشر الإعلانات' : 'إيقاف نشر الإعلانات' %></h3>
-    <input type="hidden" name="ban" value="<%= Number(office.listings_banned) ? '0' : '1' %>">
-    <div class="field"><label for="reason-ban">السبب</label><input id="reason-ban" name="reason" class="input" maxlength="200" required></div>
-    <button type="submit" class="btn <%= Number(office.listings_banned) ? 'btn--primary' : 'btn--danger' %>"><%= Number(office.listings_banned) ? 'إعادة الحق' : 'إيقاف النشر وإخفاء الإعلانات' %></button>
+  <form method="post" action="/admin/offices/<%= __(office.id) %>/listings-ban" novalidate>
+    <h3><%= __(Number(office.listings_banned) ? __('إعادة حق نشر الإعلانات') : __('إيقاف نشر الإعلانات')) %></h3>
+    <input type="hidden" name="ban" value="<%= __(Number(office.listings_banned) ? '0' : '1') %>">
+    <div class="field"><label for="reason-ban"><%= __("السبب") %></label><input id="reason-ban" name="reason" class="input" maxlength="200" required></div>
+    <button type="submit" class="btn <%= __(Number(office.listings_banned) ? 'btn--primary' : 'btn--danger') %>"><%= __(Number(office.listings_banned) ? __('إعادة الحق') : __('إيقاف النشر وإخفاء الإعلانات')) %></button>
   </form>
 </section>
 
 <section class="card detail-card">
-  <h2>ملاحظات داخلية</h2>
-  <form method="post" action="/admin/offices/<%= office.id %>/note" novalidate>
-    <div class="field"><label for="note">ملاحظة جديدة</label><textarea id="note" name="body" class="textarea" rows="3" maxlength="500"></textarea></div>
-    <button type="submit" class="btn btn--secondary">إضافة</button>
+  <h2><%= __("ملاحظات داخلية") %></h2>
+  <form method="post" action="/admin/offices/<%= __(office.id) %>/note" novalidate>
+    <div class="field"><label for="note"><%= __("ملاحظة جديدة") %></label><textarea id="note" name="body" class="textarea" rows="3" maxlength="500"></textarea></div>
+    <button type="submit" class="btn btn--secondary"><%= __("إضافة") %></button>
   </form>
   <ul class="item-list">
-    <% notes.forEach(function (n) { %><li class="item"><p class="pre-line"><%= n.body %></p><div class="item__meta"><span dir="ltr"><%= stamp(n.created_at) %></span> · <span dir="ltr"><%= n.author_phone || '' %></span></div></li><% }) %>
+    <% notes.forEach(function (n) { %><li class="item"><p class="pre-line"><%= __(n.body) %></p><div class="item__meta"><span dir="ltr"><%= __(stamp(n.created_at)) %></span> · <span dir="ltr"><%= __(n.author_phone || '') %></span></div></li><% }) %>
   </ul>
 </section>
 
 <section class="card detail-card">
-  <h2>الاشتراكات</h2>
+  <h2><%= __("الاشتراكات") %></h2>
   <ul class="item-list">
     <% subscriptions.forEach(function (s) { %>
-      <li class="item"><div class="item__title"><strong><%= s.plan_name || '—' %></strong> <span class="badge badge--role"><%= s.status %></span></div>
-        <div class="item__meta"><span dir="ltr"><%= stamp(s.period_start) %></span> → <span dir="ltr"><%= stamp(s.period_end) %></span> · <%= s.billing_interval === 'yearly' ? 'سنوي' : 'شهري' %><%= s.ended_reason ? ' · ' + s.ended_reason : '' %></div></li>
+      <li class="item"><div class="item__title"><strong><%= __(s.plan_name || '—') %></strong> <span class="badge badge--role"><%= __(s.status) %></span></div>
+        <div class="item__meta"><span dir="ltr"><%= __(stamp(s.period_start)) %></span> <%= dir === 'rtl' ? '→' : '←' %> <span dir="ltr"><%= __(stamp(s.period_end)) %></span> · <%= __(s.billing_interval === 'yearly' ? __('سنوي') : __('شهري')) %><%= __(s.ended_reason ? ' · ' + s.ended_reason : '') %></div></li>
     <% }) %>
   </ul>
-  <h3>الطلبات</h3>
+  <h3><%= __("الطلبات") %></h3>
   <ul class="item-list">
     <% orders.forEach(function (o) { %>
-      <li class="item"><div class="item__title">طلب <%= o.id %> · <%= o.plan_code %> · <%= fmtDec(o.total) %> ريال <span class="badge badge--role"><%= o.status %></span><%= Number(o.suspicious) ? ' ⚠' : '' %></div>
-        <div class="item__meta"><%= o.method === 'moyasar' ? 'بطاقة' : 'حوالة' %> · <span dir="ltr"><%= stamp(o.created_at) %></span></div></li>
+      <li class="item"><div class="item__title"><%= __("طلب") %> <%= __(o.id) %> · <%= __(o.plan_code) %> · <%= __(fmtDec(o.total)) %> <%= __("ريال") %> <span class="badge badge--role"><%= __(o.status) %></span><%= __(Number(o.suspicious) ? ' ⚠' : '') %></div>
+        <div class="item__meta"><%= __(o.method === 'moyasar' ? __('بطاقة') : __('حوالة')) %> · <span dir="ltr"><%= __(stamp(o.created_at)) %></span></div></li>
     <% }) %>
   </ul>
-  <% if (!orders.length) { %><p class="empty-state">لا توجد طلبات.</p><% } %>
+  <% if (!orders.length) { %><p class="empty-state"><%= __("لا توجد طلبات.") %></p><% } %>
 </section>
 
 <section class="card detail-card">
-  <h2>آخر إجراءات الإدارة على هذا المكتب</h2>
+  <h2><%= __("آخر إجراءات الإدارة على هذا المكتب") %></h2>
   <ul class="item-list">
-    <% audit.forEach(function (a) { %><li class="item"><span dir="ltr"><%= a.action %></span> · <span dir="ltr"><%= stamp(a.created_at) %></span></li><% }) %>
+    <% audit.forEach(function (a) { %><li class="item"><span dir="ltr"><%= __(a.action) %></span> · <span dir="ltr"><%= __(stamp(a.created_at)) %></span></li><% }) %>
   </ul>
-  <% if (!audit.length) { %><p class="empty-state">لا توجد إجراءات بعد.</p><% } %>
+  <% if (!audit.length) { %><p class="empty-state"><%= __("لا توجد إجراءات بعد.") %></p><% } %>
 </section>

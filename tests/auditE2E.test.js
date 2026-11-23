@@ -295,8 +295,8 @@ test('mobile-first: every layout has the viewport tag and the stylesheet sets no
     if (layout === 'print.ejs') continue;
     assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1/, layout);
     // The marketing layout takes its direction from the page language (RTL unless the page is English).
-    if (layout === 'site.ejs') assert.match(html, /<html lang="<%= lang %>" dir="<%= dir %>">/, layout);
-    else assert.match(html, /<html[^>]*dir="rtl"/, `${layout} is RTL`);
+    // Every layout follows the page language: RTL for Arabic, LTR for English (Nov 2026).
+    assert.match(html, /<html lang="<%= lang %>" dir="<%= dir %>">/, layout);
   }
   const css = fs.readFileSync(path.join(ROOT, 'public', 'css', 'main.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const offenders = [];

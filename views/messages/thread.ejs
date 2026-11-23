@@ -1,47 +1,47 @@
 <%- include('../partials/area-nav') %>
-<p class="back-link"><a href="<%= listUrl %>">→ كل المحادثات</a></p>
-<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
-<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<p class="back-link"><a href="<%= __(listUrl) %>"><%= dir === 'rtl' ? '→' : '←' %> <%= __("كل المحادثات") %></a></p>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 
 <section class="card detail-card">
   <div class="page-head">
-    <h1><%= contract.unit_label || 'عقد' %></h1>
+    <h1><%= __(contract.unit_label || __('عقد')) %></h1>
     <% if (kind === 'office') { %>
-      <form method="post" action="<%= base %>/mute">
-        <input type="hidden" name="muted" value="<%= muted ? 0 : 1 %>">
-        <button type="submit" class="btn btn--secondary btn--small"><%= muted ? 'إلغاء الكتم' : 'كتم المحادثة' %></button>
+      <form method="post" action="<%= __(base) %>/mute">
+        <input type="hidden" name="muted" value="<%= __(muted ? 0 : 1) %>">
+        <button type="submit" class="btn btn--secondary btn--small"><%= __(muted ? __('إلغاء الكتم') : __('كتم المحادثة')) %></button>
       </form>
     <% } %>
   </div>
-  <p class="muted">محادثة بين المكتب والمالك والمستأجر. نص فقط (حتى <%= maxLength %> حرف). لا تكتب أرقام هوية أو حسابات.</p>
-  <% if (kind === 'office' && muted) { %><p class="flash flash--info">المحادثة مكتومة: لا تصل إشعاراتها لفريق المكتب.</p><% } %>
+  <p class="muted"><%= __("محادثة بين المكتب والمالك والمستأجر. نص فقط (حتى") %> <%= __(maxLength) %> <%= __("حرف). لا تكتب أرقام هوية أو حسابات.") %></p>
+  <% if (kind === 'office' && muted) { %><p class="flash flash--info"><%= __("المحادثة مكتومة: لا تصل إشعاراتها لفريق المكتب.") %></p><% } %>
 
   <% if (messages.length) { %>
     <ul class="thread">
       <% messages.forEach(function (m) { %>
-        <li class="thread__item<%= m.mine ? ' thread__item--mine' : '' %>">
-          <p class="thread__head"><strong><%= m.author %><%= m.mine ? ' (أنت)' : '' %></strong> <span class="muted" dir="ltr"><%= m.at %></span></p>
+        <li class="thread__item<%= __(m.mine ? ' thread__item--mine' : '') %>">
+          <p class="thread__head"><strong><%= __(m.author) %><%= __(m.mine ? __(' (أنت)') : '') %></strong> <span class="muted" dir="ltr"><%= __(m.at) %></span></p>
           <% if (m.deleted) { %>
-            <p class="muted">تم حذف هذه الرسالة.</p>
+            <p class="muted"><%= __("تم حذف هذه الرسالة.") %></p>
           <% } else { %>
-            <p class="pre-line"><%= m.body %></p>
+            <p class="pre-line"><%= __(m.body) %></p>
             <% if (m.canDelete) { %>
-              <form method="post" action="<%= base %>/<%= m.id %>/delete"><button type="submit" class="btn btn--secondary btn--small">حذف (خلال 5 دقائق)</button></form>
+              <form method="post" action="<%= __(base) %>/<%= __(m.id) %>/delete"><button type="submit" class="btn btn--secondary btn--small"><%= __("حذف (خلال 5 دقائق)") %></button></form>
             <% } %>
           <% } %>
         </li>
       <% }) %>
     </ul>
   <% } else { %>
-    <p class="empty-state">لا توجد رسائل بعد. اكتب أول رسالة.</p>
+    <p class="empty-state"><%= __("لا توجد رسائل بعد. اكتب أول رسالة.") %></p>
   <% } %>
   <span id="end"></span>
 
-  <form method="post" action="<%= base %>" novalidate>
+  <form method="post" action="<%= __(base) %>" novalidate>
     <div class="field">
-      <label for="body">رسالتك</label>
-      <textarea id="body" name="body" class="textarea" rows="3" maxlength="<%= maxLength %>" required><%= draft %></textarea>
+      <label for="body"><%= __("رسالتك") %></label>
+      <textarea id="body" name="body" class="textarea" rows="3" maxlength="<%= __(maxLength) %>" required><%= __(draft) %></textarea>
     </div>
-    <button type="submit" class="btn btn--primary btn--block">إرسال</button>
+    <button type="submit" class="btn btn--primary btn--block"><%= __("إرسال") %></button>
   </form>
 </section>

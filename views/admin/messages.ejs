@@ -1,21 +1,21 @@
-<div class="page-head"><h1>رسائل التواصل</h1></div>
-<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
-<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<div class="page-head"><h1><%= __("رسائل التواصل") %></h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 <ul class="item-list">
   <% rows.forEach(function (m) { %>
     <li class="item">
-      <div class="item__title"><strong><%= m.name %></strong> <span class="badge badge--bill-<%= m.handled_at ? 'success' : 'danger' %>"><%= m.handled_at ? 'تمت المعالجة' : 'جديدة' %></span></div>
-      <div class="item__meta"><% if (m.phone) { %><span dir="ltr"><%= m.phone %></span> <% } %><% if (m.email) { %><span dir="ltr"><%= m.email %></span> <% } %>· <span dir="ltr"><%= stamp(m.created_at) %></span></div>
-      <p class="pre-line"><%= m.message %></p>
+      <div class="item__title"><strong><%= __(m.name) %></strong> <span class="badge badge--bill-<%= __(m.handled_at ? 'success' : 'danger') %>"><%= __(m.handled_at ? __('تمت المعالجة') : __('جديدة')) %></span></div>
+      <div class="item__meta"><% if (m.phone) { %><span dir="ltr"><%= __(m.phone) %></span> <% } %><% if (m.email) { %><span dir="ltr"><%= __(m.email) %></span> <% } %>· <span dir="ltr"><%= __(stamp(m.created_at)) %></span></div>
+      <p class="pre-line"><%= __(m.message) %></p>
       <% if (!m.handled_at) { %>
-        <form method="post" action="/admin/messages/<%= m.id %>/handled" class="inline-form" novalidate>
-          <label class="visually-hidden" for="mh-<%= m.id %>">السبب</label>
-          <input id="mh-<%= m.id %>" name="reason" class="input" maxlength="200" placeholder="كيف عولجت الرسالة؟" required>
-          <button type="submit" class="btn btn--secondary btn--small">تمت المعالجة</button>
+        <form method="post" action="/admin/messages/<%= __(m.id) %>/handled" class="inline-form" novalidate>
+          <label class="visually-hidden" for="mh-<%= __(m.id) %>"><%= __("السبب") %></label>
+          <input id="mh-<%= __(m.id) %>" name="reason" class="input" maxlength="200" placeholder="<%= __("كيف عولجت الرسالة؟") %>" required>
+          <button type="submit" class="btn btn--secondary btn--small"><%= __("تمت المعالجة") %></button>
         </form>
       <% } %>
     </li>
   <% }) %>
 </ul>
-<% if (!rows.length) { %><p class="empty-state">لا توجد رسائل.</p><% } %>
-<p class="muted">بيانات التواصل هنا من الزائر نفسه لأجل الرد عليه فقط.</p>
+<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد رسائل.") %></p><% } %>
+<p class="muted"><%= __("بيانات التواصل هنا من الزائر نفسه لأجل الرد عليه فقط.") %></p>

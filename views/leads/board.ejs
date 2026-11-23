@@ -1,30 +1,30 @@
 <div class="page-head ac-head">
-  <div><h1>العملاء المحتملون</h1><p class="muted">من أول استفسار حتى توثيق العقد في منصة إيجار.</p></div>
-  <div class="ac-actions"><a class="btn btn--primary" href="/office/leads/new">+ عميل جديد</a></div>
+  <div><h1><%= __("العملاء المحتملون") %></h1><p class="muted"><%= __("من أول استفسار حتى توثيق العقد في منصة إيجار.") %></p></div>
+  <div class="ac-actions"><a class="btn btn--primary" href="/office/leads/new">+ <%= __("عميل جديد") %></a></div>
 </div>
-<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
 <p class="button-row ld-filters">
-  <a class="btn btn--secondary btn--small" href="/office/leads<%= mine ? '' : '?mine=1' %>"><%= mine ? 'كل العملاء' : 'عملائي فقط' %></a>
-  <a class="btn btn--secondary btn--small" href="/office/leads<%= showLost ? '' : '?lost=1' %>"><%= showLost ? 'إخفاء غير المكتملة' : `غير المكتملة (${lostCount})` %></a>
+  <a class="btn btn--secondary btn--small" href="/office/leads<%= __(mine ? '' : '?mine=1') %>"><%= __(mine ? __('كل العملاء') : __('عملائي فقط')) %></a>
+  <a class="btn btn--secondary btn--small" href="/office/leads<%= __(showLost ? '' : '?lost=1') %>"><%= __(showLost ? __('إخفاء غير المكتملة') : `غير المكتملة (${lostCount})`) %></a>
 </p>
 <div class="ld-board">
   <% shownStages.forEach(function (stage) { const items = columns[stage]; %>
-    <section class="ld-col ld-col--<%= stage %>" aria-labelledby="col-<%= stage %>">
-      <h2 id="col-<%= stage %>"><%= stages[stage] %> <span><%= items.length %></span></h2>
-      <% if (items.length === 0) { %><p class="ld-empty">لا يوجد</p><% } %>
+    <section class="ld-col ld-col--<%= __(stage) %>" aria-labelledby="col-<%= __(stage) %>">
+      <h2 id="col-<%= __(stage) %>"><%= __(stages[stage]) %> <span><%= __(items.length) %></span></h2>
+      <% if (items.length === 0) { %><p class="ld-empty"><%= __("لا يوجد") %></p><% } %>
       <% items.forEach(function (l) { %>
         <article class="ld-card">
-          <a class="ld-card__title" href="/office/leads/<%= l.id %>"><%= l.label %></a>
-          <p class="ld-card__meta"><%= l.sourceLabel %><% if (l.contactLabel) { %> · <%= l.contactLabel %><% } %></p>
+          <a class="ld-card__title" href="/office/leads/<%= __(l.id) %>"><%= __(l.label) %></a>
+          <p class="ld-card__meta"><%= __(l.sourceLabel) %><% if (l.contactLabel) { %> · <%= __(l.contactLabel) %><% } %></p>
           <div class="ld-card__row">
-            <% if (l.next) { %><span class="<%= l.due ? 'ld-due' : 'muted' %>">المتابعة <span dir="ltr"><%= l.next %></span></span><% } else { %><span class="muted"><%= l.assigneeLabel || 'بلا مسؤول' %></span><% } %>
-            <% if (l.budget) { %><strong class="ac-num"><%= fmt(l.budget) %></strong><% } %>
+            <% if (l.next) { %><span class="<%= __(l.due ? 'ld-due' : 'muted') %>"><%= __("المتابعة") %> <span dir="ltr"><%= __(l.next) %></span></span><% } else { %><span class="muted"><%= __(l.assigneeLabel || __('بلا مسؤول')) %></span><% } %>
+            <% if (l.budget) { %><strong class="ac-num"><%= __(fmt(l.budget)) %></strong><% } %>
           </div>
           <% const order = ['new', 'contacted', 'viewing', 'awaiting_ejar', 'won']; const i = order.indexOf(stage); %>
           <% if (i >= 0 && i < 4) { %>
-            <form method="post" action="/office/leads/<%= l.id %>/stage" class="ld-move">
-              <input type="hidden" name="stage" value="<%= order[i + 1] %>">
-              <button type="submit" class="btn btn--secondary btn--small">نقل إلى: <%= stages[order[i + 1]] %> ←</button>
+            <form method="post" action="/office/leads/<%= __(l.id) %>/stage" class="ld-move">
+              <input type="hidden" name="stage" value="<%= __(order[i + 1]) %>">
+              <button type="submit" class="btn btn--secondary btn--small"><%= __("نقل إلى:") %> <%= __(stages[order[i + 1]]) %> <%= dir === 'rtl' ? '←' : '→' %></button>
             </form>
           <% } %>
         </article>

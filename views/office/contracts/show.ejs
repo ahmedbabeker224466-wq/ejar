@@ -1,123 +1,123 @@
-<p class="back-link"><a href="/office/contracts">→ كل العقود</a></p>
+<p class="back-link"><a href="/office/contracts"><%= dir === 'rtl' ? '→' : '←' %> <%= __("كل العقود") %></a></p>
 
-<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
-<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 
 <section class="card detail-card">
   <div class="page-head">
-    <h1><%= contract.unit_label || 'وحدة محذوفة' %><%= contract.tenant_label ? ` · ${contract.tenant_label}` : '' %></h1>
-    <span class="badge badge--stage-<%= stage %>"><%= stageLabels[stage] %></span>
+    <h1><%= __(contract.unit_label || __('وحدة محذوفة')) %><%= __(contract.tenant_label ? ` · ${contract.tenant_label}` : '') %></h1>
+    <span class="badge badge--stage-<%= __(stage) %>"><%= __(stageLabels[stage]) %></span>
   </div>
   <dl class="details">
-    <dt>المالك</dt><dd><% if (contract.landlord_id) { %><a href="/office/landlords/<%= contract.landlord_id %>"><%= contract.landlord_label %></a><% } else { %>—<% } %></dd>
-    <dt>الوحدة</dt><dd><% if (contract.unit_id) { %><a href="/office/units/<%= contract.unit_id %>"><%= contract.unit_label %></a><% } else { %>—<% } %><%= contract.building_name ? ` · ${contract.building_name}` : '' %></dd>
-    <% if (contract.contract_number) { %><dt>رقم العقد في إيجار</dt><dd dir="ltr"><%= contract.contract_number %></dd><% } %>
-    <dt>البداية</dt><dd><span dir="ltr"><%= contract.start_date %></span> <span class="muted nowrap">(<%= hijri.start %> تقريبي)</span></dd>
-    <dt>النهاية</dt><dd><span dir="ltr"><%= contract.end_date %></span> <span class="muted nowrap">(<%= hijri.end %> تقريبي)</span></dd>
-    <dt>التجديد التلقائي</dt><dd><%= described.autoRenew ? 'نعم' : 'لا' %></dd>
-    <% if (contract.renewed_from_id) { %><dt>تجديد لعقد</dt><dd><a href="/office/contracts/<%= contract.renewed_from_id %>">العقد السابق</a></dd><% } %>
-    <% if (contract.renewed_to_id) { %><dt>جُدِّد إلى</dt><dd><a href="/office/contracts/<%= contract.renewed_to_id %>">العقد الجديد</a></dd><% } %>
+    <dt><%= __("المالك") %></dt><dd><% if (contract.landlord_id) { %><a href="/office/landlords/<%= __(contract.landlord_id) %>"><%= __(contract.landlord_label) %></a><% } else { %>—<% } %></dd>
+    <dt><%= __("الوحدة") %></dt><dd><% if (contract.unit_id) { %><a href="/office/units/<%= __(contract.unit_id) %>"><%= __(contract.unit_label) %></a><% } else { %>—<% } %><%= __(contract.building_name ? ` · ${contract.building_name}` : '') %></dd>
+    <% if (contract.contract_number) { %><dt><%= __("رقم العقد في إيجار") %></dt><dd dir="ltr"><%= __(contract.contract_number) %></dd><% } %>
+    <dt><%= __("البداية") %></dt><dd><span dir="ltr"><%= __(contract.start_date) %></span> <span class="muted nowrap">(<%= __(hijri.start) %> <%= __("تقريبي)") %></span></dd>
+    <dt><%= __("النهاية") %></dt><dd><span dir="ltr"><%= __(contract.end_date) %></span> <span class="muted nowrap">(<%= __(hijri.end) %> <%= __("تقريبي)") %></span></dd>
+    <dt><%= __("التجديد التلقائي") %></dt><dd><%= __(described.autoRenew ? __('نعم') : __('لا')) %></dd>
+    <% if (contract.renewed_from_id) { %><dt><%= __("تجديد لعقد") %></dt><dd><a href="/office/contracts/<%= __(contract.renewed_from_id) %>"><%= __("العقد السابق") %></a></dd><% } %>
+    <% if (contract.renewed_to_id) { %><dt><%= __("جُدِّد إلى") %></dt><dd><a href="/office/contracts/<%= __(contract.renewed_to_id) %>"><%= __("العقد الجديد") %></a></dd><% } %>
   </dl>
-  <% if (described.notStarted) { %><p class="muted">لم يبدأ العقد بعد.</p><% } %>
+  <% if (described.notStarted) { %><p class="muted"><%= __("لم يبدأ العقد بعد.") %></p><% } %>
   <div class="button-row">
-    <a href="/office/contracts/<%= contract.id %>/edit" class="btn btn--secondary">تعديل</a>
-    <% if (canRenew) { %><a href="/office/contracts/<%= contract.id %>/renew" class="btn btn--secondary">تجديد</a><% } %>
-    <% if (canTerminate) { %><a href="/office/contracts/<%= contract.id %>/terminate" class="btn btn--secondary">إنهاء العقد</a><% } %>
+    <a href="/office/contracts/<%= __(contract.id) %>/edit" class="btn btn--secondary"><%= __("تعديل") %></a>
+    <% if (canRenew) { %><a href="/office/contracts/<%= __(contract.id) %>/renew" class="btn btn--secondary"><%= __("تجديد") %></a><% } %>
+    <% if (canTerminate) { %><a href="/office/contracts/<%= __(contract.id) %>/terminate" class="btn btn--secondary"><%= __("إنهاء العقد") %></a><% } %>
   </div>
 </section>
 
 <section class="card detail-card">
-  <h2>المواعيد</h2>
+  <h2><%= __("المواعيد") %></h2>
   <ul class="deadlines">
     <li>
-      <span>آخر موعد لإشعار عدم التجديد</span>
-      <strong dir="ltr"><%= described.noticeDeadline %></strong>
-      <span class="muted"><%= running ? (described.daysToNotice >= 0 ? `باقي ${described.daysToNotice} يوم` : `فات منذ ${-described.daysToNotice} يوم`) : '' %></span>
+      <span><%= __("آخر موعد لإشعار عدم التجديد") %></span>
+      <strong dir="ltr"><%= __(described.noticeDeadline) %></strong>
+      <span class="muted"><%= __(running ? (described.daysToNotice >= 0 ? `باقي ${described.daysToNotice} يوم` : `فات منذ ${-described.daysToNotice} يوم`) : '') %></span>
     </li>
     <li>
-      <span>آخر موعد لطلب تغيير الإيجار</span>
-      <strong dir="ltr"><%= described.rentChangeDeadline %></strong>
-      <span class="muted"><%= running ? (described.daysToRentChange >= 0 ? `باقي ${described.daysToRentChange} يوم` : `فات منذ ${-described.daysToRentChange} يوم`) : '' %></span>
+      <span><%= __("آخر موعد لطلب تغيير الإيجار") %></span>
+      <strong dir="ltr"><%= __(described.rentChangeDeadline) %></strong>
+      <span class="muted"><%= __(running ? (described.daysToRentChange >= 0 ? `باقي ${described.daysToRentChange} يوم` : `فات منذ ${-described.daysToRentChange} يوم`) : '') %></span>
     </li>
     <li>
-      <span>نهاية العقد</span>
-      <strong dir="ltr"><%= contract.end_date %></strong>
-      <span class="muted"><%= described.daysToEnd >= 0 ? `باقي ${described.daysToEnd} يوم` : 'انتهى' %></span>
+      <span><%= __("نهاية العقد") %></span>
+      <strong dir="ltr"><%= __(contract.end_date) %></strong>
+      <span class="muted"><%= __(described.daysToEnd >= 0 ? `باقي ${described.daysToEnd} يوم` : __('انتهى')) %></span>
     </li>
   </ul>
   <% if (rentPolicy.reason === 'riyadh_freeze') { %>
-    <p class="flash flash--warning">الإيجار مجمّد في الرياض حتى <span dir="ltr"><%= rentPolicy.freezeUntil %></span>: لا يمكن رفع الإيجار عند التجديد، ويمكن فقط طلب تخفيضه.</p>
+    <p class="flash flash--warning"><%= __("الإيجار مجمّد في الرياض حتى") %> <span dir="ltr"><%= __(rentPolicy.freezeUntil) %></span>: <%= __("لا يمكن رفع الإيجار عند التجديد، ويمكن فقط طلب تخفيضه.") %></p>
   <% } else if (rentPolicy.reason === 'unknown_city') { %>
-    <p class="muted">لم نتعرف على المدينة، فلم نتحقق من قيود رفع الإيجار.</p>
+    <p class="muted"><%= __("لم نتعرف على المدينة، فلم نتحقق من قيود رفع الإيجار.") %></p>
   <% } %>
 </section>
 
 <section class="card detail-card">
-  <h2>المبالغ</h2>
+  <h2><%= __("المبالغ") %></h2>
   <dl class="details">
-    <dt>الإيجار السنوي</dt><dd><%= Number(contract.annual_rent).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd>
-    <dt>طريقة الدفع</dt><dd><%= frequencyLabels[contract.payment_frequency] || '—' %></dd>
-    <% if (contract.deposit !== null) { %><dt>التأمين</dt><dd><%= Number(contract.deposit).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd><% } %>
-    <% if (contract.commission !== null) { %><dt>العمولة</dt><dd><%= Number(contract.commission).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd><% } %>
-    <dt>مجموع الدفعات</dt><dd><%= Number(totals.schedule).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd>
-    <dt>المدفوع</dt><dd><%= Number(totals.paid).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd>
-    <dt>المتبقي</dt><dd><%= Number(totals.open).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</dd>
+    <dt><%= __("الإيجار السنوي") %></dt><dd><%= __(Number(contract.annual_rent).toLocaleString('en-US', { minimumFractionDigits: 2 })) %> <%= __("ريال") %></dd>
+    <dt><%= __("طريقة الدفع") %></dt><dd><%= __(frequencyLabels[contract.payment_frequency] || '—') %></dd>
+    <% if (contract.deposit !== null) { %><dt><%= __("التأمين") %></dt><dd><%= __(Number(contract.deposit).toLocaleString('en-US', { minimumFractionDigits: 2 })) %> <%= __("ريال") %></dd><% } %>
+    <% if (contract.commission !== null) { %><dt><%= __("العمولة") %></dt><dd><%= __(Number(contract.commission).toLocaleString('en-US', { minimumFractionDigits: 2 })) %> <%= __("ريال") %></dd><% } %>
+    <dt><%= __("مجموع الدفعات") %></dt><dd><%= __(Number(totals.schedule).toLocaleString('en-US', { minimumFractionDigits: 2 })) %> <%= __("ريال") %></dd>
+    <dt><%= __("المدفوع") %></dt><dd><%= __(Number(totals.paid).toLocaleString('en-US', { minimumFractionDigits: 2 })) %> <%= __("ريال") %></dd>
+    <dt><%= __("المتبقي") %></dt><dd><%= __(Number(totals.open).toLocaleString('en-US', { minimumFractionDigits: 2 })) %> <%= __("ريال") %></dd>
   </dl>
 </section>
 
 <section class="card detail-card" id="payments">
   <div class="page-head">
-    <h2>الدفعات (<%= payments.length %>)</h2>
-    <a href="/office/contracts/<%= contract.id %>/receipt" class="btn btn--secondary btn--small">كشف قابل للطباعة</a>
+    <h2><%= __("الدفعات") %> (<%= __(payments.length) %>)</h2>
+    <a href="/office/contracts/<%= __(contract.id) %>/receipt" class="btn btn--secondary btn--small"><%= __("كشف قابل للطباعة") %></a>
   </div>
   <ul class="payments">
     <% payments.forEach(function (p, i) { %>
       <li class="payment">
         <div class="payment__head">
-          <span>دفعة <%= i + 1 %> · <span dir="ltr"><%= p.due_date %></span></span>
-          <strong><%= Number(p.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) %> ريال</strong>
-          <span class="badge badge--pay-<%= p.shownStatus %>"><%= paymentLabels[p.shownStatus] %></span>
-          <% if (p.partial) { %><span class="badge badge--pay-partial">دفعة جزئية</span><% } %>
+          <span><%= __("دفعة") %> <%= __(i + 1) %> · <span dir="ltr"><%= __(p.due_date) %></span></span>
+          <strong><%= __(Number(p.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })) %> <%= __("ريال") %></strong>
+          <span class="badge badge--pay-<%= __(p.shownStatus) %>"><%= __(paymentLabels[p.shownStatus]) %></span>
+          <% if (p.partial) { %><span class="badge badge--pay-partial"><%= __("دفعة جزئية") %></span><% } %>
         </div>
-        <% if (p.paidOn) { %><p class="muted">دُفعت في <span dir="ltr"><%= p.paidOn %></span><%= p.method ? ` · ${paymentMethods[p.method] || ''}` : '' %><%= p.receipt_no ? ` · إيصال ${p.receipt_no}` : '' %></p><% } %>
+        <% if (p.paidOn) { %><p class="muted"><%= __("دُفعت في") %> <span dir="ltr"><%= __(p.paidOn) %></span><%= __(p.method ? ` · ${paymentMethods[p.method] || ''}` : '') %><%= __(p.receipt_no ? ` · إيصال ${p.receipt_no}` : '') %></p><% } %>
         <%- include('../../partials/payment-entries', { p: p, base: `/office/contracts/${contract.id}/payments/${p.id}`, canRecord: canPay, undoable: undoable, fmt: fmt, methods: entryMethods, roleLabels: entryRoleLabels, today: today }) %>
         <% if (p.status === 'tenant_reported') { %>
-          <p class="muted">أبلغ المستأجر أنه دفع<%= p.reportedOn ? ` في ${p.reportedOn}` : '' %>. تأكّد من وصول المبلغ.</p>
+          <p class="muted"><%= __("أبلغ المستأجر أنه دفع") %><%= __(p.reportedOn ? ` في ${p.reportedOn}` : '') %>. <%= __("تأكّد من وصول المبلغ.") %></p>
           <% if (canPay) { %>
             <div class="button-row">
-              <form method="post" action="/office/contracts/<%= contract.id %>/payments/<%= p.id %>/confirm"><button type="submit" class="btn btn--primary">تأكيد الدفع</button></form>
-              <form method="post" action="/office/contracts/<%= contract.id %>/payments/<%= p.id %>/reject"><button type="submit" class="btn btn--secondary">رفض البلاغ</button></form>
+              <form method="post" action="/office/contracts/<%= __(contract.id) %>/payments/<%= __(p.id) %>/confirm"><button type="submit" class="btn btn--primary"><%= __("تأكيد الدفع") %></button></form>
+              <form method="post" action="/office/contracts/<%= __(contract.id) %>/payments/<%= __(p.id) %>/reject"><button type="submit" class="btn btn--secondary"><%= __("رفض البلاغ") %></button></form>
             </div>
           <% } %>
         <% } %>
         <% if (canPay) { %>
           <details class="payment__edit">
-            <summary>تغيير الحالة يدوياً (متقدم)</summary>
-            <form method="post" action="/office/contracts/<%= contract.id %>/payments/<%= p.id %>">
+            <summary><%= __("تغيير الحالة يدوياً (متقدم)") %></summary>
+            <form method="post" action="/office/contracts/<%= __(contract.id) %>/payments/<%= __(p.id) %>">
               <div class="form-grid">
                 <div class="field">
-                  <label for="status-<%= p.id %>">الحالة</label>
-                  <select id="status-<%= p.id %>" name="status" class="select">
-                    <% Object.entries(officePaymentLabels).forEach(function ([key, label]) { %><option value="<%= key %>" <%= p.status === key ? 'selected' : '' %>><%= label %></option><% }) %>
+                  <label for="status-<%= __(p.id) %>"><%= __("الحالة") %></label>
+                  <select id="status-<%= __(p.id) %>" name="status" class="select">
+                    <% Object.entries(officePaymentLabels).forEach(function ([key, label]) { %><option value="<%= __(key) %>" <%= __(p.status === key ? 'selected' : '') %>><%= __(label) %></option><% }) %>
                   </select>
                 </div>
                 <div class="field">
-                  <label for="paid-<%= p.id %>">تاريخ الدفع</label>
-                  <input id="paid-<%= p.id %>" name="paid_on" class="input" type="date" max="<%= today %>" value="<%= p.paidOn || today %>">
+                  <label for="paid-<%= __(p.id) %>"><%= __("تاريخ الدفع") %></label>
+                  <input id="paid-<%= __(p.id) %>" name="paid_on" class="input" type="date" max="<%= __(today) %>" value="<%= __(p.paidOn || today) %>">
                 </div>
                 <div class="field">
-                  <label for="method-<%= p.id %>">الطريقة</label>
-                  <select id="method-<%= p.id %>" name="method" class="select">
+                  <label for="method-<%= __(p.id) %>"><%= __("الطريقة") %></label>
+                  <select id="method-<%= __(p.id) %>" name="method" class="select">
                     <option value="">—</option>
-                    <% Object.entries(paymentMethods).forEach(function ([key, label]) { %><option value="<%= key %>" <%= p.method === key ? 'selected' : '' %>><%= label %></option><% }) %>
+                    <% Object.entries(paymentMethods).forEach(function ([key, label]) { %><option value="<%= __(key) %>" <%= __(p.method === key ? 'selected' : '') %>><%= __(label) %></option><% }) %>
                   </select>
                 </div>
                 <div class="field">
-                  <label for="receipt-<%= p.id %>">رقم الإيصال</label>
-                  <input id="receipt-<%= p.id %>" name="receipt_no" class="input" type="text" dir="ltr" maxlength="40" value="<%= p.receipt_no || '' %>">
+                  <label for="receipt-<%= __(p.id) %>"><%= __("رقم الإيصال") %></label>
+                  <input id="receipt-<%= __(p.id) %>" name="receipt_no" class="input" type="text" dir="ltr" maxlength="40" value="<%= __(p.receipt_no || '') %>">
                 </div>
               </div>
-              <button type="submit" class="btn btn--primary btn--block">حفظ</button>
+              <button type="submit" class="btn btn--primary btn--block"><%= __("حفظ") %></button>
             </form>
           </details>
         <% } %>
@@ -127,94 +127,94 @@
 </section>
 
 <section class="card detail-card" id="feedback">
-  <h2>المالك والمستأجر</h2>
+  <h2><%= __("المالك والمستأجر") %></h2>
   <dl class="details">
-    <dt>المالك</dt><dd><span class="badge badge--link-<%= feedback.landlordJoined ? 'joined' : 'not_invited' %>"><%= feedback.landlordJoined ? 'منضم' : 'لم ينضم بعد' %></span></dd>
-    <dt>المستأجر</dt><dd><span class="badge badge--link-<%= feedback.tenantJoined ? 'joined' : 'not_invited' %>"><%= feedback.tenantJoined ? 'منضم' : 'لم ينضم بعد' %></span></dd>
+    <dt><%= __("المالك") %></dt><dd><span class="badge badge--link-<%= __(feedback.landlordJoined ? 'joined' : 'not_invited') %>"><%= __(feedback.landlordJoined ? __('منضم') : __('لم ينضم بعد')) %></span></dd>
+    <dt><%= __("المستأجر") %></dt><dd><span class="badge badge--link-<%= __(feedback.tenantJoined ? 'joined' : 'not_invited') %>"><%= __(feedback.tenantJoined ? __('منضم') : __('لم ينضم بعد')) %></span></dd>
   </dl>
-  <h3>قرار المالك</h3>
+  <h3><%= __("قرار المالك") %></h3>
   <% if (feedback.decisions.length) { %>
     <ul class="item-list">
       <% feedback.decisions.forEach(function (d, i) { %>
-        <li class="item<%= i ? ' item--inactive' : '' %>">
-          <strong><%= decisionLabels[d.decision] %></strong> <span class="muted" dir="ltr"><%= d.createdOn %></span>
-          <% if (d.note) { %><p class="pre-line"><%= d.note %></p><% } %>
+        <li class="item<%= __(i ? ' item--inactive' : '') %>">
+          <strong><%= __(decisionLabels[d.decision]) %></strong> <span class="muted" dir="ltr"><%= __(d.createdOn) %></span>
+          <% if (d.note) { %><p class="pre-line"><%= __(d.note) %></p><% } %>
         </li>
       <% }) %>
     </ul>
-  <% } else { %><p class="muted">لم يسجل المالك قراراً بعد.</p><% } %>
-  <h3>طلبات المستأجر</h3>
+  <% } else { %><p class="muted"><%= __("لم يسجل المالك قراراً بعد.") %></p><% } %>
+  <h3><%= __("طلبات المستأجر") %></h3>
   <% if (feedback.requests.length) { %>
     <ul class="item-list">
       <% feedback.requests.forEach(function (r) { %>
         <li class="item">
-          <strong><%= requestTypes[r.request_type] %></strong>
-          <span class="badge badge--<%= r.status === 'pending' ? 'soon' : 'calm' %>"><%= requestStatuses[r.status] %></span>
-          <span class="muted" dir="ltr"><%= r.createdOn %></span>
-          <% if (r.note) { %><p class="pre-line"><%= r.note %></p><% } %>
+          <strong><%= __(requestTypes[r.request_type]) %></strong>
+          <span class="badge badge--<%= __(r.status === 'pending' ? 'soon' : 'calm') %>"><%= __(requestStatuses[r.status]) %></span>
+          <span class="muted" dir="ltr"><%= __(r.createdOn) %></span>
+          <% if (r.note) { %><p class="pre-line"><%= __(r.note) %></p><% } %>
           <% if (r.status === 'pending') { %>
             <div class="button-row">
-              <form method="post" action="/office/contracts/<%= contract.id %>/requests/<%= r.id %>"><input type="hidden" name="status" value="accepted"><button type="submit" class="btn btn--primary btn--small">قبول</button></form>
-              <form method="post" action="/office/contracts/<%= contract.id %>/requests/<%= r.id %>"><input type="hidden" name="status" value="rejected"><button type="submit" class="btn btn--secondary btn--small">رفض</button></form>
+              <form method="post" action="/office/contracts/<%= __(contract.id) %>/requests/<%= __(r.id) %>"><input type="hidden" name="status" value="accepted"><button type="submit" class="btn btn--primary btn--small"><%= __("قبول") %></button></form>
+              <form method="post" action="/office/contracts/<%= __(contract.id) %>/requests/<%= __(r.id) %>"><input type="hidden" name="status" value="rejected"><button type="submit" class="btn btn--secondary btn--small"><%= __("رفض") %></button></form>
             </div>
           <% } %>
         </li>
       <% }) %>
     </ul>
-  <% } else { %><p class="muted">لا توجد طلبات من المستأجر.</p><% } %>
+  <% } else { %><p class="muted"><%= __("لا توجد طلبات من المستأجر.") %></p><% } %>
 </section>
 
 <section class="card detail-card" id="invite">
-  <h2>رمز دعوة المستأجر</h2>
+  <h2><%= __("رمز دعوة المستأجر") %></h2>
   <% if (invite && invite.code) { %>
-    <p class="muted">أرسل هذا الرمز للمستأجر ليتابع عقده ودفعاته. يُستخدم مرة واحدة فقط.</p>
+    <p class="muted"><%= __("أرسل هذا الرمز للمستأجر ليتابع عقده ودفعاته. يُستخدم مرة واحدة فقط.") %></p>
     <div class="invite-code">
-      <output id="invite-code" dir="ltr"><%= invite.code %></output>
-      <button type="button" class="btn btn--secondary" data-copy="#invite-code" data-copied="تم النسخ">نسخ الرمز</button>
+      <output id="invite-code" dir="ltr"><%= __(invite.code) %></output>
+      <button type="button" class="btn btn--secondary" data-copy="#invite-code" data-copied="<%= __("تم النسخ") %>"><%= __("نسخ الرمز") %></button>
     </div>
-    <p class="muted">الحالة: <span class="badge badge--calm"><%= invite.label %></span> · صالح حتى <span dir="ltr"><%= invite.expiresOn %></span></p>
+    <p class="muted"><%= __("الحالة:") %> <span class="badge badge--calm"><%= __(invite.label) %></span> · <%= __("صالح حتى") %> <span dir="ltr"><%= __(invite.expiresOn) %></span></p>
     <div class="button-row">
-      <a href="<%= invite.shareLink %>" class="btn btn--primary" target="_blank" rel="noopener noreferrer">إرسال عبر واتساب</a>
-      <form method="post" action="/office/contracts/<%= contract.id %>/invite/revoke"><button type="submit" class="btn btn--secondary">إلغاء الرمز</button></form>
-      <form method="post" action="/office/contracts/<%= contract.id %>/invite"><button type="submit" class="btn btn--secondary">إنشاء رمز جديد</button></form>
+      <a href="<%= __(invite.shareLink) %>" class="btn btn--primary" target="_blank" rel="noopener noreferrer"><%= __("إرسال عبر واتساب") %></a>
+      <form method="post" action="/office/contracts/<%= __(contract.id) %>/invite/revoke"><button type="submit" class="btn btn--secondary"><%= __("إلغاء الرمز") %></button></form>
+      <form method="post" action="/office/contracts/<%= __(contract.id) %>/invite"><button type="submit" class="btn btn--secondary"><%= __("إنشاء رمز جديد") %></button></form>
     </div>
   <% } else { %>
     <% if (invite) { %>
-      <p>آخر رمز: <span class="badge badge--ended"><%= invite.label %></span><% if (invite.usedBy) { %> بواسطة <span dir="ltr"><%= invite.usedBy %></span><% } %></p>
+      <p><%= __("آخر رمز:") %> <span class="badge badge--ended"><%= __(invite.label) %></span><% if (invite.usedBy) { %> <%= __("بواسطة") %> <span dir="ltr"><%= __(invite.usedBy) %></span><% } %></p>
     <% } %>
     <% if (canRenew) { %>
-      <form method="post" action="/office/contracts/<%= contract.id %>/invite"><button type="submit" class="btn btn--primary btn--block">إنشاء رمز دعوة</button></form>
+      <form method="post" action="/office/contracts/<%= __(contract.id) %>/invite"><button type="submit" class="btn btn--primary btn--block"><%= __("إنشاء رمز دعوة") %></button></form>
     <% } %>
   <% } %>
 </section>
 
 <section class="card detail-card">
-  <h2>سجل العقد</h2>
+  <h2><%= __("سجل العقد") %></h2>
   <% if (timeline.length) { %>
     <ol class="timeline">
-      <% timeline.forEach(function (t) { %><li><span dir="ltr" class="muted"><%= t.at %></span> <%= t.text %></li><% }) %>
+      <% timeline.forEach(function (t) { %><li><span dir="ltr" class="muted"><%= __(t.at) %></span> <%= __(t.text) %></li><% }) %>
     </ol>
-  <% } else { %><p class="muted">لا توجد أحداث بعد.</p><% } %>
+  <% } else { %><p class="muted"><%= __("لا توجد أحداث بعد.") %></p><% } %>
 </section>
 
-<section class="card detail-card"><h2>ملف العقد</h2><p class="muted">لا يحتفظ التطبيق بملف العقد. احفظ نسختك من منصة إيجار؛ هنا نتابع التواريخ والمبالغ فقط.</p></section>
+<section class="card detail-card"><h2><%= __("ملف العقد") %></h2><p class="muted"><%= __("لا يحتفظ التطبيق بملف العقد. احفظ نسختك من منصة إيجار؛ هنا نتابع التواريخ والمبالغ فقط.") %></p></section>
 <section class="card detail-card">
-  <h2>الصيانة</h2>
-  <p class="muted">طلبات الصيانة على وحدات المكتب.</p>
-  <a href="/office/maintenance" class="btn btn--secondary btn--block">طلبات الصيانة</a>
+  <h2><%= __("الصيانة") %></h2>
+  <p class="muted"><%= __("طلبات الصيانة على وحدات المكتب.") %></p>
+  <a href="/office/maintenance" class="btn btn--secondary btn--block"><%= __("طلبات الصيانة") %></a>
 </section>
 <section class="card detail-card">
-  <h2>الرسائل</h2>
-  <p class="muted">محادثة بين المكتب والمالك والمستأجر على هذا العقد.</p>
-  <a href="/office/messages/<%= contract.id %>" class="btn btn--secondary btn--block">فتح المحادثة</a>
+  <h2><%= __("الرسائل") %></h2>
+  <p class="muted"><%= __("محادثة بين المكتب والمالك والمستأجر على هذا العقد.") %></p>
+  <a href="/office/messages/<%= __(contract.id) %>" class="btn btn--secondary btn--block"><%= __("فتح المحادثة") %></a>
 </section>
 
 <% if (canDelete) { %>
   <section class="card detail-card">
     <details class="danger-zone">
-      <summary>حذف العقد</summary>
-      <p>استخدم الحذف فقط لعقد أُدخل بالخطأ. لإيقاف عقد حقيقي استخدم "إنهاء العقد".</p>
-      <form method="post" action="/office/contracts/<%= contract.id %>/delete"><button type="submit" class="btn btn--danger btn--block">نعم، احذف العقد</button></form>
+      <summary><%= __("حذف العقد") %></summary>
+      <p><%= __("استخدم الحذف فقط لعقد أُدخل بالخطأ. لإيقاف عقد حقيقي استخدم") %> "<%= __("إنهاء العقد") %>".</p>
+      <form method="post" action="/office/contracts/<%= __(contract.id) %>/delete"><button type="submit" class="btn btn--danger btn--block"><%= __("نعم، احذف العقد") %></button></form>
     </details>
   </section>
 <% } %>

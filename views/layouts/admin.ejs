@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="<%= lang %>" dir="<%= dir %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title><%= title %> | إدارة المنصة | ميعاد</title>
+  <title><%= __(title) %> | <%= __("إدارة المنصة") %> | <%= __("ميعاد") %></title>
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0f766e">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,21 +18,22 @@
   <header class="office-top">
     <button type="button" class="office-menu-btn" id="office-menu-toggle" aria-controls="office-nav" aria-expanded="false">
       <span class="office-menu-btn__bars" aria-hidden="true"></span>
-      <span class="visually-hidden">القائمة</span>
+      <span class="visually-hidden"><%= __("القائمة") %></span>
     </button>
     <div class="office-top__title">
-      <a href="/admin" class="office-top__name">إدارة المنصة</a>
-      <div class="office-top__user"><span class="office-top__user-name" dir="auto"><%= userDisplay %></span></div>
+      <a href="/admin" class="office-top__name" dir="auto"><%= __("إدارة المنصة") %></a>
+      <div class="office-top__user"><span class="office-top__user-name" dir="auto"><%= __(userDisplay) %></span></div>
     </div>
+    <%- include('../partials/lang-switch') %>
     <%- include('../partials/bell') %>
-    <a href="/logout" class="btn btn--secondary btn--small">خروج</a>
+    <a href="/logout" class="btn btn--secondary btn--small"><%= __("خروج") %></a>
   </header>
   <div class="office-shell">
-    <nav id="office-nav" class="office-nav" aria-label="قائمة الإدارة">
+    <nav id="office-nav" class="office-nav" aria-label="<%= __("قائمة الإدارة") %>">
       <div class="office-nav__brand"><span class="office-nav__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'adm' }) %></span><span class="brand-word" lang="en" dir="ltr">miaad</span></div>
       <ul>
         <% adminNav.forEach(function (item) { %>
-          <li><a href="<%= item.href %>" <%- item.current ? 'aria-current="page"' : '' %>><%= item.label %></a></li>
+          <li><a href="<%= __(item.href) %>" <%- item.current ? 'aria-current="page"' : '' %>><%= __(item.label) %></a></li>
         <% }) %>
       </ul>
     </nav>
@@ -42,6 +43,6 @@
       <%- body %>
     </main>
   </div>
-  <footer class="office-footer"><p class="disclaimer">تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط</p></footer>
+  <footer class="office-footer"><p class="disclaimer"><%= __("تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط") %></p></footer>
 </body>
 </html>

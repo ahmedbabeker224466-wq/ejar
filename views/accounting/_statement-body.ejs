@@ -1,23 +1,23 @@
 <% const s = statement; %>
 <div class="ac-st-head">
-  <div><h2><%= s.landlord.label %></h2><p class="muted"><%= officeName %><% if (s.landlord.city) { %> · <%= s.landlord.city %><% } %></p></div>
-  <div class="ac-st-meta"><p>الفترة: <span dir="ltr"><%= s.from %></span> إلى <span dir="ltr"><%= s.to %></span></p><p>رقم الكشف: <span dir="ltr"><%= s.number %></span></p></div>
+  <div><h2><%= __(s.landlord.label) %></h2><p class="muted"><%= __(officeName) %><% if (s.landlord.city) { %> · <%= __(s.landlord.city) %><% } %></p></div>
+  <div class="ac-st-meta"><p><%= __("الفترة:") %> <span dir="ltr"><%= __(s.from) %></span> <%= __("إلى") %> <span dir="ltr"><%= __(s.to) %></span></p><p><%= __("رقم الكشف:") %> <span dir="ltr"><%= __(s.number) %></span></p></div>
 </div>
 <div class="ac-sum">
-  <div><span>الرصيد في بداية الشهر</span><strong class="ac-num"><%= fmt(s.opening) %></strong></div>
-  <div><span>الإيجار المحصّل</span><strong class="ac-num"><%= fmt(s.rent) %></strong></div>
-  <div><span>المصروفات والعمولة</span><strong class="ac-num"><%= fmt(s.expenses + s.commission) %></strong></div>
-  <div class="ac-sum__net"><span>الرصيد المستحق للمالك</span><strong class="ac-num"><%= fmt(s.closing) %></strong></div>
+  <div><span><%= __("الرصيد في بداية الشهر") %></span><strong class="ac-num"><%= __(fmt(s.opening)) %></strong></div>
+  <div><span><%= __("الإيجار المحصّل") %></span><strong class="ac-num"><%= __(fmt(s.rent)) %></strong></div>
+  <div><span><%= __("المصروفات والعمولة") %></span><strong class="ac-num"><%= __(fmt(s.expenses + s.commission)) %></strong></div>
+  <div class="ac-sum__net"><span><%= __("الرصيد المستحق للمالك") %></span><strong class="ac-num"><%= __(fmt(s.closing)) %></strong></div>
 </div>
-<% if (s.lines.length === 0) { %><p class="empty-state">لا توجد حركات في هذا الشهر.</p><% } else { %>
+<% if (s.lines.length === 0) { %><p class="empty-state"><%= __("لا توجد حركات في هذا الشهر.") %></p><% } else { %>
   <div class="table-wrap"><table class="table ac-table">
-    <thead><tr><th>التاريخ</th><th>البيان</th><th class="ac-amount ac-col-cd">له</th><th class="ac-amount ac-col-cd">عليه</th></tr></thead>
+    <thead><tr><th><%= __("التاريخ") %></th><th><%= __("البيان") %></th><th class="ac-amount ac-col-cd"><%= __("له") %></th><th class="ac-amount ac-col-cd"><%= __("عليه") %></th></tr></thead>
     <tbody>
       <% s.lines.forEach(function (l) { %>
-        <tr><td dir="ltr" class="ac-date"><%= l.day %></td><td><%= l.label %><div class="ac-only-m ac-num <%= l.credit ? 'ac-in' : 'ac-out' %>"><%= l.credit ? '+ ' + fmt(l.credit) : '- ' + fmt(l.debit) %></div></td><td class="ac-amount ac-num ac-in ac-col-cd"><%= l.credit ? fmt(l.credit) : '' %></td><td class="ac-amount ac-num ac-out ac-col-cd"><%= l.debit ? fmt(l.debit) : '' %></td></tr>
+        <tr><td dir="ltr" class="ac-date"><%= __(l.day) %></td><td><%= __(l.label) %><div class="ac-only-m ac-num <%= __(l.credit ? 'ac-in' : 'ac-out') %>"><%= __(l.credit ? '+ ' + fmt(l.credit) : '- ' + fmt(l.debit)) %></div></td><td class="ac-amount ac-num ac-in ac-col-cd"><%= __(l.credit ? fmt(l.credit) : '') %></td><td class="ac-amount ac-num ac-out ac-col-cd"><%= __(l.debit ? fmt(l.debit) : '') %></td></tr>
       <% }) %>
     </tbody>
-    <tfoot><tr><td></td><td>الإجمالي<div class="ac-only-m">له <span class="ac-num"><%= fmt(s.credits) %></span> · عليه <span class="ac-num"><%= fmt(s.debits) %></span></div></td><td class="ac-amount ac-num ac-col-cd"><%= fmt(s.credits) %></td><td class="ac-amount ac-num ac-col-cd"><%= fmt(s.debits) %></td></tr></tfoot>
+    <tfoot><tr><td></td><td><%= __("الإجمالي") %><div class="ac-only-m"><%= __("له") %> <span class="ac-num"><%= __(fmt(s.credits)) %></span> · <%= __("عليه") %> <span class="ac-num"><%= __(fmt(s.debits)) %></span></div></td><td class="ac-amount ac-num ac-col-cd"><%= __(fmt(s.credits)) %></td><td class="ac-amount ac-num ac-col-cd"><%= __(fmt(s.debits)) %></td></tr></tfoot>
   </table></div>
 <% } %>
-<p class="muted ac-note">التحويلات إلى المالك من ضمن «عليه». المبالغ بالريال السعودي، وتُحسب عمولة المكتب بنسبة <%= s.percent %>% من الإيجار المحصّل.</p>
+<p class="muted ac-note"><%= __("التحويلات إلى المالك من ضمن «عليه». المبالغ بالريال السعودي، وتُحسب عمولة المكتب بنسبة") %> <%= __(s.percent) %>% <%= __("من الإيجار المحصّل.") %></p>

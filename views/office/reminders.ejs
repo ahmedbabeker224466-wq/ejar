@@ -1,112 +1,112 @@
-<p class="back-link"><a href="/office/settings">→ الإعدادات</a></p>
-<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
-<% if (warning) { %><div class="flash flash--warning" role="alert"><%= warning %></div><% } %>
-<% if (test) { %><div class="flash flash--<%= test.ok ? 'success' : (test.status === 'skipped' ? 'warning' : 'danger') %> channel-test-result" role="status" id="test-result"><%= test.text %></div><% } %>
+<p class="back-link"><a href="/office/settings"><%= dir === 'rtl' ? '→' : '←' %> <%= __("الإعدادات") %></a></p>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
+<% if (warning) { %><div class="flash flash--warning" role="alert"><%= __(warning) %></div><% } %>
+<% if (test) { %><div class="flash flash--<%= __(test.ok ? 'success' : (test.status === 'skipped' ? 'warning' : 'danger')) %> channel-test-result" role="status" id="test-result"><%= __(test.text) %></div><% } %>
 
 <section class="card form-card">
-  <h1>قواعد التذكير</h1>
-  <p class="muted">اكتب الأيام مفصولة بفواصل. مواعيد القرار وتغيير الإيجار تُعد قبل الموعد، والتأخر وانتهاء العقد بعد التاريخ.</p>
-  <% if (Object.keys(errors).some(function (k) { return kinds[k]; })) { %><div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div><% } %>
+  <h1><%= __("قواعد التذكير") %></h1>
+  <p class="muted"><%= __("اكتب الأيام مفصولة بفواصل. مواعيد القرار وتغيير الإيجار تُعد قبل الموعد، والتأخر وانتهاء العقد بعد التاريخ.") %></p>
+  <% if (Object.keys(errors).some(function (k) { return kinds[k]; })) { %><div class="flash flash--danger" role="alert"><%= __("راجع الحقول المظللة بالأحمر.") %></div><% } %>
   <form method="post" action="/office/settings/reminders/rules" novalidate>
     <% Object.entries(kinds).forEach(function ([kind, rule]) { %>
       <fieldset class="field">
-        <legend><%= rule.label %></legend>
-        <label class="check"><input type="checkbox" name="<%= kind %>_enabled" value="1" <%= values[kind].enabled ? 'checked' : '' %>> مفعّل</label>
-        <label for="<%= kind %>_days"><%= rule.direction === 'after' ? 'بعد التاريخ بـ (أيام)' : 'قبل الموعد بـ (أيام)' %></label>
-        <input id="<%= kind %>_days" name="<%= kind %>_days" class="input" type="text" dir="ltr" inputmode="numeric" maxlength="60" value="<%= values[kind].days %>" <%= errors[kind] ? 'aria-invalid=true' : '' %>>
-        <% if (errors[kind]) { %><p class="field-error"><%= errors[kind] %></p><% } %>
+        <legend><%= __(rule.label) %></legend>
+        <label class="check"><input type="checkbox" name="<%= __(kind) %>_enabled" value="1" <%= __(values[kind].enabled ? 'checked' : '') %>> <%= __("مفعّل") %></label>
+        <label for="<%= __(kind) %>_days"><%= __(rule.direction === 'after' ? __('بعد التاريخ بـ (أيام)') : __('قبل الموعد بـ (أيام)')) %></label>
+        <input id="<%= __(kind) %>_days" name="<%= __(kind) %>_days" class="input" type="text" dir="ltr" inputmode="numeric" maxlength="60" value="<%= __(values[kind].days) %>" <%= __(errors[kind] ? 'aria-invalid=true' : '') %>>
+        <% if (errors[kind]) { %><p class="field-error"><%= __(errors[kind]) %></p><% } %>
       </fieldset>
     <% }) %>
-    <button type="submit" class="btn btn--primary btn--block btn--large">حفظ القواعد</button>
+    <button type="submit" class="btn btn--primary btn--block btn--large"><%= __("حفظ القواعد") %></button>
   </form>
 </section>
 
 <section class="card form-card" id="whatsapp">
-  <h2>واتساب (Meta WhatsApp Cloud API)</h2>
-  <% if (channels.whatsapp.configured) { %><p><span class="badge badge--link-joined">مضبوط ✓</span> القالب: <span dir="ltr"><%= channels.whatsapp.settings.template_name %></span></p><% } %>
+  <h2><%= __("واتساب (Meta WhatsApp Cloud API)") %></h2>
+  <% if (channels.whatsapp.configured) { %><p><span class="badge badge--link-joined"><%= __("مضبوط") %> ✓</span> <%= __("القالب:") %> <span dir="ltr"><%= __(channels.whatsapp.settings.template_name) %></span></p><% } %>
   <% const wa = (errors.whatsapp || {}); %>
   <form method="post" action="/office/settings/reminders/whatsapp" novalidate autocomplete="off">
     <div class="field">
-      <label for="wa-id">معرّف رقم الهاتف (Phone number ID)</label>
-      <input id="wa-id" name="phone_number_id" class="input" type="text" dir="ltr" inputmode="numeric" maxlength="30" placeholder="<%= channels.whatsapp.configured ? 'محفوظ، اتركه فارغاً لعدم التغيير' : '' %>" <%= wa.phone_number_id ? 'aria-invalid=true' : '' %>>
-      <% if (wa.phone_number_id) { %><p class="field-error"><%= wa.phone_number_id %></p><% } %>
+      <label for="wa-id"><%= __("معرّف رقم الهاتف (Phone number ID)") %></label>
+      <input id="wa-id" name="phone_number_id" class="input" type="text" dir="ltr" inputmode="numeric" maxlength="30" placeholder="<%= __(channels.whatsapp.configured ? __('محفوظ، اتركه فارغاً لعدم التغيير') : '') %>" <%= __(wa.phone_number_id ? 'aria-invalid=true' : '') %>>
+      <% if (wa.phone_number_id) { %><p class="field-error"><%= __(wa.phone_number_id) %></p><% } %>
     </div>
     <div class="field">
-      <label for="wa-token">رمز الوصول (Access token)</label>
-      <input id="wa-token" name="token" class="input" type="password" dir="ltr" maxlength="1000" autocomplete="new-password" placeholder="<%= channels.whatsapp.configured ? 'محفوظ، اتركه فارغاً لعدم التغيير' : '' %>" <%= wa.token ? 'aria-invalid=true' : '' %>>
-      <% if (wa.token) { %><p class="field-error"><%= wa.token %></p><% } %>
+      <label for="wa-token"><%= __("رمز الوصول (Access token)") %></label>
+      <input id="wa-token" name="token" class="input" type="password" dir="ltr" maxlength="1000" autocomplete="new-password" placeholder="<%= __(channels.whatsapp.configured ? __('محفوظ، اتركه فارغاً لعدم التغيير') : '') %>" <%= __(wa.token ? 'aria-invalid=true' : '') %>>
+      <% if (wa.token) { %><p class="field-error"><%= __(wa.token) %></p><% } %>
     </div>
     <div class="form-grid">
       <div class="field">
-        <label for="wa-template">اسم القالب المعتمد</label>
-        <input id="wa-template" name="template_name" class="input" type="text" dir="ltr" maxlength="100" value="<%= channels.whatsapp.settings.template_name || 'aqdi_reminder' %>">
-        <% if (wa.template_name) { %><p class="field-error"><%= wa.template_name %></p><% } %>
+        <label for="wa-template"><%= __("اسم القالب المعتمد") %></label>
+        <input id="wa-template" name="template_name" class="input" type="text" dir="ltr" maxlength="100" value="<%= __(channels.whatsapp.settings.template_name || 'aqdi_reminder') %>">
+        <% if (wa.template_name) { %><p class="field-error"><%= __(wa.template_name) %></p><% } %>
       </div>
       <div class="field">
-        <label for="wa-lang">لغة القالب</label>
-        <input id="wa-lang" name="language" class="input" type="text" dir="ltr" maxlength="10" value="<%= channels.whatsapp.settings.language || 'ar' %>">
-        <% if (wa.language) { %><p class="field-error"><%= wa.language %></p><% } %>
+        <label for="wa-lang"><%= __("لغة القالب") %></label>
+        <input id="wa-lang" name="language" class="input" type="text" dir="ltr" maxlength="10" value="<%= __(channels.whatsapp.settings.language || 'ar') %>">
+        <% if (wa.language) { %><p class="field-error"><%= __(wa.language) %></p><% } %>
       </div>
     </div>
-    <p class="field-hint">القالب نص فيه متغيران: {{1}} العنوان و {{2}} نص التذكير.</p>
-    <button type="submit" class="btn btn--primary btn--block">حفظ إعدادات واتساب</button>
+    <p class="field-hint"><%= __("القالب نص فيه متغيران:") %> {{1}} <%= __("العنوان و") %> {{2}} <%= __("نص التذكير.") %></p>
+    <button type="submit" class="btn btn--primary btn--block"><%= __("حفظ إعدادات واتساب") %></button>
   </form>
   <% if (channels.whatsapp.configured) { %>
-    <form method="post" action="/office/settings/reminders/whatsapp/remove"><button type="submit" class="btn btn--secondary btn--block">حذف إعدادات واتساب</button></form>
+    <form method="post" action="/office/settings/reminders/whatsapp/remove"><button type="submit" class="btn btn--secondary btn--block"><%= __("حذف إعدادات واتساب") %></button></form>
   <% } %>
 </section>
 
 <section class="card form-card" id="telegram">
-  <h2>تيليجرام</h2>
-  <% if (channels.telegram.configured) { %><p><span class="badge badge--link-joined">مضبوط ✓</span><% if (channels.telegram.settings.bot_username) { %> البوت: <span dir="ltr">@<%= channels.telegram.settings.bot_username %></span><% } %></p><% } %>
+  <h2><%= __("تيليجرام") %></h2>
+  <% if (channels.telegram.configured) { %><p><span class="badge badge--link-joined"><%= __("مضبوط") %> ✓</span><% if (channels.telegram.settings.bot_username) { %> <%= __("البوت:") %> <span dir="ltr">@<%= __(channels.telegram.settings.bot_username) %></span><% } %></p><% } %>
   <% const tg = (errors.telegram || {}); %>
   <form method="post" action="/office/settings/reminders/telegram" novalidate autocomplete="off">
     <div class="field">
-      <label for="tg-token">رمز البوت (من BotFather)</label>
-      <input id="tg-token" name="token" class="input" type="password" dir="ltr" maxlength="100" autocomplete="new-password" placeholder="<%= channels.telegram.configured ? 'محفوظ، اتركه فارغاً لإعادة ربط نفس البوت' : '' %>" <%= tg.token ? 'aria-invalid=true' : '' %>>
-      <% if (tg.token) { %><p class="field-error"><%= tg.token %></p><% } %>
+      <label for="tg-token"><%= __("رمز البوت (من BotFather)") %></label>
+      <input id="tg-token" name="token" class="input" type="password" dir="ltr" maxlength="100" autocomplete="new-password" placeholder="<%= __(channels.telegram.configured ? __('محفوظ، اتركه فارغاً لإعادة ربط نفس البوت') : '') %>" <%= __(tg.token ? 'aria-invalid=true' : '') %>>
+      <% if (tg.token) { %><p class="field-error"><%= __(tg.token) %></p><% } %>
     </div>
-    <button type="submit" class="btn btn--primary btn--block">حفظ وربط البوت</button>
+    <button type="submit" class="btn btn--primary btn--block"><%= __("حفظ وربط البوت") %></button>
   </form>
   <% if (channels.telegram.configured) { %>
-    <form method="post" action="/office/settings/reminders/telegram/remove"><button type="submit" class="btn btn--secondary btn--block">حذف إعدادات تيليجرام</button></form>
+    <form method="post" action="/office/settings/reminders/telegram/remove"><button type="submit" class="btn btn--secondary btn--block"><%= __("حذف إعدادات تيليجرام") %></button></form>
   <% } %>
 
-  <h3>ربط محادثتك في تيليجرام</h3>
-  <p>حالة ربط محادثتك:
-    <% if (myStatus.telegram.linked) { %><span class="badge badge--link-joined">مربوطة ✓</span><% } else { %><span class="badge badge--link-not_invited">غير مربوطة</span><% } %>
+  <h3><%= __("ربط محادثتك في تيليجرام") %></h3>
+  <p><%= __("حالة ربط محادثتك:") %>
+    <% if (myStatus.telegram.linked) { %><span class="badge badge--link-joined"><%= __("مربوطة") %> ✓</span><% } else { %><span class="badge badge--link-not_invited"><%= __("غير مربوطة") %></span><% } %>
   </p>
   <% if (botLink) { %>
-    <p>بوت المكتب: <a href="<%= botLink %>" dir="ltr" target="_blank" rel="noopener noreferrer">@<%= botName %></a></p>
+    <p><%= __("بوت المكتب:") %> <a href="<%= __(botLink) %>" dir="ltr" target="_blank" rel="noopener noreferrer">@<%= __(botName) %></a></p>
   <% } else { %>
-    <p class="muted">احفظ رمز البوت أعلاه أولاً، ثم يظهر هنا رابط البوت.</p>
+    <p class="muted"><%= __("احفظ رمز البوت أعلاه أولاً، ثم يظهر هنا رابط البوت.") %></p>
   <% } %>
   <ol class="channel-steps">
-    <li>افتح <a href="/settings/notifications#telegram">إعدادات الإشعارات</a> واضغط «أظهر رمز الربط».</li>
-    <li>افتح بوت المكتب في تيليجرام واضغط «ابدأ» (Start).</li>
-    <li>أرسل رمز الربط في محادثة البوت كما هو، فيرد البوت: «تم ربط حسابك».</li>
-    <li>ارجع إلى هذه الصفحة واضغط «إرسال رسالة تجريبية» في قسم تيليجرام بالأسفل.</li>
+    <li><%= __("افتح") %> <a href="/settings/notifications#telegram"><%= __("إعدادات الإشعارات") %></a> <%= __("واضغط «أظهر رمز الربط».") %></li>
+    <li><%= __("افتح بوت المكتب في تيليجرام واضغط «ابدأ» (Start).") %></li>
+    <li><%= __("أرسل رمز الربط في محادثة البوت كما هو، فيرد البوت: «تم ربط حسابك».") %></li>
+    <li><%= __("ارجع إلى هذه الصفحة واضغط «إرسال رسالة تجريبية» في قسم تيليجرام بالأسفل.") %></li>
   </ol>
-  <p class="field-hint">كل شخص في المكتب يربط محادثته بنفسه. الرمز صالح 15 دقيقة.</p>
+  <p class="field-hint"><%= __("كل شخص في المكتب يربط محادثته بنفسه. الرمز صالح 15 دقيقة.") %></p>
 </section>
 
 <section class="card form-card" id="test">
-  <h2>إرسال رسالة تجريبية إليّ</h2>
-  <p class="muted">تصل الرسالة إليك أنت فقط، على عنوانك في <a href="/settings/notifications">إعدادات الإشعارات</a>. تظهر النتيجة أعلى الصفحة: أُرسلت، أو لم تُرسل لأن القناة غير مضبوطة، أو فشل الإرسال مع السبب.</p>
+  <h2><%= __("إرسال رسالة تجريبية إليّ") %></h2>
+  <p class="muted"><%= __("تصل الرسالة إليك أنت فقط، على عنوانك في") %> <a href="/settings/notifications"><%= __("إعدادات الإشعارات") %></a>. <%= __("تظهر النتيجة أعلى الصفحة: أُرسلت، أو لم تُرسل لأن القناة غير مضبوطة، أو فشل الإرسال مع السبب.") %></p>
   <ul class="channel-status">
-    <li><strong>البريد الإلكتروني:</strong>
-      <%= myStatus.email.smtp ? 'خادم البريد مضبوط' : 'خادم البريد غير مضبوط' %>،
-      <%= myStatus.email.hasAddress ? 'وبريدك محفوظ.' : 'ولا يوجد بريد في حسابك.' %></li>
-    <li><strong>واتساب:</strong>
-      <%= channels.whatsapp.configured ? 'إعدادات المكتب مضبوطة' : 'إعدادات المكتب غير مضبوطة' %>،
-      <%= myStatus.whatsapp.confirmed ? 'ورقمك مؤكد.' : 'ولم تؤكد رقمك بعد.' %></li>
-    <li><strong>تيليجرام:</strong>
-      <%= channels.telegram.configured ? 'بوت المكتب مضبوط' : 'بوت المكتب غير مضبوط' %>،
-      <%= myStatus.telegram.linked ? 'ومحادثتك مربوطة.' : 'ومحادثتك غير مربوطة.' %></li>
+    <li><strong><%= __("البريد الإلكتروني:") %></strong>
+      <%= __(myStatus.email.smtp ? __('خادم البريد مضبوط') : __('خادم البريد غير مضبوط')) %>،
+      <%= __(myStatus.email.hasAddress ? __('وبريدك محفوظ.') : __('ولا يوجد بريد في حسابك.')) %></li>
+    <li><strong><%= __("واتساب:") %></strong>
+      <%= __(channels.whatsapp.configured ? __('إعدادات المكتب مضبوطة') : __('إعدادات المكتب غير مضبوطة')) %>،
+      <%= __(myStatus.whatsapp.confirmed ? __('ورقمك مؤكد.') : __('ولم تؤكد رقمك بعد.')) %></li>
+    <li><strong><%= __("تيليجرام:") %></strong>
+      <%= __(channels.telegram.configured ? __('بوت المكتب مضبوط') : __('بوت المكتب غير مضبوط')) %>،
+      <%= __(myStatus.telegram.linked ? __('ومحادثتك مربوطة.') : __('ومحادثتك غير مربوطة.')) %></li>
   </ul>
   <div class="button-row">
     <% Object.entries(channelLabels).forEach(function ([key, label]) { %>
-      <form method="post" action="/office/settings/reminders/test/<%= key %>"><button type="submit" class="btn btn--secondary">إرسال رسالة تجريبية: <%= label %></button></form>
+      <form method="post" action="/office/settings/reminders/test/<%= __(key) %>"><button type="submit" class="btn btn--secondary"><%= __("إرسال رسالة تجريبية:") %> <%= __(label) %></button></form>
     <% }) %>
   </div>
 </section>

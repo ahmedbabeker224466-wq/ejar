@@ -1,34 +1,34 @@
 <div class="page-head">
-  <h1>سجل التدقيق</h1>
+  <h1><%= __("سجل التدقيق") %></h1>
 </div>
 
-<p class="muted">سجل للقراءة فقط بما تم في مكتبك: من قام بالإجراء، وماذا فعل، ومتى (بتوقيت الرياض). لا يمكن تعديله أو حذفه.</p>
+<p class="muted"><%= __("سجل للقراءة فقط بما تم في مكتبك: من قام بالإجراء، وماذا فعل، ومتى (بتوقيت الرياض). لا يمكن تعديله أو حذفه.") %></p>
 
 <% if (total === 0) { %>
   <section class="card empty-card">
-    <h2>لا توجد إجراءات مسجلة بعد</h2>
-    <p class="lead">ستظهر هنا الإجراءات المهمة مثل إضافة عقد أو تسجيل دفعة أو إيقاف عضو.</p>
+    <h2><%= __("لا توجد إجراءات مسجلة بعد") %></h2>
+    <p class="lead"><%= __("ستظهر هنا الإجراءات المهمة مثل إضافة عقد أو تسجيل دفعة أو إيقاف عضو.") %></p>
   </section>
 <% } else { %>
-  <p class="muted"><%= total %> إجراء</p>
+  <p class="muted"><%= __(total) %> <%= __("إجراء") %></p>
   <ul class="item-list">
     <% rows.forEach(function (row) { %>
       <li class="card item">
-        <p class="item__title"><%= row.actionLabel %></p>
+        <p class="item__title"><%= __(row.actionLabel) %></p>
         <p class="item__meta">
-          <span>بواسطة: <%= row.actor.name %><% if (row.actor.role) { %> (<%= row.actor.role %>)<% } %></span>
-          <span>على: <% if (row.targetHref) { %><a href="<%= row.targetHref %>"><%= row.target %> رقم <%= row.targetId %></a><% } else { %><%= row.target %><% if (row.targetId) { %> رقم <%= row.targetId %><% } %><% } %></span>
-          <span dir="ltr"><%= riyadhTime(row.createdAt) %></span>
+          <span><%= __("بواسطة:") %> <%= __(row.actor.name) %><% if (row.actor.role) { %> (<%= __(row.actor.role) %>)<% } %></span>
+          <span><%= __("على:") %> <% if (row.targetHref) { %><a href="<%= __(row.targetHref) %>"><%= __(row.target) %> <%= __("رقم") %> <%= __(row.targetId) %></a><% } else { %><%= __(row.target) %><% if (row.targetId) { %> <%= __("رقم") %> <%= __(row.targetId) %><% } %><% } %></span>
+          <span dir="ltr"><%= __(riyadhTime(row.createdAt)) %></span>
         </p>
       </li>
     <% }) %>
   </ul>
 
   <% if (pages > 1) { %>
-    <nav class="pager" aria-label="الصفحات">
-      <% if (prevUrl) { %><a class="btn btn--secondary" href="<%= prevUrl %>">الأحدث</a><% } else { %><span></span><% } %>
-      <span>صفحة <%= page %> من <%= pages %></span>
-      <% if (nextUrl) { %><a class="btn btn--secondary" href="<%= nextUrl %>">الأقدم</a><% } else { %><span></span><% } %>
+    <nav class="pager" aria-label="<%= __("الصفحات") %>">
+      <% if (prevUrl) { %><a class="btn btn--secondary" href="<%= __(prevUrl) %>"><%= __("الأحدث") %></a><% } else { %><span></span><% } %>
+      <span><%= __("صفحة") %> <%= __(page) %> <%= __("من") %> <%= __(pages) %></span>
+      <% if (nextUrl) { %><a class="btn btn--secondary" href="<%= __(nextUrl) %>"><%= __("الأقدم") %></a><% } else { %><span></span><% } %>
     </nav>
   <% } %>
 <% } %>

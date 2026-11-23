@@ -1,75 +1,75 @@
 <% const t = summary.totals; const period = summary.period; %>
 <div class="page-head ac-head">
   <div>
-    <h1>المحاسبة</h1>
-    <p class="muted">المبالغ بالريال السعودي. ميعاد يسجّل الحركات ولا ينقل أي مال.</p>
+    <h1><%= __("المحاسبة") %></h1>
+    <p class="muted"><%= __("المبالغ بالريال السعودي. ميعاد يسجّل الحركات ولا ينقل أي مال.") %></p>
   </div>
   <div class="ac-actions">
-    <a class="btn btn--secondary" href="/office/accounting/owners?month=<%= period %>">حسابات الملّاك</a>
-    <a class="btn btn--primary" href="/office/accounting/new">+ قيد جديد</a>
+    <a class="btn btn--secondary" href="/office/accounting/owners?month=<%= __(period) %>"><%= __("حسابات الملّاك") %></a>
+    <a class="btn btn--primary" href="/office/accounting/new">+ <%= __("قيد جديد") %></a>
   </div>
 </div>
-<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
-<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 <%- include('_monthnav', { navBase: '/office/accounting', period }) %>
 
 <div class="ac-kpis">
-  <div class="card ac-kpi"><span class="ac-kpi__label">الإيجارات المحصّلة</span><strong class="ac-num"><%= fmt(t.collected) %></strong><span class="ac-kpi__hint">من دفعات العقود المسجّلة</span></div>
-  <div class="card ac-kpi"><span class="ac-kpi__label">المصروفات</span><strong class="ac-num"><%= fmt(t.expenses) %></strong><span class="ac-kpi__hint">على الملّاك <%= fmt(t.ownerExpenses) %> · على المكتب <%= fmt(t.officeExpenses) %></span></div>
-  <div class="card ac-kpi"><span class="ac-kpi__label">دخل المكتب</span><strong class="ac-num"><%= fmt(t.officeIncome) %></strong><span class="ac-kpi__hint">عمولة <%= percent %>% وإيرادات أخرى</span></div>
-  <div class="card ac-kpi ac-kpi--dark"><span class="ac-kpi__label">صافي الملّاك لهذا الشهر</span><strong class="ac-num"><%= fmt(t.ownersNet) %></strong><span class="ac-kpi__hint">حُوِّل لهم <%= fmt(t.payouts) %></span></div>
+  <div class="card ac-kpi"><span class="ac-kpi__label"><%= __("الإيجارات المحصّلة") %></span><strong class="ac-num"><%= __(fmt(t.collected)) %></strong><span class="ac-kpi__hint"><%= __("من دفعات العقود المسجّلة") %></span></div>
+  <div class="card ac-kpi"><span class="ac-kpi__label"><%= __("المصروفات") %></span><strong class="ac-num"><%= __(fmt(t.expenses)) %></strong><span class="ac-kpi__hint"><%= __("على الملّاك") %> <%= __(fmt(t.ownerExpenses)) %> · <%= __("على المكتب") %> <%= __(fmt(t.officeExpenses)) %></span></div>
+  <div class="card ac-kpi"><span class="ac-kpi__label"><%= __("دخل المكتب") %></span><strong class="ac-num"><%= __(fmt(t.officeIncome)) %></strong><span class="ac-kpi__hint"><%= __("عمولة") %> <%= __(percent) %>% <%= __("وإيرادات أخرى") %></span></div>
+  <div class="card ac-kpi ac-kpi--dark"><span class="ac-kpi__label"><%= __("صافي الملّاك لهذا الشهر") %></span><strong class="ac-num"><%= __(fmt(t.ownersNet)) %></strong><span class="ac-kpi__hint"><%= __("حُوِّل لهم") %> <%= __(fmt(t.payouts)) %></span></div>
 </div>
 
 <div class="ac-grid">
   <section class="card">
-    <h2 class="ac-title">الإيرادات والمصروفات <span class="muted">آخر 6 أشهر</span></h2>
-    <div class="ac-chart" role="img" aria-label="رسم للإيرادات والمصروفات في آخر ستة أشهر">
+    <h2 class="ac-title"><%= __("الإيرادات والمصروفات") %> <span class="muted"><%= __("آخر 6 أشهر") %></span></h2>
+    <div class="ac-chart" role="img" aria-label="<%= __("رسم للإيرادات والمصروفات في آخر ستة أشهر") %>">
       <% summary.trend.forEach(function (m) { %>
         <div class="ac-chart__month">
-          <div class="ac-chart__bars"><i class="ac-h<%= Math.round(m.collectedPct / 5) * 5 %>" title="<%= fmt(m.collected) %>"></i><i class="ac-chart__out ac-h<%= Math.round(m.expensesPct / 5) * 5 %>" title="<%= fmt(m.expenses) %>"></i></div>
-          <span><%= monthName(m.period) %></span>
+          <div class="ac-chart__bars"><i class="ac-h<%= __(Math.round(m.collectedPct / 5) * 5) %>" title="<%= __(fmt(m.collected)) %>"></i><i class="ac-chart__out ac-h<%= __(Math.round(m.expensesPct / 5) * 5) %>" title="<%= __(fmt(m.expenses)) %>"></i></div>
+          <span><%= __(monthName(m.period)) %></span>
         </div>
       <% }) %>
     </div>
-    <p class="ac-legend"><span><i></i>الإيجارات المحصّلة</span><span><i class="ac-chart__out"></i>المصروفات</span></p>
+    <p class="ac-legend"><span><i></i><%= __("الإيجارات المحصّلة") %></span><span><i class="ac-chart__out"></i><%= __("المصروفات") %></span></p>
   </section>
   <section class="card">
-    <h2 class="ac-title">توزيع المصروفات</h2>
-    <% if (summary.expenseRows.length === 0) { %><p class="empty-state">لا توجد مصروفات في هذا الشهر.</p><% } else { %>
+    <h2 class="ac-title"><%= __("توزيع المصروفات") %></h2>
+    <% if (summary.expenseRows.length === 0) { %><p class="empty-state"><%= __("لا توجد مصروفات في هذا الشهر.") %></p><% } else { %>
       <ul class="ac-split">
         <% summary.expenseRows.forEach(function (r) { %>
-          <li><div><span><%= r.label %></span><strong class="ac-num"><%= fmt(r.h) %></strong></div><span class="ac-bar"><i class="ac-w<%= Math.round(r.pct / 5) * 5 %>"></i></span></li>
+          <li><div><span><%= __(r.label) %></span><strong class="ac-num"><%= __(fmt(r.h)) %></strong></div><span class="ac-bar"><i class="ac-w<%= __(Math.round(r.pct / 5) * 5) %>"></i></span></li>
         <% }) %>
       </ul>
     <% } %>
     <form class="ac-commission" method="post" action="/office/accounting/commission">
-      <label for="percent">نسبة عمولة المكتب من الإيجار المحصّل</label>
-      <div class="ac-inline"><input id="percent" name="percent" class="input" inputmode="decimal" value="<%= percent %>" maxlength="5"><span>%</span><button type="submit" class="btn btn--secondary btn--small">حفظ</button></div>
-      <p class="muted">تُطبَّق النسبة الحالية على كل الأشهر في الكشوف.</p>
+      <label for="percent"><%= __("نسبة عمولة المكتب من الإيجار المحصّل") %></label>
+      <div class="ac-inline"><input id="percent" name="percent" class="input" inputmode="decimal" value="<%= __(percent) %>" maxlength="5"><span>%</span><button type="submit" class="btn btn--secondary btn--small"><%= __("حفظ") %></button></div>
+      <p class="muted"><%= __("تُطبَّق النسبة الحالية على كل الأشهر في الكشوف.") %></p>
     </form>
   </section>
 </div>
 
 <section class="card">
-  <div class="page-head"><h2 class="ac-title">حركات الشهر</h2><a class="btn btn--secondary btn--small" href="/office/accounting/csv?month=<%= period %>">تصدير CSV</a></div>
-  <% if (rows.length === 0) { %><p class="empty-state">لا توجد حركات في هذا الشهر. سجّل دفعات العقود أو أضف قيداً جديداً.</p><% } else { %>
+  <div class="page-head"><h2 class="ac-title"><%= __("حركات الشهر") %></h2><a class="btn btn--secondary btn--small" href="/office/accounting/csv?month=<%= __(period) %>"><%= __("تصدير") %> CSV</a></div>
+  <% if (rows.length === 0) { %><p class="empty-state"><%= __("لا توجد حركات في هذا الشهر. سجّل دفعات العقود أو أضف قيداً جديداً.") %></p><% } else { %>
     <div class="table-wrap"><table class="table ac-table">
-      <thead><tr><th>التاريخ</th><th>البيان</th><th class="ac-col-type">النوع</th><th class="ac-amount">المبلغ</th><th><span class="visually-hidden">إجراء</span></th></tr></thead>
+      <thead><tr><th><%= __("التاريخ") %></th><th><%= __("البيان") %></th><th class="ac-col-type"><%= __("النوع") %></th><th class="ac-amount"><%= __("المبلغ") %></th><th><span class="visually-hidden"><%= __("إجراء") %></span></th></tr></thead>
       <tbody>
         <% rows.forEach(function (r) { %>
-          <tr class="<%= r.voided ? 'ac-voided' : '' %>">
-            <td dir="ltr" class="ac-date"><%= r.day %></td>
-            <td><% if (r.link) { %><a href="<%= r.link %>"><%= r.label %></a><% } else { %><%= r.label %><% } %><% if (r.description) { %><div class="muted"><%= r.description %></div><% } %><% if (r.voided) { %><div class="muted">ملغى: <%= r.voidReason %></div><% } %></td>
-            <td class="ac-col-type"><span class="ac-pill ac-pill--<%= r.kind || 'rent' %>"><%= r.typeLabel %></span></td>
-            <td class="ac-amount ac-num <%= r.tone === 'in' ? 'ac-in' : 'ac-out' %>"><%= r.tone === 'in' ? '+' : '-' %> <%= fmt(r.h) %></td>
+          <tr class="<%= __(r.voided ? 'ac-voided' : '') %>">
+            <td dir="ltr" class="ac-date"><%= __(r.day) %></td>
+            <td><% if (r.link) { %><a href="<%= __(r.link) %>"><%= __(r.label) %></a><% } else { %><%= __(r.label) %><% } %><% if (r.description) { %><div class="muted"><%= __(r.description) %></div><% } %><% if (r.voided) { %><div class="muted"><%= __("ملغى:") %> <%= __(r.voidReason) %></div><% } %></td>
+            <td class="ac-col-type"><span class="ac-pill ac-pill--<%= __(r.kind || 'rent') %>"><%= __(r.typeLabel) %></span></td>
+            <td class="ac-amount ac-num <%= __(r.tone === 'in' ? 'ac-in' : 'ac-out') %>"><%= __(r.tone === 'in' ? '+' : '-') %> <%= __(fmt(r.h)) %></td>
             <td>
               <% if (r.source === 'ledger' && !r.voided) { %>
-                <details class="ac-void"><summary>إلغاء</summary>
-                  <form method="post" action="/office/accounting/<%= r.id %>/void">
-                    <input type="hidden" name="month" value="<%= period %>">
-                    <label for="reason-<%= r.id %>">سبب الإلغاء</label>
-                    <input id="reason-<%= r.id %>" name="reason" class="input" minlength="3" maxlength="200" required>
-                    <button type="submit" class="btn btn--danger btn--small">إلغاء القيد</button>
+                <details class="ac-void"><summary><%= __("إلغاء") %></summary>
+                  <form method="post" action="/office/accounting/<%= __(r.id) %>/void">
+                    <input type="hidden" name="month" value="<%= __(period) %>">
+                    <label for="reason-<%= __(r.id) %>"><%= __("سبب الإلغاء") %></label>
+                    <input id="reason-<%= __(r.id) %>" name="reason" class="input" minlength="3" maxlength="200" required>
+                    <button type="submit" class="btn btn--danger btn--small"><%= __("إلغاء القيد") %></button>
                   </form>
                 </details>
               <% } %>
@@ -78,6 +78,6 @@
         <% }) %>
       </tbody>
     </table></div>
-    <% if (more) { %><p class="muted">عرضنا آخر 50 حركة. صدّر الملف لرؤية الكل.</p><% } %>
+    <% if (more) { %><p class="muted"><%= __("عرضنا آخر 50 حركة. صدّر الملف لرؤية الكل.") %></p><% } %>
   <% } %>
 </section>

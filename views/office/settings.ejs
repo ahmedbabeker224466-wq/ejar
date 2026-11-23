@@ -1,54 +1,54 @@
 <section class="card form-card">
-  <h1>الإعدادات</h1>
+  <h1><%= __("الإعدادات") %></h1>
 
   <% if (saved) { %>
-    <div class="flash flash--success" role="status">تم حفظ بيانات المكتب.</div>
+    <div class="flash flash--success" role="status"><%= __("تم حفظ بيانات المكتب.") %></div>
   <% } %>
 
   <div class="button-row">
-    <% if (canEditOffice) { %><a href="/office/settings/reminders" class="btn btn--secondary">إعدادات التذكيرات والقنوات</a><% } %>
-    <a href="/settings/notifications" class="btn btn--secondary">إشعاراتي</a>
+    <% if (canEditOffice) { %><a href="/office/settings/reminders" class="btn btn--secondary"><%= __("إعدادات التذكيرات والقنوات") %></a><% } %>
+    <a href="/settings/notifications" class="btn btn--secondary"><%= __("إشعاراتي") %></a>
   </div>
 
-  <h2>بيانات المكتب</h2>
+  <h2><%= __("بيانات المكتب") %></h2>
   <% if (canEditOffice) { %>
     <% if (Object.keys(errors).length) { %>
-      <div class="flash flash--danger" role="alert">راجع الحقول المظللة بالأحمر.</div>
+      <div class="flash flash--danger" role="alert"><%= __("راجع الحقول المظللة بالأحمر.") %></div>
     <% } %>
     <form method="post" action="/office/settings" novalidate>
       <%- include('../partials/office-fields') %>
-      <button type="submit" class="btn btn--primary btn--block btn--large">حفظ</button>
+      <button type="submit" class="btn btn--primary btn--block btn--large"><%= __("حفظ") %></button>
     </form>
   <% } else { %>
     <dl class="details">
-      <dt>اسم المكتب</dt><dd><%= values.name %></dd>
-      <dt>المدينة</dt><dd><%= values.city %></dd>
-      <dt>هاتف المكتب</dt><dd dir="ltr"><%= values.phone %></dd>
-      <% if (values.email) { %><dt>البريد الإلكتروني</dt><dd dir="ltr"><%= values.email %></dd><% } %>
+      <dt><%= __("اسم المكتب") %></dt><dd><%= __(values.name) %></dd>
+      <dt><%= __("المدينة") %></dt><dd><%= __(values.city) %></dd>
+      <dt><%= __("هاتف المكتب") %></dt><dd dir="ltr"><%= __(values.phone) %></dd>
+      <% if (values.email) { %><dt><%= __("البريد الإلكتروني") %></dt><dd dir="ltr"><%= __(values.email) %></dd><% } %>
     </dl>
-    <p class="muted">تعديل بيانات المكتب متاح لمالك المكتب ومديره فقط.</p>
+    <p class="muted"><%= __("تعديل بيانات المكتب متاح لمالك المكتب ومديره فقط.") %></p>
   <% } %>
 </section>
 
 <% if (planInfo) { %>
 <section class="card detail-card" id="plan">
-  <h2>باقتك: <%= planInfo.name %></h2>
-  <% if (planInfo.trial) { %><p class="muted">أنت في التجربة المجانية بحدود الباقة الاحترافية.</p><% } %>
-  <h3>الحدود والاستخدام</h3>
+  <h2><%= __("باقتك:") %> <%= __(planInfo.name) %></h2>
+  <% if (planInfo.trial) { %><p class="muted"><%= __("أنت في التجربة المجانية بحدود الباقة الاحترافية.") %></p><% } %>
+  <h3><%= __("الحدود والاستخدام") %></h3>
   <ul class="usage-list">
     <% planInfo.usage.forEach(function (u) { %>
-      <li class="usage" id="usage-<%= u.key %>">
-        <div class="usage__head"><span><%= u.label %></span>
-          <strong><%= u.used %><%= u.limit === null ? ' (بلا حد)' : ' من ' + u.limit %></strong></div>
-        <% if (u.limit !== null) { %><meter class="usage__meter" min="0" max="<%= u.limit %>" value="<%= Math.min(u.used, u.limit) %>" low="<%= Math.floor(u.limit * 0.7) %>" high="<%= Math.floor(u.limit * 0.9) %>" optimum="0"><%= u.used %> / <%= u.limit %></meter><% } %>
+      <li class="usage" id="usage-<%= __(u.key) %>">
+        <div class="usage__head"><span><%= __(u.label) %></span>
+          <strong><%= __(u.used) %><%= __(u.limit === null ? __(' (بلا حد)') : __(' من ') + u.limit) %></strong></div>
+        <% if (u.limit !== null) { %><meter class="usage__meter" min="0" max="<%= __(u.limit) %>" value="<%= __(Math.min(u.used, u.limit)) %>" low="<%= __(Math.floor(u.limit * 0.7)) %>" high="<%= __(Math.floor(u.limit * 0.9)) %>" optimum="0"><%= __(u.used) %> / <%= __(u.limit) %></meter><% } %>
       </li>
     <% }) %>
   </ul>
-  <h3>تشمل باقتك</h3>
+  <h3><%= __("تشمل باقتك") %></h3>
   <ul class="plan-card__limits">
-    <% planInfo.lines.forEach(function (line) { %><li>✓ <%= line %></li><% }) %>
+    <% planInfo.lines.forEach(function (line) { %><li>✓ <%= __(line) %></li><% }) %>
   </ul>
-  <% if (canBilling) { %><p><a href="/office/billing" class="btn btn--secondary">الاشتراك وتغيير الباقة</a></p><% } %>
+  <% if (canBilling) { %><p><a href="/office/billing" class="btn btn--secondary"><%= __("الاشتراك وتغيير الباقة") %></a></p><% } %>
 </section>
 <% } %>
 
@@ -56,38 +56,38 @@
 
 <% if (link) { %>
 <section class="card form-card" id="office-link">
-  <h2>رابط مكتبك</h2>
-  <% if (link.notice) { %><div class="flash flash--success" role="status"><%= link.notice %></div><% } %>
-  <p class="muted">صفحة عامة لمكتبك تعرض اسم المكتب والمدينة والوصف وإعلاناتك المنشورة فقط، ويتواصل الزوار معك عبر نموذج الاستفسار في كل إعلان.</p>
+  <h2><%= __("رابط مكتبك") %></h2>
+  <% if (link.notice) { %><div class="flash flash--success" role="status"><%= __(link.notice) %></div><% } %>
+  <p class="muted"><%= __("صفحة عامة لمكتبك تعرض اسم المكتب والمدينة والوصف وإعلاناتك المنشورة فقط، ويتواصل الزوار معك عبر نموذج الاستفسار في كل إعلان.") %></p>
   <% if (link.url) { %>
-    <div class="invite-code office-link"><output id="office-link-url" dir="ltr"><%= link.url %></output><button type="button" class="btn btn--secondary" data-copy="#office-link-url" data-copied="تم النسخ">نسخ الرابط</button></div>
-    <p class="muted"><%= link.enabled ? 'الصفحة ظاهرة للعامة.' : 'الصفحة مخفية الآن: من يفتح الرابط يرى «الصفحة غير موجودة».' %></p>
+    <div class="invite-code office-link"><output id="office-link-url" dir="ltr"><%= __(link.url) %></output><button type="button" class="btn btn--secondary" data-copy="#office-link-url" data-copied="<%= __("تم النسخ") %>"><%= __("نسخ الرابط") %></button></div>
+    <p class="muted"><%= __(link.enabled ? __('الصفحة ظاهرة للعامة.') : __('الصفحة مخفية الآن: من يفتح الرابط يرى «الصفحة غير موجودة».')) %></p>
   <% } %>
 
-  <form method="post" action="/office/settings/link" novalidate data-slug-form data-min="<%= link.min %>" data-max="<%= link.max %>">
+  <form method="post" action="/office/settings/link" novalidate data-slug-form data-min="<%= __(link.min) %>" data-max="<%= __(link.max) %>">
     <div class="field">
-      <label for="slug">تغيير الرابط</label>
-      <div class="slug-input" dir="ltr"><span class="muted"><%= link.base %>/</span><input id="slug" name="slug" class="input" type="text" dir="ltr" inputmode="url" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="<%= link.max %>" value="<%= link.typed || link.slug || '' %>" aria-describedby="slug-hint slug-error" <%= link.error ? 'aria-invalid=true' : '' %> required></div>
-      <p id="slug-hint" class="field-hint">حروف إنجليزية صغيرة وأرقام وشرطة بين الكلمات، من <%= link.min %> إلى <%= link.max %> حرفاً، مثل: al-ittihad</p>
-      <p id="slug-error" class="field-error" role="alert" data-slug-error><%= link.error || '' %></p>
+      <label for="slug"><%= __("تغيير الرابط") %></label>
+      <div class="slug-input" dir="ltr"><span class="muted"><%= __(link.base) %>/</span><input id="slug" name="slug" class="input" type="text" dir="ltr" inputmode="url" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="<%= __(link.max) %>" value="<%= __(link.typed || link.slug || '') %>" aria-describedby="slug-hint slug-error" <%= __(link.error ? 'aria-invalid=true' : '') %> required></div>
+      <p id="slug-hint" class="field-hint"><%= __("حروف إنجليزية صغيرة وأرقام وشرطة بين الكلمات، من") %> <%= __(link.min) %> <%= __("إلى") %> <%= __(link.max) %> <%= __("حرفاً، مثل:") %> al-ittihad</p>
+      <p id="slug-error" class="field-error" role="alert" data-slug-error><%= __(link.error || '') %></p>
     </div>
-    <p class="muted">بعد التغيير يبقى الرابط القديم يحوّل الزوار إلى الرابط الجديد تلقائياً. يمكنك التغيير <%= link.changesLeft %> مرات أخرى خلال 30 يوماً.</p>
-    <button type="submit" class="btn btn--secondary btn--block" <%= link.changesLeft === 0 ? 'disabled' : '' %>>حفظ الرابط</button>
+    <p class="muted"><%= __("بعد التغيير يبقى الرابط القديم يحوّل الزوار إلى الرابط الجديد تلقائياً. يمكنك التغيير") %> <%= __(link.changesLeft) %> <%= __("مرات أخرى خلال 30 يوماً.") %></p>
+    <button type="submit" class="btn btn--secondary btn--block" <%= __(link.changesLeft === 0 ? 'disabled' : '') %>><%= __("حفظ الرابط") %></button>
   </form>
 
   <form method="post" action="/office/settings/public-page" novalidate>
     <div class="field">
-      <label class="check"><input type="checkbox" name="enabled" value="1" <%= link.enabledValue ? 'checked' : '' %>> إظهار صفحة المكتب للعامة</label>
+      <label class="check"><input type="checkbox" name="enabled" value="1" <%= __(link.enabledValue ? 'checked' : '') %>> <%= __("إظهار صفحة المكتب للعامة") %></label>
     </div>
     <div class="field">
-      <label for="public-description">وصف قصير للمكتب (اختياري)</label>
-      <textarea id="public-description" name="description" class="input" rows="3" maxlength="<%= link.descriptionMax %>" aria-describedby="description-hint" <%= link.descriptionError ? 'aria-invalid=true' : '' %>><%= link.descriptionValue %></textarea>
-      <p id="description-hint" class="field-hint">حتى <%= link.descriptionMax %> حرف، نص فقط، بدون أرقام هواتف أو روابط.</p>
-      <% if (link.descriptionError) { %><p class="field-error" role="alert"><%= link.descriptionError %></p><% } %>
+      <label for="public-description"><%= __("وصف قصير للمكتب (اختياري)") %></label>
+      <textarea id="public-description" name="description" class="input" rows="3" maxlength="<%= __(link.descriptionMax) %>" aria-describedby="description-hint" <%= __(link.descriptionError ? 'aria-invalid=true' : '') %>><%= __(link.descriptionValue) %></textarea>
+      <p id="description-hint" class="field-hint"><%= __("حتى") %> <%= __(link.descriptionMax) %> <%= __("حرف، نص فقط، بدون أرقام هواتف أو روابط.") %></p>
+      <% if (link.descriptionError) { %><p class="field-error" role="alert"><%= __(link.descriptionError) %></p><% } %>
     </div>
-    <button type="submit" class="btn btn--primary btn--block">حفظ إعدادات الصفحة</button>
+    <button type="submit" class="btn btn--primary btn--block"><%= __("حفظ إعدادات الصفحة") %></button>
   </form>
-  <p class="disclaimer">تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط</p>
+  <p class="disclaimer"><%= __("تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط") %></p>
 </section>
 <script src="<%= assetUrl('/js/officeLink.js') %>" defer></script>
 <% } %>

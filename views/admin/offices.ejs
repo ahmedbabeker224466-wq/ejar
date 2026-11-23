@@ -1,28 +1,28 @@
-<div class="page-head"><h1>المكاتب</h1></div>
+<div class="page-head"><h1><%= __("المكاتب") %></h1></div>
 <form method="get" action="/admin/offices" class="filter-bar" novalidate>
-  <div class="field"><label for="q">بحث بالاسم أو الجوال</label><input id="q" name="q" class="input" value="<%= q %>" maxlength="60"></div>
-  <div class="field"><label for="status">الحالة</label>
+  <div class="field"><label for="q"><%= __("بحث بالاسم أو الجوال") %></label><input id="q" name="q" class="input" value="<%= __(q) %>" maxlength="60"></div>
+  <div class="field"><label for="status"><%= __("الحالة") %></label>
     <select id="status" name="status" class="select">
-      <option value="">الكل</option>
-      <% statuses.forEach(function (s) { %><option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= { trial: 'تجربة', active: 'فعّال', past_due: 'غير مسدَّد', suspended: 'موقوف' }[s] %></option><% }) %>
+      <option value=""><%= __("الكل") %></option>
+      <% statuses.forEach(function (s) { %><option value="<%= __(s) %>" <%= __(status === s ? 'selected' : '') %>><%= __({ trial: __('تجربة'), active: __('فعّال'), past_due: __('غير مسدَّد'), suspended: __('موقوف') }[s]) %></option><% }) %>
     </select></div>
-  <button type="submit" class="btn btn--primary">بحث</button>
+  <button type="submit" class="btn btn--primary"><%= __("بحث") %></button>
 </form>
-<p class="muted"><%= total %> مكتب</p>
+<p class="muted"><%= __(total) %> <%= __("مكتب") %></p>
 <ul class="item-list">
   <% rows.forEach(function (o) { %>
     <li class="item">
-      <div class="item__title"><a href="/admin/offices/<%= o.id %>"><strong><%= o.name %></strong></a>
-        <span class="badge badge--bill-<%= o.status === 'active' ? 'success' : o.status === 'trial' ? 'info' : 'danger' %>"><%= { trial: 'تجربة', active: 'فعّال', past_due: 'غير مسدَّد', suspended: 'موقوف' }[o.status] %></span></div>
-      <div class="item__meta"><%= o.city %> · الباقة: <%= o.plan_name || '—' %> · وحدات <%= o.units %> · عقود <%= o.contracts %> · سُجّل <span dir="ltr"><%= stamp(o.created_at) %></span></div>
+      <div class="item__title"><a href="/admin/offices/<%= __(o.id) %>"><strong><%= __(o.name) %></strong></a>
+        <span class="badge badge--bill-<%= __(o.status === 'active' ? 'success' : o.status === 'trial' ? 'info' : 'danger') %>"><%= __({ trial: __('تجربة'), active: __('فعّال'), past_due: __('غير مسدَّد'), suspended: __('موقوف') }[o.status]) %></span></div>
+      <div class="item__meta"><%= __(o.city) %> · <%= __("الباقة:") %> <%= __(o.plan_name || '—') %> · <%= __("وحدات") %> <%= __(o.units) %> · <%= __("عقود") %> <%= __(o.contracts) %> · <%= __("سُجّل") %> <span dir="ltr"><%= __(stamp(o.created_at)) %></span></div>
     </li>
   <% }) %>
 </ul>
-<% if (!rows.length) { %><p class="empty-state">لا توجد مكاتب مطابقة.</p><% } %>
+<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد مكاتب مطابقة.") %></p><% } %>
 <% if (pages > 1) { %>
-  <nav class="pager" aria-label="الصفحات">
-    <% if (page > 1) { %><a href="/admin/offices?q=<%= encodeURIComponent(q) %>&amp;status=<%= status %>&amp;page=<%= page - 1 %>">السابق</a><% } %>
-    <span>صفحة <%= page %> من <%= pages %></span>
-    <% if (page < pages) { %><a href="/admin/offices?q=<%= encodeURIComponent(q) %>&amp;status=<%= status %>&amp;page=<%= page + 1 %>">التالي</a><% } %>
+  <nav class="pager" aria-label="<%= __("الصفحات") %>">
+    <% if (page > 1) { %><a href="/admin/offices?q=<%= __(encodeURIComponent(q)) %>&amp;status=<%= __(status) %>&amp;page=<%= __(page - 1) %>"><%= __("السابق") %></a><% } %>
+    <span><%= __("صفحة") %> <%= __(page) %> <%= __("من") %> <%= __(pages) %></span>
+    <% if (page < pages) { %><a href="/admin/offices?q=<%= __(encodeURIComponent(q)) %>&amp;status=<%= __(status) %>&amp;page=<%= __(page + 1) %>"><%= __("التالي") %></a><% } %>
   </nav>
 <% } %>

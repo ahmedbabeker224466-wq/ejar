@@ -1,9 +1,9 @@
 <div class="invoice-sheet">
   <p class="no-print invoice-actions">
-    <a href="<%= backUrl %>" class="btn btn--secondary btn--small">→ رجوع</a>
-    <button type="button" class="btn btn--primary btn--small" data-print>طباعة</button>
+    <a href="<%= __(backUrl) %>" class="btn btn--secondary btn--small"><%= dir === 'rtl' ? '→' : '←' %> <%= __("رجوع") %></a>
+    <button type="button" class="btn btn--primary btn--small" data-print><%= __("طباعة") %></button>
   </p>
-  <h1>كشف حساب المالك</h1>
+  <h1><%= __("كشف حساب المالك") %></h1>
   <%- include('_statement-body') %>
-  <p class="disclaimer">تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط</p>
+  <p class="disclaimer"><%= __("تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط") %></p>
 </div>

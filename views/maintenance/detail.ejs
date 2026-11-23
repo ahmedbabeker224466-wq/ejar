@@ -1,27 +1,27 @@
 <%- include('../partials/area-nav') %>
-<p class="back-link"><a href="<%= listUrl %>">→ كل الطلبات</a></p>
-<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
-<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<p class="back-link"><a href="<%= __(listUrl) %>"><%= dir === 'rtl' ? '→' : '←' %> <%= __("كل الطلبات") %></a></p>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 
 <section class="card detail-card">
   <div class="page-head">
-    <h1><%= request.unit_label || 'وحدة' %> · <%= request.categoryLabel %></h1>
-    <span class="badge badge--maint-<%= request.status %>"><%= request.statusLabel %></span>
+    <h1><%= __(request.unit_label || __('وحدة')) %> · <%= __(request.categoryLabel) %></h1>
+    <span class="badge badge--maint-<%= __(request.status) %>"><%= __(request.statusLabel) %></span>
   </div>
   <dl class="details">
-    <% if (request.building_name) { %><dt>المبنى</dt><dd><%= request.building_name %></dd><% } %>
-    <dt>الأولوية</dt><dd><%= request.priorityLabel %></dd>
-    <dt>تاريخ الطلب</dt><dd dir="ltr"><%= createdAt %></dd>
-    <% if (changedAt) { %><dt>آخر تغيير للحالة</dt><dd dir="ltr"><%= changedAt %></dd><% } %>
-    <% if (kind === 'office') { %><dt>المسؤول</dt><dd><%= request.assigneeLabel || 'غير محدد' %></dd><% } %>
+    <% if (request.building_name) { %><dt><%= __("المبنى") %></dt><dd><%= __(request.building_name) %></dd><% } %>
+    <dt><%= __("الأولوية") %></dt><dd><%= __(request.priorityLabel) %></dd>
+    <dt><%= __("تاريخ الطلب") %></dt><dd dir="ltr"><%= __(createdAt) %></dd>
+    <% if (changedAt) { %><dt><%= __("آخر تغيير للحالة") %></dt><dd dir="ltr"><%= __(changedAt) %></dd><% } %>
+    <% if (kind === 'office') { %><dt><%= __("المسؤول") %></dt><dd><%= __(request.assigneeLabel || __('غير محدد')) %></dd><% } %>
   </dl>
-  <h2>الوصف</h2>
-  <p class="pre-line"><%= request.description %></p>
+  <h2><%= __("الوصف") %></h2>
+  <p class="pre-line"><%= __(request.description) %></p>
   <% if (photos.length) { %>
-    <h2>الصور</h2>
+    <h2><%= __("الصور") %></h2>
     <ul class="photo-grid">
       <% photos.forEach(function (ph, i) { %>
-        <li><a href="/maintenance/photos/<%= ph.id %>" target="_blank" rel="noopener"><img src="/maintenance/photos/<%= ph.id %>" alt="صورة مرفقة <%= i + 1 %>" loading="lazy" width="160" height="160"></a></li>
+        <li><a href="/maintenance/photos/<%= __(ph.id) %>" target="_blank" rel="noopener"><img src="/maintenance/photos/<%= __(ph.id) %>" alt="<%= __("صورة مرفقة") %> <%= __(i + 1) %>" loading="lazy" width="160" height="160"></a></li>
       <% }) %>
     </ul>
   <% } %>
@@ -29,59 +29,59 @@
 
 <% if (kind === 'office') { %>
   <section class="card detail-card">
-    <h2>إدارة الطلب</h2>
+    <h2><%= __("إدارة الطلب") %></h2>
     <% if (nextStatuses.length) { %>
-      <form method="post" action="<%= base %>/status" class="button-row">
+      <form method="post" action="<%= __(base) %>/status" class="button-row">
         <% nextStatuses.forEach(function (s) { %>
-          <button type="submit" name="status" value="<%= s %>" class="btn <%= s === 'rejected' ? 'btn--secondary' : 'btn--primary' %>"><%= { seen: 'تمت المشاهدة', in_progress: 'بدء التنفيذ', done: 'تم الإنجاز', rejected: 'رفض الطلب' }[s] %></button>
+          <button type="submit" name="status" value="<%= __(s) %>" class="btn <%= __(s === 'rejected' ? 'btn--secondary' : 'btn--primary') %>"><%= __({ seen: __('تمت المشاهدة'), in_progress: __('بدء التنفيذ'), done: __('تم الإنجاز'), rejected: __('رفض الطلب') }[s]) %></button>
         <% }) %>
       </form>
     <% } else { %>
-      <p class="muted">أُغلق الطلب.</p>
+      <p class="muted"><%= __("أُغلق الطلب.") %></p>
     <% } %>
-    <form method="post" action="<%= base %>/assign">
+    <form method="post" action="<%= __(base) %>/assign">
       <div class="field">
-        <label for="assignee">إسناد إلى عضو من الفريق</label>
+        <label for="assignee"><%= __("إسناد إلى عضو من الفريق") %></label>
         <select id="assignee" name="assignee" class="select">
-          <option value="">بدون مسؤول</option>
-          <% members.forEach(function (m) { %><option value="<%= m.user_id %>" <%= Number(request.assigned_to) === m.user_id ? 'selected' : '' %>><%= m.display %> (<%= m.roleLabel %>)</option><% }) %>
+          <option value=""><%= __("بدون مسؤول") %></option>
+          <% members.forEach(function (m) { %><option value="<%= __(m.user_id) %>" <%= __(Number(request.assigned_to) === m.user_id ? 'selected' : '') %>><%= __(m.display) %> (<%= __(m.roleLabel) %>)</option><% }) %>
         </select>
       </div>
-      <button type="submit" class="btn btn--secondary btn--block">حفظ الإسناد</button>
+      <button type="submit" class="btn btn--secondary btn--block"><%= __("حفظ الإسناد") %></button>
     </form>
   </section>
 <% } %>
 
 <section class="card detail-card" id="thread">
-  <h2>الردود</h2>
+  <h2><%= __("الردود") %></h2>
   <% if (messages.length) { %>
     <ul class="thread">
       <% messages.forEach(function (m) { %>
-        <li class="thread__item thread__item--<%= m.visibility %>">
-          <p class="thread__head"><strong><%= m.author %></strong> <span class="muted" dir="ltr"><%= m.at %></span>
-            <% if (m.visibility === 'internal') { %><span class="badge badge--soon">داخلي</span><% } else if (m.visibility === 'landlord') { %><span class="badge badge--calm">المالك والمكتب</span><% } %>
+        <li class="thread__item thread__item--<%= __(m.visibility) %>">
+          <p class="thread__head"><strong><%= __(m.author) %></strong> <span class="muted" dir="ltr"><%= __(m.at) %></span>
+            <% if (m.visibility === 'internal') { %><span class="badge badge--soon"><%= __("داخلي") %></span><% } else if (m.visibility === 'landlord') { %><span class="badge badge--calm"><%= __("المالك والمكتب") %></span><% } %>
           </p>
-          <p class="pre-line"><%= m.body %></p>
+          <p class="pre-line"><%= __(m.body) %></p>
         </li>
       <% }) %>
     </ul>
   <% } else { %>
-    <p class="empty-state">لا توجد ردود بعد.</p>
+    <p class="empty-state"><%= __("لا توجد ردود بعد.") %></p>
   <% } %>
-  <form method="post" action="<%= base %>/messages" novalidate>
+  <form method="post" action="<%= __(base) %>/messages" novalidate>
     <div class="field">
-      <label for="body"><%= kind === 'landlord' ? 'تعليق' : 'رد' %></label>
-      <textarea id="body" name="body" class="textarea" rows="3" maxlength="<%= limits.message %>" required></textarea>
-      <p class="field-hint">حتى <%= limits.message %> حرف، نص فقط.<%= kind === 'landlord' ? ' يراه المكتب فقط.' : '' %></p>
+      <label for="body"><%= __(kind === 'landlord' ? __('تعليق') : __('رد')) %></label>
+      <textarea id="body" name="body" class="textarea" rows="3" maxlength="<%= __(limits.message) %>" required></textarea>
+      <p class="field-hint"><%= __("حتى") %> <%= __(limits.message) %> <%= __("حرف، نص فقط.") %><%= __(kind === 'landlord' ? __(' يراه المكتب فقط.') : '') %></p>
     </div>
     <% if (kind === 'office') { %>
       <div class="field">
-        <label for="visibility">نوع الرد</label>
+        <label for="visibility"><%= __("نوع الرد") %></label>
         <select id="visibility" name="visibility" class="select">
-          <% Object.entries(visibility).forEach(function ([key, label]) { %><option value="<%= key %>"><%= label %></option><% }) %>
+          <% Object.entries(visibility).forEach(function ([key, label]) { %><option value="<%= __(key) %>"><%= __(label) %></option><% }) %>
         </select>
       </div>
     <% } %>
-    <button type="submit" class="btn btn--primary btn--block">إرسال</button>
+    <button type="submit" class="btn btn--primary btn--block"><%= __("إرسال") %></button>
   </form>
 </section>

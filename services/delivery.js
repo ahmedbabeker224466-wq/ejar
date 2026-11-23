@@ -13,6 +13,7 @@ const { prefsFor, withDisclaimer } = require('./notifications');
 const channelSettings = require('./channelSettings');
 const features = require('./features');
 const email = require('./channels/email');
+const tr = require('./tr');
 const whatsapp = require('./channels/whatsapp');
 const telegram = require('./channels/telegram');
 const { toE164 } = require('../utils/phone');
@@ -34,7 +35,11 @@ async function contactsFor(pool, userId) {
  * Sends one message on one channel to one person. officeChannel is the
  * decrypted office settings for WhatsApp / Telegram (or null).
  */
-async function sendOne({ channel, user, contacts, officeChannel, title, body }) {
+async function sendOne({ channel, user, contacts, officeChannel, title: titleAr, body: bodyAr }) {
+  // Each person gets the message in their own language (users.locale).
+  const lang = user && user.locale === 'en' ? 'en' : 'ar';
+  const title = tr.translate(lang, titleAr);
+  const body = tr.translate(lang, bodyAr);
   if (channel === 'email') return email.send({ to: user.email, subject: title, text: body });
   if (channel === 'whatsapp') {
     if (!officeChannel) return { ok: false, error: 'channel_not_configured', skip: true };
@@ -99,7 +104,7 @@ async function deliverPending({ pool, now = new Date(), limit = 100 }) {
     let attempts = 1;
     try {
       const [[row]] = await pool.query(
-        `SELECT d.channel, d.attempts, n.user_id, n.office_id, n.kind, n.title, n.body, u.email, u.is_active
+        `SELECT d.channel, d.attempts, n.user_id, n.office_id, n.kind, n.title, n.body, u.email, u.is_active, u.locale
            FROM delivery_log d JOIN notifications n ON n.id = d.notification_id JOIN users u ON u.id = n.user_id
           WHERE d.id = ?`,
         [id],

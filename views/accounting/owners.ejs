@@ -1,23 +1,23 @@
 <div class="page-head ac-head">
-  <div><h1>حسابات الملّاك</h1><p class="muted">الرصيد = ما يحتفظ به المكتب لكل مالك حتى نهاية الشهر المختار. عمولة المكتب <%= percent %>%.</p></div>
-  <div class="ac-actions"><a class="btn btn--secondary" href="/office/accounting?month=<%= period %>">→ المحاسبة</a><a class="btn btn--primary" href="/office/accounting/new?kind=owner_payout">+ تحويل إلى مالك</a></div>
+  <div><h1><%= __("حسابات الملّاك") %></h1><p class="muted"><%= __("الرصيد") %> = <%= __("ما يحتفظ به المكتب لكل مالك حتى نهاية الشهر المختار. عمولة المكتب") %> <%= __(percent) %>%.</p></div>
+  <div class="ac-actions"><a class="btn btn--secondary" href="/office/accounting?month=<%= __(period) %>"><%= dir === 'rtl' ? '→' : '←' %> <%= __("المحاسبة") %></a><a class="btn btn--primary" href="/office/accounting/new?kind=owner_payout">+ <%= __("تحويل إلى مالك") %></a></div>
 </div>
 <%- include('_monthnav', { navBase: '/office/accounting/owners', period }) %>
 <section class="card">
-  <% if (balances.rows.length === 0) { %><p class="empty-state">لا يوجد ملّاك بعد.</p><% } else { %>
+  <% if (balances.rows.length === 0) { %><p class="empty-state"><%= __("لا يوجد ملّاك بعد.") %></p><% } else { %>
     <div class="table-wrap"><table class="table ac-table">
-      <thead><tr><th>المالك</th><th class="ac-amount">إيجار الشهر</th><th class="ac-amount">الرصيد المستحق</th><th></th></tr></thead>
+      <thead><tr><th><%= __("المالك") %></th><th class="ac-amount"><%= __("إيجار الشهر") %></th><th class="ac-amount"><%= __("الرصيد المستحق") %></th><th></th></tr></thead>
       <tbody>
         <% balances.rows.forEach(function (r) { %>
           <tr>
-            <td><a href="/office/accounting/owners/<%= r.id %>?month=<%= period %>"><%= r.label %></a><% if (!r.active) { %> <span class="badge">موقوف</span><% } %><% if (r.city) { %><div class="muted"><%= r.city %></div><% } %></td>
-            <td class="ac-amount ac-num"><%= fmt(r.collected) %></td>
-            <td class="ac-amount ac-num <%= r.balance < 0 ? 'ac-out' : '' %>"><%= fmt(r.balance) %></td>
-            <td><a class="btn btn--secondary btn--small" href="/office/accounting/owners/<%= r.id %>?month=<%= period %>">الكشف</a></td>
+            <td><a href="/office/accounting/owners/<%= __(r.id) %>?month=<%= __(period) %>"><%= __(r.label) %></a><% if (!r.active) { %> <span class="badge"><%= __("موقوف") %></span><% } %><% if (r.city) { %><div class="muted"><%= __(r.city) %></div><% } %></td>
+            <td class="ac-amount ac-num"><%= __(fmt(r.collected)) %></td>
+            <td class="ac-amount ac-num <%= __(r.balance < 0 ? 'ac-out' : '') %>"><%= __(fmt(r.balance)) %></td>
+            <td><a class="btn btn--secondary btn--small" href="/office/accounting/owners/<%= __(r.id) %>?month=<%= __(period) %>"><%= __("الكشف") %></a></td>
           </tr>
         <% }) %>
       </tbody>
-      <tfoot><tr><td>الإجمالي</td><td></td><td class="ac-amount ac-num"><%= fmt(balances.totalBalance) %></td><td></td></tr></tfoot>
+      <tfoot><tr><td><%= __("الإجمالي") %></td><td></td><td class="ac-amount ac-num"><%= __(fmt(balances.totalBalance)) %></td><td></td></tr></tfoot>
     </table></div>
   <% } %>
 </section>

@@ -2135,3 +2135,12 @@ body.office-body, body.app-body {
 .stat__value, .stat__label { display: block; }
 @media (min-width: 900px) { .office-body .stats:has(> .stat:nth-child(5)) { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 .office-body .stats { margin-bottom: var(--space-4); }
+
+/* Language switch in the signed-in areas (Nov 2026). */
+.lang-switch { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: 999px; background: #fff; color: var(--color-text); font-weight: 600; font-size: .9rem; text-decoration: none; white-space: nowrap; }
+.lang-switch svg { width: 16px; height: 16px; }
+.lang-switch:hover { border-color: var(--color-primary); color: var(--color-primary); }
+@media (max-width: 420px) { .lang-switch span { display: none; } .lang-switch { padding: 0 10px; } }
+.office-top__title { overflow: hidden; }
+.office-top .lang-switch { flex: none; }
+@media (max-width: 480px) { .office-top__user .badge { display: none; } }

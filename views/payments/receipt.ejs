@@ -1,14 +1,14 @@
-<p class="back-link no-print"><a href="<%= backUrl %>">→ رجوع</a></p>
+<p class="back-link no-print"><a href="<%= __(backUrl) %>"><%= dir === 'rtl' ? '→' : '←' %> <%= __("رجوع") %></a></p>
 <section class="card detail-card receipt" id="receipt">
   <div class="page-head">
-    <h1>كشف دفعات العقد</h1>
-    <button type="button" class="btn btn--primary btn--small no-print" data-print>طباعة</button>
+    <h1><%= __("كشف دفعات العقد") %></h1>
+    <button type="button" class="btn btn--primary btn--small no-print" data-print><%= __("طباعة") %></button>
   </div>
   <dl class="details">
-    <dt>المكتب</dt><dd><%= officeName %></dd>
-    <% if (unitLabel) { %><dt>الوحدة</dt><dd><%= unitLabel %></dd><% } %>
-    <dt>مدة العقد</dt><dd><span dir="ltr"><%= startDate %></span> إلى <span dir="ltr"><%= endDate %></span></dd>
-    <dt>تاريخ الكشف</dt><dd dir="ltr"><%= today %></dd>
+    <dt><%= __("المكتب") %></dt><dd><%= __(officeName) %></dd>
+    <% if (unitLabel) { %><dt><%= __("الوحدة") %></dt><dd><%= __(unitLabel) %></dd><% } %>
+    <dt><%= __("مدة العقد") %></dt><dd><span dir="ltr"><%= __(startDate) %></span> <%= __("إلى") %> <span dir="ltr"><%= __(endDate) %></span></dd>
+    <dt><%= __("تاريخ الكشف") %></dt><dd dir="ltr"><%= __(today) %></dd>
   </dl>
 
   <% if (history.length) { %>
@@ -16,28 +16,28 @@
       <% history.forEach(function (p, i) { %>
         <li class="receipt-row">
           <div class="receipt-row__head">
-            <strong>دفعة <%= i + 1 %> · <span dir="ltr"><%= String(p.due_date).slice(0, 10) %></span></strong>
-            <span class="badge badge--pay-<%= p.partial ? 'partial' : p.shownStatus %>"><%= p.partial ? 'دفعة جزئية' : paymentLabels[p.shownStatus] %></span>
+            <strong><%= __("دفعة") %> <%= __(i + 1) %> · <span dir="ltr"><%= __(String(p.due_date).slice(0, 10)) %></span></strong>
+            <span class="badge badge--pay-<%= __(p.partial ? 'partial' : p.shownStatus) %>"><%= __(p.partial ? __('دفعة جزئية') : paymentLabels[p.shownStatus]) %></span>
           </div>
           <dl class="receipt-row__figures">
-            <div><dt>المبلغ</dt><dd><%= fmt(p.totalHalalas) %></dd></div>
-            <div><dt>المدفوع</dt><dd><%= fmt(p.paidHalalas) %></dd></div>
-            <div><dt>المتبقي</dt><dd><%= fmt(p.remainingHalalas) %></dd></div>
+            <div><dt><%= __("المبلغ") %></dt><dd><%= __(fmt(p.totalHalalas)) %></dd></div>
+            <div><dt><%= __("المدفوع") %></dt><dd><%= __(fmt(p.paidHalalas)) %></dd></div>
+            <div><dt><%= __("المتبقي") %></dt><dd><%= __(fmt(p.remainingHalalas)) %></dd></div>
           </dl>
           <% p.entries.filter(function (e) { return !e.undone_at; }).forEach(function (e) { %>
-            <p class="receipt__entry">↳ <%= fmt(e.halalas) %> ريال في <span dir="ltr"><%= e.paidOn %></span><%= e.method ? ` · ${methods[e.method] || ''}` : '' %><%= e.reference_code ? ` · مرجع: ${e.reference_code}` : '' %></p>
+            <p class="receipt__entry">↳ <%= __(fmt(e.halalas)) %> <%= __("ريال في") %> <span dir="ltr"><%= __(e.paidOn) %></span><%= __(e.method ? ` · ${methods[e.method] || ''}` : '') %><%= __(e.reference_code ? ` · مرجع: ${e.reference_code}` : '') %></p>
           <% }) %>
         </li>
       <% }) %>
     </ul>
     <dl class="receipt-total">
-      <div><dt>مجموع الدفعات</dt><dd><%= fmt(totals.scheduled) %></dd></div>
-      <div><dt>المدفوع</dt><dd><%= fmt(totals.collected) %></dd></div>
-      <div><dt>المتبقي</dt><dd><%= fmt(totals.remaining) %></dd></div>
+      <div><dt><%= __("مجموع الدفعات") %></dt><dd><%= __(fmt(totals.scheduled)) %></dd></div>
+      <div><dt><%= __("المدفوع") %></dt><dd><%= __(fmt(totals.collected)) %></dd></div>
+      <div><dt><%= __("المتبقي") %></dt><dd><%= __(fmt(totals.remaining)) %></dd></div>
     </dl>
-    <p class="muted">المبالغ بالريال السعودي. هذا الكشف للتتبع فقط ولا يُثبت سداداً رسمياً.</p>
+    <p class="muted"><%= __("المبالغ بالريال السعودي. هذا الكشف للتتبع فقط ولا يُثبت سداداً رسمياً.") %></p>
   <% } else { %>
-    <p class="empty-state">لا توجد دفعات لهذا العقد.</p>
+    <p class="empty-state"><%= __("لا توجد دفعات لهذا العقد.") %></p>
   <% } %>
 </section>
 <script src="<%= assetUrl('/js/print.js') %>" defer></script>

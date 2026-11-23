@@ -220,7 +220,7 @@ router.post('/login', async (req, res, next) => {
     const nextPath = safeNext(req.body.next);
     const phone = normalizeSaudi(raw);
     if (!phone) return renderPhonePage(res, intent, raw.slice(0, 20), MESSAGES.invalid_phone, 422, nextPath);
-    const result = await otp.request(phone, 'login', req.ip);
+    const result = await otp.request(phone, 'login', req.ip, req.lang);
     if (!result.ok) {
       return renderPhonePage(res, intent, toLocal(phone), messageFor(result), result.error === 'send_failed' ? 503 : 429, nextPath);
     }
@@ -242,7 +242,7 @@ router.post('/login/resend', async (req, res, next) => {
   try {
     const pending = pendingLogin(req);
     if (!pending) return res.redirect('/login');
-    const result = await otp.request(pending.phone, 'login', req.ip);
+    const result = await otp.request(pending.phone, 'login', req.ip, req.lang);
     if (!result.ok) return renderVerify(res, pending, messageFor(result), 429);
     const fresh = { phone: pending.phone, sentAt: Date.now(), next: safeNext(pending.next) };
     stepCookie(res, LOGIN_COOKIE, auth.signStepToken(fresh, 'login-phone', STEP_SECONDS));

@@ -1,81 +1,81 @@
-<p class="back-link"><a href="/office/units">→ كل الوحدات</a></p>
+<p class="back-link"><a href="/office/units"><%= dir === 'rtl' ? '→' : '←' %> <%= __("كل الوحدات") %></a></p>
 
-<% if (message) { %><div class="flash flash--success" role="status"><%= message %></div><% } %>
-<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 
 <section class="card detail-card">
   <div class="page-head">
-    <h1><%= unit.label %></h1>
+    <h1><%= __(unit.label) %></h1>
     <div class="item__badges">
-      <span class="badge badge--unit-<%= unit.status %>"><%= statusLabels[unit.status] %></span>
-      <span class="badge badge--calm"><%= unitTypes[unit.unit_type] %></span>
+      <span class="badge badge--unit-<%= __(unit.status) %>"><%= __(statusLabels[unit.status]) %></span>
+      <span class="badge badge--calm"><%= __(unitTypes[unit.unit_type]) %></span>
     </div>
   </div>
   <dl class="details">
-    <dt>المالك</dt><dd><a href="/office/landlords/<%= unit.landlord_id %>"><%= unit.landlord_label %></a></dd>
-    <dt>المبنى</dt><dd><%= unit.building_name || '—' %></dd>
-    <dt>المدينة</dt><dd><%= unit.city %><%= unit.district ? ` · ${unit.district}` : '' %></dd>
-    <% if (unit.rooms !== null) { %><dt>الغرف</dt><dd><%= unit.rooms %></dd><% } %>
-    <% if (unit.bathrooms !== null) { %><dt>دورات المياه</dt><dd><%= unit.bathrooms %></dd><% } %>
-    <% if (unit.area_sqm !== null) { %><dt>المساحة</dt><dd><%= Number(unit.area_sqm) %> م²</dd><% } %>
-    <% if (unit.floor_no !== null) { %><dt>الدور</dt><dd><%= unit.floor_no %></dd><% } %>
-    <dt>مفروشة</dt><dd><%= unit.is_furnished ? 'نعم' : 'لا' %></dd>
-    <% if (unit.base_rent !== null) { %><dt>الإيجار السنوي</dt><dd><%= Number(unit.base_rent).toLocaleString('en-US') %> <%= unit.currency === 'SAR' ? 'ريال' : unit.currency %></dd><% } %>
-    <% if (unit.notes) { %><dt>ملاحظات</dt><dd class="pre-line"><%= unit.notes %></dd><% } %>
+    <dt><%= __("المالك") %></dt><dd><a href="/office/landlords/<%= __(unit.landlord_id) %>"><%= __(unit.landlord_label) %></a></dd>
+    <dt><%= __("المبنى") %></dt><dd><%= __(unit.building_name || '—') %></dd>
+    <dt><%= __("المدينة") %></dt><dd><%= __(unit.city) %><%= __(unit.district ? ` · ${unit.district}` : '') %></dd>
+    <% if (unit.rooms !== null) { %><dt><%= __("الغرف") %></dt><dd><%= __(unit.rooms) %></dd><% } %>
+    <% if (unit.bathrooms !== null) { %><dt><%= __("دورات المياه") %></dt><dd><%= __(unit.bathrooms) %></dd><% } %>
+    <% if (unit.area_sqm !== null) { %><dt><%= __("المساحة") %></dt><dd><%= __(Number(unit.area_sqm)) %> م²</dd><% } %>
+    <% if (unit.floor_no !== null) { %><dt><%= __("الدور") %></dt><dd><%= __(unit.floor_no) %></dd><% } %>
+    <dt><%= __("مفروشة") %></dt><dd><%= __(unit.is_furnished ? __('نعم') : __('لا')) %></dd>
+    <% if (unit.base_rent !== null) { %><dt><%= __("الإيجار السنوي") %></dt><dd><%= __(Number(unit.base_rent).toLocaleString('en-US')) %> <%= __(unit.currency === 'SAR' ? __('ريال') : unit.currency) %></dd><% } %>
+    <% if (unit.notes) { %><dt><%= __("ملاحظات") %></dt><dd class="pre-line"><%= __(unit.notes) %></dd><% } %>
   </dl>
 
   <% if (unit.amenities.length) { %>
-    <h2>المزايا</h2>
+    <h2><%= __("المزايا") %></h2>
     <ul class="tag-list">
-      <% unit.amenities.forEach(function (a) { %><li><%= amenityLabels[a] || a %></li><% }) %>
+      <% unit.amenities.forEach(function (a) { %><li><%= __(amenityLabels[a] || a) %></li><% }) %>
     </ul>
   <% } %>
 
   <div class="button-row">
-    <a href="/office/units/<%= unit.id %>/edit" class="btn btn--secondary">تعديل</a>
+    <a href="/office/units/<%= __(unit.id) %>/edit" class="btn btn--secondary"><%= __("تعديل") %></a>
   </div>
 </section>
 
 <section class="card detail-card">
-  <h2>حالة الوحدة</h2>
+  <h2><%= __("حالة الوحدة") %></h2>
   <% if (unit.status === 'rented') { %>
-    <p>الوحدة مؤجرة. تعود شاغرة تلقائياً عند انتهاء العقد.</p>
+    <p><%= __("الوحدة مؤجرة. تعود شاغرة تلقائياً عند انتهاء العقد.") %></p>
   <% } else { %>
-    <form method="post" action="/office/units/<%= unit.id %>/status">
+    <form method="post" action="/office/units/<%= __(unit.id) %>/status">
       <% if (unit.status === 'vacant') { %>
         <input type="hidden" name="status" value="maintenance">
-        <button type="submit" class="btn btn--secondary btn--block">تحويل إلى "تحت الصيانة"</button>
+        <button type="submit" class="btn btn--secondary btn--block"><%= __("تحويل إلى") %> "<%= __("تحت الصيانة") %>"</button>
       <% } else { %>
         <input type="hidden" name="status" value="vacant">
-        <button type="submit" class="btn btn--secondary btn--block">انتهت الصيانة، الوحدة شاغرة</button>
+        <button type="submit" class="btn btn--secondary btn--block"><%= __("انتهت الصيانة، الوحدة شاغرة") %></button>
       <% } %>
     </form>
   <% } %>
 </section>
 
 <section class="card detail-card" id="contracts">
-  <h2>العقود (<%= contracts.total %>)</h2>
+  <h2><%= __("العقود") %> (<%= __(contracts.total) %>)</h2>
   <%- include('../contracts/_mini-list', { list: contracts, stageLabels, more: `/office/contracts?q=${encodeURIComponent(unit.label)}` }) %>
   <% if (unit.status === 'vacant') { %>
-    <a href="/office/contracts/new?landlord=<%= unit.landlord_id %>&amp;unit=<%= unit.id %>" class="btn btn--primary">إضافة عقد لهذه الوحدة</a>
+    <a href="/office/contracts/new?landlord=<%= __(unit.landlord_id) %>&amp;unit=<%= __(unit.id) %>" class="btn btn--primary"><%= __("إضافة عقد لهذه الوحدة") %></a>
   <% } %>
 </section>
 <section class="card detail-card" id="maintenance">
-  <h2>الصيانة (<%= maintenance.total %>)</h2>
+  <h2><%= __("الصيانة") %> (<%= __(maintenance.total) %>)</h2>
   <% if (maintenance.total === 0) { %>
-    <p class="muted">لا توجد طلبات صيانة على هذه الوحدة. يرفع المستأجر الطلب من حسابه.</p>
+    <p class="muted"><%= __("لا توجد طلبات صيانة على هذه الوحدة. يرفع المستأجر الطلب من حسابه.") %></p>
   <% } else { %>
     <ul class="item-list">
       <% maintenance.rows.forEach(function (r) { %>
         <li class="item">
-          <% if (canSeeMaintenance) { %><a class="item__title" href="/office/maintenance/<%= r.id %>">طلب رقم <%= r.id %> · <%= r.categoryLabel %></a><% } else { %><p class="item__title">طلب رقم <%= r.id %> · <%= r.categoryLabel %></p><% } %>
-          <div class="item__badges"><span class="badge badge--maint-<%= r.status %>"><%= r.statusLabel %></span></div>
-          <p class="item__meta"><span><%= r.priorityLabel %></span><span dir="ltr"><%= riyadhDate(new Date(r.created_at)) %></span></p>
+          <% if (canSeeMaintenance) { %><a class="item__title" href="/office/maintenance/<%= __(r.id) %>"><%= __("طلب رقم") %> <%= __(r.id) %> · <%= __(r.categoryLabel) %></a><% } else { %><p class="item__title"><%= __("طلب رقم") %> <%= __(r.id) %> · <%= __(r.categoryLabel) %></p><% } %>
+          <div class="item__badges"><span class="badge badge--maint-<%= __(r.status) %>"><%= __(r.statusLabel) %></span></div>
+          <p class="item__meta"><span><%= __(r.priorityLabel) %></span><span dir="ltr"><%= __(riyadhDate(new Date(r.created_at))) %></span></p>
         </li>
       <% }) %>
     </ul>
     <% if (maintenance.total > maintenance.rows.length && canSeeMaintenance) { %>
-      <a href="/office/maintenance" class="btn btn--secondary btn--block">كل طلبات الصيانة</a>
+      <a href="/office/maintenance" class="btn btn--secondary btn--block"><%= __("كل طلبات الصيانة") %></a>
     <% } %>
   <% } %>
 </section>
@@ -83,10 +83,10 @@
 <% if (canDelete) { %>
   <section class="card detail-card">
     <details class="danger-zone">
-      <summary>حذف الوحدة</summary>
-      <p>الحذف نهائي ولا يمكن التراجع عنه.</p>
-      <form method="post" action="/office/units/<%= unit.id %>/delete">
-        <button type="submit" class="btn btn--danger btn--block">نعم، احذف الوحدة</button>
+      <summary><%= __("حذف الوحدة") %></summary>
+      <p><%= __("الحذف نهائي ولا يمكن التراجع عنه.") %></p>
+      <form method="post" action="/office/units/<%= __(unit.id) %>/delete">
+        <button type="submit" class="btn btn--danger btn--block"><%= __("نعم، احذف الوحدة") %></button>
       </form>
     </details>
   </section>

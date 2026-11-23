@@ -13,15 +13,15 @@
 %>
 <section class="mk-phero mk-phero--sm" aria-labelledby="page-title">
   <div class="mk-wrap">
-    <h1 id="page-title"><%= t('feat.title') %></h1>
-    <p><%= t('feat.lead') %></p>
+    <h1 id="page-title"><%= __(t('feat.title')) %></h1>
+    <p><%= __(t('feat.lead')) %></p>
   </div>
 </section>
 <section class="mk-lift">
   <div class="mk-wrap">
     <div class="mk-cards">
       <% items.forEach(function (it) { %>
-        <article class="mk-card"><%- icon(it[1]) %><h2><%= t('feat.' + it[0] + '.t') %></h2><p><%= t('feat.' + it[0] + '.p') %></p></article>
+        <article class="mk-card"><%- icon(it[1]) %><h2><%= __(t('feat.' + it[0] + '.t')) %></h2><p><%= __(t('feat.' + it[0] + '.p')) %></p></article>
       <% }) %>
     </div>
   </div>

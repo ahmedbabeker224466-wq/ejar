@@ -1,46 +1,46 @@
-<div class="page-head"><h1>لوحة المنصة</h1></div>
+<div class="page-head"><h1><%= __("لوحة المنصة") %></h1></div>
 <% if (data.pendingTransfers || data.suspiciousOrders) { %>
   <section class="card detail-card">
-    <h2>يحتاج انتباهك</h2>
+    <h2><%= __("يحتاج انتباهك") %></h2>
     <ul class="action-list">
-      <% if (data.pendingTransfers) { %><li><a href="/admin/transfers?status=pending">حوالات بنكية بانتظار المراجعة: <strong><%= data.pendingTransfers %></strong></a></li><% } %>
-      <% if (data.suspiciousOrders) { %><li><a href="/admin/orders?suspicious=1">طلبات مشبوهة (مبلغ لا يطابق): <strong><%= data.suspiciousOrders %></strong></a></li><% } %>
+      <% if (data.pendingTransfers) { %><li><a href="/admin/transfers?status=pending"><%= __("حوالات بنكية بانتظار المراجعة:") %> <strong><%= __(data.pendingTransfers) %></strong></a></li><% } %>
+      <% if (data.suspiciousOrders) { %><li><a href="/admin/orders?suspicious=1"><%= __("طلبات مشبوهة (مبلغ لا يطابق):") %> <strong><%= __(data.suspiciousOrders) %></strong></a></li><% } %>
     </ul>
   </section>
 <% } %>
 
 <div class="stats">
-  <div class="stat card"><span class="stat__value"><%= data.totalOffices %></span><span class="stat__label">إجمالي المكاتب</span></div>
-  <div class="stat card"><span class="stat__value"><%= fmt(data.mrr) %></span><span class="stat__label">الإيراد الشهري المتكرر (ريال، قبل الضريبة)</span></div>
-  <div class="stat card"><span class="stat__value"><%= data.newOffices %></span><span class="stat__label">مكاتب جديدة هذا الشهر</span></div>
-  <div class="stat card"><span class="stat__value"><%= data.contracts %></span><span class="stat__label">إجمالي العقود</span></div>
-  <div class="stat card"><span class="stat__value"><%= data.aiReads %></span><span class="stat__label">قراءات الذكاء الاصطناعي هذا الشهر</span></div>
+  <div class="stat card"><span class="stat__value"><%= __(data.totalOffices) %></span><span class="stat__label"><%= __("إجمالي المكاتب") %></span></div>
+  <div class="stat card"><span class="stat__value"><%= __(fmt(data.mrr)) %></span><span class="stat__label"><%= __("الإيراد الشهري المتكرر (ريال، قبل الضريبة)") %></span></div>
+  <div class="stat card"><span class="stat__value"><%= __(data.newOffices) %></span><span class="stat__label"><%= __("مكاتب جديدة هذا الشهر") %></span></div>
+  <div class="stat card"><span class="stat__value"><%= __(data.contracts) %></span><span class="stat__label"><%= __("إجمالي العقود") %></span></div>
+  <div class="stat card"><span class="stat__value"><%= __(data.aiReads) %></span><span class="stat__label"><%= __("قراءات الذكاء الاصطناعي هذا الشهر") %></span></div>
 </div>
 
 <section class="card detail-card">
-  <h2>المكاتب حسب الحالة</h2>
-  <% const labels = { trial: 'تجربة', active: 'مشترك فعّال', past_due: 'غير مسدَّد', suspended: 'موقوف' }; %>
+  <h2><%= __("المكاتب حسب الحالة") %></h2>
+  <% const labels = { trial: __('تجربة'), active: __('مشترك فعّال'), past_due: __('غير مسدَّد'), suspended: __('موقوف') }; %>
   <ul class="usage-list">
     <% Object.keys(labels).forEach(function (key) { %>
       <li class="usage">
-        <div class="usage__head"><span><%= labels[key] %></span><strong><%= data.byStatus[key] %></strong></div>
-        <meter class="usage__meter" min="0" max="<%= Math.max(1, data.totalOffices) %>" value="<%= data.byStatus[key] %>"><%= data.byStatus[key] %></meter>
+        <div class="usage__head"><span><%= __(labels[key]) %></span><strong><%= __(data.byStatus[key]) %></strong></div>
+        <meter class="usage__meter" min="0" max="<%= __(Math.max(1, data.totalOffices)) %>" value="<%= __(data.byStatus[key]) %>"><%= __(data.byStatus[key]) %></meter>
       </li>
     <% }) %>
   </ul>
-  <p class="muted">منها <%= data.trialOver %> مكتب انتهت تجربته ولم يشترك.</p>
+  <p class="muted"><%= __("منها") %> <%= __(data.trialOver) %> <%= __("مكتب انتهت تجربته ولم يشترك.") %></p>
 </section>
 
 <section class="card detail-card">
-  <h2>الإشعارات في آخر 7 أيام</h2>
+  <h2><%= __("الإشعارات في آخر 7 أيام") %></h2>
   <div class="table-wrap">
     <table class="table">
       <tbody>
-        <tr><th>إشعارات أُنشئت</th><td><%= data.notifications %></td></tr>
-        <tr><th>رسائل خارجية أُرسلت</th><td><%= data.deliveries.sent %></td></tr>
-        <tr><th>رسائل فشلت</th><td><%= data.deliveries.failed %></td></tr>
-        <tr><th>رسائل معلقة</th><td><%= data.deliveries.pending %></td></tr>
-        <tr><th>رسائل تُخطّيت (قناة غير مفعّلة)</th><td><%= data.deliveries.skipped %></td></tr>
+        <tr><th><%= __("إشعارات أُنشئت") %></th><td><%= __(data.notifications) %></td></tr>
+        <tr><th><%= __("رسائل خارجية أُرسلت") %></th><td><%= __(data.deliveries.sent) %></td></tr>
+        <tr><th><%= __("رسائل فشلت") %></th><td><%= __(data.deliveries.failed) %></td></tr>
+        <tr><th><%= __("رسائل معلقة") %></th><td><%= __(data.deliveries.pending) %></td></tr>
+        <tr><th><%= __("رسائل تُخطّيت (قناة غير مفعّلة)") %></th><td><%= __(data.deliveries.skipped) %></td></tr>
       </tbody>
     </table>
   </div>

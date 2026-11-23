@@ -1,29 +1,29 @@
 <%- include('../partials/area-nav') %>
 <div class="page-head">
-  <h1>كشف الحساب</h1>
-  <a class="btn btn--secondary btn--small" href="/landlord/statement/csv?<%= csvQuery %>">تصدير CSV</a>
+  <h1><%= __("كشف الحساب") %></h1>
+  <a class="btn btn--secondary btn--small" href="/landlord/statement/csv?<%= __(csvQuery) %>"><%= __("تصدير") %> CSV</a>
 </div>
-<% if (range.error) { %><div class="flash flash--danger" role="alert"><%= range.error %> عرضنا المدة الافتراضية.</div><% } %>
+<% if (range.error) { %><div class="flash flash--danger" role="alert"><%= __(range.error) %> <%= __("عرضنا المدة الافتراضية.") %></div><% } %>
 <form class="card filter-bar" method="get" action="/landlord/statement">
   <div class="filter-grid">
-    <div class="field"><label for="from">من</label><input id="from" name="from" class="input" type="date" value="<%= range.from %>"></div>
-    <div class="field"><label for="to">إلى</label><input id="to" name="to" class="input" type="date" value="<%= range.to %>"></div>
+    <div class="field"><label for="from"><%= __("من") %></label><input id="from" name="from" class="input" type="date" value="<%= __(range.from) %>"></div>
+    <div class="field"><label for="to"><%= __("إلى") %></label><input id="to" name="to" class="input" type="date" value="<%= __(range.to) %>"></div>
   </div>
-  <button type="submit" class="btn btn--secondary btn--block">عرض</button>
+  <button type="submit" class="btn btn--secondary btn--block"><%= __("عرض") %></button>
 </form>
 
 <% statement.offices.forEach(function (o) { %>
   <section class="card detail-card">
-    <h2><%= o.officeName %></h2>
+    <h2><%= __(o.officeName) %></h2>
     <% if (o.items.length === 0) { %>
-      <p class="empty-state">لا توجد دفعات مستحقة في هذه المدة.</p>
+      <p class="empty-state"><%= __("لا توجد دفعات مستحقة في هذه المدة.") %></p>
     <% } else { %>
       <div class="table-wrap"><table class="table">
-        <thead><tr><th>الوحدة</th><th>الاستحقاق</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead>
-        <tbody><% o.items.forEach(function (i) { %><tr><td><%= i.unit || '—' %></td><td dir="ltr"><%= i.due %></td><td><%= fmt(i.total) %></td><td><%= fmt(i.paid) %></td><td><%= fmt(i.remaining) %></td><td><%= i.status %></td></tr><% }) %></tbody>
-        <tfoot><tr><th colspan="2">المجموع</th><th><%= fmt(o.totals.total) %></th><th><%= fmt(o.totals.paid) %></th><th><%= fmt(o.totals.remaining) %></th><th></th></tr></tfoot>
+        <thead><tr><th><%= __("الوحدة") %></th><th><%= __("الاستحقاق") %></th><th><%= __("المبلغ") %></th><th><%= __("المدفوع") %></th><th><%= __("المتبقي") %></th><th><%= __("الحالة") %></th></tr></thead>
+        <tbody><% o.items.forEach(function (i) { %><tr><td><%= __(i.unit || '—') %></td><td dir="ltr"><%= __(i.due) %></td><td><%= __(fmt(i.total)) %></td><td><%= __(fmt(i.paid)) %></td><td><%= __(fmt(i.remaining)) %></td><td><%= __(i.status) %></td></tr><% }) %></tbody>
+        <tfoot><tr><th colspan="2"><%= __("المجموع") %></th><th><%= __(fmt(o.totals.total)) %></th><th><%= __(fmt(o.totals.paid)) %></th><th><%= __(fmt(o.totals.remaining)) %></th><th></th></tr></tfoot>
       </table></div>
-      <p class="muted">المبالغ بالريال. هذا الكشف للاطلاع فقط.</p>
+      <p class="muted"><%= __("المبالغ بالريال. هذا الكشف للاطلاع فقط.") %></p>
     <% } %>
   </section>
 <% }) %>

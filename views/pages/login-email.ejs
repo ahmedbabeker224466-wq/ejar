@@ -2,18 +2,18 @@
   <div class="auth__icon" aria-hidden="true">
     <%- include('../partials/brand-mark', { bid: 'a' }) %>
   </div>
-  <h1><%= heading %></h1>
-  <p class="lead"><%= lead %></p>
+  <h1><%= __(heading) %></h1>
+  <p class="lead"><%= __(lead) %></p>
 
   <% if (error) { %>
-    <div class="flash flash--danger" role="alert"><%= error %></div>
+    <div class="flash flash--danger" role="alert"><%= __(error) %></div>
   <% } %>
 
   <form method="post" action="/login/email" novalidate>
-    <input type="hidden" name="intent" value="<%= intent %>">
-    <% if (locals.next) { %><input type="hidden" name="next" value="<%= next %>"><% } %>
+    <input type="hidden" name="intent" value="<%= __(intent) %>">
+    <% if (locals.next) { %><input type="hidden" name="next" value="<%= __(next) %>"><% } %>
     <div class="field">
-      <label for="email">البريد الإلكتروني</label>
+      <label for="email"><%= __("البريد الإلكتروني") %></label>
       <input
         id="email"
         name="email"
@@ -24,21 +24,21 @@
         autocomplete="email"
         maxlength="190"
         placeholder="name@example.com"
-        value="<%= email %>"
+        value="<%= __(email) %>"
         aria-describedby="email-hint"
-        <%= error ? 'aria-invalid=true' : '' %>
+        <%= __(error ? 'aria-invalid=true' : '') %>
         autofocus
         required
       >
-      <p id="email-hint" class="field-hint">مثال: name@example.com</p>
+      <p id="email-hint" class="field-hint"><%= __("مثال:") %> name@example.com</p>
     </div>
-    <button type="submit" class="btn btn--primary btn--block btn--large"><%= button %></button>
+    <button type="submit" class="btn btn--primary btn--block btn--large"><%= __(button) %></button>
   </form>
 
-  <div class="auth__divider"><span>أو</span></div>
+  <div class="auth__divider"><span><%= __("أو") %></span></div>
   <% if (intent === 'register') { %>
-    <a href="/login" class="btn btn--outline btn--block">لديك حساب؟ سجّل الدخول</a>
+    <a href="/login" class="btn btn--outline btn--block"><%= __("لديك حساب؟ سجّل الدخول") %></a>
   <% } else { %>
-    <a href="/register" class="btn btn--outline btn--block">مكتب عقار جديد؟ سجّل مكتبك</a>
+    <a href="/register" class="btn btn--outline btn--block"><%= __("مكتب عقار جديد؟ سجّل مكتبك") %></a>
   <% } %>
 </section>

@@ -701,8 +701,13 @@ function translate(lang, key, vars = {}) {
 
 /** Pure: the path a link should use in lang ('/pricing' -> '/en/pricing' in English; '/' -> '/en'). Non-localized paths stay as they are. */
 function localizedPath(lang, path) {
-  if (lang !== 'en' || !LOCALIZED_PATHS.includes(path)) return path;
-  return path === '/' ? '/en' : `/en${path}`;
+  if (lang !== 'en') return path;
+  if (LOCALIZED_PATHS.includes(path)) return path === '/' ? '/en' : `/en${path}`;
+  // Any other page of the app keeps English through ?lang=en (middleware/appLang).
+  if (typeof path === 'string' && path.startsWith('/') && !path.startsWith('//') && !/[?&]lang=/.test(path)) {
+    return `${path}${path.includes('?') ? '&' : '?'}lang=en`;
+  }
+  return path;
 }
 
 /** Pure: splits a request path into its language and the path without the /en prefix. */

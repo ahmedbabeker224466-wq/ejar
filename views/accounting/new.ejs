@@ -1,48 +1,48 @@
-<div class="page-head"><h1>قيد جديد</h1><a class="btn btn--secondary btn--small" href="/office/accounting">→ المحاسبة</a></div>
+<div class="page-head"><h1><%= __("قيد جديد") %></h1><a class="btn btn--secondary btn--small" href="/office/accounting"><%= dir === 'rtl' ? '→' : '←' %> <%= __("المحاسبة") %></a></div>
 <form class="card form-card" method="post" action="/office/accounting" novalidate>
   <fieldset class="field">
-    <legend>نوع القيد</legend>
+    <legend><%= __("نوع القيد") %></legend>
     <div class="ac-choices">
       <% Object.entries(kinds).forEach(function ([key, label]) { %>
-        <label class="ac-choice"><input type="radio" name="kind" value="<%= key %>" <%= values.kind === key ? 'checked' : '' %>> <span><%= label %></span></label>
+        <label class="ac-choice"><input type="radio" name="kind" value="<%= __(key) %>" <%= __(values.kind === key ? 'checked' : '') %>> <span><%= __(label) %></span></label>
       <% }) %>
     </div>
-    <% if (errors.kind) { %><p class="field-error"><%= errors.kind %></p><% } %>
+    <% if (errors.kind) { %><p class="field-error"><%= __(errors.kind) %></p><% } %>
   </fieldset>
   <div class="field">
-    <label for="category">التصنيف</label>
+    <label for="category"><%= __("التصنيف") %></label>
     <select id="category" name="category" class="select">
-      <% Object.entries(categories.expense).forEach(function ([key, label]) { %><option value="<%= key %>" <%= values.category === key ? 'selected' : '' %>>  <%= label %></option><% }) %>
+      <% Object.entries(categories.expense).forEach(function ([key, label]) { %><option value="<%= __(key) %>" <%= __(values.category === key ? 'selected' : '') %>>  <%= __(label) %></option><% }) %>
     </select>
-    <p class="muted ac-hint">للمصروفات فقط. التحويل إلى المالك والإيراد الآخر لا يحتاجان تصنيفاً.</p>
-    <% if (errors.category) { %><p class="field-error"><%= errors.category %></p><% } %>
+    <p class="muted ac-hint"><%= __("للمصروفات فقط. التحويل إلى المالك والإيراد الآخر لا يحتاجان تصنيفاً.") %></p>
+    <% if (errors.category) { %><p class="field-error"><%= __(errors.category) %></p><% } %>
   </div>
   <div class="form-grid">
-    <div class="field"><label for="amount">المبلغ (ريال)</label><input id="amount" name="amount" class="input" inputmode="decimal" dir="ltr" value="<%= values.amount %>" required><% if (errors.amount) { %><p class="field-error"><%= errors.amount %></p><% } %></div>
-    <div class="field"><label for="entry_date">التاريخ</label><input id="entry_date" name="entry_date" type="date" class="input" max="<%= today %>" value="<%= values.entry_date || today %>"><% if (errors.entry_date) { %><p class="field-error"><%= errors.entry_date %></p><% } %></div>
+    <div class="field"><label for="amount"><%= __("المبلغ (ريال)") %></label><input id="amount" name="amount" class="input" inputmode="decimal" dir="ltr" value="<%= __(values.amount) %>" required><% if (errors.amount) { %><p class="field-error"><%= __(errors.amount) %></p><% } %></div>
+    <div class="field"><label for="entry_date"><%= __("التاريخ") %></label><input id="entry_date" name="entry_date" type="date" class="input" max="<%= __(today) %>" value="<%= __(values.entry_date || today) %>"><% if (errors.entry_date) { %><p class="field-error"><%= __(errors.entry_date) %></p><% } %></div>
   </div>
   <div class="field">
-    <label for="landlord_id">المالك</label>
+    <label for="landlord_id"><%= __("المالك") %></label>
     <select id="landlord_id" name="landlord_id" class="select">
-      <option value="">مصروف على المكتب (بلا مالك)</option>
-      <% options.landlords.forEach(function (l) { %><option value="<%= l.id %>" <%= String(values.landlord_id) === String(l.id) ? 'selected' : '' %>><%= l.label %></option><% }) %>
+      <option value=""><%= __("مصروف على المكتب (بلا مالك)") %></option>
+      <% options.landlords.forEach(function (l) { %><option value="<%= __(l.id) %>" <%= __(String(values.landlord_id) === String(l.id) ? 'selected' : '') %>><%= __(l.label) %></option><% }) %>
     </select>
-    <p class="muted ac-hint">المصروف على مالك يُخصم من كشف حسابه. التحويل إلى المالك يحتاج اختياره.</p>
-    <% if (errors.landlord_id) { %><p class="field-error"><%= errors.landlord_id %></p><% } %>
+    <p class="muted ac-hint"><%= __("المصروف على مالك يُخصم من كشف حسابه. التحويل إلى المالك يحتاج اختياره.") %></p>
+    <% if (errors.landlord_id) { %><p class="field-error"><%= __(errors.landlord_id) %></p><% } %>
   </div>
   <div class="field">
-    <label for="unit_id">الوحدة (اختياري)</label>
+    <label for="unit_id"><%= __("الوحدة (اختياري)") %></label>
     <select id="unit_id" name="unit_id" class="select">
-      <option value="">بلا وحدة</option>
-      <% options.units.forEach(function (u) { %><option value="<%= u.id %>" <%= String(values.unit_id) === String(u.id) ? 'selected' : '' %>><%= u.label %><% if (u.landlord_label) { %> (<%= u.landlord_label %>)<% } %></option><% }) %>
+      <option value=""><%= __("بلا وحدة") %></option>
+      <% options.units.forEach(function (u) { %><option value="<%= __(u.id) %>" <%= __(String(values.unit_id) === String(u.id) ? 'selected' : '') %>><%= __(u.label) %><% if (u.landlord_label) { %> (<%= __(u.landlord_label) %>)<% } %></option><% }) %>
     </select>
-    <% if (errors.unit_id) { %><p class="field-error"><%= errors.unit_id %></p><% } %>
+    <% if (errors.unit_id) { %><p class="field-error"><%= __(errors.unit_id) %></p><% } %>
   </div>
   <div class="field">
-    <label for="description">وصف قصير (اختياري)</label>
-    <input id="description" name="description" class="input" maxlength="160" value="<%= values.description %>">
-    <p class="muted ac-hint">مثل: تغيير قطعة المكيف. لا تكتب أرقام حسابات أو آيبان.</p>
-    <% if (errors.description) { %><p class="field-error"><%= errors.description %></p><% } %>
+    <label for="description"><%= __("وصف قصير (اختياري)") %></label>
+    <input id="description" name="description" class="input" maxlength="160" value="<%= __(values.description) %>">
+    <p class="muted ac-hint"><%= __("مثل: تغيير قطعة المكيف. لا تكتب أرقام حسابات أو آيبان.") %></p>
+    <% if (errors.description) { %><p class="field-error"><%= __(errors.description) %></p><% } %>
   </div>
-  <button type="submit" class="btn btn--primary btn--block">حفظ القيد</button>
+  <button type="submit" class="btn btn--primary btn--block"><%= __("حفظ القيد") %></button>
 </form>

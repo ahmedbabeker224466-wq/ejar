@@ -1,8 +1,8 @@
 <% if (flash && flash.length) { %>
   <div class="flash-list">
     <% flash.forEach(function (item) { %>
-      <div class="flash flash--<%= item.type || 'info' %>" role="<%= item.type === 'danger' ? 'alert' : 'status' %>">
-        <%= item.message %>
+      <div class="flash flash--<%= __(item.type || 'info') %>" role="<%= __(item.type === 'danger' ? 'alert' : 'status') %>">
+        <%= __(item.message) %>
       </div>
     <% }) %>
   </div>

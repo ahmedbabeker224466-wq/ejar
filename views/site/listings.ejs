@@ -1,57 +1,57 @@
 <section class="search-hero">
-  <h1>إعلانات العقارات للإيجار</h1>
-  <p class="search-hero__lead">شقق وفلل ومحلات للإيجار السنوي من مكاتب العقار، بالريال السعودي.</p>
+  <h1><%= __("إعلانات العقارات للإيجار") %></h1>
+  <p class="search-hero__lead"><%= __("شقق وفلل ومحلات للإيجار السنوي من مكاتب العقار، بالريال السعودي.") %></p>
   <form method="get" action="/listings" class="search-bar" novalidate>
     <div class="search-bar__main">
-      <div class="search-bar__field"><label class="visually-hidden" for="f-city">المدينة</label>
+      <div class="search-bar__field"><label class="visually-hidden" for="f-city"><%= __("المدينة") %></label>
         <select id="f-city" name="city" class="select" data-hood-city>
-          <option value="">كل المدن</option>
-          <% cities.forEach(function (c) { %><option value="<%= c %>" <%= filters.city === c ? 'selected' : '' %>><%= c %></option><% }) %>
+          <option value=""><%= __("كل المدن") %></option>
+          <% cities.forEach(function (c) { %><option value="<%= __(c) %>" <%= __(filters.city === c ? 'selected' : '') %>><%= __(c) %></option><% }) %>
         </select></div>
-      <div class="search-bar__field"><label class="visually-hidden" for="f-hood">الحي</label>
+      <div class="search-bar__field"><label class="visually-hidden" for="f-hood"><%= __("الحي") %></label>
           <select id="f-hood" name="neighborhood" class="select" data-hood-select>
-            <option value="">كل الأحياء</option>
+            <option value=""><%= __("كل الأحياء") %></option>
             <% cities.forEach(function (c) { if (!(byCity[c] || []).length) return; var list = byCity[c].concat([other]); %>
-              <optgroup label="<%= c %>" data-city="<%= c %>">
-                <% list.forEach(function (n) { %><option value="<%= n %>" <%= filters.neighborhood === n && (!filters.city || filters.city === c) ? 'selected' : '' %>><%= n %></option><% }) %>
+              <optgroup label="<%= __(c) %>" data-city="<%= __(c) %>">
+                <% list.forEach(function (n) { %><option value="<%= __(n) %>" <%= __(filters.neighborhood === n && (!filters.city || filters.city === c) ? 'selected' : '') %>><%= __(n) %></option><% }) %>
               </optgroup>
             <% }) %>
           </select></div>
-      <div class="search-bar__field"><label class="visually-hidden" for="f-type">النوع</label>
-        <select id="f-type" name="type" class="select"><option value="">كل الأنواع</option>
-          <% Object.keys(types).forEach(function (t) { %><option value="<%= t %>" <%= filters.type === t ? 'selected' : '' %>><%= types[t] %></option><% }) %></select></div>
-      <div class="search-bar__field"><label class="visually-hidden" for="f-rooms">الغرف</label>
-        <select id="f-rooms" name="rooms" class="select"><option value="">كل الغرف</option>
-          <% ['1', '2', '3', '4', '5+'].forEach(function (r) { %><option value="<%= r %>" <%= rawFilters.rooms === r ? 'selected' : '' %>><%= r %></option><% }) %></select></div>
-        <div class="search-bar__field"><label class="visually-hidden" for="f-min">أقل إيجار سنوي</label><input id="f-min" name="min_price" class="input" inputmode="numeric" dir="ltr" maxlength="9" placeholder="أقل إيجار" value="<%= rawFilters.min_price %>"></div>
-        <div class="search-bar__field"><label class="visually-hidden" for="f-max">أعلى إيجار سنوي</label><input id="f-max" name="max_price" class="input" inputmode="numeric" dir="ltr" maxlength="9" placeholder="أعلى إيجار" value="<%= rawFilters.max_price %>"></div>
-        <div class="search-bar__field"><label class="visually-hidden" for="f-sort">الترتيب</label>
+      <div class="search-bar__field"><label class="visually-hidden" for="f-type"><%= __("النوع") %></label>
+        <select id="f-type" name="type" class="select"><option value=""><%= __("كل الأنواع") %></option>
+          <% Object.keys(types).forEach(function (t) { %><option value="<%= __(t) %>" <%= __(filters.type === t ? 'selected' : '') %>><%= __(types[t]) %></option><% }) %></select></div>
+      <div class="search-bar__field"><label class="visually-hidden" for="f-rooms"><%= __("الغرف") %></label>
+        <select id="f-rooms" name="rooms" class="select"><option value=""><%= __("كل الغرف") %></option>
+          <% ['1', '2', '3', '4', '5+'].forEach(function (r) { %><option value="<%= __(r) %>" <%= __(rawFilters.rooms === r ? 'selected' : '') %>><%= __(r) %></option><% }) %></select></div>
+        <div class="search-bar__field"><label class="visually-hidden" for="f-min"><%= __("أقل إيجار سنوي") %></label><input id="f-min" name="min_price" class="input" inputmode="numeric" dir="ltr" maxlength="9" placeholder="<%= __("أقل إيجار") %>" value="<%= __(rawFilters.min_price) %>"></div>
+        <div class="search-bar__field"><label class="visually-hidden" for="f-max"><%= __("أعلى إيجار سنوي") %></label><input id="f-max" name="max_price" class="input" inputmode="numeric" dir="ltr" maxlength="9" placeholder="<%= __("أعلى إيجار") %>" value="<%= __(rawFilters.max_price) %>"></div>
+        <div class="search-bar__field"><label class="visually-hidden" for="f-sort"><%= __("الترتيب") %></label>
           <select id="f-sort" name="sort" class="select">
-            <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>الأحدث</option>
-            <option value="price_asc" <%= filters.sort === 'price_asc' ? 'selected' : '' %>>الأقل سعراً</option>
-            <option value="price_desc" <%= filters.sort === 'price_desc' ? 'selected' : '' %>>الأعلى سعراً</option>
-            <option value="area_desc" <%= filters.sort === 'area_desc' ? 'selected' : '' %>>الأكبر مساحة</option>
+            <option value="newest" <%= __(filters.sort === 'newest' ? 'selected' : '') %>><%= __("الأحدث") %></option>
+            <option value="price_asc" <%= __(filters.sort === 'price_asc' ? 'selected' : '') %>><%= __("الأقل سعراً") %></option>
+            <option value="price_desc" <%= __(filters.sort === 'price_desc' ? 'selected' : '') %>><%= __("الأعلى سعراً") %></option>
+            <option value="area_desc" <%= __(filters.sort === 'area_desc' ? 'selected' : '') %>><%= __("الأكبر مساحة") %></option>
           </select></div>
       <button type="submit" class="btn btn--primary search-bar__submit">
         <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        بحث
+        <%= __("بحث") %>
       </button>
     </div>
   </form>
 </section>
 
-<p class="results-count"><%= total %> إعلان</p>
+<p class="results-count"><%= __(total) %> <%= __("إعلان") %></p>
 <ul class="listing-grid">
   <% rows.forEach(function (l) { %>
     <%- include('_listing-card', { l, fmt }) %>
   <% }) %>
 </ul>
-<% if (!rows.length) { %><p class="empty-state">لا توجد إعلانات مطابقة الآن.</p><% } %>
+<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد إعلانات مطابقة الآن.") %></p><% } %>
 <% if (pages > 1) { %>
-  <nav class="pager" aria-label="الصفحات">
-    <% if (page > 1) { %><a href="/listings?<%= qs %><%= qs ? '&' : '' %>page=<%= page - 1 %>">السابق</a><% } %>
-    <span>صفحة <%= page %> من <%= pages %></span>
-    <% if (page < pages) { %><a href="/listings?<%= qs %><%= qs ? '&' : '' %>page=<%= page + 1 %>">التالي</a><% } %>
+  <nav class="pager" aria-label="<%= __("الصفحات") %>">
+    <% if (page > 1) { %><a href="/listings?<%= __(qs) %><%= __(qs ? '&' : '') %>page=<%= __(page - 1) %>"><%= __("السابق") %></a><% } %>
+    <span><%= __("صفحة") %> <%= __(page) %> <%= __("من") %> <%= __(pages) %></span>
+    <% if (page < pages) { %><a href="/listings?<%= __(qs) %><%= __(qs ? '&' : '') %>page=<%= __(page + 1) %>"><%= __("التالي") %></a><% } %>
   </nav>
 <% } %>
 <script src="<%= assetUrl('/js/listingForm.js') %>" defer></script>

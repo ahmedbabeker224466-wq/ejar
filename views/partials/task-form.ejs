@@ -1,42 +1,42 @@
 <%# Locals: action, values, errors, members, linkTypes, limits, submit %>
-<form method="post" action="<%= action %>" novalidate>
+<form method="post" action="<%= __(action) %>" novalidate>
   <div class="field">
-    <label for="title">عنوان المهمة</label>
-    <input id="title" name="title" class="input" type="text" maxlength="<%= limits.title %>" value="<%= values.title %>" required <%= errors.title ? 'aria-invalid=true' : '' %>>
-    <% if (errors.title) { %><p class="field-error"><%= errors.title %></p><% } %>
+    <label for="title"><%= __("عنوان المهمة") %></label>
+    <input id="title" name="title" class="input" type="text" maxlength="<%= __(limits.title) %>" value="<%= __(values.title) %>" required <%= __(errors.title ? 'aria-invalid=true' : '') %>>
+    <% if (errors.title) { %><p class="field-error"><%= __(errors.title) %></p><% } %>
   </div>
   <div class="field">
-    <label for="description">الوصف (اختياري)</label>
-    <textarea id="description" name="description" class="textarea" rows="3" maxlength="<%= limits.description %>"><%= values.description %></textarea>
-    <% if (errors.description) { %><p class="field-error"><%= errors.description %></p><% } %>
+    <label for="description"><%= __("الوصف (اختياري)") %></label>
+    <textarea id="description" name="description" class="textarea" rows="3" maxlength="<%= __(limits.description) %>"><%= __(values.description) %></textarea>
+    <% if (errors.description) { %><p class="field-error"><%= __(errors.description) %></p><% } %>
   </div>
   <div class="form-grid">
     <div class="field">
-      <label for="due_date">تاريخ الاستحقاق</label>
-      <input id="due_date" name="due_date" class="input" type="date" value="<%= values.due_date %>">
-      <% if (errors.due_date) { %><p class="field-error"><%= errors.due_date %></p><% } %>
+      <label for="due_date"><%= __("تاريخ الاستحقاق") %></label>
+      <input id="due_date" name="due_date" class="input" type="date" value="<%= __(values.due_date) %>">
+      <% if (errors.due_date) { %><p class="field-error"><%= __(errors.due_date) %></p><% } %>
     </div>
     <div class="field">
-      <label for="assignee">المسؤول</label>
+      <label for="assignee"><%= __("المسؤول") %></label>
       <select id="assignee" name="assignee" class="select">
-        <option value="">بدون مسؤول</option>
-        <% members.forEach(function (m) { %><option value="<%= m.user_id %>" <%= String(values.assignee) === String(m.user_id) ? 'selected' : '' %>><%= m.display %> (<%= m.roleLabel %>)</option><% }) %>
+        <option value=""><%= __("بدون مسؤول") %></option>
+        <% members.forEach(function (m) { %><option value="<%= __(m.user_id) %>" <%= __(String(values.assignee) === String(m.user_id) ? 'selected' : '') %>><%= __(m.display) %> (<%= __(m.roleLabel) %>)</option><% }) %>
       </select>
-      <% if (errors.assignee) { %><p class="field-error"><%= errors.assignee %></p><% } %>
+      <% if (errors.assignee) { %><p class="field-error"><%= __(errors.assignee) %></p><% } %>
     </div>
     <div class="field">
-      <label for="link_type">ربط بـ (اختياري)</label>
+      <label for="link_type"><%= __("ربط بـ (اختياري)") %></label>
       <select id="link_type" name="link_type" class="select">
-        <option value="">بدون ربط</option>
-        <% Object.entries(linkTypes).forEach(function ([key, label]) { %><option value="<%= key %>" <%= values.link_type === key ? 'selected' : '' %>><%= label %></option><% }) %>
+        <option value=""><%= __("بدون ربط") %></option>
+        <% Object.entries(linkTypes).forEach(function ([key, label]) { %><option value="<%= __(key) %>" <%= __(values.link_type === key ? 'selected' : '') %>><%= __(label) %></option><% }) %>
       </select>
     </div>
     <div class="field">
-      <label for="link_id">رقم العنصر المرتبط</label>
-      <input id="link_id" name="link_id" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="12" value="<%= values.link_id %>">
-      <p class="field-hint">الرقم الظاهر في رابط صفحة العقد أو الوحدة أو الطلب.</p>
-      <% if (errors.link) { %><p class="field-error"><%= errors.link %></p><% } %>
+      <label for="link_id"><%= __("رقم العنصر المرتبط") %></label>
+      <input id="link_id" name="link_id" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="12" value="<%= __(values.link_id) %>">
+      <p class="field-hint"><%= __("الرقم الظاهر في رابط صفحة العقد أو الوحدة أو الطلب.") %></p>
+      <% if (errors.link) { %><p class="field-error"><%= __(errors.link) %></p><% } %>
     </div>
   </div>
-  <button type="submit" class="btn btn--primary btn--block"><%= submit %></button>
+  <button type="submit" class="btn btn--primary btn--block"><%= __(submit) %></button>
 </form>

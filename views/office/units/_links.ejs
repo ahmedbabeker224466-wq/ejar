@@ -1,34 +1,34 @@
 <%# Landlord and building selects shared by the unit form and the bulk form. %>
 <div class="field">
-  <label for="landlord_id">المالك</label>
+  <label for="landlord_id"><%= __("المالك") %></label>
   <select id="landlord_id" name="landlord_id" class="select" required data-landlord-select <%- errors.landlord_id ? 'aria-invalid="true"' : '' %>>
-    <option value="">اختر المالك</option>
+    <option value=""><%= __("اختر المالك") %></option>
     <% landlords.forEach(function (l) { %>
-      <option value="<%= l.id %>" <%= Number(values.landlord_id) === l.id ? 'selected' : '' %>><%= l.label %><%= l.is_active ? '' : ' (موقوف)' %></option>
+      <option value="<%= __(l.id) %>" <%= __(Number(values.landlord_id) === l.id ? 'selected' : '') %>><%= __(l.label) %><%= __(l.is_active ? '' : __(' (موقوف)')) %></option>
     <% }) %>
   </select>
-  <% if (errors.landlord_id) { %><p class="field-error"><%= errors.landlord_id %></p><% } %>
-  <% if (landlords.length === 0) { %><p class="field-hint">لا يوجد ملاك بعد. <a href="/office/landlords/new">أضف مالكاً أولاً</a>.</p><% } %>
+  <% if (errors.landlord_id) { %><p class="field-error"><%= __(errors.landlord_id) %></p><% } %>
+  <% if (landlords.length === 0) { %><p class="field-hint"><%= __("لا يوجد ملاك بعد.") %> <a href="/office/landlords/new"><%= __("أضف مالكاً أولاً") %></a>.</p><% } %>
 </div>
 
 <div class="field">
-  <label for="building_id">المبنى <span class="muted">(اختياري)</span></label>
+  <label for="building_id"><%= __("المبنى") %> <span class="muted">(<%= __("اختياري)") %></span></label>
   <select id="building_id" name="building_id" class="select" data-building-select <%- errors.building_id ? 'aria-invalid="true"' : '' %>>
-    <option value="">بدون مبنى</option>
+    <option value=""><%= __("بدون مبنى") %></option>
     <% buildingOptions.forEach(function (b) { %>
-      <option value="<%= b.id %>" data-landlord="<%= b.landlord_id %>" data-city="<%= b.city %>" <%= Number(values.building_id) === b.id ? 'selected' : '' %>><%= b.name %></option>
+      <option value="<%= __(b.id) %>" data-landlord="<%= __(b.landlord_id) %>" data-city="<%= __(b.city) %>" <%= __(Number(values.building_id) === b.id ? 'selected' : '') %>><%= __(b.name) %></option>
     <% }) %>
   </select>
-  <% if (errors.building_id) { %><p class="field-error"><%= errors.building_id %></p><% } else { %>
-    <p class="field-hint">تظهر مباني المالك المختار فقط. عند اختيار مبنى تُؤخذ مدينته.</p>
+  <% if (errors.building_id) { %><p class="field-error"><%= __(errors.building_id) %></p><% } else { %>
+    <p class="field-hint"><%= __("تظهر مباني المالك المختار فقط. عند اختيار مبنى تُؤخذ مدينته.") %></p>
   <% } %>
 </div>
 
 <div class="field">
-  <label for="city">المدينة</label>
+  <label for="city"><%= __("المدينة") %></label>
   <select id="city" name="city" class="select" data-city-select <%- errors.city ? 'aria-invalid="true"' : '' %>>
-    <option value="">مدينة المبنى</option>
-    <% cities.forEach(function (city) { %><option value="<%= city %>" <%= values.city === city ? 'selected' : '' %>><%= city %></option><% }) %>
+    <option value=""><%= __("مدينة المبنى") %></option>
+    <% cities.forEach(function (city) { %><option value="<%= __(city) %>" <%= __(values.city === city ? 'selected' : '') %>><%= __(city) %></option><% }) %>
   </select>
-  <% if (errors.city) { %><p class="field-error"><%= errors.city %></p><% } %>
+  <% if (errors.city) { %><p class="field-error"><%= __(errors.city) %></p><% } %>
 </div>

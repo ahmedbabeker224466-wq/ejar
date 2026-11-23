@@ -1,63 +1,63 @@
-<h1 class="office-title">أهلاً بك في <%= office.name %></h1>
+<h1 class="office-title"><%= __("أهلاً بك في") %> <%= __(office.name) %></h1>
 
-<section class="stats" aria-label="أرقام المكتب">
+<section class="stats" aria-label="<%= __("أرقام المكتب") %>">
   <a class="stat card stat--link" href="/office/contracts">
-    <p class="stat__value"><%= counts.activeContracts %></p>
-    <p class="stat__label">عقود سارية</p>
+    <p class="stat__value"><%= __(counts.activeContracts) %></p>
+    <p class="stat__label"><%= __("عقود سارية") %></p>
   </a>
   <a class="stat card stat--link" href="/office/contracts?stage=action">
-    <p class="stat__value"><%= counts.deadline90 %></p>
-    <p class="stat__label">موعد القرار خلال 90 يوماً</p>
+    <p class="stat__value"><%= __(counts.deadline90) %></p>
+    <p class="stat__label"><%= __("موعد القرار خلال 90 يوماً") %></p>
   </a>
   <div class="stat card">
-    <p class="stat__value"><%= counts.latePayments %></p>
-    <p class="stat__label">دفعات متأخرة</p>
-    <% if (counts.latePayments > 0) { %><p class="stat__sub"><%= Number(counts.lateTotal).toLocaleString('en-US') %> ريال</p><% } %>
+    <p class="stat__value"><%= __(counts.latePayments) %></p>
+    <p class="stat__label"><%= __("دفعات متأخرة") %></p>
+    <% if (counts.latePayments > 0) { %><p class="stat__sub"><%= __(Number(counts.lateTotal).toLocaleString('en-US')) %> <%= __("ريال") %></p><% } %>
   </div>
   <a class="stat card stat--link" href="/office/units?status=vacant">
-    <p class="stat__value"><%= counts.units.vacant %></p>
-    <p class="stat__label">وحدات شاغرة</p>
+    <p class="stat__value"><%= __(counts.units.vacant) %></p>
+    <p class="stat__label"><%= __("وحدات شاغرة") %></p>
   </a>
   <div class="stat card">
-    <p class="stat__value"><%= counts.openMaintenance %></p>
-    <p class="stat__label">طلبات صيانة مفتوحة</p>
+    <p class="stat__value"><%= __(counts.openMaintenance) %></p>
+    <p class="stat__label"><%= __("طلبات صيانة مفتوحة") %></p>
   </div>
   <% if (can('landlords')) { %>
     <a class="stat card stat--link" href="/office/landlords">
-      <p class="stat__value"><%= counts.landlordsActive %></p>
-      <p class="stat__label">الملّاك</p>
+      <p class="stat__value"><%= __(counts.landlordsActive) %></p>
+      <p class="stat__label"><%= __("الملّاك") %></p>
     </a>
   <% } %>
 </section>
 
 <% if (can('units')) { %>
   <section class="card office-section">
-    <h2><a href="/office/units">الوحدات</a></h2>
+    <h2><a href="/office/units"><%= __("الوحدات") %></a></h2>
     <div class="units-summary">
-      <div class="mini-stat"><strong class="stat__units-total"><%= counts.units.total %></strong> كل الوحدات</div>
-      <div class="mini-stat"><strong><%= counts.units.vacant %></strong> شاغرة</div>
-      <div class="mini-stat"><strong><%= counts.units.rented %></strong> مؤجرة</div>
-      <div class="mini-stat"><strong><%= counts.units.maintenance %></strong> تحت الصيانة</div>
+      <div class="mini-stat"><strong class="stat__units-total"><%= __(counts.units.total) %></strong> <%= __("كل الوحدات") %></div>
+      <div class="mini-stat"><strong><%= __(counts.units.vacant) %></strong> <%= __("شاغرة") %></div>
+      <div class="mini-stat"><strong><%= __(counts.units.rented) %></strong> <%= __("مؤجرة") %></div>
+      <div class="mini-stat"><strong><%= __(counts.units.maintenance) %></strong> <%= __("تحت الصيانة") %></div>
     </div>
-    <% if (counts.units.usageText) { %><p class="muted">حد الباقة: <%= counts.units.usageText %></p><% } %>
+    <% if (counts.units.usageText) { %><p class="muted"><%= __("حد الباقة:") %> <%= __(counts.units.usageText) %></p><% } %>
   </section>
 <% } %>
 
 <section class="card office-section">
-  <h2>يحتاج إجراء</h2>
+  <h2><%= __("يحتاج إجراء") %></h2>
   <div class="units-summary">
-    <div class="mini-stat"><strong class="pending-requests"><%= pending.requests %></strong> طلبات جديدة من المستأجرين</div>
-    <div class="mini-stat"><strong class="pending-reported"><%= pending.reported %></strong> دفعات أبلغ عنها المستأجر بانتظار التأكيد</div>
+    <div class="mini-stat"><strong class="pending-requests"><%= __(pending.requests) %></strong> <%= __("طلبات جديدة من المستأجرين") %></div>
+    <div class="mini-stat"><strong class="pending-reported"><%= __(pending.reported) %></strong> <%= __("دفعات أبلغ عنها المستأجر بانتظار التأكيد") %></div>
   </div>
   <% if (pendingContracts.length) { %>
     <ul class="board">
       <% pendingContracts.forEach(function (c) { %>
         <li class="board__row">
           <div>
-            <strong><%= c.unit_label || 'وحدة' %></strong>
-            <p class="muted board__days"><%= [Number(c.requests) ? `${c.requests} طلب جديد` : '', Number(c.reported) ? `${c.reported} دفعة بانتظار التأكيد` : ''].filter(Boolean).join(' · ') %></p>
+            <strong><%= __(c.unit_label || __('وحدة')) %></strong>
+            <p class="muted board__days"><%= __([Number(c.requests) ? `${c.requests} طلب جديد` : '', Number(c.reported) ? `${c.reported} دفعة بانتظار التأكيد` : ''].filter(Boolean).join(' · ')) %></p>
           </div>
-          <a class="btn btn--secondary btn--small" href="/office/contracts/<%= c.id %>#feedback">فتح العقد</a>
+          <a class="btn btn--secondary btn--small" href="/office/contracts/<%= __(c.id) %>#feedback"><%= __("فتح العقد") %></a>
         </li>
       <% }) %>
     </ul>
@@ -67,68 +67,68 @@
       <% board.forEach(function (c) { %>
         <li class="board__row">
           <div>
-            <strong><%= c.unit_label || 'وحدة' %></strong>
-            <span class="badge badge--stage-<%= c.status %>"><%= stageLabels[c.status] %></span>
-            <p class="muted board__days"><%= c.daysToNotice >= 0 ? `باقي ${c.daysToNotice} يوم على موعد القرار` : `فات موعد القرار منذ ${-c.daysToNotice} يوم` %></p>
+            <strong><%= __(c.unit_label || __('وحدة')) %></strong>
+            <span class="badge badge--stage-<%= __(c.status) %>"><%= __(stageLabels[c.status]) %></span>
+            <p class="muted board__days"><%= __(c.daysToNotice >= 0 ? `باقي ${c.daysToNotice} يوم على موعد القرار` : `فات موعد القرار منذ ${-c.daysToNotice} يوم`) %></p>
           </div>
-          <a class="btn btn--secondary btn--small" href="/office/contracts/<%= c.id %>">فتح العقد</a>
+          <a class="btn btn--secondary btn--small" href="/office/contracts/<%= __(c.id) %>"><%= __("فتح العقد") %></a>
         </li>
       <% }) %>
     </ul>
-    <p><a href="/office/contracts?stage=action">عرض كل العقود التي تحتاج إجراء</a></p>
+    <p><a href="/office/contracts?stage=action"><%= __("عرض كل العقود التي تحتاج إجراء") %></a></p>
   <% } else { %>
-    <p class="empty-state">لا يوجد ما يحتاج إجراءً الآن. سنعرض هنا العقود التي يقترب موعد قرارها.</p>
+    <p class="empty-state"><%= __("لا يوجد ما يحتاج إجراءً الآن. سنعرض هنا العقود التي يقترب موعد قرارها.") %></p>
   <% } %>
 </section>
 
 <section class="card office-section" id="sent">
-  <h2>آخر الإشعارات المرسلة</h2>
+  <h2><%= __("آخر الإشعارات المرسلة") %></h2>
   <div class="units-summary">
-    <div class="mini-stat"><strong class="delivery-sent"><%= sent.counts.sent %></strong> أُرسلت</div>
-    <div class="mini-stat"><strong class="delivery-pending"><%= sent.counts.pending %></strong> بالانتظار</div>
-    <div class="mini-stat"><strong class="delivery-failed"><%= sent.counts.failed %></strong> فشلت (حاولنا ولم تصل)</div>
-    <div class="mini-stat"><strong class="delivery-skipped"><%= sent.counts.skipped %></strong> لم تُرسل (قناة غير مضبوطة)</div>
+    <div class="mini-stat"><strong class="delivery-sent"><%= __(sent.counts.sent) %></strong> <%= __("أُرسلت") %></div>
+    <div class="mini-stat"><strong class="delivery-pending"><%= __(sent.counts.pending) %></strong> <%= __("بالانتظار") %></div>
+    <div class="mini-stat"><strong class="delivery-failed"><%= __(sent.counts.failed) %></strong> <%= __("فشلت (حاولنا ولم تصل)") %></div>
+    <div class="mini-stat"><strong class="delivery-skipped"><%= __(sent.counts.skipped) %></strong> <%= __("لم تُرسل (قناة غير مضبوطة)") %></div>
   </div>
-  <p class="muted">آخر 7 أيام، عبر البريد وواتساب وتيليجرام. التذكيرات تظهر دائماً داخل الموقع.</p>
+  <p class="muted"><%= __("آخر 7 أيام، عبر البريد وواتساب وتيليجرام. التذكيرات تظهر دائماً داخل الموقع.") %></p>
   <% if (sent.latest.length) { %>
     <ul class="item-list">
       <% sent.latest.forEach(function (n) { %>
         <li class="item">
-          <p class="item__title"><%= n.title %></p>
-          <p class="item__meta"><%= kindLabels[n.kind] || '' %> · <span dir="ltr"><%= riyadhTime(n.created_at) %></span></p>
+          <p class="item__title"><%= __(n.title) %></p>
+          <p class="item__meta"><%= __(kindLabels[n.kind] || '') %> · <span dir="ltr"><%= __(riyadhTime(n.created_at)) %></span></p>
           <% if (n.deliveries.length) { %>
             <div class="delivery-dots">
-              <% n.deliveries.forEach(function (d) { %><span class="badge badge--delivery-<%= d.status %>"><%= { email: 'بريد', whatsapp: 'واتساب', telegram: 'تيليجرام' }[d.channel] %>: <%= { sent: 'أُرسل', failed: 'فشل', skipped: 'لم يُرسل', pending: 'بالانتظار' }[d.status] %></span><% }) %>
+              <% n.deliveries.forEach(function (d) { %><span class="badge badge--delivery-<%= __(d.status) %>"><%= __({ email: __('بريد'), whatsapp: __('واتساب'), telegram: __('تيليجرام') }[d.channel]) %>: <%= __({ sent: __('أُرسل'), failed: __('فشل'), skipped: __('لم يُرسل'), pending: __('بالانتظار') }[d.status]) %></span><% }) %>
             </div>
             <% const problems = n.deliveries.filter(function (d) { return d.reason && d.kind !== 'sent'; }); %>
             <% if (problems.length) { %>
               <ul class="delivery-reasons">
                 <% problems.forEach(function (d) { %>
-                  <li class="delivery-reason delivery-reason--<%= d.kind %>"><strong><%= { email: 'بريد', whatsapp: 'واتساب', telegram: 'تيليجرام' }[d.channel] %>:</strong> <%= { not_configured: 'لم يُرسل لأن القناة غير مضبوطة', failed: 'فشل الإرسال', pending: 'بالانتظار' }[d.kind] %>. <%= d.reason %></li>
+                  <li class="delivery-reason delivery-reason--<%= __(d.kind) %>"><strong><%= __({ email: __('بريد'), whatsapp: __('واتساب'), telegram: __('تيليجرام') }[d.channel]) %>:</strong> <%= __({ not_configured: __('لم يُرسل لأن القناة غير مضبوطة'), failed: __('فشل الإرسال'), pending: __('بالانتظار') }[d.kind]) %>. <%= __(d.reason) %></li>
                 <% }) %>
               </ul>
-              <p class="item__meta"><a href="<%= can('settings.office') ? '/office/settings/reminders' : '/settings/notifications' %>">راجع إعدادات القنوات</a></p>
+              <p class="item__meta"><a href="<%= __(can('settings.office') ? '/office/settings/reminders' : '/settings/notifications') %>"><%= __("راجع إعدادات القنوات") %></a></p>
             <% } %>
           <% } %>
         </li>
       <% }) %>
     </ul>
   <% } else { %>
-    <p class="empty-state">لم تُرسل إشعارات بعد. تبدأ التذكيرات تلقائياً كل صباح الساعة 7.</p>
+    <p class="empty-state"><%= __("لم تُرسل إشعارات بعد. تبدأ التذكيرات تلقائياً كل صباح الساعة 7.") %></p>
   <% } %>
-  <% if (can('settings.office')) { %><p><a href="/office/settings/reminders">إعدادات التذكيرات والقنوات</a></p><% } %>
+  <% if (can('settings.office')) { %><p><a href="/office/settings/reminders"><%= __("إعدادات التذكيرات والقنوات") %></a></p><% } %>
 </section>
 
 <% if (setupSteps.length) { %>
   <section class="card office-section">
-    <h2>ابدأ تجهيز مكتبك</h2>
+    <h2><%= __("ابدأ تجهيز مكتبك") %></h2>
     <ul class="checklist">
       <% setupSteps.forEach(function (step) { %>
         <li>
-          <a href="<%= step.href %>"<%- step.done ? ' class="is-done"' : '' %>>
-            <span class="checklist__box" aria-hidden="true"><%= step.done ? '✓' : '' %></span>
-            <span><%= step.label %></span>
-            <span class="visually-hidden"><%= step.done ? '(مكتمل)' : '(لم يكتمل)' %></span>
+          <a href="<%= __(step.href) %>"<%- step.done ? ' class="is-done"' : '' %>>
+            <span class="checklist__box" aria-hidden="true"><%= __(step.done ? '✓' : '') %></span>
+            <span><%= __(step.label) %></span>
+            <span class="visually-hidden"><%= __(step.done ? __('(مكتمل)') : __('(لم يكتمل)')) %></span>
           </a>
         </li>
       <% }) %>

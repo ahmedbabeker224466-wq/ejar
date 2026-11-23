@@ -1,5 +1,5 @@
-<nav class="ac-month" aria-label="اختيار الشهر">
-  <a class="btn btn--secondary btn--small" href="<%= navBase %>?month=<%= nav.prev %>" aria-label="الشهر السابق">→ <%= monthName(nav.prev) %></a>
-  <strong><%= monthLabel(period) %></strong>
-  <% if (nav.next) { %><a class="btn btn--secondary btn--small" href="<%= navBase %>?month=<%= nav.next %>" aria-label="الشهر التالي"><%= monthName(nav.next) %> ←</a><% } else { %><span class="ac-month__spacer"></span><% } %>
+<nav class="ac-month" aria-label="<%= __("اختيار الشهر") %>">
+  <a class="btn btn--secondary btn--small" href="<%= __(navBase) %>?month=<%= __(nav.prev) %>" aria-label="<%= __("الشهر السابق") %>"><%= dir === 'rtl' ? '→' : '←' %> <%= __(monthName(nav.prev)) %></a>
+  <strong><%= __(monthLabel(period)) %></strong>
+  <% if (nav.next) { %><a class="btn btn--secondary btn--small" href="<%= __(navBase) %>?month=<%= __(nav.next) %>" aria-label="<%= __("الشهر التالي") %>"><%= __(monthName(nav.next)) %> <%= dir === 'rtl' ? '←' : '→' %></a><% } else { %><span class="ac-month__spacer"></span><% } %>
 </nav>

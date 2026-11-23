@@ -1,50 +1,50 @@
 <div class="invoice-sheet">
   <p class="no-print invoice-actions">
-    <a href="<%= backUrl %>" class="btn btn--secondary btn--small">→ رجوع</a>
-    <button type="button" class="btn btn--primary btn--small" data-print>طباعة</button>
+    <a href="<%= __(backUrl) %>" class="btn btn--secondary btn--small"><%= dir === 'rtl' ? '→' : '←' %> <%= __("رجوع") %></a>
+    <button type="button" class="btn btn--primary btn--small" data-print><%= __("طباعة") %></button>
   </p>
   <header class="invoice-head">
     <div>
-      <h1><%= invoice.title %></h1>
-      <p class="invoice-no">رقم: <strong dir="ltr"><%= invoice.invoiceNo %></strong></p>
-      <p>التاريخ: <span dir="ltr"><%= invoice.issuedDay %></span></p>
-      <% if (invoice.kind === 'credit_note') { %><p>يلغي مستنداً سابقاً<% if (invoice.reason) { %> · السبب: <%= invoice.reason %><% } %></p><% } %>
-      <% if (invoice.status === 'credited') { %><p class="invoice-stamp">ملغاة بإشعار</p><% } %>
+      <h1><%= __(invoice.title) %></h1>
+      <p class="invoice-no"><%= __("رقم:") %> <strong dir="ltr"><%= __(invoice.invoiceNo) %></strong></p>
+      <p><%= __("التاريخ:") %> <span dir="ltr"><%= __(invoice.issuedDay) %></span></p>
+      <% if (invoice.kind === 'credit_note') { %><p><%= __("يلغي مستنداً سابقاً") %><% if (invoice.reason) { %> · <%= __("السبب:") %> <%= __(invoice.reason) %><% } %></p><% } %>
+      <% if (invoice.status === 'credited') { %><p class="invoice-stamp"><%= __("ملغاة بإشعار") %></p><% } %>
     </div>
   </header>
 
   <section class="invoice-parties">
     <div>
-      <h2>البائع</h2>
-      <% if (invoice.seller.legal_name) { %><p><strong><%= invoice.seller.legal_name %></strong></p><% } else { %><p class="muted">اسم البائع لم يُحدَّد بعد</p><% } %>
-      <% if (invoice.seller.address) { %><p><%= invoice.seller.address %></p><% } %>
-      <% if (invoice.seller.vat_number) { %><p>الرقم الضريبي: <span dir="ltr"><%= invoice.seller.vat_number %></span></p><% } %>
-      <% if (invoice.seller.cr_number) { %><p>السجل التجاري: <span dir="ltr"><%= invoice.seller.cr_number %></span></p><% } %>
+      <h2><%= __("البائع") %></h2>
+      <% if (invoice.seller.legal_name) { %><p><strong><%= __(invoice.seller.legal_name) %></strong></p><% } else { %><p class="muted"><%= __("اسم البائع لم يُحدَّد بعد") %></p><% } %>
+      <% if (invoice.seller.address) { %><p><%= __(invoice.seller.address) %></p><% } %>
+      <% if (invoice.seller.vat_number) { %><p><%= __("الرقم الضريبي:") %> <span dir="ltr"><%= __(invoice.seller.vat_number) %></span></p><% } %>
+      <% if (invoice.seller.cr_number) { %><p><%= __("السجل التجاري:") %> <span dir="ltr"><%= __(invoice.seller.cr_number) %></span></p><% } %>
     </div>
     <div>
-      <h2>المشتري</h2>
-      <p><strong><%= invoice.buyerName %></strong></p>
+      <h2><%= __("المشتري") %></h2>
+      <p><strong><%= __(invoice.buyerName) %></strong></p>
     </div>
   </section>
 
   <div class="table-wrap">
     <table class="table invoice-table">
-      <thead><tr><th>البيان</th><th>المبلغ (قبل الضريبة)</th></tr></thead>
+      <thead><tr><th><%= __("البيان") %></th><th><%= __("المبلغ (قبل الضريبة)") %></th></tr></thead>
       <tbody>
         <% invoice.lines.forEach(function (line) { %>
           <tr>
-            <td><%= line.description %>
-              <% if (line.period_from) { %><br><span class="muted">الفترة: <span dir="ltr"><%= line.period_from %></span> إلى <span dir="ltr"><%= line.period_to %></span></span><% } %></td>
-            <td><%= fmt(line.net) %></td>
+            <td><%= __(line.description) %>
+              <% if (line.period_from) { %><br><span class="muted"><%= __("الفترة:") %> <span dir="ltr"><%= __(line.period_from) %></span> <%= __("إلى") %> <span dir="ltr"><%= __(line.period_to) %></span></span><% } %></td>
+            <td><%= __(fmt(line.net)) %></td>
           </tr>
         <% }) %>
       </tbody>
       <tfoot>
-        <tr><th>الإجمالي قبل الضريبة</th><td><%= fmt(invoice.subtotal - invoice.discount) %></td></tr>
-        <tr><th>ضريبة القيمة المضافة (<%= invoice.vatRateBp / 100 %>%)</th><td><%= fmt(invoice.vat) %></td></tr>
-        <tr><th>الإجمالي (<%= invoice.currency === 'SAR' ? 'ريال سعودي' : invoice.currency %>)</th><td><strong><%= fmt(invoice.total) %></strong></td></tr>
+        <tr><th><%= __("الإجمالي قبل الضريبة") %></th><td><%= __(fmt(invoice.subtotal - invoice.discount)) %></td></tr>
+        <tr><th><%= __("ضريبة القيمة المضافة") %> (<%= __(invoice.vatRateBp / 100) %>%)</th><td><%= __(fmt(invoice.vat)) %></td></tr>
+        <tr><th><%= __("الإجمالي") %> (<%= __(invoice.currency === 'SAR' ? __('ريال سعودي') : invoice.currency) %>)</th><td><strong><%= __(fmt(invoice.total)) %></strong></td></tr>
       </tfoot>
     </table>
   </div>
-  <p class="muted invoice-note">المبالغ بالريال السعودي. هذا المستند صادر من تطبيق ميعاد ولا يُعدّ فاتورة إلكترونية معتمدة من هيئة الزكاة والضريبة والجمارك.</p>
+  <p class="muted invoice-note"><%= __("المبالغ بالريال السعودي. هذا المستند صادر من تطبيق ميعاد ولا يُعدّ فاتورة إلكترونية معتمدة من هيئة الزكاة والضريبة والجمارك.") %></p>
 </div>

@@ -21,6 +21,7 @@ const { hostResolver } = require('./middleware/customHost');
 const { loadUser, loadUnreadCount } = require('./middleware/auth');
 const maintenance = require('./middleware/maintenance');
 const { locale } = require('./middleware/locale');
+const { appLang } = require('./middleware/appLang');
 const { siteLayout } = require('./middleware/siteLayout');
 const { sameOrigin } = require('./middleware/security');
 const platformSettings = require('./services/platformSettings');
@@ -33,6 +34,10 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const assets = createAssetVersion(PUBLIC_DIR);
 
 const app = express();
+// Every view can call __(); pages that know their language replace it (middleware/locale, appLang).
+app.locals.__ = (text, vars) => require('./services/tr').translate('ar', text, vars);
+app.locals.lang = 'ar';
+app.locals.dir = 'rtl';
 
 // Behind Passenger every connection arrives from the local proxy (127.0.0.1),
 // so the visitor's address comes from X-Forwarded-For: with 'loopback' Express
@@ -136,6 +141,10 @@ app.use(function loadUserMiddleware(req, res, next) {
 app.use(function loadUnreadCountMiddleware(req, res, next) {
   return req.isCustomHost ? next() : unread(req, res, next);
 });
+
+// The language of every page without an /en copy: ?lang=, the user's saved
+// language, the cookie, Arabic (middleware/appLang).
+app.use(appLang({ saveLocale: (userId, lang) => require('./config/db').pool.query('UPDATE users SET locale = ? WHERE id = ?', [lang, userId]) }));
 
 // The platform admin's banner message (empty = none), read from memory.
 app.use((req, res, next) => {

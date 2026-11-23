@@ -1,13 +1,13 @@
 <section class="mk-phero mk-phero--sm" aria-labelledby="page-title">
-  <div class="mk-wrap"><h1 id="page-title"><%= t('meta.disclaimerTitle') %></h1></div>
+  <div class="mk-wrap"><h1 id="page-title"><%= __(t('meta.disclaimerTitle')) %></h1></div>
 </section>
 <section class="mk-lift">
   <div class="mk-wrap">
     <article class="mk-panel mk-prose">
       <%- include('_legal-note') %>
-      <p class="mk-alert mk-alert--info"><%= t('footer.disclaimer') %></p>
-      <p><%= t('disc.p1') %></p>
-      <p><%= t('disc.p2') %></p>
+      <p class="mk-alert mk-alert--info"><%= __(t('footer.disclaimer')) %></p>
+      <p><%= __(t('disc.p1')) %></p>
+      <p><%= __(t('disc.p2')) %></p>
     </article>
   </div>
 </section>

@@ -1,64 +1,64 @@
-<div class="page-head"><h1>الطلبات والمدفوعات</h1></div>
-<% if (done) { %><div class="flash flash--success" role="status"><%= done %></div><% } %>
-<% if (error) { %><div class="flash flash--danger" role="alert"><%= error %></div><% } %>
+<div class="page-head"><h1><%= __("الطلبات والمدفوعات") %></h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 
 <form method="get" action="/admin/orders" class="filter-bar" novalidate>
-  <div class="field"><label for="status">الحالة</label>
-    <select id="status" name="status" class="select"><option value="">الكل</option>
-      <% statuses.forEach(function (s) { %><option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= { pending: 'معلّق', paid: 'مدفوع', failed: 'فشل', expired: 'منتهي' }[s] %></option><% }) %></select></div>
-  <div class="field"><label for="method">الطريقة</label>
-    <select id="method" name="method" class="select"><option value="">الكل</option>
-      <option value="moyasar" <%= filters.method === 'moyasar' ? 'selected' : '' %>>بطاقة</option>
-      <option value="bank_transfer" <%= filters.method === 'bank_transfer' ? 'selected' : '' %>>حوالة</option></select></div>
-  <label class="check"><input type="checkbox" name="suspicious" value="1" <%= filters.suspicious ? 'checked' : '' %>> المشبوهة فقط</label>
-  <button type="submit" class="btn btn--primary">تصفية</button>
+  <div class="field"><label for="status"><%= __("الحالة") %></label>
+    <select id="status" name="status" class="select"><option value=""><%= __("الكل") %></option>
+      <% statuses.forEach(function (s) { %><option value="<%= __(s) %>" <%= __(filters.status === s ? 'selected' : '') %>><%= __({ pending: __('معلّق'), paid: __('مدفوع'), failed: __('فشل'), expired: __('منتهي') }[s]) %></option><% }) %></select></div>
+  <div class="field"><label for="method"><%= __("الطريقة") %></label>
+    <select id="method" name="method" class="select"><option value=""><%= __("الكل") %></option>
+      <option value="moyasar" <%= __(filters.method === 'moyasar' ? 'selected' : '') %>><%= __("بطاقة") %></option>
+      <option value="bank_transfer" <%= __(filters.method === 'bank_transfer' ? 'selected' : '') %>><%= __("حوالة") %></option></select></div>
+  <label class="check"><input type="checkbox" name="suspicious" value="1" <%= __(filters.suspicious ? 'checked' : '') %>> <%= __("المشبوهة فقط") %></label>
+  <button type="submit" class="btn btn--primary"><%= __("تصفية") %></button>
 </form>
 
 <section class="card detail-card">
-  <h2>الطلبات (<%= total %>)</h2>
+  <h2><%= __("الطلبات") %> (<%= __(total) %>)</h2>
   <ul class="item-list">
     <% rows.forEach(function (o) { %>
       <li class="item">
-        <div class="item__title"><strong>#<%= o.id %></strong> <a href="/admin/offices/<%= o.office_id %>"><%= o.office_name %></a>
-          <span class="badge badge--role"><%= { pending: 'معلّق', paid: 'مدفوع', failed: 'فشل', expired: 'منتهي' }[o.status] %></span>
-          <% if (Number(o.suspicious)) { %><span class="badge badge--bill-danger">مشبوه: <%= o.fail_reason %></span><% } %></div>
-        <div class="item__meta"><%= o.plan_code %> · <%= o.billing_interval === 'yearly' ? 'سنوي' : 'شهري' %> · <%= o.method === 'moyasar' ? 'بطاقة' : 'حوالة' %> · <%= fmtDec(o.total) %> <%= o.currency %><%= o.promo_code ? ' · خصم ' + o.promo_code : '' %> · <span dir="ltr"><%= stamp(o.created_at) %></span></div>
+        <div class="item__title"><strong>#<%= __(o.id) %></strong> <a href="/admin/offices/<%= __(o.office_id) %>"><%= __(o.office_name) %></a>
+          <span class="badge badge--role"><%= __({ pending: __('معلّق'), paid: __('مدفوع'), failed: __('فشل'), expired: __('منتهي') }[o.status]) %></span>
+          <% if (Number(o.suspicious)) { %><span class="badge badge--bill-danger"><%= __("مشبوه:") %> <%= __(o.fail_reason) %></span><% } %></div>
+        <div class="item__meta"><%= __(o.plan_code) %> · <%= __(o.billing_interval === 'yearly' ? __('سنوي') : __('شهري')) %> · <%= __(o.method === 'moyasar' ? __('بطاقة') : __('حوالة')) %> · <%= __(fmtDec(o.total)) %> <%= __(o.currency) %><%= __(o.promo_code ? __(' · خصم ') + o.promo_code : '') %> · <span dir="ltr"><%= __(stamp(o.created_at)) %></span></div>
       </li>
     <% }) %>
   </ul>
-  <% if (!rows.length) { %><p class="empty-state">لا توجد طلبات.</p><% } %>
-  <% if (pages > 1) { %><nav class="pager"><% if (page > 1) { %><a href="/admin/orders?status=<%= filters.status %>&amp;method=<%= filters.method %>&amp;page=<%= page - 1 %>">السابق</a><% } %> <span>صفحة <%= page %> من <%= pages %></span> <% if (page < pages) { %><a href="/admin/orders?status=<%= filters.status %>&amp;method=<%= filters.method %>&amp;page=<%= page + 1 %>">التالي</a><% } %></nav><% } %>
+  <% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد طلبات.") %></p><% } %>
+  <% if (pages > 1) { %><nav class="pager"><% if (page > 1) { %><a href="/admin/orders?status=<%= __(filters.status) %>&amp;method=<%= __(filters.method) %>&amp;page=<%= __(page - 1) %>"><%= __("السابق") %></a><% } %> <span><%= __("صفحة") %> <%= __(page) %> <%= __("من") %> <%= __(pages) %></span> <% if (page < pages) { %><a href="/admin/orders?status=<%= __(filters.status) %>&amp;method=<%= __(filters.method) %>&amp;page=<%= __(page + 1) %>"><%= __("التالي") %></a><% } %></nav><% } %>
 </section>
 
 <section class="card detail-card">
-  <h2>آخر المدفوعات</h2>
+  <h2><%= __("آخر المدفوعات") %></h2>
   <ul class="item-list">
     <% payments.forEach(function (p) { %>
-      <li class="item"><div class="item__title"><a href="/admin/offices/<%= p.office_id %>"><%= p.office_name %></a> · <%= fmtDec(p.amount) %> <%= p.currency %> <span class="badge badge--role"><%= p.status %></span></div>
-        <div class="item__meta"><%= p.provider %> · <span dir="ltr"><%= p.provider_ref %></span><%= p.card_last4 ? ' · ****' + p.card_last4 : '' %> · <span dir="ltr"><%= stamp(p.created_at) %></span></div></li>
+      <li class="item"><div class="item__title"><a href="/admin/offices/<%= __(p.office_id) %>"><%= __(p.office_name) %></a> · <%= __(fmtDec(p.amount)) %> <%= __(p.currency) %> <span class="badge badge--role"><%= __(p.status) %></span></div>
+        <div class="item__meta"><%= __(p.provider) %> · <span dir="ltr"><%= __(p.provider_ref) %></span><%= __(p.card_last4 ? ' · ****' + p.card_last4 : '') %> · <span dir="ltr"><%= __(stamp(p.created_at)) %></span></div></li>
     <% }) %>
   </ul>
-  <% if (!payments.length) { %><p class="empty-state">لا توجد مدفوعات.</p><% } %>
+  <% if (!payments.length) { %><p class="empty-state"><%= __("لا توجد مدفوعات.") %></p><% } %>
 </section>
 
 <section class="card detail-card">
-  <h2>الفواتير والإشعارات الدائنة</h2>
+  <h2><%= __("الفواتير والإشعارات الدائنة") %></h2>
   <ul class="item-list">
     <% invoices.forEach(function (i) { %>
       <li class="item">
-        <div class="item__title"><a href="/admin/invoices/<%= i.id %>"><strong dir="ltr"><%= i.invoice_no %></strong></a> <%= i.doc_title %>
-          <% if (i.status === 'credited') { %><span class="badge badge--ended">ملغاة بإشعار</span><% } %></div>
-        <div class="item__meta"><a href="/admin/offices/<%= i.office_id %>"><%= i.office_name %></a> · <%= fmtDec(i.total) %> <%= i.currency %> · <span dir="ltr"><%= stamp(i.issued_at) %></span></div>
+        <div class="item__title"><a href="/admin/invoices/<%= __(i.id) %>"><strong dir="ltr"><%= __(i.invoice_no) %></strong></a> <%= __(i.doc_title) %>
+          <% if (i.status === 'credited') { %><span class="badge badge--ended"><%= __("ملغاة بإشعار") %></span><% } %></div>
+        <div class="item__meta"><a href="/admin/offices/<%= __(i.office_id) %>"><%= __(i.office_name) %></a> · <%= __(fmtDec(i.total)) %> <%= __(i.currency) %> · <span dir="ltr"><%= __(stamp(i.issued_at)) %></span></div>
         <% if (i.kind === 'invoice' && i.status === 'issued') { %>
-          <details class="danger-zone"><summary>إصدار إشعار دائن (استرداد)</summary>
-            <form method="post" action="/admin/invoices/<%= i.id %>/credit-note" novalidate>
-              <p class="muted">يلغي الفاتورة بالكامل. لا يُرجع المبلغ تلقائياً: أرجعه من لوحة مزوّد الدفع أو البنك.</p>
-              <div class="field"><label for="reason-<%= i.id %>">السبب</label><input id="reason-<%= i.id %>" name="reason" class="input" maxlength="200" required></div>
-              <button type="submit" class="btn btn--danger btn--small">إصدار الإشعار</button>
+          <details class="danger-zone"><summary><%= __("إصدار إشعار دائن (استرداد)") %></summary>
+            <form method="post" action="/admin/invoices/<%= __(i.id) %>/credit-note" novalidate>
+              <p class="muted"><%= __("يلغي الفاتورة بالكامل. لا يُرجع المبلغ تلقائياً: أرجعه من لوحة مزوّد الدفع أو البنك.") %></p>
+              <div class="field"><label for="reason-<%= __(i.id) %>"><%= __("السبب") %></label><input id="reason-<%= __(i.id) %>" name="reason" class="input" maxlength="200" required></div>
+              <button type="submit" class="btn btn--danger btn--small"><%= __("إصدار الإشعار") %></button>
             </form></details>
         <% } %>
       </li>
     <% }) %>
   </ul>
-  <% if (!invoices.length) { %><p class="empty-state">لا توجد فواتير.</p><% } %>
+  <% if (!invoices.length) { %><p class="empty-state"><%= __("لا توجد فواتير.") %></p><% } %>
 </section>
