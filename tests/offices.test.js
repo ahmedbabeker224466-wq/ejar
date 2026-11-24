@@ -85,8 +85,8 @@ const NAV = {
 
 test('the navigation has the 18 items in order, settings last', () => {
   assert.deepEqual(ALL, [
-    'home', 'contracts', 'landlords', 'units', 'tenants', 'payments', 'accounting', 'maintenance',
-    'tasks', 'messages', 'leads', 'listings', 'domain', 'reports', 'team', 'audit', 'billing', 'settings',
+    'home', 'billing', 'contracts', 'landlords', 'units', 'tenants', 'payments', 'accounting', 'maintenance',
+    'tasks', 'messages', 'leads', 'listings', 'domain', 'reports', 'team', 'audit', 'settings',
   ]);
 });
 

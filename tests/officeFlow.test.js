@@ -502,9 +502,9 @@ test('the sidebar shows only the items each role may open', { skip }, async () =
   const owner = await registerOffice(phone(29), { ...OFFICE_FORM, name: 'مكتب القائمة' });
   const manager = await addMember(owner.office.id, phone(30), 'office_manager');
   const staff = await addMember(owner.office.id, phone(31), 'office_staff');
-  const all = ['/office', '/office/contracts', '/office/landlords', '/office/units', '/office/tenants',
+  const all = ['/office', '/office/billing', '/office/contracts', '/office/landlords', '/office/units', '/office/tenants',
     '/office/payments', '/office/accounting', '/office/maintenance', '/office/tasks', '/office/messages',
-    '/office/leads', '/office/listings', '/office/domain', '/office/reports', '/office/team', '/office/audit', '/office/billing', '/office/settings'];
+    '/office/leads', '/office/listings', '/office/domain', '/office/reports', '/office/team', '/office/audit', '/office/settings'];
 
   assert.deepEqual(navHrefs((await request('/office', { cookie: owner.cookie })).text), all);
   assert.deepEqual(

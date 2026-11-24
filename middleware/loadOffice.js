@@ -13,6 +13,7 @@ const { toLocal } = require('../utils/phone');
 // member's role has its capability; routes/office.js guards the same pages.
 const OFFICE_NAV = [
   { key: 'home', href: '/office', label: 'الرئيسية', capability: 'contracts', group: '' },
+  { key: 'billing', href: '/office/billing', label: 'الاشتراك', capability: 'billing', group: '' },
   { key: 'contracts', href: '/office/contracts', label: 'العقود', capability: 'contracts', group: 'العقود والعقارات' },
   { key: 'landlords', href: '/office/landlords', label: 'الملّاك', capability: 'landlords', group: 'العقود والعقارات' },
   { key: 'units', href: '/office/units', label: 'العقارات والوحدات', capability: 'units', group: 'العقود والعقارات' },
@@ -28,7 +29,6 @@ const OFFICE_NAV = [
   { key: 'reports', href: '/office/reports', label: 'التقارير', capability: 'reports', group: 'المكتب' },
   { key: 'team', href: '/office/team', label: 'الفريق', capability: 'team', group: 'المكتب' },
   { key: 'audit', href: '/office/audit', label: 'سجل التدقيق', capability: 'audit', group: 'المكتب' },
-  { key: 'billing', href: '/office/billing', label: 'الاشتراك', capability: 'billing', group: 'المكتب' },
   { key: 'settings', href: '/office/settings', label: 'الإعدادات', capability: 'settings.basic', group: 'المكتب' },
 ];
 
