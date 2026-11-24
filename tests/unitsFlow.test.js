@@ -460,7 +460,7 @@ test('landlord and tenant roles get 403 on /office/units', { skip }, async () =>
 test('dashboard unit numbers, checklist tick and sidebar highlight', { skip }, async () => {
   const a = await officeWithLandlord(19, 'مكتب اللوحة', 'test_units_5');
   const before = await http.request('/office', { cookie: a.cookie });
-  assert.match(before.text, /<a href="\/office\/units">\s*<span class="checklist__box" aria-hidden="true"><\/span>/, 'not ticked yet');
+  assert.match(before.text, /<a href="\/office\/units\/new" class="btn btn--primary btn--small">/, 'not ticked yet');
 
   const ids = [];
   for (const label of ['و1', 'و2', 'و3', 'و4']) ids.push(await a.scoped.insert('units', { landlord_id: a.landlordId, label, city: 'الرياض' }));
@@ -475,7 +475,7 @@ test('dashboard unit numbers, checklist tick and sidebar highlight', { skip }, a
   assert.match(summary, /<strong>2<\/strong> مؤجرة/);
   assert.match(summary, /<strong>1<\/strong> تحت الصيانة/);
   assert.match(summary, /4 من 5 وحدة/);
-  assert.match(home.text, /<a href="\/office\/units" class="is-done">/);
+  assert.match(home.text, /<li class="setup__item is-done">[\s\S]{0,400}أضف أول عقار أو وحدة/);
 
   const page = await http.request(`/office/units/${ids[0]}`, { cookie: a.cookie });
   assert.match(page.text, /<a href="\/office\/units" aria-current="page">.*?<span>العقارات والوحدات<\/span><\/a>/);

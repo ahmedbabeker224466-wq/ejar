@@ -211,9 +211,10 @@ test('register end to end: new phone -> code -> /office/new -> office, owner, me
   assert.doesNotMatch(home.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
   assert.equal((home.text.match(/class="stat__value">0</g) || []).length, 6, 'six stats, all zero');
   assert.match(home.text, /يحتاج إجراء/);
-  for (const href of ['/office/landlords', '/office/units', '/office/contracts', '/office/team', '/office/settings']) {
-    assert.ok(home.text.includes(`<a href="${href}">`), `checklist links ${href}`);
+  for (const href of ['/office/landlords/new', '/office/units/new', '/office/contracts/new', '/office/team', '/office/settings/reminders']) {
+    assert.ok(home.text.includes(`<a href="${href}" class="btn btn--primary btn--small">`), `setup step links ${href}`);
   }
+  assert.match(home.text, /0 من 5 خطوات مكتملة/);
 
   // Never again: back to /office, and a second submit creates nothing.
   assert.equal((await request('/office/new', { cookie })).location, '/office');

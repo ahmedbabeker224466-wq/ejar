@@ -640,7 +640,7 @@ test('dashboard numbers, needs-action board, checklist, landlord and unit pages'
   assert.equal(stat('موعد القرار خلال 90 يوماً'), 1);
   assert.equal(stat('وحدات شاغرة'), 1);
   assert.ok(stat('دفعات متأخرة') >= 1, 'the urgent contract started a year ago and has past due payments');
-  assert.match(home.text, /<a href="\/office\/contracts" class="is-done">/);
+  assert.match(home.text, /<li class="setup__item is-done">[\s\S]{0,400}أضف أول عقد/);
   const board = home.text.slice(home.text.indexOf('class="board"'), home.text.indexOf('عرض كل العقود التي تحتاج إجراء'));
   assert.ok(board.includes(`/office/contracts/${urgentId}`));
   assert.ok(!board.includes(`/office/contracts/${calmId}`), 'calm contracts are not on the board');

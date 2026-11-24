@@ -2597,3 +2597,20 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 .office-body .office-main a:not(.btn):hover { text-decoration: underline; text-underline-offset: 3px; }
 .office-body .back-link a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid #dfe4ef; border-radius: 999px; background: #fff; color: #1d3b8f; font-size: .9rem; }
 .office-body .back-link a:hover { text-decoration: none; background: #f2f5fc; }
+/* Office home: setup steps */
+.office-body .setup__head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.office-body .setup__head h2 { margin: 0 0 2px; }
+.office-body .setup__head .muted { margin: 0; }
+.office-body .setup__bar { flex: 0 1 220px; height: 8px; border-radius: 999px; background: #e7ecf6; overflow: hidden; }
+.office-body .setup__bar span { display: block; height: 100%; background: var(--color-success, #15803d); border-radius: inherit; }
+.office-body .setup__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.office-body .setup__item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1px solid #e3e8f2; border-radius: 12px; background: #fff; }
+.office-body .setup__item.is-done { background: #f7fbf8; border-color: #d3ecdc; }
+.office-body .setup__num { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: #eef2fb; color: #1d3b8f; }
+.office-body .setup__item.is-done .setup__num { background: var(--color-success, #15803d); color: #fff; }
+.office-body .setup__num svg { width: 16px; height: 16px; }
+.office-body .setup__text { flex: 1; display: grid; gap: 2px; }
+.office-body .setup__text strong { font-size: 1rem; }
+.office-body .setup__text span { font-size: .88rem; color: #5f6b87; }
+.office-body .setup__item.is-done .setup__text strong { color: #5f6b87; }
+.office-body .setup__state { font-size: .85rem; font-weight: 700; color: var(--color-success, #15803d); }

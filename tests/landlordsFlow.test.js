@@ -180,7 +180,7 @@ test('create, validate, edit, deactivate and reactivate a landlord; audit rows h
 
   // The dashboard ticks "add first landlord" and counts landlords.
   const home = await http.request('/office', { cookie: owner.cookie });
-  assert.match(home.text, /<a href="\/office\/landlords" class="is-done">/);
+  assert.match(home.text, /<li class="setup__item is-done">[\s\S]{0,400}أضف أول مالك/);
   assert.match(home.text, /class="stat__value">1<\/p>\s*<p class="stat__label">الملّاك/);
 });
 

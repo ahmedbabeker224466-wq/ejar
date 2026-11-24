@@ -119,19 +119,24 @@
   <% if (can('settings.office')) { %><p><a href="/office/settings/reminders" class="btn btn--secondary"><%= __("إعدادات التذكيرات والقنوات") %></a></p><% } %>
 </section>
 
-<% if (setupSteps.length) { %>
-  <section class="card office-section">
-    <h2><%= __("ابدأ تجهيز مكتبك") %></h2>
-    <ul class="checklist">
-      <% setupSteps.forEach(function (step) { %>
-        <li>
-          <a href="<%= __(step.href) %>"<%- step.done ? ' class="is-done"' : '' %>>
-            <span class="checklist__box" aria-hidden="true"></span>
-            <span><%= __(step.label) %></span>
-            <span class="visually-hidden"><%= __(step.done ? __('(مكتمل)') : __('(لم يكتمل)')) %></span>
-          </a>
+<% const doneCount = setupSteps.filter(function (s) { return s.done; }).length; %>
+<% if (setupSteps.length && doneCount < setupSteps.length) { %>
+  <section class="card office-section setup">
+    <div class="setup__head">
+      <div>
+        <h2><%= __("ابدأ تجهيز مكتبك") %></h2>
+        <p class="muted"><%= __(doneCount) %> <%= __("من") %> <%= __(setupSteps.length) %> <%= __("خطوات مكتملة") %></p>
+      </div>
+      <div class="setup__bar" role="progressbar" aria-valuemin="0" aria-valuemax="<%= setupSteps.length %>" aria-valuenow="<%= doneCount %>"><span style="width: <%= Math.round(doneCount / setupSteps.length * 100) %>%"></span></div>
+    </div>
+    <ol class="setup__list">
+      <% setupSteps.forEach(function (step, i) { %>
+        <li class="setup__item<%= step.done ? ' is-done' : '' %>">
+          <span class="setup__num" aria-hidden="true"><% if (step.done) { %><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg><% } else { %><%= i + 1 %><% } %></span>
+          <span class="setup__text"><strong><%= __(step.label) %></strong><span><%= __(step.hint) %></span></span>
+          <% if (step.done) { %><span class="setup__state"><%= __("مكتمل") %></span><% } else { %><a href="<%= __(step.href) %>" class="btn btn--primary btn--small"><%= __("ابدأ") %></a><% } %>
         </li>
       <% }) %>
-    </ul>
+    </ol>
   </section>
 <% } %>

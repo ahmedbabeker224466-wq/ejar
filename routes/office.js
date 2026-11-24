@@ -187,11 +187,11 @@ router.post('/office/review/edit', onlyUnverifiedOwner, resubmitLimit, async (re
 
 // done(counts) ticks a step once the office has done it.
 const SETUP_STEPS = [
-  { label: 'أضف أول مالك', href: '/office/landlords', capability: 'landlords', done: (c) => c.landlordsTotal > 0 },
-  { label: 'أضف أول عقار أو وحدة', href: '/office/units', capability: 'units', done: (c) => c.units.total + c.units.buildings > 0 },
-  { label: 'أضف أول عقد', href: '/office/contracts', capability: 'contracts', done: (c) => c.contractsTotal > 0 },
-  { label: 'ادعُ أحد أعضاء فريقك', href: '/office/team', capability: 'team' },
-  { label: 'اربط واتساب لإرسال التذكيرات', href: '/office/settings', capability: 'settings.basic' },
+  { label: 'أضف أول مالك', hint: 'لقب المالك ومدينته وجواله، ويدخل لوحته برمز دعوة.', href: '/office/landlords/new', capability: 'landlords', done: (c) => c.landlordsTotal > 0 },
+  { label: 'أضف أول عقار أو وحدة', hint: 'المبنى ووحداته، أو وحدة مستقلة.', href: '/office/units/new', capability: 'units', done: (c) => c.units.total + c.units.buildings > 0 },
+  { label: 'أضف أول عقد', hint: 'ارفع ملف العقد من إيجار وتُقرأ التواريخ والمبالغ تلقائياً.', href: '/office/contracts/new', capability: 'contracts', done: (c) => c.contractsTotal > 0 },
+  { label: 'ادعُ أحد أعضاء فريقك', hint: 'مدير أو موظف برقم جواله.', href: '/office/team', capability: 'team', done: (c) => c.membersTotal > 1 },
+  { label: 'فعّل قناة للتذكيرات', hint: 'تيليجرام أو واتساب ليصل التذكير خارج الموقع.', href: '/office/settings/reminders', capability: 'settings.office', done: (c) => c.channelsTotal > 0 },
 ];
 
 router.get('/office', requirePerm('contracts'), async (req, res, next) => {
@@ -202,6 +202,11 @@ router.get('/office', requirePerm('contracts'), async (req, res, next) => {
     await contractStatus.maybeRecompute({ pool: db.pool, officeId: req.office.id, now, today });
     const counts = await offices.dashboardCounts(db.pool, req.office.id, now);
     counts.units = await unitsService.unitCounts(db.pool, req.office.id);
+    const scopedHome = scopeToOffice(db.pool, req.office.id);
+    const [members] = await scopedHome.query('SELECT COUNT(*) AS n FROM office_members WHERE office_id = :office_id AND is_active = 1');
+    const [channels] = await scopedHome.query('SELECT COUNT(*) AS n FROM channel_settings WHERE office_id = :office_id AND enabled = 1');
+    counts.membersTotal = Number(members.n);
+    counts.channelsTotal = Number(channels.n);
     return res.render('office/home', {
       title: 'الرئيسية',
       counts,
@@ -214,6 +219,7 @@ router.get('/office', requirePerm('contracts'), async (req, res, next) => {
       stageLabels: contractsService.STAGE_LABELS,
       setupSteps: SETUP_STEPS.filter((step) => can(req.memberRole, step.capability)).map((step) => ({
         label: step.label,
+        hint: step.hint,
         href: step.href,
         done: Boolean(step.done && step.done(counts)),
       })),
