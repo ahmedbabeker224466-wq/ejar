@@ -173,7 +173,7 @@ Everything else is written with Node's built-in modules: TOTP with crypto, Whats
 
 # Admin sign-in (routes/adminLogin.js, routes/adminSecurity.js, views/pages/admin-login.ejs, layouts/admin-auth)
 - /admin/login (anonymous GET /admin redirects there; own dark layout): PLATFORM_ADMIN_EMAIL + PLATFORM_ADMIN_PASSWORD (env, at least 8 characters, owner decision; missing = off), compared in constant time, one generic error. The account is the active platform_admin with PLATFORM_ADMIN_PHONE. The authenticator step follows only when that user turned it on (or REQUIRE_ADMIN_2FA requires it): owner's decision, Nov 2026, 2FA optional. 8 attempts per IP per 15 minutes; audit auth.admin_login { outcome, method } without the address. noindex. /login?method=phone still works.
-- /admin/security (nav «الأمان»): status and optional setup of the authenticator (twoFactor.pendingSetup/confirmSetup), backup codes shown once, audit admin.2fa.enable.
+- /admin/security (nav «الأمان»): status, optional setup (twoFactor.pendingSetup/confirmSetup, backup codes shown once, audit admin.2fa.enable) and «إيقاف» (POST /admin/security/2fa/disable: a current authenticator or backup code, refused while REQUIRE_ADMIN_2FA requires it, clears secret and backup codes, audit admin.2fa.disable).
 - Tests: tests/adminLogin.test.js (phones 9665000034NN, emails al-...@aqdi-test.example).
 
 # Email test login (services/emailAuth.js, routes/auth.js, views/pages/login-email.ejs, scripts/set-user-email.js)

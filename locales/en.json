@@ -2772,5 +2772,10 @@
  "أدخل هذا المفتاح في التطبيق:": "Enter this key in the app:",
  "أو افتح هذا الرابط من الجوال نفسه": "Or open this link on the same phone",
  "الرمز غير صحيح. تأكد من وقت جوالك واكتب الرمز الظاهر الآن.": "The code is incorrect. Check your phone's clock and enter the code shown now.",
- "محاولات محدودة": "Limited attempts"
+ "محاولات محدودة": "Limited attempts",
+ "إعدادات الخادم تشترط التحقق بخطوتين، فلا يمكن إيقافه من هنا.": "The server settings require two-step verification, so it cannot be turned off here.",
+ "الرمز غير صحيح. اكتب الرمز الظاهر الآن في التطبيق أو أحد رموز الاحتياط.": "The code is incorrect. Enter the code shown now in the app or one of your backup codes.",
+ "تم إيقاف التحقق بخطوتين.": "Two-step verification has been turned off.",
+ "إيقاف التحقق بخطوتين": "Turn off two-step verification",
+ "بعد الإيقاف يكون الدخول بالبريد وكلمة المرور فقط. للتأكيد اكتب الرمز الظاهر الآن في التطبيق أو أحد رموز الاحتياط.": "Once turned off, sign-in requires only the email and password. To confirm, enter the code shown now in the app or one of your backup codes."
 }

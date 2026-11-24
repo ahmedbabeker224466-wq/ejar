@@ -129,3 +129,28 @@ test('the right email and password sign in; 2FA is optional and turned on inside
   assert.ok(rows.length > 0);
   for (const r of rows) assert.ok(!String(r.after_json).includes('@'), 'the address is never audited');
 });
+
+test('2FA can be turned off inside with a current code', { skip }, async () => {
+  routes.limit.counter.reset();
+  // Sign in through the authenticator step (it is on after the previous test).
+  const [[row]] = await db.pool.query('SELECT id, twofa_secret FROM users WHERE phone = ?', [phone(1)]);
+  const secret = require('../services/secretBox').open(row.twofa_secret);
+  const totp = require('../services/totp');
+  const step = await signIn(ADMIN, PASSWORD);
+  const two = await http.request('/login/2fa', { method: 'POST', cookie: cookieOf(step, 'aqdi_mfa'), form: { code: totp.generateCode(secret, Date.now()) } });
+  const session = cookieOf(two, 'aqdi_session');
+  assert.ok(session, `2FA step answered ${two.status}`);
+
+  const wrong = await http.request('/admin/security/2fa/disable', { method: 'POST', cookie: session, form: { code: '000000' } });
+  assert.equal(wrong.status, 422);
+  // A fresh code from the next time window, so the same code is not reused.
+  const off = await http.request('/admin/security/2fa/disable', { method: 'POST', cookie: session, form: { code: totp.generateCode(secret, Date.now() + 30000) } });
+  assert.equal(off.status, 302, off.text.slice(0, 200));
+  const [[after]] = await db.pool.query('SELECT twofa_enabled, twofa_secret FROM users WHERE id = ?', [row.id]);
+  assert.equal(Number(after.twofa_enabled), 0);
+  assert.equal(after.twofa_secret, null);
+
+  routes.limit.counter.reset();
+  const direct = await signIn(ADMIN, PASSWORD);
+  assert.equal(direct.location, '/admin', 'email and password only again');
+});

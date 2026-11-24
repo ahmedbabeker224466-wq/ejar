@@ -1,10 +1,23 @@
 <div class="page-head"><h1><%= __("الأمان") %></h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
 
 <section class="form-card">
   <h2><%= __("التحقق بخطوتين") %></h2>
   <% if (enabled) { %>
     <p><span class="badge badge--calm"><%= __("مفعّل") %></span></p>
     <p class="muted"><%= __("عند الدخول إلى لوحة الإدارة يُطلب رمز من تطبيق المصادقة بعد كلمة المرور. إذا فقدت جوالك فاستخدم أحد رموز الاحتياط.") %></p>
+    <% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
+    <% if (!required) { %>
+    <h3><%= __("إيقاف التحقق بخطوتين") %></h3>
+    <p class="muted"><%= __("بعد الإيقاف يكون الدخول بالبريد وكلمة المرور فقط. للتأكيد اكتب الرمز الظاهر الآن في التطبيق أو أحد رموز الاحتياط.") %></p>
+    <form method="post" action="/admin/security/2fa/disable" novalidate>
+      <div class="field">
+        <label for="off-code"><%= __("الرمز من التطبيق") %></label>
+        <input id="off-code" name="code" class="input" type="text" dir="ltr" autocomplete="one-time-code" maxlength="20" required>
+      </div>
+      <button type="submit" class="btn btn--danger btn--large"><%= __("إيقاف التحقق بخطوتين") %></button>
+    </form>
+    <% } %>
   <% } else { %>
     <p><span class="badge badge--urgent"><%= __("غير مفعّل") %></span></p>
     <p class="muted"><%= __("خطوة حماية اختيارية: بعد تفعيلها يُطلب رمز من تطبيق المصادقة في جوالك بعد كلمة المرور.") %></p>
