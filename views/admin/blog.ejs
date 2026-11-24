@@ -1,13 +1,21 @@
 <div class="page-head"><h1><%= __("المدونة") %></h1><a href="/admin/blog/new" class="btn btn--primary btn--small"><%= __("مقال جديد") %></a></div>
 <% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
-<ul class="item-list">
+<% if (rows.length) { %>
+<div class="adm-posts">
   <% rows.forEach(function (p) { %>
-    <li class="item">
-      <div class="item__title"><a href="/admin/blog/<%= __(p.id) %>"><strong><%= __(p.title) %></strong></a>
+    <article class="adm-post">
+      <div class="adm-post__badges">
         <span class="badge badge--bill-<%= __(p.status === 'published' ? 'success' : 'info') %>"><%= __(p.status === 'published' ? __('منشور') : __('مسودة')) %></span>
-        <% if (p.needsReview) { %><span class="badge badge--bill-warning"><%= __("يحتاج مراجعة قبل النشر") %></span><% } %></div>
-      <div class="item__meta"><span dir="ltr">/blog/<%= __(p.slug) %></span> · <span dir="ltr"><%= __(stamp(p.publishedAt || p.createdAt)) %></span></div>
-    </li>
+        <% if (p.needsReview) { %><span class="badge badge--bill-warning"><%= __("تحتاج مراجعة") %></span><% } %>
+      </div>
+      <h2 class="adm-post__title"><a href="/admin/blog/<%= __(p.id) %>"><%= __(p.title) %></a></h2>
+      <% if (p.excerpt) { %><p class="adm-post__excerpt"><%= __(p.excerpt) %></p><% } %>
+      <div class="adm-post__foot">
+        <span class="adm-post__date" dir="ltr"><%= __(stamp(p.publishedAt || p.createdAt)) %></span>
+        <% if (p.status === 'published') { %><a href="/blog/<%= __(p.slug) %>" class="adm-post__view" target="_blank" rel="noopener"><%= __("عرض في الموقع") %></a><% } %>
+        <a href="/admin/blog/<%= __(p.id) %>" class="btn btn--secondary btn--small"><%= __("تعديل") %></a>
+      </div>
+    </article>
   <% }) %>
-</ul>
-<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد مقالات.") %></p><% } %>
+</div>
+<% } else { %><p class="empty-state"><%= __("لا توجد مقالات.") %></p><% } %>

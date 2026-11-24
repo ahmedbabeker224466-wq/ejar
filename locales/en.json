@@ -2812,5 +2812,7 @@
  "منطقة الخطر": "Danger zone",
  "نوع الإجراء": "Action type",
  "يتوقف دخول المكتب وتذكيراته حتى تعيد تشغيله. لا يُحذف شيء.": "The office's access and reminders stop until you reactivate it. Nothing is deleted.",
- "مدير المنصة": "Platform administrator"
+ "مدير المنصة": "Platform administrator",
+ "تحتاج مراجعة": "Needs review",
+ "عرض في الموقع": "View on the website"
 }

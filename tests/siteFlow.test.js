@@ -284,7 +284,7 @@ test('blog admin: create a draft with a reason, drafts are invisible, publishing
   assert.equal(post1.needs_review, 1);
   assert.equal(post1.published_at, null);
   assert.equal((await create()).status, 422, 'duplicate slug');
-  assert.match((await http.request('/admin/blog', { cookie: admin.cookie })).text, /يحتاج مراجعة قبل النشر/);
+  assert.match((await http.request('/admin/blog', { cookie: admin.cookie })).text, /تحتاج مراجعة/);
 
   // A draft is not public anywhere.
   assert.equal((await getPublic('/blog/site-test-one')).status, 404);
