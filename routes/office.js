@@ -260,6 +260,7 @@ async function renderSettings(req, res, { values, errors = {}, saved = false, st
   const domainView = await domains.officeView(db.pool, req.office.id);
   return res.status(status).render('office/settings', {
     licenceLocked: true,
+    licenceRequired: true,
     domain: {
       ...domainView,
       freeLink: domainView.slug ? `${seo.baseUrl(req).replace(/^https?:\/\//, '')}/${domainView.slug}` : null,
@@ -304,7 +305,7 @@ router.get('/office/settings', requirePerm('settings.basic'), async (req, res, n
 
 router.post('/office/settings', requirePerm('settings.office'), async (req, res, next) => {
   try {
-    const { values, errors } = offices.validateOfficeFields(req.body);
+    const { values, errors } = offices.validateOfficeFields(req.body, { requireLicence: true });
     if (Object.keys(errors).length > 0) {
       return await renderSettings(req, res, {
         values: { ...formValues(values), phone: String(req.body.phone || '').slice(0, 20) },

@@ -1,6 +1,27 @@
+<div class="auth-split">
 <section class="auth card">
+  <div class="auth__icon" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'j' }) %></div>
   <h1><%= __("الانضمام برمز الدعوة") %></h1>
-  <% if (!signedIn) { %>
+  <% if (!signedIn && locals.guestByEmail) { %>
+    <p class="lead"><%= __("اكتب الرمز الذي أرسله لك مكتب العقار وبريدك الإلكتروني، وسنرسل إليه رمز تحقق لتدخل إلى حسابك.") %></p>
+    <% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
+    <form method="post" action="/join" novalidate>
+      <div class="field">
+        <label for="code"><%= __("رمز الدعوة") %></label>
+        <input id="code" name="code" class="input input--code" type="text" dir="ltr" autocomplete="off" autocapitalize="characters"
+          spellcheck="false" maxlength="20" placeholder="XXXXXXXX" value="<%= code %>" aria-describedby="code-hint" autofocus required>
+        <p id="code-hint" class="field-hint"><%= __("8 خانات من حروف إنجليزية وأرقام، كما وصلتك.") %></p>
+      </div>
+      <div class="field">
+        <label for="email"><%= __("البريد الإلكتروني") %></label>
+        <input id="email" name="email" class="input" type="email" dir="ltr" inputmode="email" autocomplete="email" maxlength="190"
+          placeholder="name@example.com" value="<%= email %>" required>
+      </div>
+      <button type="submit" class="btn btn--primary btn--block btn--large"><%= __("متابعة") %></button>
+    </form>
+    <div class="auth__divider"><span><%= __("أو") %></span></div>
+    <a href="/login?next=/join" class="btn btn--outline btn--block"><%= __("لديك حساب؟ سجّل الدخول") %></a>
+  <% } else if (!signedIn) { %>
     <p class="lead"><%= __("أرسل لك مكتب العقار رمزاً من 8 خانات لتتابع عقارك أو عقد إيجارك. سجّل الدخول برقم جوالك أولاً، ثم أدخل الرمز.") %></p>
     <a href="/login?next=/join" class="btn btn--primary btn--block btn--large"><%= __("سجّل الدخول برقم الجوال") %></a>
   <% } else if (refused) { %>
@@ -15,9 +36,11 @@
         <input id="code" name="code" class="input input--code" type="text" dir="ltr" autocomplete="off" autocapitalize="characters"
           spellcheck="false" maxlength="20" placeholder="XXXXXXXX" value="<%= __(code) %>" aria-describedby="code-hint"
           <%= __(error ? 'aria-invalid=true' : '') %> autofocus required>
-        <p id="code-hint" class="field-hint">8 <%= __("خانات من حروف إنجليزية وأرقام، كما وصلتك.") %></p>
+        <p id="code-hint" class="field-hint"><%= __("8 خانات من حروف إنجليزية وأرقام، كما وصلتك.") %></p>
       </div>
       <button type="submit" class="btn btn--primary btn--block btn--large"><%= __("انضم") %></button>
     </form>
   <% } %>
 </section>
+<%- include('../partials/auth-art') %>
+</div>

@@ -361,7 +361,6 @@ test('publish needs a photo, price, description and a neighborhood; only publish
   assert.equal((html.match(/<h1/g) || []).length, 1);
   assert.match(html, /<link rel="canonical" href="https:\/\/aqdi\.example\/listings\/\d+">/);
   assert.match(html, /property="og:title"/);
-  assert.match(html, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
   const ld = /<script type="application\/ld\+json">(.*?)<\/script>/s.exec(html);
   assert.ok(ld, 'JSON-LD is present');
   const data = JSON.parse(ld[1]);

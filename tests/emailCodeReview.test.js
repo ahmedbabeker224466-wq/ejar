@@ -104,7 +104,7 @@ async function cleanup() {
   await db.pool.query(`DELETE FROM audit_logs WHERE actor_id IN (${owners}) OR (entity_type = 'user' AND entity_id IN (${owners})) OR office_id IN (SELECT id FROM offices WHERE owner_id IN (${owners}))`, [...PHONES, ...PHONES, ...PHONES]);
   await retryOnDeadlock(() => db.pool.query(`DELETE FROM offices WHERE owner_id IN (${owners})`, PHONES), { retries: 5 });
   await retryOnDeadlock(() => db.pool.query(`DELETE FROM users WHERE phone IN (${marks}) OR email LIKE 'ec-%@aqdi-test.example'`, PHONES), { retries: 5 });
-  const keys = ['owner', 'login', 'lock', 'admin', 'office'].map((n) => emailCode && emailCode.identify(mail(n))).filter(Boolean);
+  const keys = ['owner', 'login', 'lock', 'admin', 'office', 'join'].map((n) => emailCode && emailCode.identify(mail(n))).filter(Boolean);
   await retryOnDeadlock(() => db.pool.query(`DELETE FROM otp_codes WHERE phone IN (${[...PHONES, ...keys].map(() => '?').join(',')})`, [...PHONES, ...keys]), { retries: 5 });
 }
 
@@ -272,4 +272,38 @@ test('a new office needs its licence, waits for review, the admins are told; app
   await http.request('/office/settings', { method: 'POST', cookie, form: { ...form, rega_license: '1299999999', cr_number: '7099999999' } });
   const [[kept]] = await db.pool.query('SELECT rega_license, cr_number FROM offices WHERE id = ?', [office.id]);
   assert.deepEqual({ ...kept }, { rega_license: '1200000033', cr_number: '7000000033' });
+});
+
+test('a guest joins with the invite code and an email code: no phone needed', { skip }, async () => {
+  reset();
+  const { createFixtures } = require('./helpers/fixtures');
+  const fx = createFixtures({ db, http, phone });
+  const o = await fx.office(20, 'تجربة-انضمام-بريد', { landlords: 1, units: 1 });
+  await http.request(`/office/landlords/${o.landlordId}/invite`, { method: 'POST', cookie: o.cookie });
+  const [[inv]] = await db.pool.query('SELECT code FROM invites WHERE landlord_id = ? AND used_at IS NULL AND revoked_at IS NULL ORDER BY id DESC LIMIT 1', [o.landlordId]);
+
+  const page = await http.request('/join');
+  assert.equal(page.status, 200);
+  assert.match(page.text, /name="code"/);
+  assert.match(page.text, /name="email"/);
+  assert.match(page.text, /class="mk-footer"/, 'the site footer, like every public page');
+
+  require('../services/invites').inviteGuard.reset();
+  const bad = await http.request('/join', { method: 'POST', form: { code: 'ZZZZZZZZ', email: mail('join') } });
+  assert.equal(bad.status, 422);
+  assert.equal(lastCode(mail('join')), null, 'no email for a wrong invite code');
+
+  const asked = await http.request('/join', { method: 'POST', form: { code: inv.code, email: mail('join') } });
+  assert.equal(asked.status, 302);
+  assert.equal(asked.location, '/join/verify');
+  const step = asked.response.headers.getSetCookie().find((c) => c.startsWith('aqdi_join=')).split(';')[0];
+  const wrong = await http.request('/join/verify', { method: 'POST', cookie: step, form: { code: '000000' === lastCode(mail('join')) ? '111111' : '000000' } });
+  assert.equal(wrong.status, 422);
+  const ok = await http.request('/join/verify', { method: 'POST', cookie: step, form: { code: lastCode(mail('join')) } });
+  assert.equal(ok.status, 302);
+  assert.equal(ok.location, '/landlord?done=joined');
+  const user = await userByEmail(mail('join'));
+  assert.equal(user.role, 'landlord');
+  const [[landlord]] = await db.pool.query('SELECT user_id FROM landlords WHERE id = ?', [o.landlordId]);
+  assert.equal(Number(landlord.user_id), Number(user.id));
 });

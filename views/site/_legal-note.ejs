@@ -1,8 +1,3 @@
-<% if (!locals.legalReviewed) { %>
-<p class="mk-alert mk-alert--warn" role="note"><strong><%= __(t('legal.reviewStrong')) %></strong> <%= __(t('legal.reviewText')) %></p>
-<% } %>
 <% if (seller.legal_name || seller.cr_number || seller.address) { %>
   <p class="mk-meta"><%= __(t('legal.operator')) %> <% if (seller.legal_name) { %><strong><%= __(seller.legal_name) %></strong><% } %><% if (seller.cr_number) { %> · <%= __(t('legal.crShort')) %> <span dir="ltr"><%= __(seller.cr_number) %></span><% } %><% if (seller.address) { %> · <%= __(seller.address) %><% } %></p>
-<% } else { %>
-  <p class="mk-meta"><%= __(t('legal.operatorPending')) %></p>
 <% } %>

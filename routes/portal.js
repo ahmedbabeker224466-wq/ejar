@@ -18,6 +18,12 @@ const portal = require('../services/portal');
 const paymentEntries = require('../services/paymentEntries');
 const money = require('../services/money');
 const joins = require('../services/joins');
+const invites = require('../services/invites');
+const auth = require('../services/auth');
+const emailAuth = require('../services/emailAuth');
+const emailCode = require('../services/emailCode');
+const platformSettings = require('../services/platformSettings');
+const { toWesternDigits } = require('../utils/phone');
 const { landlordLinks, tenantLinks } = require('../services/memberships');
 const { parseId } = require('../services/landlords');
 const { riyadhDate } = require('../services/contractDates');
@@ -92,22 +98,103 @@ function loadArea(kind) {
 
 // ------------------------------------------------------------ join
 
-function renderJoin(req, res, { status = 200, error = null, code = '' } = {}) {
+function renderJoin(req, res, { status = 200, error = null, code = '', email = '' } = {}) {
   const refused = Boolean(req.user && joins.OFFICE_ROLES.has(req.user.role));
+  res.locals.layout = 'layouts/site';
+  res.locals.mkStd = true;
   return res.status(status).render('portal/join', {
     title: 'الانضمام برمز',
     signedIn: Boolean(req.user),
+    guestByEmail: !req.user && emailCode.enabled(),
     refused,
     refusedMessage: joins.MESSAGES.office_user,
     error,
     code,
+    email,
   });
 }
+
+// A guest joins with the invite code and an email address: the code is checked
+// first (inviteGuard), then a six-digit code goes to the email; only the right
+// email code signs in (or creates the account) and redeems the invite.
+const JOIN_COOKIE = 'aqdi_join';
+const JOIN_SECONDS = 15 * 60;
+const joinCookieOptions = () => ({ httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: JOIN_SECONDS * 1000, path: '/join' });
+const pendingJoin = (req) => auth.verifyStepToken(req.cookies[JOIN_COOKIE], 'join-email');
+
+function renderJoinVerify(req, res, pending, error = null, status = 200) {
+  res.locals.layout = 'layouts/site';
+  res.locals.mkStd = true;
+  const elapsed = Math.floor((Date.now() - pending.sentAt) / 1000);
+  return res.status(status).render('pages/login-verify', {
+    title: 'رمز الدخول',
+    phoneLocal: pending.email,
+    sentTo: 'email',
+    verifyAction: '/join/verify',
+    resendAction: '/join/resend',
+    changeHref: '/join',
+    changeLabel: 'تغيير البريد الإلكتروني',
+    resendIn: Math.max(0, 60 - elapsed),
+    error,
+  });
+}
+
+async function guestJoin(req, res) {
+  const typed = String(req.body.code || '').slice(0, 40);
+  const address = emailAuth.normalizeEmail(String(req.body.email || '').slice(0, 190));
+  if (!address) return renderJoin(req, res, { status: 422, error: 'اكتب بريدك الإلكتروني بصيغة صحيحة، مثل name@example.com.', code: typed, email: req.body.email || '' });
+  const checked = await invites.inviteGuard.check(db.pool, typed, { ip: req.ip });
+  if (!checked.ok) {
+    if (checked.reason === 'rate_limited') res.set('Retry-After', String(checked.retryAfterSec));
+    return renderJoin(req, res, { status: checked.reason === 'rate_limited' ? 429 : 422, error: checked.reason === 'rate_limited' ? joins.MESSAGES.rate_limited : joins.MESSAGES.invalid, code: typed, email: address });
+  }
+  const sent = await emailCode.request(address, 'login', req.ip, req.lang);
+  if (!sent.ok) return renderJoin(req, res, { status: 429, error: sent.error === 'send_failed' ? 'تعذّر إرسال الرمز إلى بريدك الآن. حاول مرة أخرى بعد قليل.' : joins.MESSAGES.rate_limited, code: typed, email: address });
+  res.cookie(JOIN_COOKIE, auth.signStepToken({ email: address, code: typed, sentAt: Date.now() }, 'join-email', JOIN_SECONDS), joinCookieOptions());
+  return res.redirect('/join/verify');
+}
+
+router.get('/join/verify', (req, res) => {
+  const pending = pendingJoin(req);
+  if (!pending) return res.redirect('/join');
+  return renderJoinVerify(req, res, pending);
+});
+
+router.post('/join/resend', wrap(async (req, res) => {
+  const pending = pendingJoin(req);
+  if (!pending) return res.redirect('/join');
+  const sent = await emailCode.request(pending.email, 'login', req.ip, req.lang);
+  if (!sent.ok) return renderJoinVerify(req, res, pending, joins.MESSAGES.rate_limited, 429);
+  res.cookie(JOIN_COOKIE, auth.signStepToken({ ...pending, sentAt: Date.now() }, 'join-email', JOIN_SECONDS), joinCookieOptions());
+  return res.redirect('/join/verify');
+}));
+
+router.post('/join/verify', wrap(async (req, res) => {
+  const pending = pendingJoin(req);
+  if (!pending) return res.redirect('/join');
+  const typed = req.body.code || ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'].map((k) => req.body[k] || '').join('');
+  const result = await emailCode.verify(pending.email, toWesternDigits(String(typed)).replace(/\D/g, ''), 'login');
+  if (!result.ok) return renderJoinVerify(req, res, pending, 'الرمز غير صحيح أو انتهت صلاحيته. أعد المحاولة أو اطلب رمزاً جديداً.', 422);
+  res.clearCookie(JOIN_COOKIE, { path: '/join' });
+  let found = await emailAuth.findForLogin(db.pool, pending.email);
+  if (!found.ok && found.error === 'unknown') {
+    const made = await emailAuth.register(db.pool, pending.email, { signupsDisabled: () => platformSettings.signupsDisabled(db.pool) });
+    if (!made.ok && made.error !== 'exists') return renderJoin(req, res, { status: 403, error: joins.MESSAGES.invalid, code: pending.code, email: pending.email });
+    found = await emailAuth.findForLogin(db.pool, pending.email);
+  }
+  if (!found.ok) return renderJoin(req, res, { status: 403, error: joins.MESSAGES.invalid, code: pending.code, email: pending.email });
+  const user = found.user;
+  if (joins.OFFICE_ROLES.has(user.role)) return renderJoin(req, res, { status: 403, error: joins.MESSAGES.office_user });
+  await auth.issueSession(req, res, user);
+  const joined = await joins.joinWithCode(db.pool, { userId: user.id, code: pending.code, ip: req.ip });
+  if (!joined.ok) return res.redirect(auth.homeFor(user.role));
+  return res.redirect(joined.kind === 'staff' ? '/office' : `${AREAS[joined.kind].href}?done=joined`);
+}));
 
 router.get('/join', (req, res) => renderJoin(req, res));
 
 router.post('/join', wrap(async (req, res) => {
-  if (!req.user) return res.redirect('/login?next=/join');
+  if (!req.user) return emailCode.enabled() ? guestJoin(req, res) : res.redirect('/login?next=/join');
   const typed = String(req.body.code || '').slice(0, 40);
   if (joins.OFFICE_ROLES.has(req.user.role)) return renderJoin(req, res, { status: 403 });
   const wait = joins.joinGuard.attempt({ userId: req.user.id, ip: req.ip });

@@ -178,7 +178,6 @@ test('join page: signed out asks to sign in and comes back to /join', { skip }, 
   const page = await http.request('/join');
   assert.equal(page.status, 200);
   assert.match(page.text, /href="\/login\?next=\/join"/);
-  assert.match(page.text, new RegExp(DISCLAIMER));
   const post = await http.request('/join', { method: 'POST', form: { code: 'ABCDEFGH' } });
   assert.equal(post.status, 302);
   assert.equal(post.location, '/login?next=/join');

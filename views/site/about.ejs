@@ -8,15 +8,15 @@
   <div class="mk-wrap">
     <div class="mk-panel mk-prose">
       <p class="mk-about-idea"><%= __(t('about.idea')) %></p>
-      <h2><%= __(t('about.operator')) %></h2>
       <% if (seller.legal_name || seller.cr_number || seller.vat_number || seller.address) { %>
+        <h2><%= __(t('about.operator')) %></h2>
         <dl class="mk-dl">
           <% if (seller.legal_name) { %><dt><%= __(t('about.legalName')) %></dt><dd><%= __(seller.legal_name) %></dd><% } %>
           <% if (seller.cr_number) { %><dt><%= __(t('about.cr')) %></dt><dd dir="ltr"><%= __(seller.cr_number) %></dd><% } %>
           <% if (seller.vat_number) { %><dt><%= __(t('about.vat')) %></dt><dd dir="ltr"><%= __(seller.vat_number) %></dd><% } %>
           <% if (seller.address) { %><dt><%= __(t('about.address')) %></dt><dd><%= __(seller.address) %></dd><% } %>
         </dl>
-      <% } else { %><p class="mk-meta"><%= __(t('about.pending')) %></p><% } %>
+      <% } %>
       <p class="mk-page-cta"><a href="<%= L('/contact') %>" class="mk-btn mk-btn--brand mk-btn--lg"><%= __(t('contact.title')) %></a></p>
     </div>
   </div>

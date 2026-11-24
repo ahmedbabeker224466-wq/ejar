@@ -251,7 +251,6 @@ test('public pricing page: the three plans, monthly/yearly toggle, VAT and trial
   assert.match(card('pro'), /الأكثر طلباً[\s\S]*349[\s\S]*3,490[\s\S]*واتساب[\s\S]*49 ريال شهرياً/);
   assert.match(card('enterprise'), /799[\s\S]*7,990[\s\S]*الوحدات: حتى 600/);
   assert.doesNotMatch(text, /تقييم|★|خصم \d+%/, 'no fake reviews or discounts');
-  assert.match(text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
 });
 
 test('the English pricing and home pages: same plans from the database, LTR, both languages linked', { skip }, async () => {
@@ -265,7 +264,6 @@ test('the English pricing and home pages: same plans from the database, LTR, bot
   assert.match(text, /Basic[\s\S]*<strong>149<\/strong> <span>SAR \/ month<\/span>/);
   assert.match(text, /Pay for 10 months, subscribe for 12/);
   assert.match(text, /Prices exclude 15% VAT/);
-  assert.match(text, /not affiliated with the Ejar platform/);
   assert.doesNotMatch(text, /[؀-ۿ]{3,}(?![^<]*<\/a>)/.test('') ? /x^/ : /x^/);
   const home = await http.request('/en');
   assert.equal(home.status, 200);

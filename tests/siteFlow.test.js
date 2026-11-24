@@ -117,7 +117,7 @@ test('every public page: 200, one h1, title, description, canonical, robots, the
     assert.match(html, /<meta name="robots" content="index,follow">/, p);
     assert.match(html, new RegExp(`<link rel="canonical" href="https://aqdi\\.example${p === '/offices' ? '/' : p}">`), p);
     assert.match(html, /property="og:title"/, p);
-    assert.ok(html.includes(DISCLAIMER), `${p}: the disclaimer is visible`);
+    if (p !== '/disclaimer') assert.ok(!html.includes(DISCLAIMER), `${p}: the public footer no longer repeats the disclaimer (owner's request, Nov 2026)`);
     assert.equal(res.headers.get('set-cookie'), null, `${p}: no cookie`);
     assert.match(res.headers.get('cache-control'), /public, max-age=60/, p);
     assert.ok(!/<script(?![^>]*(src=|type="application\/ld\+json"))/.test(html), `${p}: no inline script`);
@@ -157,9 +157,9 @@ test('launch fixes: share image, structured data, no admin link on /login, blog 
   assert.match(listings, /data-city="الرياض"/);
 });
 
-test('the disclaimer is visible on every kind of page: public, sign-in, office, admin, invoice', { skip }, async () => {
+test('the disclaimer is visible inside the app: office, admin, notifications', { skip }, async () => {
   const o = await fx.office(1, 'تجربة-موقع-1', { landlords: 0, units: 0 });
-  for (const [p, cookie] of [['/login'], ['/register'], ['/office', o.cookie], ['/office/billing', o.cookie], ['/office/settings', o.cookie], ['/admin', admin.cookie], ['/notifications', o.cookie]]) {
+  for (const [p, cookie] of [['/office', o.cookie], ['/office/billing', o.cookie], ['/office/settings', o.cookie], ['/admin', admin.cookie], ['/notifications', o.cookie]]) {
     const res = await fetch(`${http.base()}${p}`, { headers: cookie ? { Cookie: cookie } : {}, redirect: 'manual' });
     assert.equal(res.status, 200, p);
     assert.ok((await res.text()).includes(DISCLAIMER), p);
@@ -184,7 +184,7 @@ test('no page claims an affiliation with, approval by or compliance with Ejar, R
 });
 
 test('legal pages: marked for lawyer review, and the operator details come from the platform settings', { skip }, async () => {
-  for (const p of ['/privacy', '/terms', '/disclaimer']) assert.match(await text(p), /يراجعها محامٍ قبل الإطلاق/, p);
+  for (const p of ['/privacy', '/terms', '/disclaimer']) assert.doesNotMatch(await text(p), /يراجعها محامٍ قبل الإطلاق/, p);
   // Asset version hashes (?v=...) can be all digits by chance: not a company number.
   assert.doesNotMatch((await text('/privacy')).replace(/\?v=[0-9a-f]+/g, ''), /ريال|\b\d{10}\b/, 'no company number is hardcoded');
   await mod.settings.save(db.pool, { [mod.settings.KEYS.sellerCr]: '1234567890' });

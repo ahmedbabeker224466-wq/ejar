@@ -604,3 +604,21 @@ textarea.mk-input { min-height: 150px; resize: vertical; }
   .auth-art { display: none; }
   .mk-std .auth-split .auth { padding: 32px 4px; }
 }
+@media (min-width: 981px) {
+  .mk-dd__panel { max-width: calc(100vw - 48px); flex-wrap: wrap; }
+}
+@media (min-width: 981px) and (max-width: 1180px) {
+  .mk-dd__col { min-width: 210px; }
+  .mk-nav__links { gap: 0; }
+  .mk-nav__inner { gap: 16px; }
+}
+
+/* The Solutions menu spans the header width, so it never leaves the screen */
+@media (min-width: 981px) {
+  .mk-dd--wide { position: static; }
+  .mk-dd--wide .mk-dd__panel { inset-inline: 28px; top: calc(100% - 4px); justify-content: space-between; max-width: none; }
+  .mk-dd--wide .mk-dd__col { flex: 1 1 0; min-width: 0; }
+  .mk-dd:not(.mk-dd--wide) .mk-dd__col { width: 280px; min-width: 0; }
+}
+@media (min-width: 981px) { .mk-dd:not(.mk-dd--wide) .mk-dd__panel { width: max-content; } }
+@media (min-width: 981px) and (max-width: 1180px) { .mk-dd:not(.mk-dd--wide) .mk-dd__col { width: 240px; } .mk-dd:not(.mk-dd--wide) .mk-dd__panel { gap: 8px 20px; padding: 18px; } }

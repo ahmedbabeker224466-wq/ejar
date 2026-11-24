@@ -2744,5 +2744,9 @@
  "تم رفض الطلب، وأُبلغ صاحب المكتب بالسبب.": "The application has been rejected and the office owner has been informed of the reason.",
  "هذا المكتب موافق عليه من قبل.": "This office has already been approved.",
  "يمكن رفض المكاتب التي بانتظار المراجعة فقط.": "Only offices awaiting review can be rejected.",
- "تحقق من صندوق الوارد، وإن لم تجد الرسالة فانظر في الرسائل غير المرغوب فيها.": "Check your inbox. If you cannot find the message, please look in your spam folder."
+ "تحقق من صندوق الوارد، وإن لم تجد الرسالة فانظر في الرسائل غير المرغوب فيها.": "Check your inbox. If you cannot find the message, please look in your spam folder.",
+ "اكتب الرمز الذي أرسله لك مكتب العقار وبريدك الإلكتروني، وسنرسل إليه رمز تحقق لتدخل إلى حسابك.": "Enter the code your real estate office sent you and your email address, and we will send you a verification code to access your account.",
+ "8 خانات من حروف إنجليزية وأرقام، كما وصلتك.": "8 characters of English letters and digits, exactly as you received them.",
+ "اكتب بريدك الإلكتروني بصيغة صحيحة، مثل name@example.com.": "Enter a valid email address, such as name@example.com.",
+ "الرمز غير صحيح أو انتهت صلاحيته. أعد المحاولة أو اطلب رمزاً جديداً.": "The code is incorrect or has expired. Please try again or request a new code."
 }

@@ -420,7 +420,7 @@ test.describe('/admin/launch', { skip }, () => {
     const platformSettings = require('../services/platformSettings');
     platformSettings.setLegalReviewed(false);
     for (const p of ['/privacy', '/terms', '/disclaimer']) {
-      assert.match((await http.request(p)).text, /يراجعها محامٍ قبل الإطلاق/, p);
+      assert.doesNotMatch((await http.request(p)).text, /يراجعها محامٍ قبل الإطلاق/, p);
     }
     assert.equal((await post('/admin/launch/confirm/legal_review', admin.cookie, { reason: 'تمت المراجعة', note: ' ' })).status, 422);
     const ok = await post('/admin/launch/confirm/legal_review', admin.cookie, { reason: 'تمت المراجعة', note: 'المحامي خالد', on: '2026-10-05' });
@@ -429,7 +429,7 @@ test.describe('/admin/launch', { skip }, () => {
     for (const p of ['/privacy', '/terms', '/disclaimer']) {
       const text = (await http.request(p)).text;
       assert.doesNotMatch(text, /يراجعها محامٍ قبل الإطلاق/, p);
-      assert.match(text, /الجهة المشغّلة|بيانات الجهة المشغّلة/, 'the rest of the page is intact');
+      assert.match(text, /آخر تحديث/, 'the rest of the page is intact');
     }
     platformSettings.setLegalReviewed(false);
   });

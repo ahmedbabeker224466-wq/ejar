@@ -5,16 +5,12 @@
   <div class="mk-wrap">
     <article class="mk-panel mk-prose">
       <%- include('_legal-note') %>
-      <h2><%= __(t('terms.h1')) %></h2>
-      <p><%= __(t('terms.p1')) %></p>
-      <h2><%= __(t('terms.h2')) %></h2>
-      <p><%= __(t('terms.p2')) %></p>
-      <h2><%= __(t('terms.h3')) %></h2>
-      <p><%= __(t('terms.p3')) %></p>
-      <h2><%= __(t('terms.h4')) %></h2>
-      <p><%= __(t('terms.p4')) %></p>
-      <h2><%= __(t('terms.h5')) %></h2>
-      <p><%= __(t('terms.p5')) %></p>
+      <p class="mk-meta"><%= __(t('legal.updated')) %></p>
+      <% for (let i = 1; i <= Number(t('terms.count')); i += 1) { %>
+        <h2><%= __(t('terms.s' + i + '.h')) %></h2>
+        <p><%= __(t('terms.s' + i + '.p')) %></p>
+      <% } %>
+      <p><a href="<%= L('/contact') %>"><%= __(t('contact.title')) %></a></p>
     </article>
   </div>
 </section>

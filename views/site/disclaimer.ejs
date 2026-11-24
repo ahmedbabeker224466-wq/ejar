@@ -6,8 +6,8 @@
     <article class="mk-panel mk-prose">
       <%- include('_legal-note') %>
       <p class="mk-alert mk-alert--info"><%= __(t('footer.disclaimer')) %></p>
-      <p><%= __(t('disc.p1')) %></p>
-      <p><%= __(t('disc.p2')) %></p>
+      <% for (let i = 1; i <= Number(t('disc.count')); i += 1) { %><p><%= __(t('disc.s' + i)) %></p><% } %>
+      <p class="mk-meta"><%= __(t('legal.updated')) %></p>
     </article>
   </div>
 </section>
