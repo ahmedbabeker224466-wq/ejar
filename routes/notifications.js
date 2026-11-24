@@ -37,51 +37,63 @@ const signedIn = [requireAuth, requirePerm('settings.basic')];
 
 // ------------------------------------------------------------ notification center
 
-function listUrl(kind, page) {
-  const params = new URLSearchParams();
-  if (kind) params.set('kind', kind);
-  if (page > 1) params.set('page', String(page));
-  const query = params.toString();
-  return `/notifications${query ? `?${query}` : ''}`;
+/**
+ * The notification center at `${base}/notifications`: '' for everyone, '/admin'
+ * for the platform admin and staff (their own session cookie lives on /admin).
+ */
+function mountCenter(target, base, guard) {
+  const root = `${base}/notifications`;
+
+  function listUrl(kind, page) {
+    const params = new URLSearchParams();
+    if (kind) params.set('kind', kind);
+    if (page > 1) params.set('page', String(page));
+    const query = params.toString();
+    return `${root}${query ? `?${query}` : ''}`;
+  }
+
+  const backPattern = new RegExp(`^${root.replace(/\//g, '\\/')}(\\?[\\w=&-]*)?$`);
+  const safeBack = (value) => (backPattern.test(String(value || '')) ? String(value) : root);
+
+  target.get(root, guard, wrap(async (req, res) => {
+    const kind = Object.hasOwn(notifications.KIND_LABELS, String(req.query.kind || '')) ? String(req.query.kind) : '';
+    const list = await notifications.listFor(db.pool, req.user.id, { kind, page: req.query.page });
+    res.render('notifications/index', {
+      title: 'الإشعارات',
+      ...list,
+      kind,
+      base,
+      kindLabels: notifications.KIND_LABELS,
+      home: auth.homeFor(req.user.role),
+      rows: list.rows.map((n) => ({ ...n, at: riyadhNow(new Date(n.created_at)).slice(0, 16) })),
+      back: listUrl(kind, list.page),
+      prevUrl: list.page > 1 ? listUrl(kind, list.page - 1) : null,
+      nextUrl: list.page < list.pages ? listUrl(kind, list.page + 1) : null,
+    });
+  }));
+
+  target.post(`${root}/read-all`, guard, wrap(async (req, res) => {
+    await notifications.markAllRead(db.pool, req.user.id);
+    return res.redirect(safeBack(req.body.back));
+  }));
+
+  target.post(`${root}/:id/read`, guard, wrap(async (req, res) => {
+    const id = parseId(req.params.id);
+    if (!id || !(await notifications.markRead(db.pool, req.user.id, id))) return notFound(res);
+    return res.redirect(safeBack(req.body.back));
+  }));
+
+  // Opens a notification's page and marks it read.
+  target.post(`${root}/:id/open`, guard, wrap(async (req, res) => {
+    const id = parseId(req.params.id);
+    const [[row]] = id ? await db.pool.query('SELECT link FROM notifications WHERE id = ? AND user_id = ?', [id, req.user.id]) : [[null]];
+    if (!row) return notFound(res);
+    await notifications.markRead(db.pool, req.user.id, id);
+    return res.redirect(notifications.safeLink(row.link) || root);
+  }));
 }
 
-router.get('/notifications', signedIn, wrap(async (req, res) => {
-  const kind = Object.hasOwn(notifications.KIND_LABELS, String(req.query.kind || '')) ? String(req.query.kind) : '';
-  const list = await notifications.listFor(db.pool, req.user.id, { kind, page: req.query.page });
-  res.render('notifications/index', {
-    title: 'الإشعارات',
-    ...list,
-    kind,
-    kindLabels: notifications.KIND_LABELS,
-    home: auth.homeFor(req.user.role),
-    rows: list.rows.map((n) => ({ ...n, at: riyadhNow(new Date(n.created_at)).slice(0, 16) })),
-    back: listUrl(kind, list.page),
-    prevUrl: list.page > 1 ? listUrl(kind, list.page - 1) : null,
-    nextUrl: list.page < list.pages ? listUrl(kind, list.page + 1) : null,
-  });
-}));
-
-const safeBack = (value) => (/^\/notifications(\?[\w=&-]*)?$/.test(String(value || '')) ? String(value) : '/notifications');
-
-router.post('/notifications/read-all', signedIn, wrap(async (req, res) => {
-  await notifications.markAllRead(db.pool, req.user.id);
-  return res.redirect(safeBack(req.body.back));
-}));
-
-router.post('/notifications/:id/read', signedIn, wrap(async (req, res) => {
-  const id = parseId(req.params.id);
-  if (!id || !(await notifications.markRead(db.pool, req.user.id, id))) return notFound(res);
-  return res.redirect(safeBack(req.body.back));
-}));
-
-// Opens a notification's page and marks it read.
-router.post('/notifications/:id/open', signedIn, wrap(async (req, res) => {
-  const id = parseId(req.params.id);
-  const [[row]] = id ? await db.pool.query('SELECT link FROM notifications WHERE id = ? AND user_id = ?', [id, req.user.id]) : [[null]];
-  if (!row) return notFound(res);
-  await notifications.markRead(db.pool, req.user.id, id);
-  return res.redirect(notifications.safeLink(row.link) || '/notifications');
-}));
+mountCenter(router, '', signedIn);
 
 // ------------------------------------------------------------ personal settings
 
@@ -205,3 +217,4 @@ router.post('/webhooks/telegram/:secret', wrap(async (req, res) => {
 }));
 
 module.exports = router;
+module.exports.mountCenter = mountCenter;

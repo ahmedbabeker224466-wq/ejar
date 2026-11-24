@@ -26,8 +26,8 @@
       <div class="office-top__user"><span class="office-top__user-name" dir="auto"><%= __(userDisplay) %></span></div>
     </div>
     <%- include('../partials/lang-switch') %>
-    <%- include('../partials/bell') %>
-    <a href="/logout" class="btn btn--secondary btn--small"><%= __("خروج") %></a>
+    <%- include('../partials/bell', { bellHref: '/admin/notifications' }) %>
+    <a href="/admin/logout" class="btn btn--secondary btn--small"><%= __("خروج") %></a>
   </header>
   <div class="office-shell">
     <nav id="office-nav" class="office-nav" aria-label="<%= __("قائمة الإدارة") %>">

@@ -88,7 +88,7 @@ async function login(canonicalPhone) {
   );
   const step = auth.signStepToken({ phone: canonicalPhone, sentAt: Date.now() }, 'login-phone', 600);
   const result = await request('/login/verify', { method: 'POST', cookie: `aqdi_login=${step}`, form: { code: '123456' } });
-  const setCookie = result.response.headers.getSetCookie().find((c) => c.startsWith('aqdi_session='));
+  const setCookie = result.response.headers.getSetCookie().find((c) => /^aqdi_(admin_)?session=/.test(c));
   return { location: result.location, cookie: setCookie ? setCookie.split(';')[0] : null };
 }
 
@@ -316,9 +316,10 @@ test('nobody becomes platform_admin through /register or /office/new', { skip },
   // The admin phone never gets an office through this flow, and keeps its role.
   const admin = await login('966500000139');
   assert.equal(admin.location, '/platform');
-  assert.equal((await request('/office/new', { cookie: admin.cookie })).location, '/platform');
+  // The admin session cookie belongs to /admin: outside it the admin is signed out.
+  assert.equal((await request('/office/new', { cookie: admin.cookie })).location, '/login');
   const post = await request('/office/new', { method: 'POST', cookie: admin.cookie, form: OFFICE_FORM });
-  assert.equal(post.location, '/platform');
+  assert.equal(post.location, '/login');
   const adminUser = await userByPhone('966500000139');
   assert.equal(adminUser.role, 'platform_admin');
   const [[n]] = await db.pool.query('SELECT COUNT(*) AS n FROM office_members WHERE user_id = ?', [adminUser.id]);

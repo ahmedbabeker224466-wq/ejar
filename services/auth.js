@@ -11,6 +11,17 @@ const { normalizeSaudi } = require('../utils/phone');
 const platformSettings = require('./platformSettings');
 
 const SESSION_COOKIE = 'aqdi_session';
+// The platform admin and platform staff get their own cookie, sent only to
+// /admin, so signing in as an office (or a landlord, a tenant) in the same
+// browser never ends the admin session, and the reverse.
+const ADMIN_COOKIE = 'aqdi_admin_session';
+const ADMIN_COOKIE_PATH = '/admin';
+const PLATFORM_ROLES = new Set(['platform_admin', 'platform_staff']);
+
+/** Which cookie holds the session of a user with this role. */
+function cookieFor(role) {
+  return PLATFORM_ROLES.has(role) ? { name: ADMIN_COOKIE, path: ADMIN_COOKIE_PATH } : { name: SESSION_COOKIE, path: '/' };
+}
 const SESSION_AUDIENCE = 'session';
 const TTL_SECONDS = {
   default: 7 * 24 * 60 * 60,
@@ -29,14 +40,19 @@ function ttlFor(role) {
   return TTL_SECONDS[role] || TTL_SECONDS.default;
 }
 
-function cookieOptions(maxAgeSeconds) {
+function cookieOptions(maxAgeSeconds, path = '/') {
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: '/',
+    path,
     maxAge: maxAgeSeconds * 1000,
   };
+}
+
+/** True for the paths that run on the admin session cookie. */
+function isAdminPath(path) {
+  return path === ADMIN_COOKIE_PATH || String(path || '').startsWith(`${ADMIN_COOKIE_PATH}/`);
 }
 
 /** Signs a short-lived token for one login step (phone entered, 2FA pending). */
@@ -160,7 +176,8 @@ function createAuthService({ pool = db.pool, signupsDisabled = () => platformSet
       jwtSecret(),
       { algorithm: 'HS256', audience: SESSION_AUDIENCE, expiresIn: ttl },
     );
-    res.cookie(SESSION_COOKIE, token, cookieOptions(ttl));
+    const cookie = cookieFor(user.role);
+    res.cookie(cookie.name, token, cookieOptions(ttl, cookie.path));
     return tokenId;
   }
 
@@ -254,5 +271,9 @@ module.exports = {
   describeDevice,
   cookieOptions,
   SESSION_COOKIE,
+  ADMIN_COOKIE,
+  ADMIN_COOKIE_PATH,
+  cookieFor,
+  isAdminPath,
   jwtSecret,
 };

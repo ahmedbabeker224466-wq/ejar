@@ -132,6 +132,23 @@ router.use('/login/2fa', (req, res, next) => {
   next();
 });
 
+// Signs out of the admin session only; an office session in the same browser stays.
+router.get('/admin/logout', noStore, async (req, res, next) => {
+  try {
+    // Only a platform session ends here: an office session in this browser
+    // (read on /admin when there is no admin cookie) is left alone.
+    const platform = req.user && ['platform_admin', 'platform_staff'].includes(req.user.role);
+    if (platform) {
+      await auth.revokeSession(req.user.tokenId);
+      if (req.sessionCookie) res.clearCookie(req.sessionCookie.name, { path: req.sessionCookie.path });
+    }
+    res.clearCookie(auth.ADMIN_COOKIE, { path: auth.ADMIN_COOKIE_PATH });
+    return res.redirect('/admin/login');
+  } catch (err) {
+    return next(err);
+  }
+});
+
 router.get('/admin/login', (req, res) => {
   if (req.user && req.user.role === 'platform_admin') return res.redirect('/admin');
   return renderStart(res, '', configured() ? null : MESSAGES.off);

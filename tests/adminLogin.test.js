@@ -97,7 +97,7 @@ test('a wrong email or password: one generic answer, no session', { skip }, asyn
     const r = await signIn(email, password);
     assert.equal(r.status, 401);
     assert.match(r.text, /البريد الإلكتروني أو كلمة المرور غير صحيحة/);
-    assert.equal(cookieOf(r, 'aqdi_session'), null);
+    assert.equal(cookieOf(r, 'aqdi_admin_session'), null);
   }
 });
 
@@ -106,7 +106,7 @@ test('the right email and password sign in; 2FA is optional and turned on inside
   const ok = await signIn(' AL-Admin@aqdi-test.example ', PASSWORD);
   assert.equal(ok.status, 302);
   assert.equal(ok.location, '/admin');
-  const session = cookieOf(ok, 'aqdi_session');
+  const session = cookieOf(ok, 'aqdi_admin_session');
   assert.ok(session);
   await new Promise((r) => setTimeout(r, 50));
   const alert = sent.find((m) => m.to === ADMIN && /تنبيه/.test(m.subject));
@@ -130,7 +130,7 @@ test('the right email and password sign in; 2FA is optional and turned on inside
   routes.limit.counter.reset();
   const next = await signIn(ADMIN, PASSWORD);
   assert.equal(next.location, '/login/2fa', 'now the authenticator step follows');
-  assert.equal(cookieOf(next, 'aqdi_session'), null);
+  assert.equal(cookieOf(next, 'aqdi_admin_session'), null);
   assert.ok(cookieOf(next, 'aqdi_mfa'));
 
   const [rows] = await db.pool.query("SELECT after_json FROM audit_logs WHERE action = 'auth.admin_login' AND actor_id IN (SELECT id FROM users WHERE phone = ?)", [phone(1)]);
@@ -146,7 +146,7 @@ test('2FA can be turned off inside with a current code', { skip }, async () => {
   const totp = require('../services/totp');
   const step = await signIn(ADMIN, PASSWORD);
   const two = await http.request('/login/2fa', { method: 'POST', cookie: cookieOf(step, 'aqdi_mfa'), form: { code: totp.generateCode(secret, Date.now()) } });
-  const session = cookieOf(two, 'aqdi_session');
+  const session = cookieOf(two, 'aqdi_admin_session');
   assert.ok(session, `2FA step answered ${two.status}`);
 
   const wrong = await http.request('/admin/security/2fa/disable', { method: 'POST', cookie: session, form: { code: '000000' } });
@@ -166,7 +166,7 @@ test('2FA can be turned off inside with a current code', { skip }, async () => {
 test('platform staff: created by the admin, sign in at /admin/login, reach only their sections', { skip }, async () => {
   routes.limit.counter.reset();
   // The admin signs in (2FA is off again after the previous test).
-  const adm = cookieOf(await signIn(ADMIN, PASSWORD), 'aqdi_session');
+  const adm = cookieOf(await signIn(ADMIN, PASSWORD), 'aqdi_admin_session');
   assert.ok(adm);
   const STAFF = 'al-staff@aqdi-test.example';
   await db.pool.query('DELETE FROM users WHERE email = ?', [STAFF]);
@@ -184,7 +184,7 @@ test('platform staff: created by the admin, sign in at /admin/login, reach only 
   assert.equal((await signIn(STAFF, 'wrong-pass-0000')).status, 401);
   const st = await signIn(STAFF, 'staff-pass-12345');
   assert.equal(st.location, '/admin');
-  const sc = cookieOf(st, 'aqdi_session');
+  const sc = cookieOf(st, 'aqdi_admin_session');
   assert.ok(sc);
   const home = await http.request('/admin', { cookie: sc });
   assert.equal(home.status, 302, 'the staff home is their first section');
@@ -203,4 +203,27 @@ test('platform staff: created by the admin, sign in at /admin/login, reach only 
   routes.limit.counter.reset();
   assert.equal((await signIn(STAFF, 'staff-pass-12345')).status, 401);
   await db.pool.query('DELETE FROM users WHERE email = ?', [STAFF]);
+});
+
+test('the admin session and an office session live side by side in one browser', { skip }, async () => {
+  routes.limit.counter.reset();
+  const adm = cookieOf(await signIn(ADMIN, PASSWORD), 'aqdi_admin_session');
+  assert.ok(adm, 'the admin gets the admin cookie');
+  const owner = await http.registerOffice(phone(20), 'تجربة-جلستان');
+  assert.match(owner.cookie, /^aqdi_session=/, 'the office gets the normal cookie');
+  const both = `${adm}; ${owner.cookie}`;
+
+  // Both cookies sent together: /admin is the admin, /office is the office.
+  assert.equal((await http.request('/admin', { cookie: both })).status, 200);
+  assert.equal((await http.request('/office', { cookie: both })).status, 200);
+  assert.equal((await http.request('/admin/notifications', { cookie: both })).status, 200, 'the admin bell has its own page');
+
+  // Signing out of the admin leaves the office signed in, and the reverse.
+  assert.equal((await http.request('/admin/logout', { cookie: both })).location, '/admin/login');
+  assert.equal((await http.request('/office', { cookie: owner.cookie })).status, 200, 'the office session survives the admin logout');
+  assert.equal((await http.request('/admin', { cookie: both })).location, '/admin/login');
+  const adm2 = cookieOf(await signIn(ADMIN, PASSWORD), 'aqdi_admin_session');
+  await http.request('/logout', { cookie: `${adm2}; ${owner.cookie}` });
+  assert.equal((await http.request('/admin', { cookie: adm2 })).status, 200, 'the admin session survives the office logout');
+  assert.equal((await http.request('/admin/logout', { cookie: owner.cookie })).location, '/admin/login');
 });

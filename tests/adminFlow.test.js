@@ -124,7 +124,11 @@ test('only a signed-in platform admin opens /admin; everyone else is refused on 
   for (const p of PAGES) {
     assert.equal((await http.request(p)).status, 302, `${p} signed out`);
     assert.equal((await http.request(p)).location, '/admin/login');
-    for (const cookie of [owner.cookie, staff, manager]) assert.equal((await http.request(p, { cookie })).status, 403, `${p} office role`);
+    for (const cookie of [owner.cookie, staff, manager]) {
+      const refused = await http.request(p, { cookie });
+      assert.equal(refused.status, 302, `${p} office role`);
+      assert.equal(refused.location, '/admin/login', `${p} office role goes to the admin sign-in`);
+    }
     assert.equal((await aget(p)).status, 200, `${p} admin`);
   }
   // Writes are refused for non-admins too, and nothing happens.
@@ -138,7 +142,7 @@ test('only a signed-in platform admin opens /admin; everyone else is refused on 
   assert.notEqual((await http.request('/office/billing', { cookie: admin.cookie })).status, 200);
   // /platform (where the admin lands after login) goes to /admin.
   assert.equal((await aget('/platform')).location, '/admin');
-  assert.equal((await http.request('/platform', { cookie: owner.cookie })).status, 403);
+  assert.equal((await http.request('/platform', { cookie: owner.cookie })).location, '/admin', 'a plain redirect; the /admin guard refuses the office');
   // Another site cannot post for the admin.
   const cross = await fetch(`${http.base()}/admin/settings/switches`, {
     method: 'POST', headers: { Cookie: admin.cookie, Origin: 'https://evil.example', 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'reason=xxx', redirect: 'manual',
@@ -359,7 +363,7 @@ test('bank-transfer queue: approve and reject need a reason, both are audit-logg
   const receipt = await fx.get(`/admin/transfers/${first}/receipt`, admin.cookie);
   assert.equal(receipt.status, 200);
   assert.equal(receipt.type, 'image/jpeg');
-  assert.equal((await fx.get(`/admin/transfers/${first}/receipt`, o.cookie)).status, 403);
+  assert.equal((await fx.get(`/admin/transfers/${first}/receipt`, o.cookie)).status, 302, 'an office is sent to the admin sign-in');
 
   assert.equal((await apost(`/admin/transfers/${first}/approve`, { reason: '' })).status, 422);
   assert.equal((await one('SELECT status FROM bank_transfers WHERE id = ?', [first])).status, 'pending');
@@ -531,7 +535,7 @@ test('audit viewer: filters by action, office, actor and date; non-admins cannot
   assert.match((await aget(`/admin/audit?office=${o.office.id}&from=${today}&to=${today}`)).text, /extend_trial/);
   assert.doesNotMatch((await aget(`/admin/audit?office=${o.office.id}&from=2020-01-01&to=2020-01-02`)).text, /extend_trial/);
   assert.equal((await aget('/admin/audit?page=999&from=garbage')).status, 200, 'bad filters fall back instead of failing');
-  assert.equal((await http.request('/admin/audit', { cookie: o.cookie })).status, 403);
+  assert.equal((await http.request('/admin/audit', { cookie: o.cookie })).location, '/admin/login');
 });
 
 test('every admin action in this run was audit-logged with a reason and the admin as actor', { skip }, async () => {

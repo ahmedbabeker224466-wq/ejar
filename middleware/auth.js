@@ -10,14 +10,33 @@ const logger = require('../utils/logger');
 function loadUser(authService = auth) {
   return async function loadUserMiddleware(req, res, next) {
     req.user = null;
-    const token = req.cookies && req.cookies[auth.SESSION_COOKIE];
-    if (token) {
+    req.sessionCookie = null;
+    const cookies = req.cookies || {};
+    // /admin runs on the admin cookie first; everything else on the normal one.
+    // Without an admin cookie /admin falls back to the normal one, so a platform
+    // account signed in before the split stays in, and anyone else is refused
+    // by the admin guard (a GET goes to /admin/login).
+    const admin = auth.isAdminPath(req.path);
+    const candidates = admin
+      ? [{ name: auth.ADMIN_COOKIE, path: auth.ADMIN_COOKIE_PATH }, { name: auth.SESSION_COOKIE, path: '/' }]
+      : [{ name: auth.SESSION_COOKIE, path: '/' }];
+    for (const cookie of candidates) {
+      const token = cookies[cookie.name];
+      if (!token) continue;
+      let user = null;
       try {
-        req.user = await authService.userFromToken(token);
+        user = await authService.userFromToken(token);
       } catch (err) {
         logger.error(`Session check failed: ${err.code || err.message}`);
+        continue;
       }
-      if (!req.user) res.clearCookie(auth.SESSION_COOKIE, { path: '/' });
+      if (!user) {
+        res.clearCookie(cookie.name, { path: cookie.path });
+        continue;
+      }
+      req.user = user;
+      req.sessionCookie = cookie;
+      break;
     }
     res.locals.currentUser = req.user;
     next();

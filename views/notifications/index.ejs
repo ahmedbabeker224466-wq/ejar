@@ -2,10 +2,10 @@
 <section class="card detail-card">
   <div class="page-head">
     <h1><%= __("الإشعارات") %></h1>
-    <a href="/settings/notifications" class="btn btn--secondary btn--small"><%= __("الإعدادات") %></a>
+    <% if (!locals.base) { %><a href="/settings/notifications" class="btn btn--secondary btn--small"><%= __("الإعدادات") %></a><% } %>
   </div>
 
-  <form method="get" action="/notifications" class="filter-bar">
+  <form method="get" action="<%= locals.base || '' %>/notifications" class="filter-bar">
     <label for="kind" class="visually-hidden"><%= __("نوع الإشعار") %></label>
     <select id="kind" name="kind" class="select">
       <option value=""><%= __("كل الأنواع") %></option>
@@ -15,7 +15,7 @@
   </form>
 
   <% if (rows.some(function (n) { return !n.read_at; })) { %>
-    <form method="post" action="/notifications/read-all">
+    <form method="post" action="<%= locals.base || '' %>/notifications/read-all">
       <input type="hidden" name="back" value="<%= __(back) %>">
       <button type="submit" class="btn btn--secondary btn--block"><%= __("تعليم الكل كمقروء") %></button>
     </form>
@@ -30,10 +30,10 @@
           <div class="note__actions">
             <span class="muted" dir="ltr"><%= __(n.at) %></span>
             <% if (n.link) { %>
-              <form method="post" action="/notifications/<%= __(n.id) %>/open"><button type="submit" class="btn btn--primary btn--small"><%= __("فتح") %></button></form>
+              <form method="post" action="<%= locals.base || '' %>/notifications/<%= __(n.id) %>/open"><button type="submit" class="btn btn--primary btn--small"><%= __("فتح") %></button></form>
             <% } %>
             <% if (!n.read_at) { %>
-              <form method="post" action="/notifications/<%= __(n.id) %>/read">
+              <form method="post" action="<%= locals.base || '' %>/notifications/<%= __(n.id) %>/read">
                 <input type="hidden" name="back" value="<%= __(back) %>">
                 <button type="submit" class="btn btn--secondary btn--small"><%= __("تعليم كمقروء") %></button>
               </form>

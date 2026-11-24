@@ -112,7 +112,7 @@ function routeTable() {
 
 // Routes that answer a visitor who is not signed in, by design.
 const PUBLIC = [
-  /^GET \/(health|healthz|health\/detail|features|offices|pricing|about|privacy|terms|disclaimer|contact|blog|blog\/feed\.xml|blog\/:slug|blog\/:slug\/cover|sitemap\.xml|robots\.txt|listings|listings\/:id|listings\/photos\/:id\/:variant|listings\/:id\/report|login|register|join|login\/verify|login\/2fa|login\/2fa\/setup|logout|admin\/login|admin\/login\/verify)?$/,
+  /^GET \/(health|healthz|health\/detail|features|offices|pricing|about|privacy|terms|disclaimer|contact|blog|blog\/feed\.xml|blog\/:slug|blog\/:slug\/cover|sitemap\.xml|robots\.txt|listings|listings\/:id|listings\/photos\/:id\/:variant|listings\/:id\/report|login|register|join|login\/verify|login\/2fa|login\/2fa\/setup|logout|platform|admin\/logout|admin\/login|admin\/login\/verify)?$/,
   /^POST \/(contact|listings\/:id\/inquiry|listings\/:id\/report|login|login\/verify|login\/resend|login\/2fa|login\/2fa\/setup|admin\/login|admin\/login\/verify|admin\/login\/resend|register|webhooks\/moyasar|webhooks\/telegram\/:secret|cron\/run\/:job)$/,
 ];
 const isPublic = (r) => PUBLIC.some((re) => re.test(`${r.method} ${r.path}`));
@@ -138,7 +138,7 @@ test('tenants and landlords get nothing from /office and /admin, staff nothing f
     for (const r of routes) {
       const res = await http.request(fill(r.path), { method: r.method, cookie: who.cookie, form: isWrite(r) ? { x: '1' } : undefined });
       assert.ok([302, 403, 404].includes(res.status), `${r.method} ${r.path} answered ${res.status}`);
-      if (res.status === 302) assert.doesNotMatch(res.location, /^\/(office|admin)\//, `${r.method} ${r.path} -> ${res.location}`);
+      if (res.status === 302) assert.doesNotMatch(res.location, /^\/(office|admin)\/(?!login$)/, `${r.method} ${r.path} -> ${res.location}`);
     }
   }
   // An office member is no platform admin.
@@ -221,7 +221,7 @@ test('session cookies are HttpOnly, SameSite and Secure in production', { skip }
   await db.pool.query("INSERT INTO otp_codes (phone, code_hash, purpose, expires_at) VALUES (?, ?, 'login', UTC_TIMESTAMP() + INTERVAL 5 MINUTE)", [phone(9), hashCode(phone(9), '123456')]);
   const step = auth.signStepToken({ phone: phone(9), sentAt: Date.now() }, 'login-phone', 600);
   const res = await http.request('/login/verify', { method: 'POST', cookie: `aqdi_login=${step}`, form: { code: '123456' } });
-  const cookie = res.response.headers.getSetCookie().find((c) => c.startsWith('aqdi_session='));
+  const cookie = res.response.headers.getSetCookie().find((c) => /^aqdi_(admin_)?session=/.test(c));
   assert.match(cookie, /HttpOnly/i);
   assert.match(cookie, /SameSite=Lax/i);
 });

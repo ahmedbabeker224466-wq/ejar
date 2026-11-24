@@ -649,7 +649,7 @@ test('abuse report -> admin queue -> hide with a reason: the listing is gone, th
   const queue = await http.request('/admin/reports', { cookie: admin.cookie });
   assert.equal(queue.status, 200);
   assert.match(queue.text, /إعلان وهمي/);
-  assert.equal((await http.request('/admin/reports', { cookie: o.cookie })).status, 403);
+  assert.equal((await http.request('/admin/reports', { cookie: o.cookie })).location, '/admin/login');
   assert.equal((await post(`/admin/reports/${row.id}/hide`, o.cookie, { reason: 'محاولة' })).status, 403);
   assert.equal((await post(`/admin/reports/${row.id}/hide`, admin.cookie, { reason: '' })).status, 422, 'a reason is required');
   assert.equal((await one('SELECT status FROM listings WHERE id = ?', [id])).status, 'published');

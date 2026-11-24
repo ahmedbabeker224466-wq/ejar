@@ -114,10 +114,12 @@ test('session cookie is HttpOnly, SameSite=Lax, and dies on logout-all', { skip 
   const { req, res, cookies } = fakeReqRes();
   await authService.issueSession(req, res, user);
 
-  const { value, options } = cookies.aqdi_session;
+  // A platform admin's session lives in its own cookie, sent to /admin only.
+  assert.equal(cookies.aqdi_session, undefined);
+  const { value, options } = cookies.aqdi_admin_session;
   assert.equal(options.httpOnly, true);
   assert.equal(options.sameSite, 'lax');
-  assert.equal(options.path, '/');
+  assert.equal(options.path, '/admin');
   const decoded = jwt.decode(value);
   assert.equal(decoded.sub, String(user.id));
   assert.equal(decoded.exp - decoded.iat, 12 * 60 * 60, 'platform_admin sessions last 12 hours');
@@ -137,8 +139,8 @@ test('logout revokes only that session', { skip }, async () => {
   const idA = await authService.issueSession(a.req, a.res, fresh);
   await authService.issueSession(b.req, b.res, fresh);
   await authService.revokeSession(idA);
-  assert.equal(await authService.userFromToken(a.cookies.aqdi_session.value), null);
-  assert.ok(await authService.userFromToken(b.cookies.aqdi_session.value));
+  assert.equal(await authService.userFromToken(a.cookies.aqdi_admin_session.value), null);
+  assert.ok(await authService.userFromToken(b.cookies.aqdi_admin_session.value));
 });
 
 test('a tampered token is rejected', { skip }, async () => {

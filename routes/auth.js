@@ -474,6 +474,7 @@ router.post('/logout-all', requireAuth, async (req, res, next) => {
   try {
     await auth.logoutAll(req.user.id);
     res.clearCookie(auth.SESSION_COOKIE, { path: '/' });
+    res.clearCookie(auth.ADMIN_COOKIE, { path: auth.ADMIN_COOKIE_PATH });
     return res.redirect('/login');
   } catch (err) {
     return next(err);

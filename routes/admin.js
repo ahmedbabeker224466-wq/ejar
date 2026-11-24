@@ -98,6 +98,7 @@ function staffSections(req, res, next) {
     const first = Object.keys(STAFF_SECTIONS).find((k) => allowed.has(k));
     if (first) return res.redirect(STAFF_SECTIONS[first].prefixes[0]);
   }
+  if (underPrefix(path, '/admin/notifications')) return next(); // their own notifications
   const key = sectionOf(path);
   if (key && allowed.has(key)) return next();
   return res.status(403).render('errors/403', { title: 'غير متاح', heading: 'هذا القسم غير متاح لحسابك', message: 'اطلب من مدير المنصة إضافة هذا القسم إلى صلاحياتك.' });
@@ -157,7 +158,10 @@ function twoFactorGuard(req, res, next) {
   return next();
 }
 
-router.use('/admin', noStore, sameOrigin, (req, res, next) => (req.user || req.method !== 'GET' ? next() : res.redirect('/admin/login')), requireAuth, requirePerm('platform.access'), twoFactorGuard, staffSections, async (req, res, next) => {
+// A GET from someone who is not signed in as the platform (signed out, or
+// signed in as an office in this browser) goes to the admin sign-in page.
+const PLATFORM_ROLES = new Set(['platform_admin', 'platform_staff']);
+router.use('/admin', noStore, sameOrigin, (req, res, next) => (req.method !== 'GET' || (req.user && PLATFORM_ROLES.has(req.user.role)) ? next() : res.redirect('/admin/login')), requireAuth, requirePerm('platform.access'), twoFactorGuard, staffSections, async (req, res, next) => {
   res.locals.layout = 'layouts/admin';
   res.locals.adminNav = NAV.map((item) => ({ ...item, current: isCurrent(item, req.baseUrl + req.path) }));
   const counts = req.method === 'GET' ? await pendingCounts() : {};
@@ -175,7 +179,9 @@ router.use('/admin', noStore, sameOrigin, (req, res, next) => (req.user || req.m
 });
 
 // /platform is where a platform admin lands after login.
-router.get('/platform', noStore, requirePerm('platform.access'), (req, res) => res.redirect('/admin'));
+// The admin's landing path. The admin session cookie is sent to /admin only, so
+// this is a plain redirect; the /admin guard decides who gets in.
+router.get('/platform', noStore, (req, res) => res.redirect('/admin'));
 
 const DONE = {
   trial: 'تم تمديد التجربة.',
@@ -236,6 +242,8 @@ require('./adminSecurity')(router, { wrap, audit });
 require('./adminDomains')(router, { wrap, notFound, reasonOf, REASON_ERROR, doneText });
 require('./adminStaff')(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText, STAFF_SECTIONS });
 require('./adminOps')(router, { wrap, reasonOf, REASON_ERROR, audit, doneText });
+// The admin's own notifications (the admin session cookie is sent to /admin only).
+require('./notifications').mountCenter(router, '/admin', (req, res, next) => next());
 
 module.exports = router;
 module.exports.STAFF_SECTIONS = STAFF_SECTIONS;

@@ -441,7 +441,7 @@ test('the new admin pages are for the platform admin only', { skip }, async () =
   const o = await fx.office(3, 'تجربة-موقع-3', { landlords: 0, units: 0 });
   for (const p of ['/admin/reports', '/admin/messages', '/admin/blog', '/admin/blog/new']) {
     assert.equal((await http.request(p)).status, 302, p);
-    assert.equal((await http.request(p, { cookie: o.cookie })).status, 403, p);
+    assert.equal((await http.request(p, { cookie: o.cookie })).location, '/admin/login', p);
     assert.equal((await http.request(p, { cookie: admin.cookie })).status, 200, p);
   }
   assert.equal((await http.request('/admin/blog/999999', { cookie: admin.cookie })).status, 404);
