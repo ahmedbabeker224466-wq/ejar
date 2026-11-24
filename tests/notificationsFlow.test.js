@@ -387,7 +387,7 @@ test('email with SMTP set goes through the mailer (mocked)', { skip }, async () 
     assert.equal((await db.pool.query("SELECT status FROM delivery_log WHERE notification_id = ? AND channel = 'email'", [id]))[0][0].status, 'sent');
     const message = sent.find((m) => m.to === 'mail@example.sa');
     assert.equal(message.subject, 'عنوان');
-    assert.ok(message.text.endsWith(DISCLAIMER));
+    assert.ok(!message.text.includes(DISCLAIMER), 'emails leave the disclaimer line out (owner, Nov 2026)');
   } finally {
     email.setMailer(null);
     delete process.env.SMTP_HOST;
@@ -716,7 +716,7 @@ test('test-send button: owner and manager only, exact result per channel, audit 
     assert.match(ok.text, /البريد الإلكتروني: تم إرسال رسالة التجربة ✓/);
     assert.equal(outbox.length, 1);
     assert.equal(outbox[0].to, 'owner-test@aqdi-test.example');
-    assert.ok(outbox[0].text.includes(DISCLAIMER));
+    assert.ok(!outbox[0].text.includes(DISCLAIMER), 'emails leave the disclaimer line out');
     email.setMailer({ sendMail: async () => { const e = new Error('Invalid login: secret-pass'); e.code = 'EAUTH'; throw e; } });
     const bad = await http.request('/office/settings/reminders/test/email', { method: 'POST', cookie: o.cookie });
     assert.match(bad.text, /فشل الإرسال\. رفض خادم البريد اسم المستخدم أو كلمة المرور/);

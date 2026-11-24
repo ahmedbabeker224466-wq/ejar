@@ -21,7 +21,7 @@
       <% rows.forEach(function (r) { %>
         <tr>
           <% const shown = lang === "ar" && r.label; %><td><strong><%= __(shown || r.action) %></strong><% if (shown) { %><span class="adm-sub" dir="ltr"><%= __(r.action) %></span><% } %></td>
-          <td dir="ltr"><%= __(r.actor_phone || __('النظام')) %></td>
+          <td dir="ltr"><%= r.actor_phone ? '0' + String(r.actor_phone).slice(3) : (r.actor_email || __('النظام')) %></td>
           <td><%= __(r.office_name || '—') %></td>
           <td dir="ltr"><%= __(stamp(r.created_at)) %></td>
           <td><%= __(r.reason || '—') %></td>

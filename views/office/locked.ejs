@@ -1,4 +1,10 @@
 <section class="card office-locked">
+  <% if (reason === 'admin_suspended') { %>
+  <h1><%= __("حساب المكتب موقوف") %></h1>
+  <p class="lead"><%= __("أوقفت إدارة ميعاد حساب المكتب مؤقتاً. تواصل معنا لمعرفة السبب وإعادة التفعيل.") %></p>
+  <p class="muted"><%= __("بياناتك محفوظة ولم يُحذف منها شيء.") %></p>
+  <a href="/contact" class="btn btn--primary btn--large btn--block"><%= __("تواصل معنا") %></a>
+  <% } else { %>
   <h1><%= __(reason === 'read_only' ? __('وضع القراءة فقط') : __('اشتراكك منتهي')) %></h1>
   <p class="lead">
     <%= __(reason === 'trial_expired'
@@ -12,5 +18,6 @@
     <a href="/office/billing" class="btn btn--primary btn--large btn--block"><%= __("الذهاب إلى الاشتراك") %></a>
   <% } else { %>
     <p class="lead"><%= __("تواصل مع مالك المكتب لتجديد الاشتراك.") %></p>
+  <% } %>
   <% } %>
 </section>

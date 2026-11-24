@@ -90,7 +90,8 @@ async function listForAdmin(pool, { status = '' } = {}) {
   const where = ['pending', 'approved', 'rejected'].includes(status) ? 'WHERE t.status = ?' : '';
   const [rows] = await pool.query(
     `SELECT t.id, t.office_id, t.order_id, t.reference, t.receipt_path, t.status, t.decision_note, t.decided_at, t.created_at,
-            o.name AS office_name, r.total, r.currency, r.plan_code, r.billing_interval, r.status AS order_status
+            o.name AS office_name, r.total, r.currency, r.plan_code,
+            (SELECT p.name_ar FROM plans p WHERE p.code = r.plan_code LIMIT 1) AS plan_name, r.billing_interval, r.status AS order_status
        FROM bank_transfers t
        JOIN offices o ON o.id = t.office_id
        JOIN orders r ON r.id = t.order_id
@@ -111,6 +112,7 @@ async function listForAdmin(pool, { status = '' } = {}) {
     total: money.fromDecimal(r.total),
     currency: r.currency,
     planCode: r.plan_code,
+    planName: r.plan_name || r.plan_code,
     interval: r.billing_interval,
     orderStatus: r.order_status,
   }));

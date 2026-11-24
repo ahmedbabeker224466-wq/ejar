@@ -151,7 +151,7 @@ test('register by email: a code is mailed, the account exists only after the rig
   const code = lastCode(mail('owner'));
   assert.match(code, /^\d{6}$/);
   const message = sent[sent.length - 1];
-  assert.ok(message.html.includes('email-logo.png'), 'the HTML template with the logo');
+  assert.ok(message.html.includes('email-logo-2.png'), 'the HTML template with the logo');
   assert.equal(await userByEmail(mail('owner')), undefined, 'no account before the code');
 
   const [rows] = await db.pool.query('SELECT phone FROM otp_codes WHERE phone = ?', [emailCode.identify(mail('owner'))]);
@@ -330,4 +330,20 @@ test('a guest joins with the invite code and an email code: no phone needed', { 
   assert.equal(user.role, 'landlord');
   const [[landlord]] = await db.pool.query('SELECT user_id FROM landlords WHERE id = ?', [o.landlordId]);
   assert.equal(Number(landlord.user_id), Number(user.id));
+});
+
+test('emails leave out the in-app disclaimer line', async () => {
+  const email = require('../services/channels/email');
+  const { withDisclaimer } = require('../services/notifications');
+  const sent = [];
+  email.setMailer({ sendMail: async (m) => { sent.push(m); return {}; } });
+  try {
+    const result = await email.send({ to: 'x@aqdi-test.example', subject: 'تجربة', text: withDisclaimer('تم رفض الحوالة.') },
+      { SMTP_HOST: 'smtp.example', MAIL_FROM: 'm <a@b.example>', APP_URL: 'https://mi3aad.com' });
+    assert.equal(result.ok, true);
+    assert.equal(sent[0].text, 'تم رفض الحوالة.');
+    assert.doesNotMatch(sent[0].html, /غير تابع لمنصة إيجار/);
+  } finally {
+    email.setMailer(null);
+  }
 });

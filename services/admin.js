@@ -132,7 +132,8 @@ async function officeDetail(pool, officeId, now = new Date()) {
        FROM subscriptions s LEFT JOIN plans p ON p.id = s.plan_id WHERE s.office_id = :office_id ORDER BY s.id DESC LIMIT 10`,
   );
   const officeOrders = await scoped.query(
-    `SELECT id, plan_code, billing_interval, method, status, suspicious, total, currency, created_at
+    `SELECT id, plan_code, (SELECT p.name_ar FROM plans p WHERE p.code = orders.plan_code LIMIT 1) AS plan_name,
+            billing_interval, method, status, suspicious, total, currency, created_at
        FROM orders WHERE office_id = :office_id ORDER BY id DESC LIMIT 10`,
   );
   const notes = await scoped.query(
@@ -181,7 +182,8 @@ async function listOrders(pool, { status = '', method = '', suspicious = false, 
   const total = Number(n);
   const { page: current, pages } = clampPage(page, total);
   const [rows] = await pool.query(
-    `SELECT r.id, r.office_id, o.name AS office_name, r.plan_code, r.billing_interval, r.method, r.status, r.suspicious, r.fail_reason,
+    `SELECT r.id, r.office_id, o.name AS office_name, r.plan_code,
+            (SELECT p.name_ar FROM plans p WHERE p.code = r.plan_code LIMIT 1) AS plan_name, r.billing_interval, r.method, r.status, r.suspicious, r.fail_reason,
             r.total, r.currency, r.promo_code, r.created_at, r.invoice_id
        FROM orders r JOIN offices o ON o.id = r.office_id ${clause}
       ORDER BY r.id DESC LIMIT ${PAGE_SIZE} OFFSET ${(current - 1) * PAGE_SIZE}`,
@@ -243,7 +245,7 @@ async function listAudit(pool, { action = '', officeId = '', actor = '', from = 
   const total = Number(n);
   const { page: current, pages } = clampPage(page, total);
   const [rows] = await pool.query(
-    `SELECT a.id, a.office_id, a.action, a.entity_type, a.entity_id, a.after_json, a.created_at, u.phone AS actor_phone, o.name AS office_name
+    `SELECT a.id, a.office_id, a.action, a.entity_type, a.entity_id, a.after_json, a.created_at, u.phone AS actor_phone, u.email AS actor_email, o.name AS office_name
        FROM audit_logs a LEFT JOIN users u ON u.id = a.actor_id LEFT JOIN offices o ON o.id = a.office_id ${clause}
       ORDER BY a.id DESC LIMIT ${PAGE_SIZE} OFFSET ${(current - 1) * PAGE_SIZE}`,
     params,

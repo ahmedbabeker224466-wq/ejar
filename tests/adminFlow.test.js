@@ -267,7 +267,10 @@ test('office actions: a reason is required, each change is real and audit-logged
   assert.equal((await officeRow(id)).status, 'trial');
   assert.equal((await apost(`/admin/offices/${id}/suspend`, { reason: 'مخالفة الشروط' })).location, `/admin/offices/${id}?done=suspend`);
   assert.equal((await officeRow(id)).status, 'suspended');
-  assert.equal((await http.request('/office/contracts', { cookie: o.cookie })).status, 402, 'the office is locked at once');
+  const lockedPage = await http.request('/office/contracts', { cookie: o.cookie });
+  assert.equal(lockedPage.status, 402, 'the office is locked at once');
+  assert.match(lockedPage.text, /أوقفت إدارة ميعاد حساب المكتب/, 'an admin suspension says so, not "subscribe"');
+  assert.doesNotMatch(lockedPage.text, /href="\/office\/billing" class="btn/);
   assert.equal(afterOf(await lastAudit('admin.office.suspend', id)).reason, 'مخالفة الشروط');
 
   // A payment while suspended by the admin does not lift the suspension, and checkout is closed.

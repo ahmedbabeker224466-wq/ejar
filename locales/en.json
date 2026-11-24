@@ -2886,5 +2886,8 @@
  "أرسلت التعديل مرات كثيرة. انتظر قليلاً ثم حاول مرة أخرى.": "You have sent corrections too many times. Wait a little and try again.",
  "مكتب عدّل بياناته وينتظر المراجعة": "An office corrected its details and awaits review",
  "تعديل بيانات مكتب بانتظار المراجعة": "Office details corrected for review",
- "تعديل بيانات المكتب للمراجعة": "Office details corrected for review"
+ "تعديل بيانات المكتب للمراجعة": "Office details corrected for review",
+ "حساب المكتب موقوف": "The office account is suspended",
+ "أوقفت إدارة ميعاد حساب المكتب مؤقتاً. تواصل معنا لمعرفة السبب وإعادة التفعيل.": "Mi3aad has suspended the office account for now. Contact us to learn why and to reactivate it.",
+ "الحساب موقوف": "Account suspended"
 }

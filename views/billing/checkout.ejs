@@ -40,6 +40,6 @@
       <% if (online) { %><button type="submit" name="method" value="moyasar" class="btn btn--primary btn--large btn--block"><%= __(quote.total === 0 ? __('تفعيل الباقة') : __('ادفع بالبطاقة')) %></button><% } %>
       <button type="submit" name="method" value="bank_transfer" class="btn btn--secondary btn--large btn--block"><%= __(quote.total === 0 ? __('تفعيل الباقة') : __('الدفع بالحوالة البنكية')) %></button>
     </form>
-    <p class="muted"><%= __("لا نحفظ بيانات بطاقتك: تُدخَل في نموذج الدفع الآمن لدى مزوّد الدفع.") %></p>
+    <% if (online) { %><p class="muted"><%= __("لا نحفظ بيانات بطاقتك: تُدخَل في نموذج الدفع الآمن لدى مزوّد الدفع.") %></p><% } %>
   </section>
 <% } %>

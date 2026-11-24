@@ -17,8 +17,8 @@
         <span class="adm-msg__date" dir="ltr"><%= __(stamp(t.createdAt)) %></span>
       </header>
       <dl class="adm-kv adm-transfer__kv">
-        <dt><%= __("المبلغ") %></dt><dd><%= __(fmt(t.total)) %> <%= __(t.currency) %></dd>
-        <dt><%= __("الباقة") %></dt><dd><%= __(t.planCode) %> · <%= __(t.interval === 'yearly' ? __('سنوي') : __('شهري')) %></dd>
+        <dt><%= __("المبلغ") %></dt><dd><%= __(fmt(t.total)) %> <%= t.currency === 'SAR' ? __('ريال') : t.currency %></dd>
+        <dt><%= __("الباقة") %></dt><dd><%= __(t.planName) %> · <%= __(t.interval === 'yearly' ? __('سنوي') : __('شهري')) %></dd>
         <dt><%= __("مرجع الحوالة") %></dt><dd dir="ltr"><%= __(t.reference) %></dd>
         <dt><%= __("رقم الطلب") %></dt><dd dir="ltr">#<%= __(t.orderId) %></dd>
       </dl>

@@ -25,9 +25,9 @@
       <tr>
         <td dir="ltr">#<%= __(o.id) %></td>
         <td><a class="adm-strong" href="/admin/offices/<%= __(o.office_id) %>"><%= __(o.office_name) %></a></td>
-        <td><%= __(o.plan_code) %><span class="adm-sub"><%= __(o.billing_interval === 'yearly' ? __('سنوي') : __('شهري')) %></span></td>
+        <td><%= __(o.plan_name || o.plan_code) %><span class="adm-sub"><%= __(o.billing_interval === 'yearly' ? __('سنوي') : __('شهري')) %></span></td>
         <td><%= __(o.method === 'moyasar' ? __('بطاقة') : __('حوالة')) %></td>
-        <td><%= __(fmtDec(o.total)) %> <%= __(o.currency) %><% if (o.promo_code) { %><span class="adm-sub"><%= __("خصم") %> <%= __(o.promo_code) %></span><% } %></td>
+        <td><%= __(fmtDec(o.total)) %> <%= o.currency === 'SAR' ? __('ريال') : o.currency %><% if (o.promo_code) { %><span class="adm-sub"><%= __("خصم") %> <%= __(o.promo_code) %></span><% } %></td>
         <td><span class="badge badge--bill-<%= __(ocl[o.status] || 'info') %>"><%= __(ost[o.status]) %></span><% if (Number(o.suspicious)) { %> <span class="badge badge--bill-danger"><%= __("مشبوه:") %> <%= __(o.fail_reason) %></span><% } %></td>
         <td dir="ltr"><%= __(stamp(o.created_at)) %></td>
       </tr>
@@ -48,7 +48,7 @@
     <% payments.forEach(function (p) { %>
       <tr>
         <td><a class="adm-strong" href="/admin/offices/<%= __(p.office_id) %>"><%= __(p.office_name) %></a></td>
-        <td><%= __(fmtDec(p.amount)) %> <%= __(p.currency) %></td>
+        <td><%= __(fmtDec(p.amount)) %> <%= p.currency === 'SAR' ? __('ريال') : p.currency %></td>
         <td><%= __(p.provider) %><%= __(p.card_last4 ? ' ****' + p.card_last4 : '') %></td>
         <td dir="ltr"><%= __(p.provider_ref) %></td>
         <td><span class="badge badge--role"><%= __({ paid: __("مدفوع"), refunded: __("مسترد"), failed: __("فشل"), pending: __("معلّق") }[p.status] || p.status) %></span></td>
@@ -68,7 +68,7 @@
       <li class="item">
         <div class="item__title"><a href="/admin/invoices/<%= __(i.id) %>"><strong dir="ltr"><%= __(i.invoice_no) %></strong></a> <%= __(i.doc_title) %>
           <% if (i.status === 'credited') { %><span class="badge badge--ended"><%= __("ملغاة بإشعار") %></span><% } %></div>
-        <div class="item__meta"><a href="/admin/offices/<%= __(i.office_id) %>"><%= __(i.office_name) %></a> · <%= __(fmtDec(i.total)) %> <%= __(i.currency) %> · <span dir="ltr"><%= __(stamp(i.issued_at)) %></span></div>
+        <div class="item__meta"><a href="/admin/offices/<%= __(i.office_id) %>"><%= __(i.office_name) %></a> · <%= __(fmtDec(i.total)) %> <%= i.currency === 'SAR' ? __('ريال') : i.currency %> · <span dir="ltr"><%= __(stamp(i.issued_at)) %></span></div>
         <% if (i.kind === 'invoice' && i.status === 'issued') { %>
           <details class="danger-zone"><summary><%= __("إصدار إشعار دائن (استرداد)") %></summary>
             <form method="post" action="/admin/invoices/<%= __(i.id) %>/credit-note" novalidate>

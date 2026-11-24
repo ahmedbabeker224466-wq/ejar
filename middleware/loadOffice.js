@@ -109,7 +109,15 @@ function loadOffice(pool = db.pool) {
  * During the read-only grace after a paid period, every page can be read but
  * nothing can be changed (billing and settings stay writable, so the owner can pay).
  */
-function officeGate(req, res, next) {
+async function officeGate(req, res, next) {
+  try {
+    return await gate(req, res, next);
+  } catch (err) {
+    return next(err);
+  }
+}
+
+async function gate(req, res, next) {
   const access = req.officeAccess;
   if (!access || (!access.locked && !access.readOnly)) return next();
   // Waiting for the licence check (or refused): no office page opens at all,
@@ -128,7 +136,13 @@ function officeGate(req, res, next) {
   }
   const path = req.baseUrl + req.path;
   if (OPEN_WHEN_LOCKED.some((open) => path === open || path.startsWith(`${open}/`))) return next();
-  if (access.locked) return res.status(402).render('office/locked', { title: 'اشتراكك منتهي', reason: access.reason });
+  if (access.locked) {
+    // A suspension by the platform admin is not lifted by paying: say so plainly.
+    if (access.reason === 'suspended' && await require('../services/subscriptions').isAdminSuspended(require('../config/db').pool, req.office.id)) {
+      return res.status(402).render('office/locked', { title: 'الحساب موقوف', reason: 'admin_suspended' });
+    }
+    return res.status(402).render('office/locked', { title: 'اشتراكك منتهي', reason: access.reason });
+  }
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
   return res.status(402).render('office/locked', { title: 'وضع القراءة فقط', reason: 'read_only' });
 }

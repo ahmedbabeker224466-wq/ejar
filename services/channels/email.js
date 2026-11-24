@@ -67,7 +67,7 @@ function htmlFor({ subject, text }, env = process.env) {
   return `<!doctype html><html lang="${rtl ? 'ar' : 'en'}" dir="${dir}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(subject || '')}</title></head>`
     + `<body style="margin:0;padding:0;background:#f4f7fd"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fd"><tr><td align="center" style="padding:28px 12px">`
     + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e1e6f1;border-radius:16px">`
-    + `<tr><td style="padding:24px 28px 8px;text-align:${align}"><a href="${base}"><img src="${base}/img/email-logo.png" width="150" height="46" alt="miaad" style="display:inline-block;border:0;width:150px;height:auto"></a></td></tr>`
+    + `<tr><td style="padding:24px 28px 8px;text-align:${align}"><a href="${base}"><img src="${base}/img/email-logo-2.png" width="150" height="46" alt="miaad" style="display:inline-block;border:0;width:150px;height:auto"></a></td></tr>`
     + `<tr><td dir="${dir}" style="padding:12px 28px 14px;text-align:${align};font-family:Tahoma,'Segoe UI',Arial,sans-serif">`
     + (subject ? `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.5;color:#0f1d45">${escapeHtml(subject)}</h1>` : '')
     + paragraphs + `</td></tr>`
@@ -75,8 +75,20 @@ function htmlFor({ subject, text }, env = process.env) {
     + `</table></td></tr></table></body></html>`;
 }
 
+// The in-app disclaimer line is left out of emails (owner's decision, Nov 2026).
+const EMAIL_DROPPED_LINE = 'تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط';
+
+function withoutDisclaimer(text) {
+  return String(text || '')
+    .split(/\n{2,}/)
+    .filter((part) => part.trim() !== EMAIL_DROPPED_LINE)
+    .join('\n\n')
+    .trim();
+}
+
 /** Sends one plain-text email. Returns { ok } or { ok: false, error, retryable, skip }. */
-async function send({ to, subject, text }, env = process.env) {
+async function send({ to, subject, text: rawText }, env = process.env) {
+  const text = withoutDisclaimer(rawText);
   const config = smtpConfig(env);
   if (!config) return { ok: false, error: 'smtp_not_configured', skip: true };
   if (!to) return { ok: false, error: 'no_contact', skip: true };
@@ -91,4 +103,4 @@ async function send({ to, subject, text }, env = process.env) {
   }
 }
 
-module.exports = { send, smtpConfig, setMailer, htmlFor };
+module.exports = { send, smtpConfig, setMailer, htmlFor, withoutDisclaimer };
