@@ -192,7 +192,7 @@ test('dashboard: the cards render from real counts', { skip }, async () => {
   const page = await aget('/admin');
   assert.match(page.text, /الإيراد الشهري المتكرر/);
   assert.match(page.text, /مكاتب جديدة هذا الشهر/);
-  assert.match(page.text, /<meter /);
+  assert.match(page.text, /class="adm-bar adm-bar--trial"/);
   assert.ok(o1);
 });
 

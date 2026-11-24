@@ -29,6 +29,7 @@ function sizeText(bytes) {
 function ageText(at, now = new Date()) {
   if (!at) return '—';
   const minutes = Math.max(0, Math.floor((now.getTime() - new Date(at).getTime()) / 60000));
+  if (minutes < 1) return 'الآن';
   if (minutes < 60) return `قبل ${minutes} دقيقة`;
   if (minutes < 48 * 60) return `قبل ${Math.floor(minutes / 60)} ساعة`;
   return `قبل ${Math.floor(minutes / 1440)} يوماً`;

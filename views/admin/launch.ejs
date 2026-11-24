@@ -10,14 +10,18 @@
   <p class="muted"><%= __("هذه الصفحة لا تعرض أي سر أو كلمة مرور، فقط هل الفحص ناجح أم لا. ما لا يستطيع التطبيق رؤيته (كلمة مرور لم يُعطَ إياها، مراجعة محامٍ) تؤكده أنت بيدك مع سبب يُسجَّل في سجل التدقيق.") %></p>
 </section>
 
+<% const order = { fail: 0, warn: 1, pass: 2 }; const sorted = checks.slice().sort(function (a, b) { return order[a.status] - order[b.status]; });
+   const esc = function (t) { return String(t).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); };
+   /* Latin technical names (env variables, file names) become separate LTR chips so the Arabic sentence stays clean. */
+   const chips = function (t) { if (lang !== 'ar') return esc(t); return esc(t).replace(/[A-Za-z][A-Za-z0-9_.\-]*[A-Za-z0-9]/g, function (w) { return '<code class="adm-chip" dir="ltr">' + w + '</code>'; }); }; %>
 <ul class="item-list">
-  <% checks.forEach(function (c) { %>
+  <% sorted.forEach(function (c) { %>
     <li class="item" id="check-<%= __(c.id) %>">
       <div class="item__title">
         <span class="badge badge--bill-<%= __(c.status === 'pass' ? 'success' : (c.status === 'warn' ? 'warning' : 'danger')) %>"><%= __(c.status === 'pass' ? __('ناجح') : (c.status === 'warn' ? __('تحذير') : __('فاشل'))) %></span>
         <strong><%= __(c.titleAr) %></strong>
       </div>
-      <p><%= __(c.detailAr) %></p>
+      <p><%- chips(__(c.detailAr)) %></p>
 
       <% if (c.id === 'ejar_rules') { %>
         <table class="table" aria-label="<%= __("قواعد إيجار الحالية") %>">

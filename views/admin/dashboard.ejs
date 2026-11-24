@@ -21,11 +21,11 @@
 <section class="card detail-card">
   <h2><%= __("المكاتب حسب الحالة") %></h2>
   <% const labels = { trial: __('تجربة'), active: __('مشترك فعّال'), past_due: __('غير مسدَّد'), suspended: __('موقوف') }; %>
-  <ul class="usage-list">
-    <% Object.keys(labels).forEach(function (key) { %>
-      <li class="usage">
-        <div class="usage__head"><span><%= __(labels[key]) %></span><strong><%= __(data.byStatus[key]) %></strong></div>
-        <meter class="usage__meter" min="0" max="<%= __(Math.max(1, data.totalOffices)) %>" value="<%= __(data.byStatus[key]) %>"><%= __(data.byStatus[key]) %></meter>
+  <ul class="adm-bars">
+    <% Object.keys(labels).forEach(function (key) { const n = Number(data.byStatus[key]) || 0; const pct = data.totalOffices ? Math.round((n / data.totalOffices) * 100) : 0; %>
+      <li class="adm-bar adm-bar--<%= __(key) %>">
+        <div class="adm-bar__head"><span><%= __(labels[key]) %></span><strong><%= __(n) %></strong></div>
+        <div class="adm-bar__track"><span class="adm-bar__fill" data-w="<%= __(pct) %>"></span></div>
       </li>
     <% }) %>
   </ul>

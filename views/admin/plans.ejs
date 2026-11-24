@@ -2,19 +2,34 @@
 <% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
 <% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
 <p class="muted"><%= __("أي تعديل يسري فوراً على كل المشتركين في الباقة. الأسعار قبل الضريبة.") %></p>
-<ul class="item-list">
+<% const lim = (v) => (v === null || v === undefined ? __('بلا حد') : v); %>
+<div class="adm-plans">
   <% rows.forEach(function (p) { %>
-    <li class="item">
-      <div class="item__title"><a href="/admin/plans/<%= __(p.id) %>"><strong><%= __(p.name_ar) %></strong></a> <span dir="ltr">(<%= __(p.code) %>)</span>
-        <span class="badge badge--bill-<%= __(Number(p.is_active) ? 'success' : 'danger') %>"><%= __(Number(p.is_active) ? __('مفعّلة') : __('موقوفة')) %></span>
-        <% if (!Number(p.is_public)) { %><span class="badge badge--ended"><%= __("غير معروضة") %></span><% } %></div>
-      <div class="item__meta"><%= __(fmtDec(p.price_monthly)) %> / <%= __("شهر") %> · <%= __(fmtDec(p.price_yearly)) %> / <%= __("سنة") %> ·
-        <%= __("وحدات") %> <%= __(p.max_units === null ? '∞' : p.max_units) %> · <%= __("عقود") %> <%= __(p.max_contracts === null ? '∞' : p.max_contracts) %> · <%= __("فريق") %> <%= __(p.max_members === null ? '∞' : p.max_members) %></div>
-      <details class="danger-zone"><summary><%= __("حذف الباقة") %></summary>
-        <form method="post" action="/admin/plans/<%= __(p.id) %>/delete" novalidate>
-          <div class="field"><label for="reason-<%= __(p.id) %>"><%= __("السبب") %></label><input id="reason-<%= __(p.id) %>" name="reason" class="input" maxlength="200" required></div>
-          <button type="submit" class="btn btn--danger btn--small"><%= __("حذف") %></button>
-        </form></details>
-    </li>
+    <article class="adm-plan">
+      <div class="adm-plan__head">
+        <h2 class="adm-plan__name"><%= __(p.name_ar) %></h2>
+        <div class="adm-plan__badges">
+          <span class="badge badge--bill-<%= __(Number(p.is_active) ? 'success' : 'danger') %>"><%= __(Number(p.is_active) ? __('مفعّلة') : __('موقوفة')) %></span>
+          <% if (!Number(p.is_public)) { %><span class="badge badge--ended"><%= __("مخفية") %></span><% } %>
+        </div>
+      </div>
+      <p class="adm-plan__price"><%= __(fmtDec(p.price_monthly)) %> <small><%= __("ريال / شهرياً") %></small></p>
+      <p class="adm-plan__year"><%= __(fmtDec(p.price_yearly)) %> <%= __("ريال / سنوياً") %></p>
+      <ul class="adm-plan__limits">
+        <li><span><%= __("الوحدات") %></span><strong><%= __(lim(p.max_units)) %></strong></li>
+        <li><span><%= __("العقود") %></span><strong><%= __(lim(p.max_contracts)) %></strong></li>
+        <li><span><%= __("أعضاء الفريق") %></span><strong><%= __(lim(p.max_members)) %></strong></li>
+        <% if (p.max_ai_reads_monthly !== undefined) { %><li><span><%= __("قراءات الذكاء الاصطناعي شهرياً") %></span><strong><%= __(lim(p.max_ai_reads_monthly)) %></strong></li><% } %>
+        <% if (p.max_listings !== undefined) { %><li><span><%= __("الإعلانات") %></span><strong><%= __(lim(p.max_listings)) %></strong></li><% } %>
+      </ul>
+      <div class="adm-plan__actions">
+        <a href="/admin/plans/<%= __(p.id) %>" class="btn btn--secondary btn--small"><%= __("تعديل") %></a>
+        <details><summary><%= __("حذف") %></summary>
+          <form method="post" action="/admin/plans/<%= __(p.id) %>/delete" novalidate>
+            <div class="field"><label for="reason-<%= __(p.id) %>"><%= __("سبب الحذف") %></label><input id="reason-<%= __(p.id) %>" name="reason" class="input" maxlength="200" required></div>
+            <button type="submit" class="btn btn--danger btn--small"><%= __("تأكيد الحذف") %></button>
+          </form></details>
+      </div>
+    </article>
   <% }) %>
-</ul>
+</div>

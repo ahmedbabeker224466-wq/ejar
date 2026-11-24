@@ -20,8 +20,8 @@
     <% } %>
     <% if (snapshot.checks && snapshot.checks.db !== false) { %>
       <ul class="item-list">
-        <li class="item"><%= __("آخر تشغيل للمهام المجدولة:") %> <%= __(snapshot.checks.cronAgeMinutes === null ? '—' : __('قبل ') + snapshot.checks.cronAgeMinutes + __(' دقيقة')) %></li>
-        <li class="item"><%= __("آخر نسخة ناجحة:") %> <%= __(snapshot.checks.backupAgeHours === null ? '—' : __('قبل ') + snapshot.checks.backupAgeHours + __(' ساعة')) %></li>
+        <li class="item"><%= __("آخر تشغيل للمهام المجدولة:") %> <%= __(snapshot.checks.cronAgeMinutes === null ? '—' : (snapshot.checks.cronAgeMinutes < 1 ? __('الآن') : __('قبل ') + snapshot.checks.cronAgeMinutes + __(' دقيقة'))) %></li>
+        <li class="item"><%= __("آخر نسخة ناجحة:") %> <%= __(snapshot.checks.backupAgeHours === null ? '—' : (snapshot.checks.backupAgeHours < 1 ? __('خلال الساعة الأخيرة') : __('قبل ') + snapshot.checks.backupAgeHours + __(' ساعة'))) %></li>
         <li class="item"><%= __("طابور الرسائل:") %> <%= __(snapshot.checks.queue ? snapshot.checks.queue.pending : 0) %> <%= __("رسالة معلقة") %></li>
         <li class="item"><%= __("رسائل فشلت في الساعة الماضية:") %> <%= __(snapshot.checks.failedLastHour) %></li>
         <li class="item"><%= __("دفعات مشبوهة:") %> <%= __(snapshot.checks.suspiciousOrders) %></li>

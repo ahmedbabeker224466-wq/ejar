@@ -1,23 +1,36 @@
 <div class="page-head"><h1><%= __("سجل التدقيق") %></h1></div>
-<form method="get" action="/admin/audit" class="filter-bar" novalidate>
-  <div class="field"><label for="action"><%= __("الإجراء (يبدأ بـ)") %></label><input id="action" name="action" class="input" dir="ltr" value="<%= __(filters.action) %>" placeholder="admin."></div>
+<form method="get" action="/admin/audit" class="adm-filters" novalidate>
+  <div class="field"><label for="action"><%= __("نوع الإجراء") %></label>
+    <select id="action" name="action" class="select">
+      <% [['', 'الكل'], ['admin.', 'إجراءات الإدارة'], ['auth.', 'الدخول'], ['billing.', 'الاشتراكات والمدفوعات'], ['office.', 'المكاتب'], ['contract.', 'العقود'], ['team.', 'الفرق'], ['domain.', 'الدومينات']].forEach(function (o) { %>
+        <option value="<%= __(o[0]) %>" <%= filters.action === o[0] ? 'selected' : '' %>><%= __(o[1]) %></option>
+      <% }) %>
+    </select></div>
   <div class="field"><label for="office"><%= __("رقم المكتب") %></label><input id="office" name="office" class="input" dir="ltr" inputmode="numeric" value="<%= __(filters.officeId) %>"></div>
   <div class="field"><label for="actor"><%= __("جوال المنفّذ") %></label><input id="actor" name="actor" class="input" dir="ltr" value="<%= __(filters.actor) %>"></div>
   <div class="field"><label for="from"><%= __("من") %></label><input id="from" name="from" class="input" type="date" dir="ltr" value="<%= __(filters.from) %>"></div>
   <div class="field"><label for="to"><%= __("إلى") %></label><input id="to" name="to" class="input" type="date" dir="ltr" value="<%= __(filters.to) %>"></div>
   <button type="submit" class="btn btn--primary"><%= __("تصفية") %></button>
 </form>
-<p class="muted"><%= __(total) %> <%= __("سجل") %></p>
-<ul class="item-list">
-  <% rows.forEach(function (r) { %>
-    <li class="item">
-      <div class="item__title"><strong dir="ltr"><%= __(r.action) %></strong> <span class="muted" dir="ltr"><%= __(r.entity_type) %><%= __(r.entity_id ? ' #' + r.entity_id : '') %></span></div>
-      <div class="item__meta"><span dir="ltr"><%= __(stamp(r.created_at)) %></span> · <span dir="ltr"><%= __(r.actor_phone || __('النظام')) %></span><%= __(r.office_name ? ' · ' + r.office_name : '') %></div>
-      <% if (r.reason) { %><p class="muted"><%= __("السبب:") %> <%= __(r.reason) %></p><% } %>
-    </li>
-  <% }) %>
-</ul>
-<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد سجلات مطابقة.") %></p><% } %>
+<p class="adm-count"><%= __(total) %> <%= __("سجل") %></p>
+<% if (rows.length) { %>
+<div class="table-wrap">
+  <table class="table adm-table">
+    <thead><tr><th><%= __("الإجراء") %></th><th><%= __("المنفّذ") %></th><th><%= __("المكتب") %></th><th><%= __("التاريخ") %></th><th><%= __("السبب") %></th></tr></thead>
+    <tbody>
+      <% rows.forEach(function (r) { %>
+        <tr>
+          <% const shown = lang === "ar" && r.label; %><td><strong><%= __(shown || r.action) %></strong><% if (shown) { %><span class="adm-sub" dir="ltr"><%= __(r.action) %></span><% } %></td>
+          <td dir="ltr"><%= __(r.actor_phone || __('النظام')) %></td>
+          <td><%= __(r.office_name || '—') %></td>
+          <td dir="ltr"><%= __(stamp(r.created_at)) %></td>
+          <td><%= __(r.reason || '—') %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %><p class="empty-state"><%= __("لا توجد سجلات مطابقة.") %></p><% } %>
 <% if (pages > 1) { %>
   <% const qs = 'action=' + encodeURIComponent(filters.action) + '&office=' + encodeURIComponent(filters.officeId) + '&actor=' + encodeURIComponent(filters.actor) + '&from=' + filters.from + '&to=' + filters.to; %>
   <nav class="pager"><% if (page > 1) { %><a href="/admin/audit?<%= __(qs) %>&amp;page=<%= __(page - 1) %>"><%= __("السابق") %></a><% } %> <span><%= __("صفحة") %> <%= __(page) %> <%= __("من") %> <%= __(pages) %></span> <% if (page < pages) { %><a href="/admin/audit?<%= __(qs) %>&amp;page=<%= __(page + 1) %>"><%= __("التالي") %></a><% } %></nav>

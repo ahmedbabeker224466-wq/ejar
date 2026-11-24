@@ -23,6 +23,7 @@ const { createNotification } = require('../services/notifications');
 const images = require('../services/images');
 const money = require('../services/money');
 const { createAudit } = require('../services/audit');
+const auditLabels = require('../services/auditLabels');
 const { riyadhDate } = require('../services/contractDates');
 const { requireAuth } = require('../middleware/auth');
 const { requirePerm } = require('../middleware/permissions');
@@ -39,23 +40,57 @@ function notFound(res) {
   return res.status(404).render('errors/404', { title: 'الصفحة غير موجودة' });
 }
 
+// Grouped sidebar: group heading (null = none), icon key (views/admin/_nav-icons.ejs)
+// and an optional pending-count key from pendingCounts().
 const NAV = [
-  { key: 'dashboard', href: '/admin', label: 'لوحة المنصة' },
-  { key: 'offices', href: '/admin/offices', label: 'المكاتب' },
-  { key: 'orders', href: '/admin/orders', label: 'الطلبات والمدفوعات' },
-  { key: 'transfers', href: '/admin/transfers', label: 'الحوالات البنكية' },
-  { key: 'promos', href: '/admin/promos', label: 'أكواد الخصم' },
-  { key: 'plans', href: '/admin/plans', label: 'الباقات' },
-  { key: 'domains', href: '/admin/domains', label: 'طلبات الدومين' },
-  { key: 'reports', href: '/admin/reports', label: 'بلاغات الإعلانات' },
-  { key: 'messages', href: '/admin/messages', label: 'رسائل التواصل' },
-  { key: 'blog', href: '/admin/blog', label: 'المدونة' },
-  { key: 'settings', href: '/admin/settings', label: 'إعدادات المنصة' },
-  { key: 'launch', href: '/admin/launch', label: 'جاهزية الإطلاق' },
-  { key: 'ops', href: '/admin/ops', label: 'التشغيل والنسخ الاحتياطي' },
-  { key: 'audit', href: '/admin/audit', label: 'سجل التدقيق' },
-  { key: 'security', href: '/admin/security', label: 'الأمان' },
+  { key: 'dashboard', href: '/admin', label: 'لوحة المنصة', group: null },
+  { key: 'offices', href: '/admin/offices', label: 'المكاتب', group: 'العمل اليومي', count: 'offices' },
+  { key: 'transfers', href: '/admin/transfers', label: 'الحوالات البنكية', group: 'العمل اليومي', count: 'transfers' },
+  { key: 'reports', href: '/admin/reports', label: 'بلاغات الإعلانات', group: 'العمل اليومي', count: 'reports' },
+  { key: 'messages', href: '/admin/messages', label: 'رسائل التواصل', group: 'العمل اليومي', count: 'messages' },
+  { key: 'domains', href: '/admin/domains', label: 'طلبات الدومين', group: 'العمل اليومي', count: 'domains' },
+  { key: 'orders', href: '/admin/orders', label: 'الطلبات والمدفوعات', group: 'المال والباقات' },
+  { key: 'plans', href: '/admin/plans', label: 'الباقات', group: 'المال والباقات' },
+  { key: 'promos', href: '/admin/promos', label: 'أكواد الخصم', group: 'المال والباقات' },
+  { key: 'blog', href: '/admin/blog', label: 'المدونة', group: 'المحتوى' },
+  { key: 'settings', href: '/admin/settings', label: 'إعدادات المنصة', group: 'النظام' },
+  { key: 'launch', href: '/admin/launch', label: 'جاهزية الإطلاق', group: 'النظام' },
+  { key: 'ops', href: '/admin/ops', label: 'التشغيل والنسخ الاحتياطي', group: 'النظام' },
+  { key: 'audit', href: '/admin/audit', label: 'سجل التدقيق', group: 'النظام' },
+  { key: 'security', href: '/admin/security', label: 'الأمان', group: 'النظام' },
 ];
+
+const DOMAIN_OPEN = ['pending_setup', 'pending_purchase', 'awaiting_nameservers', 'awaiting_dns'];
+
+/** Work waiting in each queue, for the sidebar badges. Never blocks a page. */
+async function pendingCounts() {
+  try {
+    const [[row]] = await db.pool.query(
+      `SELECT
+         (SELECT COUNT(*) FROM offices WHERE verification = 'pending') AS offices,
+         (SELECT COUNT(*) FROM bank_transfers WHERE status = 'pending') AS transfers,
+         (SELECT COUNT(*) FROM listing_reports WHERE status = 'open') AS reports,
+         (SELECT COUNT(*) FROM contact_messages WHERE handled_at IS NULL) AS messages,
+         (SELECT COUNT(*) FROM office_domain_requests WHERE status IN (?, ?, ?, ?)) AS domains`,
+      DOMAIN_OPEN,
+    );
+    return Object.fromEntries(Object.entries(row).map(([k, v]) => [k, Number(v) || 0]));
+  } catch {
+    return {};
+  }
+}
+
+/** The sidebar as groups: [{ title, items: [...] }]. */
+function navGroups(path, counts) {
+  const groups = [];
+  for (const item of NAV) {
+    const entry = { ...item, current: isCurrent(item, path), pending: item.count ? counts[item.count] || 0 : 0 };
+    const last = groups[groups.length - 1];
+    if (last && last.title === item.group) last.items.push(entry);
+    else groups.push({ title: item.group, items: [entry] });
+  }
+  return groups;
+}
 
 function isCurrent(item, path) {
   if (item.href === '/admin') return path === '/admin' || path === '/admin/';
@@ -71,14 +106,17 @@ function twoFactorGuard(req, res, next) {
   return next();
 }
 
-router.use('/admin', noStore, sameOrigin, (req, res, next) => (req.user || req.method !== 'GET' ? next() : res.redirect('/admin/login')), requireAuth, requirePerm('platform.access'), twoFactorGuard, (req, res, next) => {
+router.use('/admin', noStore, sameOrigin, (req, res, next) => (req.user || req.method !== 'GET' ? next() : res.redirect('/admin/login')), requireAuth, requirePerm('platform.access'), twoFactorGuard, async (req, res, next) => {
   res.locals.layout = 'layouts/admin';
   res.locals.adminNav = NAV.map((item) => ({ ...item, current: isCurrent(item, req.baseUrl + req.path) }));
-  res.locals.userDisplay = req.user.name || req.user.phone || req.user.email;
+  res.locals.adminNavGroups = navGroups(req.baseUrl + req.path, req.method === 'GET' ? await pendingCounts() : {});
+  // The header never shows the admin's phone (screen sharing).
+  res.locals.userDisplay = 'مدير المنصة';
   res.locals.fmt = money.formatHalalas;
   res.locals.fmtDec = (value) => money.formatHalalas(money.fromDecimal(value));
   res.locals.stamp = (at) => (at ? riyadhDate(new Date(at)) : '—');
   res.locals.done = null;
+  res.locals.auditLabel = auditLabels.labelFor;
   next();
 });
 
@@ -569,7 +607,7 @@ router.get('/admin/audit', wrap(async (req, res) => {
   };
   const rows = result.rows.map((r) => {
     const after = parse(r.after_json);
-    return { ...r, reason: after && typeof after.reason === 'string' ? after.reason : '' };
+    return { ...r, label: auditLabels.labelFor(r.action), reason: after && typeof after.reason === 'string' ? after.reason : '' };
   });
   return res.render('admin/audit', { title: 'سجل التدقيق', ...result, rows, filters });
 }));
