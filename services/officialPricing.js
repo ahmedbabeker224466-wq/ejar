@@ -66,7 +66,7 @@ const OFFICIAL = Object.freeze({
 const CUSTOM_PLAN_FROM_UNITS = 600;
 
 const DOMAIN_V2_KEY = 'plans.custom_domain_v2';
-const DOMAIN_TRIAL_KEY = 'plans.custom_domain_trial_v1';
+const DOMAIN_TRIAL_KEY = 'plans.custom_domain_trial_v2';
 const CUSTOM_DOMAIN_ADDON = Object.freeze({ name_ar: 'نطاق مخصص', price_monthly: '49.00', currency: 'SAR', plans: ['pro'] });
 
 // The limits every active plan must carry (launch check "الباقات والأسعار").
@@ -163,9 +163,11 @@ async function applyOfficialPricing(pool) {
     await pool.query('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)', [DOMAIN_V2_KEY, new Date().toISOString()]);
   }
   // The trial carries Pro limits, so it includes the custom domain too (once).
+  // A free trial row created by hand may carry another code: every active plan
+  // priced 0 counts as the trial here.
   const [[trialMark]] = await pool.query('SELECT setting_key FROM settings WHERE setting_key = ?', [DOMAIN_TRIAL_KEY]);
   if (!trialMark) {
-    const [changed] = await pool.query("UPDATE plans SET custom_domain = 'included' WHERE code = 'trial' AND custom_domain <> 'included'");
+    const [changed] = await pool.query("UPDATE plans SET custom_domain = 'included' WHERE (code = 'trial' OR (is_active = 1 AND price_monthly = 0 AND price_yearly = 0)) AND custom_domain <> 'included'");
     if (changed.affectedRows) updated.push('custom_domain_trial');
     await pool.query('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)', [DOMAIN_TRIAL_KEY, new Date().toISOString()]);
   }
