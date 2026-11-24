@@ -35,7 +35,7 @@ test.afterEach(() => mock.restore());
 test('config: no key means disabled; the model defaults to claude-sonnet-4-5', () => {
   assert.equal(ai.aiConfig({}).enabled, false);
   assert.equal(ai.aiConfig({ CLAUDE_API_KEY: '   ' }).enabled, false);
-  assert.deepEqual(ai.aiConfig({ CLAUDE_API_KEY: 'k' }), { enabled: true, apiKey: 'k', model: 'claude-sonnet-4-5' });
+  assert.deepEqual(ai.aiConfig({ CLAUDE_API_KEY: 'k' }), { enabled: true, provider: 'claude', apiKey: 'k', model: 'claude-sonnet-4-5' });
   assert.equal(ai.aiConfig({ CLAUDE_API_KEY: 'k', CLAUDE_MODEL: 'claude-sonnet-5-5' }).model, 'claude-sonnet-5-5');
 });
 
@@ -255,4 +255,46 @@ test('acceptance: of 10 readings, the one with a wrong date is caught; the other
   assert.deepEqual(flagged, [{ index: 6, codes: ['term_too_long'] }]);
   const wrong = engine.describeDeadlines({ start_date: '2026-04-01', end_date: '2062-03-31' }, TODAY);
   assert.ok(wrong.daysToNotice > 10000, 'and its preview deadline is visibly decades away');
+});
+
+// ------------------------------------------------------------ Gemini (chosen by the admin)
+
+test('gemini: the stored choice wins over the environment; key in a header, file inline, JSON only', async () => {
+  const stored = { provider: 'gemini', model: '', apiKey: 'gemini-test-key-not-real' };
+  assert.deepEqual(ai.aiConfig({ CLAUDE_API_KEY: 'k' }, stored), { enabled: true, provider: 'gemini', apiKey: 'gemini-test-key-not-real', model: 'gemini-2.5-flash' });
+  assert.equal(ai.aiConfig({}, { provider: 'gemini', model: '', apiKey: '' }).enabled, false, 'no key, no feature');
+
+  const aiSettings = require('../services/aiSettings');
+  aiSettings.setForTests(stored);
+  try {
+    mock.state.reply = { status: 200, body: JSON.stringify({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(GOOD) }] } }] }) };
+    const result = await ai.readContract({ buffer: fakePdf(), mime: 'application/pdf', today: TODAY, env: {} });
+    assert.equal(result.fields.end_date, '2027-09-30');
+    const { options, body } = mock.state.calls[0];
+    assert.equal(options.hostname, 'generativelanguage.googleapis.com');
+    assert.equal(options.path, '/v1beta/models/gemini-2.5-flash:generateContent');
+    assert.ok(!options.path.includes('key='), 'the key never goes in the URL');
+    assert.equal(options.headers['x-goog-api-key'], 'gemini-test-key-not-real');
+    const sent = JSON.parse(body);
+    assert.equal(sent.contents[0].parts[0].inline_data.mime_type, 'application/pdf');
+    assert.equal(sent.generationConfig.responseMimeType, 'application/json');
+    assert.ok(sent.systemInstruction.parts[0].text.includes('iqama'));
+
+    // A blocked reply is a friendly refusal, an HTTP error a friendly error.
+    mock.state.reply = { status: 200, body: JSON.stringify({ promptFeedback: { blockReason: 'SAFETY' } }) };
+    await assert.rejects(ai.readContract({ buffer: fakePdf(), mime: 'application/pdf', today: TODAY, env: {} }), (e) => e.code === 'refused');
+    mock.state.reply = { status: 429, body: '{"error":{"message":"quota"}}' };
+    await assert.rejects(ai.readContract({ buffer: fakePdf(), mime: 'application/pdf', today: TODAY, env: {} }), (e) => e.code === 'api_error');
+  } finally {
+    aiSettings.setForTests({});
+  }
+});
+
+test('ai settings form: provider required, model and key shapes checked', () => {
+  const aiSettings = require('../services/aiSettings');
+  assert.ok(aiSettings.validate({}).errors.ai_provider);
+  assert.ok(aiSettings.validate({ ai_provider: 'gemini', ai_model: 'bad model!' }).errors.ai_model);
+  assert.ok(aiSettings.validate({ ai_provider: 'gemini', ai_key: 'short' }).errors.ai_key);
+  const ok = aiSettings.validate({ ai_provider: 'gemini', ai_model: 'gemini-2.5-flash', ai_key: 'AIzaSyTestTestTestTestTestTest123' });
+  assert.deepEqual(ok.errors, {});
 });

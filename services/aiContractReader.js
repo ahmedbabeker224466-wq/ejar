@@ -1,7 +1,10 @@
 'use strict';
 
-// Reads ONLY dates and amounts from an uploaded Ejar contract with the Claude
-// API (POST https://api.anthropic.com/v1/messages, built-in https only).
+// Reads ONLY dates and amounts from an uploaded Ejar contract with the AI
+// service the platform admin chose (services/aiSettings.js): the Claude API
+// (POST https://api.anthropic.com/v1/messages) or the Gemini API (POST
+// https://generativelanguage.googleapis.com/v1beta/models/<model>:generateContent),
+// built-in https only. Without a stored choice, CLAUDE_API_KEY still works.
 //
 // Privacy, enforced here:
 // - The file exists only in memory for the length of the request. It is never
@@ -18,6 +21,7 @@ const engine = require('./contractEngine');
 const { normalizeCity, CITIES } = require('../config/saudiCities');
 const { UNIT_TYPES } = require('./units');
 const logger = require('../utils/logger');
+const aiSettings = require('./aiSettings');
 
 // Tunable for tests; production uses the defaults.
 const settings = {
@@ -32,6 +36,7 @@ const DEFAULT_MODEL = 'claude-sonnet-4-5';
 const API_HOST = 'api.anthropic.com';
 const API_PATH = '/v1/messages';
 const API_VERSION = '2023-06-01';
+const GEMINI_HOST = 'generativelanguage.googleapis.com';
 
 const ALLOWED_KEYS = Object.freeze([
   'start_date', 'end_date', 'annual_rent', 'payment_frequency', 'city', 'property_type', 'ejar_contract_number',
@@ -61,11 +66,18 @@ class AiReadError extends Error {
   }
 }
 
-/** API key and model from the environment. enabled is false without a key. */
-function aiConfig(env = process.env) {
+/**
+ * Provider, key and model: the admin's stored choice first (memory), then
+ * CLAUDE_API_KEY / CLAUDE_MODEL from the environment. enabled is false without a key.
+ */
+function aiConfig(env = process.env, stored = aiSettings.now()) {
+  if (stored && stored.apiKey && aiSettings.PROVIDERS[stored.provider]) {
+    const model = stored.model || aiSettings.PROVIDERS[stored.provider].defaultModel;
+    return { enabled: true, provider: stored.provider, apiKey: stored.apiKey, model };
+  }
   const apiKey = String(env.CLAUDE_API_KEY || '').trim();
   const model = String(env.CLAUDE_MODEL || '').trim() || DEFAULT_MODEL;
-  return { enabled: apiKey.length > 0, apiKey, model };
+  return { enabled: apiKey.length > 0, provider: 'claude', apiKey, model };
 }
 
 // ------------------------------------------------------------ the file
@@ -151,6 +163,54 @@ function buildRequestBody(block, model) {
  * call time, so tests can replace it.
  */
 function callApi(body, { apiKey, timeoutMs = settings.timeoutMs }) {
+  return postJson({
+    hostname: API_HOST,
+    path: API_PATH,
+    headers: { 'x-api-key': apiKey, 'anthropic-version': API_VERSION },
+  }, body, timeoutMs);
+}
+
+/** The Gemini request: the same instructions, the file as inline data, JSON only, no thinking. */
+function buildGeminiBody(block) {
+  return {
+    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: [{
+      role: 'user',
+      parts: [
+        { inline_data: { mime_type: block.source.media_type, data: block.source.data } },
+        { text: 'Extract the fields from this contract. Return the JSON object only.' },
+      ],
+    }],
+    generationConfig: {
+      temperature: 0,
+      maxOutputTokens: settings.maxTokens,
+      responseMimeType: 'application/json',
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  };
+}
+
+function callGemini(body, { apiKey, model, timeoutMs = settings.timeoutMs }) {
+  return postJson({
+    hostname: GEMINI_HOST,
+    path: `/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    // The key goes in a header, never in the URL (URLs end up in logs).
+    headers: { 'x-goog-api-key': apiKey },
+  }, body, timeoutMs);
+}
+
+/** The text of a Gemini reply, or throws refused when Google blocked it. */
+function geminiText(reply) {
+  if (reply && reply.promptFeedback && reply.promptFeedback.blockReason) throw new AiReadError('refused');
+  const candidate = reply && Array.isArray(reply.candidates) ? reply.candidates[0] : null;
+  if (candidate && ['SAFETY', 'RECITATION', 'PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII'].includes(candidate.finishReason)) {
+    throw new AiReadError('refused');
+  }
+  const parts = candidate && candidate.content && Array.isArray(candidate.content.parts) ? candidate.content.parts : [];
+  return parts.filter((p) => p && typeof p.text === 'string' && !p.thought).map((p) => p.text).join('\n');
+}
+
+function postJson({ hostname, path, headers }, body, timeoutMs) {
   const https = require('https');
   const payload = Buffer.from(JSON.stringify(body));
   return new Promise((resolve, reject) => {
@@ -162,12 +222,11 @@ function callApi(body, { apiKey, timeoutMs = settings.timeoutMs }) {
       fn(value);
     };
     const req = https.request({
-      hostname: API_HOST,
-      path: API_PATH,
+      hostname,
+      path,
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': API_VERSION,
+        ...headers,
         'content-type': 'application/json',
         'content-length': payload.length,
       },
@@ -334,9 +393,12 @@ async function readContract({ buffer, mime, today, env = process.env }) {
   if (detectFileType(buffer) !== mime) throw new AiReadError('bad_file');
 
   const block = await contentBlock(buffer, mime);
-  const response = await callApi(buildRequestBody(block, config.model), { apiKey: config.apiKey });
+  const gemini = config.provider === 'gemini';
+  const response = gemini
+    ? await callGemini(buildGeminiBody(block), { apiKey: config.apiKey, model: config.model })
+    : await callApi(buildRequestBody(block, config.model), { apiKey: config.apiKey });
   if (response.status !== 200) {
-    logger.error(`AI contract read failed: HTTP ${response.status}`);
+    logger.error(`AI contract read failed: ${config.provider} HTTP ${response.status}`);
     throw new AiReadError('api_error');
   }
   let reply;
@@ -345,10 +407,15 @@ async function readContract({ buffer, mime, today, env = process.env }) {
   } catch {
     throw new AiReadError('bad_output');
   }
-  if (reply && reply.stop_reason === 'refusal') throw new AiReadError('refused');
-  const text = Array.isArray(reply && reply.content)
-    ? reply.content.filter((b) => b && b.type === 'text' && typeof b.text === 'string').map((b) => b.text).join('\n')
-    : '';
+  let text;
+  if (gemini) {
+    text = geminiText(reply);
+  } else {
+    if (reply && reply.stop_reason === 'refusal') throw new AiReadError('refused');
+    text = Array.isArray(reply && reply.content)
+      ? reply.content.filter((b) => b && b.type === 'text' && typeof b.text === 'string').map((b) => b.text).join('\n')
+      : '';
+  }
   const parsed = extractJson(text);
   if (!parsed) throw new AiReadError('bad_output');
 
@@ -368,7 +435,10 @@ module.exports = {
   checkUpload,
   contentBlock,
   buildRequestBody,
+  buildGeminiBody,
+  geminiText,
   callApi,
+  callGemini,
   extractJson,
   looksSensitive,
   sanitizeFields,

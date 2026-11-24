@@ -15,6 +15,7 @@ const invoices = require('../services/invoices');
 const subscriptions = require('../services/subscriptions');
 const bankTransfers = require('../services/bankTransfers');
 const platformSettings = require('../services/platformSettings');
+const aiSettings = require('../services/aiSettings');
 const { createNotification } = require('../services/notifications');
 const images = require('../services/images');
 const money = require('../services/money');
@@ -29,7 +30,7 @@ const { noStore, sameOrigin } = require('../middleware/security');
 module.exports = function registerSystem(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText }) {
 // ------------------------------------------------------------ platform settings and kill switches
 
-async function renderSettings(req, res, { errors = {}, values = null, status = 200 } = {}) {
+async function renderSettings(req, res, { errors = {}, values = null, status = 200, aiValues = null } = {}) {
   const seller = await platformSettings.seller();
   const bank = await platformSettings.bank();
   const support = await platformSettings.support();
@@ -44,9 +45,25 @@ async function renderSettings(req, res, { errors = {}, values = null, status = 2
     errors,
     switches,
     analytics: await platformSettings.get(platformSettings.KEYS.analyticsSnippet),
+    ai: aiSettings.view(),
+    aiValues: aiValues || { ai_provider: aiSettings.view().provider || 'gemini', ai_model: aiSettings.view().model },
+    aiProviders: aiSettings.PROVIDERS,
     done: doneText(req.query.done),
   });
 }
+
+// The AI service that reads contracts. The key is sealed and never shown or audited.
+router.post('/admin/settings/ai', wrap(async (req, res) => {
+  const { values, errors } = aiSettings.validate(req.body);
+  const reason = reasonOf(req.body);
+  if (!reason) errors.reason_ai = REASON_ERROR;
+  if (!values.key && !values.clearKey && !aiSettings.now().apiKey && !errors.ai_key) errors.ai_key = 'الصق مفتاح الخدمة.';
+  const aiValues = { ai_provider: values.provider, ai_model: values.model };
+  if (Object.keys(errors).length) return renderSettings(req, res, { errors, aiValues, status: 422 });
+  const changed = await aiSettings.save(db.pool, values);
+  await audit.write(req.user.id, null, 'admin.settings.ai', 'settings', null, null, { changed, provider: values.provider, reason }, req.ip);
+  return res.redirect('/admin/settings?done=saved#ai');
+}));
 
 router.get('/admin/settings', wrap((req, res) => renderSettings(req, res)));
 

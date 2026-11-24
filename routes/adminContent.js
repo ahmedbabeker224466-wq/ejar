@@ -239,6 +239,9 @@ module.exports = function register(router, { wrap, notFound, reasonOf, REASON_ER
         errors,
         switches: await platformSettings.switches(),
         analytics: String(req.body.snippet || '').slice(0, 1000),
+        ai: require('../services/aiSettings').view(),
+        aiValues: { ai_provider: require('../services/aiSettings').view().provider || 'gemini', ai_model: require('../services/aiSettings').view().model },
+        aiProviders: require('../services/aiSettings').PROVIDERS,
         done: null,
       });
     }

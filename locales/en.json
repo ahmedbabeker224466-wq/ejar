@@ -2889,5 +2889,21 @@
  "تعديل بيانات المكتب للمراجعة": "Office details corrected for review",
  "حساب المكتب موقوف": "The office account is suspended",
  "أوقفت إدارة ميعاد حساب المكتب مؤقتاً. تواصل معنا لمعرفة السبب وإعادة التفعيل.": "Mi3aad has suspended the office account for now. Contact us to learn why and to reactivate it.",
- "الحساب موقوف": "Account suspended"
+ "الحساب موقوف": "Account suspended",
+ "الذكاء الاصطناعي": "AI",
+ "قراءة العقود بالذكاء الاصطناعي": "Reading contracts with AI",
+ "اختر الخدمة التي تقرأ ملف العقد المرفوع، والصق مفتاحها. يُحفظ المفتاح مشفراً ولا يظهر هنا مرة أخرى.": "Choose the service that reads the uploaded contract file and paste its key. The key is stored encrypted and never shown here again.",
+ "يعمل بمفتاح Claude من متغيرات البيئة": "Running on the Claude key from the environment",
+ "الخدمة": "Service",
+ "النموذج (اختياري)": "Model (optional)",
+ "اتركه فارغاً لاستخدام النموذج الافتراضي.": "Leave it empty to use the default model.",
+ "مفتاح الخدمة": "Service key",
+ "اتركه فارغاً للإبقاء على المفتاح الحالي": "Leave empty to keep the current key",
+ "احذف المفتاح المحفوظ": "Delete the stored key",
+ "تنبيه عن الخصوصية: ملف العقد يُرسَل كاملاً إلى الخدمة المختارة ليقرأ منه التواريخ والمبالغ، وفيه أسماء الأطراف وأرقام هوياتهم. شروط Google للخطة المجانية من Gemini تسمح لها باستخدام ما يُرسَل لتحسين خدماتها، بخلاف الخطة المدفوعة. استخدم الخطة المجانية للتجربة فقط، وفعّل الفوترة في حساب Google قبل استقبال عقود المكاتب الحقيقية.": "Privacy notice: the whole contract file is sent to the chosen service so it can read the dates and amounts, and it contains the parties names and ID numbers. Google terms for the free Gemini tier allow it to use what is sent to improve its services, unlike the paid tier. Use the free tier for testing only, and turn on billing in the Google account before receiving real office contracts.",
+ "اختر مزوّد الذكاء الاصطناعي.": "Choose the AI provider.",
+ "اسم النموذج حروف إنجليزية وأرقام فقط، مثل gemini-2.5-flash.": "The model name is Latin letters and digits only, like gemini-2.5-flash.",
+ "المفتاح غير صحيح. انسخه كما هو من لوحة المزوّد.": "The key is not valid. Copy it exactly from the provider console.",
+ "الصق مفتاح الخدمة.": "Paste the service key.",
+ "تعديل إعدادات الذكاء الاصطناعي": "AI settings changed"
 }

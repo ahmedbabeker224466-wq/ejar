@@ -15,7 +15,7 @@ function installClaudeMock() {
   const original = https.request;
   const state = { calls: [], reply: null };
   https.request = function mockedRequest(options, callback) {
-    if (!options || options.hostname !== 'api.anthropic.com') return original.apply(https, arguments);
+    if (!options || !['api.anthropic.com', 'generativelanguage.googleapis.com'].includes(options.hostname)) return original.apply(https, arguments);
     const req = new EventEmitter();
     req.destroyed = false;
     req.destroy = () => {

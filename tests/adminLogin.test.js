@@ -227,3 +227,35 @@ test('the admin session and an office session live side by side in one browser',
   assert.equal((await http.request('/admin', { cookie: adm2 })).status, 200, 'the admin session survives the office logout');
   assert.equal((await http.request('/admin/logout', { cookie: owner.cookie })).location, '/admin/login');
 });
+
+test('AI service key: saved sealed from /admin/settings, never shown or audited', { skip }, async () => {
+  routes.limit.counter.reset();
+  const adm = cookieOf(await signIn(ADMIN, PASSWORD), 'aqdi_admin_session');
+  const aiSettings = require('../services/aiSettings');
+  const KEY = 'AIzaSyTestOnlyNotARealKey0123456789';
+  try {
+    const missing = await http.request('/admin/settings/ai', { method: 'POST', cookie: adm, form: { ai_provider: 'gemini', ai_key: KEY } });
+    assert.equal(missing.status, 422, 'a reason is required');
+    const saved = await http.request('/admin/settings/ai', { method: 'POST', cookie: adm, form: { ai_provider: 'gemini', ai_model: '', ai_key: KEY, reason: 'تجربة جيميناي' } });
+    assert.equal(saved.status, 302);
+    const [[row]] = await db.pool.query("SELECT setting_value, is_secret FROM settings WHERE setting_key = 'ai.key_sealed'");
+    assert.equal(Number(row.is_secret), 1);
+    assert.ok(!String(row.setting_value).includes(KEY), 'stored sealed, not as text');
+    assert.equal(aiSettings.now().apiKey, KEY, 'in memory right after the save');
+    assert.equal(require('../services/aiContractReader').aiConfig({}).provider, 'gemini');
+    const page = await http.request('/admin/settings', { cookie: adm });
+    assert.match(page.text, /مضبوط ✓/);
+    assert.ok(!page.text.includes(KEY), 'the key is never sent back');
+    const [[auditRow]] = await db.pool.query("SELECT after_json FROM audit_logs WHERE action = 'admin.settings.ai' ORDER BY id DESC LIMIT 1");
+    assert.ok(!JSON.stringify(auditRow.after_json).includes(KEY), 'never in the audit row');
+    // Blank key keeps it; the tick removes it.
+    await http.request('/admin/settings/ai', { method: 'POST', cookie: adm, form: { ai_provider: 'gemini', ai_model: 'gemini-2.5-pro', reason: 'تغيير النموذج' } });
+    assert.equal(aiSettings.now().apiKey, KEY);
+    assert.equal(aiSettings.now().model, 'gemini-2.5-pro');
+    await http.request('/admin/settings/ai', { method: 'POST', cookie: adm, form: { ai_provider: 'gemini', ai_clear_key: '1', reason: 'حذف المفتاح' } });
+    assert.equal(aiSettings.now().apiKey, '');
+  } finally {
+    await db.pool.query("DELETE FROM settings WHERE setting_key IN ('ai.provider', 'ai.model', 'ai.key_sealed')");
+    aiSettings.setForTests({});
+  }
+});

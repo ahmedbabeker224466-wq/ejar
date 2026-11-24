@@ -202,6 +202,7 @@ async function refreshBanner(pool = db.pool) {
     bannerText = all[KEYS.bannerMessage] || '';
     setAnalytics(all[KEYS.analyticsSnippet] || '');
     legalReviewed = Boolean(all[KEYS.legalReviewed]);
+    await require('./aiSettings').refresh(pool);
     const [[row]] = await pool.query("SELECT COUNT(*) AS n FROM blog_posts WHERE status = 'published' AND published_at IS NOT NULL AND published_at <= ?", [new Date()]);
     blogLive = Number(row.n) > 0;
   } catch {

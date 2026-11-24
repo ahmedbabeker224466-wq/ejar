@@ -6,6 +6,7 @@
   <a href="#bank"><%= __("الحساب البنكي") %></a>
   <a href="#support"><%= __("التواصل مع الدعم") %></a>
   <a href="#switches"><%= __("مفاتيح الإيقاف") %></a>
+  <a href="#ai"><%= __("الذكاء الاصطناعي") %></a>
   <a href="#analytics"><%= __("التحليلات") %></a>
 </nav>
 <form method="post" action="/admin/settings/details" class="form-card adm-settings" novalidate>
@@ -48,6 +49,30 @@
   <div class="field"><label for="reason-switches"><%= __("سبب الإجراء (يُسجَّل في سجل التدقيق)") %></label><input id="reason-switches" name="reason" class="input" maxlength="200" required>
     <% if (errors.reason_switches) { %><p class="field-error"><%= __(errors.reason_switches) %></p><% } %></div>
   <button type="submit" class="btn btn--success btn--large"><%= __("حفظ المفاتيح") %></button>
+</form>
+
+<form method="post" action="/admin/settings/ai" class="form-card adm-settings" id="ai" novalidate autocomplete="off">
+  <h2><%= __("قراءة العقود بالذكاء الاصطناعي") %></h2>
+  <p class="muted"><%= __("اختر الخدمة التي تقرأ ملف العقد المرفوع، والصق مفتاحها. يُحفظ المفتاح مشفراً ولا يظهر هنا مرة أخرى.") %></p>
+  <p class="adm-status"><% if (ai.keySet) { %><span class="badge badge--bill-success"><%= __("مضبوط ✓") %></span> <%= __(aiProviders[ai.provider] ? aiProviders[ai.provider].label : '') %><% } else if (ai.envKey) { %><span class="badge badge--bill-info"><%= __("يعمل بمفتاح Claude من متغيرات البيئة") %></span><% } else { %><span class="badge badge--bill-warning"><%= __("غير مفعّل") %></span><% } %></p>
+  <div class="form-grid">
+    <div class="field"><label for="ai_provider"><%= __("الخدمة") %></label>
+      <select id="ai_provider" name="ai_provider" class="select">
+        <% Object.entries(aiProviders).forEach(function ([code, p]) { %><option value="<%= code %>" <%= aiValues.ai_provider === code ? 'selected' : '' %>><%= p.label %></option><% }) %>
+      </select>
+      <% if (errors.ai_provider) { %><p class="field-error"><%= __(errors.ai_provider) %></p><% } %></div>
+    <div class="field"><label for="ai_model"><%= __("النموذج (اختياري)") %></label>
+      <input id="ai_model" name="ai_model" class="input" dir="ltr" maxlength="80" value="<%= aiValues.ai_model || '' %>" placeholder="<%= aiProviders[aiValues.ai_provider || 'gemini'] ? aiProviders[aiValues.ai_provider || 'gemini'].defaultModel : '' %>">
+      <% if (errors.ai_model) { %><p class="field-error"><%= __(errors.ai_model) %></p><% } else { %><p class="field-hint"><%= __("اتركه فارغاً لاستخدام النموذج الافتراضي.") %></p><% } %></div>
+  </div>
+  <div class="field"><label for="ai_key"><%= __("مفتاح الخدمة") %></label>
+    <input id="ai_key" name="ai_key" class="input" type="password" dir="ltr" maxlength="300" autocomplete="new-password" placeholder="<%= ai.keySet ? __('اتركه فارغاً للإبقاء على المفتاح الحالي') : '' %>">
+    <% if (errors.ai_key) { %><p class="field-error"><%= __(errors.ai_key) %></p><% } %></div>
+  <% if (ai.keySet) { %><label class="adm-check"><input type="checkbox" name="ai_clear_key" value="1"> <%= __("احذف المفتاح المحفوظ") %></label><% } %>
+  <div class="flash flash--warning adm-note"><%= __("تنبيه عن الخصوصية: ملف العقد يُرسَل كاملاً إلى الخدمة المختارة ليقرأ منه التواريخ والمبالغ، وفيه أسماء الأطراف وأرقام هوياتهم. شروط Google للخطة المجانية من Gemini تسمح لها باستخدام ما يُرسَل لتحسين خدماتها، بخلاف الخطة المدفوعة. استخدم الخطة المجانية للتجربة فقط، وفعّل الفوترة في حساب Google قبل استقبال عقود المكاتب الحقيقية.") %></div>
+  <div class="field"><label for="reason-ai"><%= __("سبب الإجراء (يُسجَّل في سجل التدقيق)") %></label><input id="reason-ai" name="reason" class="input" maxlength="200" required>
+    <% if (errors.reason_ai) { %><p class="field-error"><%= __(errors.reason_ai) %></p><% } %></div>
+  <button type="submit" class="btn btn--success btn--large"><%= __("حفظ") %></button>
 </form>
 
 <form method="post" action="/admin/settings/analytics" class="form-card adm-settings" id="analytics" novalidate>

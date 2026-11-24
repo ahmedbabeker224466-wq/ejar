@@ -42,6 +42,7 @@ const LABELS = Object.freeze({
   'admin.report.dismiss': 'رفض بلاغ إعلان',
   'admin.settings.analytics': 'تعديل كود التحليلات',
   'admin.settings.details': 'تعديل بيانات المنصة',
+  'admin.settings.ai': 'تعديل إعدادات الذكاء الاصطناعي',
   'admin.settings.switches': 'تعديل مفاتيح الإيقاف',
   'billing.paid': 'سداد اشتراك',
   'billing.suspicious': 'دفعة مشبوهة',
