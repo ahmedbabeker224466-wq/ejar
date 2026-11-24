@@ -1,0 +1,6 @@
+<%# The three steps of registering an office; step = the current one (1, 2 or 3). %>
+<ol class="signup-steps" aria-label="<%= __("خطوات تسجيل المكتب") %>">
+  <% [__("الحساب"), __("بيانات المكتب"), __("المراجعة")].forEach(function (label, i) { const n = i + 1; %>
+    <li class="<%= n < step ? 'is-done' : n === step ? 'is-current' : '' %>" <%- n === step ? 'aria-current="step"' : '' %>><%= label %></li>
+  <% }) %>
+</ol>

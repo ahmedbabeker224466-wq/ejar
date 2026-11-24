@@ -163,6 +163,7 @@ const TABLES = [
     'verification_note VARCHAR(200) NULL', // the admin's reason when rejected (shown to the owner)
     'verified_at DATETIME NULL',
     `verified_by ${REF} NULL`,
+    'terms_accepted_at DATETIME NULL', // when the owner ticked the terms and privacy box at sign-up
     'UNIQUE KEY uq_offices_public_slug (public_slug)',
     'UNIQUE KEY uq_offices_custom_domain (custom_domain)',
     fk('offices', 'owner_id', 'users', 'SET NULL'),
@@ -1237,6 +1238,7 @@ const COLUMN_ADDITIONS = [
   { table: 'offices', column: 'verification_note', definition: 'VARCHAR(200) NULL AFTER verification' },
   { table: 'offices', column: 'verified_at', definition: 'DATETIME NULL AFTER verification_note' },
   { table: 'offices', column: 'verified_by', definition: 'BIGINT UNSIGNED NULL AFTER verified_at' },
+  { table: 'offices', column: 'terms_accepted_at', definition: 'DATETIME NULL AFTER verified_by' },
   { table: 'backups', column: 'filename', definition: 'VARCHAR(80) NULL AFTER path' },
   { table: 'backups', column: 'sha256', definition: 'CHAR(64) NULL AFTER size_bytes' },
   { table: 'backups', column: 'tables_count', definition: 'INT UNSIGNED NULL AFTER sha256' },

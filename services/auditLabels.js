@@ -49,6 +49,7 @@ const LABELS = Object.freeze({
   'billing.transfer_approve': 'اعتماد حوالة بنكية',
   'billing.transfer_reject': 'رفض حوالة بنكية',
   'office.create': 'إنشاء مكتب',
+  'office.resubmit': 'تعديل بيانات مكتب بانتظار المراجعة',
   'office.update': 'تعديل بيانات مكتب',
   'office.plan_backfill': 'تعيين الباقة الافتراضية',
   'office.public_page': 'تعديل صفحة المكتب العامة',

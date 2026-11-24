@@ -118,7 +118,7 @@ async function membershipsFor(pool, userId) {
  * failing rolls every step back (a deadlock is retried, see services/transaction.js). Only a user with no role and no office may
  * create one, so this can never grant platform_admin or a second office.
  */
-async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
+async function createOffice(pool, { userId, fields, ip, termsAccepted = false, now = new Date() }) {
   return withTransaction(pool, async (conn) => {
     // Locks the user row, so a double submit cannot create two offices.
     const [[user]] = await conn.query('SELECT id, role FROM users WHERE id = ? FOR UPDATE', [userId]);
@@ -133,8 +133,8 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
     const trialEndsAt = contractDates.trialEndsAt(now);
     const [created] = await conn.query(
       `INSERT INTO offices
-         (name, city, phone, email, cr_number, rega_license, owner_id, plan_id, status, trial_ends_at, verification)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'trial', ?, 'pending')`,
+         (name, city, phone, email, cr_number, rega_license, owner_id, plan_id, status, trial_ends_at, verification, terms_accepted_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'trial', ?, 'pending', ?)`,
       [
         fields.name,
         fields.city,
@@ -145,6 +145,7 @@ async function createOffice(pool, { userId, fields, ip, now = new Date() }) {
         userId,
         plan ? plan.id : null,
         trialEndsAt,
+        termsAccepted ? now : null,
       ],
     );
     const officeId = created.insertId;

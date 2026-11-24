@@ -89,6 +89,7 @@ function renderVerify(res, pending, error, status = 200) {
   res.status(status).render('pages/login-verify', {
     title: 'رمز الدخول',
     phoneLocal: toLocal(pending.phone),
+    signupStep: pending.intent === 'register' ? 1 : null,
     resendIn: Math.max(0, RESEND_SECONDS - elapsed),
     error,
   });
@@ -104,6 +105,7 @@ function renderEmailVerify(res, pending, error, status = 200) {
     title: 'رمز الدخول',
     phoneLocal: pending.email,
     sentTo: 'email',
+    signupStep: pending.intent === 'register' ? 1 : null,
     verifyAction: '/login/email/verify',
     resendAction: '/login/email/resend',
     changeHref: pending.intent === 'register' ? '/register' : '/login',
@@ -321,7 +323,7 @@ router.post('/login', async (req, res, next) => {
     if (!result.ok) {
       return renderPhonePage(res, intent, toLocal(phone), messageFor(result), result.error === 'send_failed' ? 503 : 429, nextPath);
     }
-    stepCookie(res, LOGIN_COOKIE, auth.signStepToken({ phone, sentAt: Date.now(), next: nextPath }, 'login-phone', STEP_SECONDS));
+    stepCookie(res, LOGIN_COOKIE, auth.signStepToken({ phone, intent, sentAt: Date.now(), next: nextPath }, 'login-phone', STEP_SECONDS));
     return res.redirect('/login/verify');
   } catch (err) {
     return next(err);
@@ -341,7 +343,7 @@ router.post('/login/resend', async (req, res, next) => {
     if (!pending) return res.redirect('/login');
     const result = await otp.request(pending.phone, 'login', req.ip, req.lang);
     if (!result.ok) return renderVerify(res, pending, messageFor(result), 429);
-    const fresh = { phone: pending.phone, sentAt: Date.now(), next: safeNext(pending.next) };
+    const fresh = { phone: pending.phone, intent: pending.intent === 'register' ? 'register' : 'login', sentAt: Date.now(), next: safeNext(pending.next) };
     stepCookie(res, LOGIN_COOKIE, auth.signStepToken(fresh, 'login-phone', STEP_SECONDS));
     return res.redirect('/login/verify');
   } catch (err) {

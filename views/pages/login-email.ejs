@@ -1,5 +1,6 @@
 <div class="auth-split">
 <section class="auth card">
+  <% if (intent === 'register') { %><%- include('../partials/signup-steps', { step: 1 }) %><% } %>
   <div class="auth__icon" aria-hidden="true">
     <%- include('../partials/brand-mark', { bid: 'a' }) %>
   </div>

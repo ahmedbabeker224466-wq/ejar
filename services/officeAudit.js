@@ -23,6 +23,7 @@ const ROLE_LABELS = {
 
 const ACTION_LABELS = {
   'office.create': 'إنشاء المكتب',
+  'office.resubmit': 'تعديل بيانات المكتب للمراجعة',
   'office.update': 'تعديل بيانات المكتب',
   'office.plan_backfill': 'تحديد الباقة الافتراضية تلقائياً',
   'office.public_slug': 'تغيير رابط المكتب',

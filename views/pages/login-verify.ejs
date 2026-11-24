@@ -1,5 +1,6 @@
 <% if (!locals.adminAuth) { %><div class="auth-split"><% } %>
 <section class="auth card">
+  <% if (locals.signupStep) { %><%- include('../partials/signup-steps', { step: signupStep }) %><% } %>
   <h1><%= __("أدخل رمز الدخول") %></h1>
   <p class="lead"><%= __("أرسلنا رمزاً من 6 أرقام إلى") %> <bdi dir="ltr" class="nowrap"><%= __(phoneLocal) %></bdi></p>
   <% if (locals.sentTo === 'email') { %><p class="muted"><%= __("تحقق من صندوق الوارد، وإن لم تجد الرسالة فانظر في الرسائل غير المرغوب فيها.") %></p><% } %>

@@ -5,6 +5,7 @@
 // route here already has requireAuth, requirePerm('platform.access') and the 2FA check.
 
 /* eslint-disable no-unused-vars */
+const { toLocal } = require('../utils/phone');
 const db = require('../config/db');
 const auth = require('../services/auth');
 const admin = require('../services/admin');
@@ -41,6 +42,7 @@ async function renderOffice(req, res, { error = null, status = 200, values = {} 
   if (!detail) return notFound(res);
   return res.status(status).render('admin/office', {
     title: detail.office.name,
+    toLocal,
     ...detail,
     allPlans: await plans.listPlans(db.pool),
     falInquiryUrl: officeReview.FAL_INQUIRY_URL,

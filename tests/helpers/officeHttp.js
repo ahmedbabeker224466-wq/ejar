@@ -61,7 +61,7 @@ function createOfficeHttp(db) {
     const created = await request('/office/new', {
       method: 'POST',
       cookie,
-      form: { name, city: 'الرياض', phone: '0112345678', rega_license: '1200000001', cr_number: '7000000001' },
+      form: { name, city: 'الرياض', phone: '0112345678', rega_license: '1200000001', cr_number: '7000000001', accept_terms: '1' },
     });
     assert.equal(created.status, 302, created.text.slice(0, 200));
     const user = await userByPhone(phone);

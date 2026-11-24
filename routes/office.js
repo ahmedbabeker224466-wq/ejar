@@ -83,15 +83,20 @@ async function onlyWithoutOffice(req, res, next) {
   }
 }
 
-function renderNewOffice(res, values, errors, status = 200) {
+function renderNewOffice(res, values, errors, status = 200, extra = {}) {
   return res.status(status).render('office/new', {
-    title: 'إنشاء مكتبك',
+    title: extra.editing ? 'تعديل بيانات المكتب' : 'إنشاء مكتبك',
+    layout: 'layouts/site',
+    mkStd: true,
     licenceRequired: true,
     cities: offices.SAUDI_CITIES,
     values,
     errors,
+    ...extra,
   });
 }
+
+const TERMS_ERROR = 'وافق على الشروط والأحكام وسياسة الخصوصية لإنشاء المكتب.';
 
 const createOfficeLimit = rateLimit({
   windowMs: 10 * 60 * 1000,
@@ -109,14 +114,16 @@ router.get('/office/new', requireAuth, onlyWithoutOffice, (req, res) => {
 
 router.post('/office/new', requireAuth, createOfficeLimit, onlyWithoutOffice, async (req, res, next) => {
   const { values, errors } = offices.validateOfficeFields(req.body, { requireLicence: true });
+  const acceptedTerms = req.body.accept_terms === '1';
+  if (!acceptedTerms) errors.accept_terms = TERMS_ERROR;
   if (Object.keys(errors).length > 0) {
-    return renderNewOffice(res, { ...formValues(values), phone: String(req.body.phone || '').slice(0, 20) }, errors, 422);
+    return renderNewOffice(res, { ...formValues(values), phone: String(req.body.phone || '').slice(0, 20), accept_terms: acceptedTerms }, errors, 422);
   }
   try {
     if (await platformSettings.signupsDisabled()) {
-      return renderNewOffice(res, formValues(values), { form: 'التسجيل الجديد متوقف مؤقتاً. حاول لاحقاً.' }, 403);
+      return renderNewOffice(res, { ...formValues(values), accept_terms: true }, { form: 'التسجيل الجديد متوقف مؤقتاً. حاول لاحقاً.' }, 403);
     }
-    const officeId = await offices.createOffice(db.pool, { userId: req.user.id, fields: values, ip: req.ip });
+    const officeId = await offices.createOffice(db.pool, { userId: req.user.id, fields: values, ip: req.ip, termsAccepted: true });
     // The platform admin checks the licence; a failed notice never blocks the sign-up.
     try {
       await officeReview.notifyNewOffice(db.pool, officeId);
@@ -128,13 +135,55 @@ router.post('/office/new', requireAuth, createOfficeLimit, onlyWithoutOffice, as
     if (err instanceof offices.OfficeCreateError) return res.redirect('/office');
     // Only the error code: never the office details the user typed.
     logger.error(`Office creation failed: ${err.code || err.name}`);
-    return renderNewOffice(res, formValues(values), { form: 'تعذّر إنشاء المكتب الآن. حاول مرة أخرى بعد قليل.' }, 500);
+    return renderNewOffice(res, { ...formValues(values), accept_terms: true }, { form: 'تعذّر إنشاء المكتب الآن. حاول مرة أخرى بعد قليل.' }, 500);
   }
 });
 
 // ------------------------------------------------------------ office area
 
 router.use('/office', requireAuth, loadOffice(), officeGate);
+
+// ------------------------------------------------------------ correcting a pending or refused sign-up
+// Only the owner, only while the licence check is pending or was refused.
+// Saving sends the office back to the admin's review queue (officeGate lets
+// these two routes through for an unverified office).
+function onlyUnverifiedOwner(req, res, next) {
+  if (req.memberRole !== 'office_owner') return res.status(404).render('errors/404', { title: 'الصفحة غير موجودة' });
+  if (req.office.verification === 'approved') return res.redirect('/office');
+  return next();
+}
+
+const resubmitLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  keyFor: (req) => `office-resubmit:${req.office.id}`,
+  onLimit: (req, res) =>
+    renderNewOffice(res, formValues(offices.validateOfficeFields(req.body, { requireLicence: true }).values), {
+      form: 'أرسلت التعديل مرات كثيرة. انتظر قليلاً ثم حاول مرة أخرى.',
+    }, 429, { editing: true }),
+});
+
+router.get('/office/review/edit', onlyUnverifiedOwner, async (req, res, next) => {
+  try {
+    return renderNewOffice(res, formValues(await offices.officeDetails(db.pool, req.office.id)), {}, 200, { editing: true });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post('/office/review/edit', onlyUnverifiedOwner, resubmitLimit, async (req, res, next) => {
+  const { values, errors } = offices.validateOfficeFields(req.body, { requireLicence: true });
+  if (Object.keys(errors).length > 0) {
+    return renderNewOffice(res, { ...formValues(values), phone: String(req.body.phone || '').slice(0, 20) }, errors, 422, { editing: true });
+  }
+  try {
+    await officeReview.resubmit(db.pool, { officeId: req.office.id, userId: req.user.id, fields: values, ip: req.ip });
+    return res.redirect('/office?done=resubmitted');
+  } catch (err) {
+    if (err instanceof officeReview.ReviewError) return res.redirect('/office');
+    return next(err);
+  }
+});
 
 // done(counts) ticks a step once the office has done it.
 const SETUP_STEPS = [

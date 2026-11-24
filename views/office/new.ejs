@@ -1,7 +1,11 @@
-<section class="card form-card">
-  <h1><%= __("أنشئ مكتبك") %></h1>
-  <p class="lead"><%= __("اكتب بيانات مكتبك. نراجع رخصة فال والسجل التجاري، ثم تبدأ تجربتك المجانية لمدة 14 يوماً دون بطاقة دفع.") %></p>
-  <p class="flash flash--info"><%= __("مالك عقار أو مستأجر ووصلك رمز دعوة من مكتب؟") %> <a href="/join"><%= __("ادخل الرمز هنا") %></a> <%= __("بدلاً من إنشاء مكتب.") %></p>
+<% const editing = Boolean(locals.editing); %>
+<div class="auth-split">
+<section class="auth card auth--wide">
+  <%- include('../partials/signup-steps', { step: 2 }) %>
+  <h1><%= editing ? __("عدّل بيانات مكتبك") : __("أنشئ مكتبك") %></h1>
+  <p class="lead"><%= editing
+    ? __("صحّح البيانات ثم أرسلها، وسنعيد مراجعة الرخصة والسجل التجاري.")
+    : __("اكتب بيانات مكتبك. نراجع رخصة فال والسجل التجاري، ثم تبدأ تجربتك المجانية لمدة 14 يوماً دون بطاقة دفع.") %></p>
 
   <% if (errors.form) { %>
     <div class="flash flash--danger" role="alert"><%= __(errors.form) %></div>
@@ -9,8 +13,25 @@
     <div class="flash flash--danger" role="alert"><%= __("راجع الحقول المظللة بالأحمر.") %></div>
   <% } %>
 
-  <form method="post" action="/office/new" novalidate>
+  <form method="post" action="<%= editing ? '/office/review/edit' : '/office/new' %>" novalidate>
     <%- include('../partials/office-fields') %>
-    <button type="submit" class="btn btn--primary btn--block btn--large"><%= __("أنشئ المكتب") %></button>
+    <% if (!editing) { %>
+    <div class="field">
+      <label class="consent" for="accept_terms" <%- errors.accept_terms ? 'aria-invalid="true"' : '' %>>
+        <input id="accept_terms" name="accept_terms" type="checkbox" value="1" required <%= values.accept_terms ? 'checked' : '' %> <%- errors.accept_terms ? 'aria-describedby="terms-error"' : '' %>>
+        <span><%= __("أوافق على") %> <a href="/terms" target="_blank" rel="noopener"><%= __("الشروط والأحكام") %></a> <%= __("و") %><a href="/privacy" target="_blank" rel="noopener"><%= __("سياسة الخصوصية") %></a>.</span>
+      </label>
+      <% if (errors.accept_terms) { %><p id="terms-error" class="field-error"><%= __(errors.accept_terms) %></p><% } %>
+    </div>
+    <% } %>
+    <button type="submit" class="btn btn--primary btn--block btn--large"><%= editing ? __("أرسل للمراجعة") : __("أنشئ المكتب") %></button>
   </form>
+
+  <% if (editing) { %>
+    <a href="/office" class="btn btn--outline btn--block office-back"><%= __("رجوع") %></a>
+  <% } else { %>
+    <p class="muted office-note"><%= __("مالك عقار أو مستأجر ووصلك رمز دعوة من مكتب؟") %> <a href="/join"><%= __("ادخل الرمز هنا") %></a>.</p>
+  <% } %>
 </section>
+<%- include('../partials/auth-art') %>
+</div>

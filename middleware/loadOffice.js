@@ -112,13 +112,18 @@ function loadOffice(pool = db.pool) {
 function officeGate(req, res, next) {
   const access = req.officeAccess;
   if (!access || (!access.locked && !access.readOnly)) return next();
-  // Waiting for the licence check (or refused): no office page opens at all.
+  // Waiting for the licence check (or refused): no office page opens at all,
+  // except the owner's form that corrects the details and resubmits them.
   if (access.reason === 'pending_review' || access.reason === 'rejected') {
+    if (req.baseUrl + req.path === '/office/review/edit' && req.memberRole === 'office_owner') return next();
     res.locals.officeNav = [];
+    res.locals.bareShell = true;
     return res.status(403).render('office/review', {
       title: access.reason === 'rejected' ? 'لم تتم الموافقة على المكتب' : 'طلبك قيد المراجعة',
       reason: access.reason,
       note: req.office.verification_note,
+      canEdit: req.memberRole === 'office_owner',
+      resubmitted: req.query.done === 'resubmitted',
     });
   }
   const path = req.baseUrl + req.path;

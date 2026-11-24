@@ -43,11 +43,11 @@
 <section class="card detail-card">
   <h2><%= __("البيانات") %></h2>
   <dl class="adm-kv">
-    <dt><%= __("الحالة") %></dt><dd><span class="badge badge--bill-<%= __(office.status === 'active' ? 'success' : office.status === 'trial' ? 'info' : 'danger') %>"><%= __(stLabel[office.status]) %></span><%= __(adminSuspended ? __(' (موقوف من الإدارة)') : '') %></dd>
+    <dt><%= __("الحالة") %></dt><dd><% if (office.verification === 'pending') { %><span class="badge badge--bill-warning"><%= __("بانتظار المراجعة") %></span><% } else if (office.verification === 'rejected') { %><span class="badge badge--bill-danger"><%= __("مرفوض") %></span><% } else { %><span class="badge badge--bill-<%= __(office.status === 'active' ? 'success' : office.status === 'trial' ? 'info' : 'danger') %>"><%= __(stLabel[office.status]) %></span><%= __(adminSuspended ? __(' (موقوف من الإدارة)') : '') %><% } %></dd>
     <dt><%= __("الباقة") %></dt><dd><%= __(office.plan_name || '—') %></dd>
     <dt><%= __("المدينة") %></dt><dd><%= __(office.city) %></dd>
-    <dt><%= __("الجوال") %></dt><dd dir="ltr"><%= __(office.phone) %></dd>
-    <dt><%= __("نهاية التجربة") %></dt><dd dir="ltr"><%= __(stamp(office.trial_ends_at)) %></dd>
+    <dt><%= __("الجوال") %></dt><dd dir="ltr"><%= __(toLocal(office.phone) || '—') %></dd>
+    <dt><%= __("نهاية التجربة") %></dt><dd<%- office.verification === 'approved' ? ' dir="ltr"' : '' %>><%= __(office.verification === 'approved' ? stamp(office.trial_ends_at) : __('تبدأ عند الموافقة')) %></dd>
     <dt><%= __("نهاية الاشتراك") %></dt><dd dir="ltr"><%= __(stamp(office.subscription_ends_at)) %></dd>
     <dt><%= __("نشر الإعلانات") %></dt><dd><%= __(Number(office.listings_banned) ? __('موقوف من الإدارة') : __('مسموح')) %></dd>
     <dt><%= __("أعضاء الفريق") %></dt><dd><%= __(members.active) %> <%= __("فعّال من") %> <%= __(members.total) %></dd>

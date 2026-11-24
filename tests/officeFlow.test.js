@@ -104,6 +104,7 @@ const OFFICE_FORM = {
   email: 'office@example.sa',
   cr_number: '1010123456',
   rega_license: '1200001234',
+  accept_terms: '1',
 };
 
 /** Registers a new office through the real pages; returns the owner's cookie and office id. */

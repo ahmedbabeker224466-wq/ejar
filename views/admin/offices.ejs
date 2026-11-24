@@ -20,8 +20,7 @@
       <% rows.forEach(function (o) { %>
         <tr>
           <td><a class="adm-strong" href="/admin/offices/<%= __(o.id) %>"><%= __(o.name) %></a><span class="adm-sub"><%= __(o.city) %></span></td>
-          <td><span class="badge badge--bill-<%= __(o.status === 'active' ? 'success' : o.status === 'trial' ? 'info' : 'danger') %>"><%= __(statusLabel[o.status]) %></span>
-            <% if (o.verification === 'pending') { %><span class="badge badge--bill-warning"><%= __("بانتظار المراجعة") %></span><% } else if (o.verification === 'rejected') { %><span class="badge badge--bill-danger"><%= __("مرفوض") %></span><% } %></td>
+          <td><% if (o.verification === 'pending') { %><span class="badge badge--bill-warning"><%= __("بانتظار المراجعة") %></span><% } else if (o.verification === 'rejected') { %><span class="badge badge--bill-danger"><%= __("مرفوض") %></span><% } else { %><span class="badge badge--bill-<%= __(o.status === 'active' ? 'success' : o.status === 'trial' ? 'info' : 'danger') %>"><%= __(statusLabel[o.status]) %></span><% } %></td>
           <td><%= __(o.plan_name || '—') %></td>
           <td><%= __(o.units) %></td>
           <td><%= __(o.contracts) %></td>

@@ -91,6 +91,45 @@ async function approve(pool, { officeId, adminId, reason, ip, now = new Date() }
   return office;
 }
 
+/**
+ * The owner corrects the details of a pending or refused office and sends them
+ * back for the licence check. The audit row names the changed fields only,
+ * never the licence numbers or the phone.
+ */
+async function resubmit(pool, { officeId, userId, fields, ip, now = new Date() }) {
+  const office = await withTransaction(pool, async (conn) => {
+    const [[row]] = await conn.query(
+      `SELECT id, name, city, phone, email, cr_number, rega_license, owner_id, verification
+         FROM offices WHERE id = ? FOR UPDATE`,
+      [officeId],
+    );
+    if (!row) throw new ReviewError('no_office');
+    if (Number(row.owner_id) !== Number(userId)) throw new ReviewError('not_owner');
+    if (row.verification === 'approved') throw new ReviewError('already_approved');
+    const changed = ['name', 'city', 'phone', 'email', 'cr_number', 'rega_license']
+      .filter((key) => String(row[key] ?? '') !== String(fields[key] ?? ''));
+    const scoped = scopeToOffice(conn, row.id);
+    await scoped.query(
+      `UPDATE offices SET name = ?, city = ?, phone = ?, email = ?, cr_number = ?, rega_license = ?,
+              verification = 'pending', verification_note = NULL
+        WHERE id = :office_id`,
+      [fields.name, fields.city, fields.phone, fields.email, fields.cr_number, fields.rega_license],
+    );
+    await createAudit(conn).write(userId, row.id, 'office.resubmit', 'office', row.id,
+      { verification: row.verification }, { verification: 'pending', changed }, ip);
+    return { id: row.id, name: fields.name };
+  });
+  await notifyPlatformAdmins(pool, {
+    kind: 'office_review',
+    title: 'مكتب عدّل بياناته وينتظر المراجعة',
+    body: `عدّل المكتب بياناته وينتظر مراجعة الرخصة: ${office.name}`,
+    link: `/admin/offices/${office.id}`,
+    dedupeKey: `office_review:o${office.id}:${now.getTime()}`,
+    urgent: true,
+  });
+  return office;
+}
+
 /** Rejects a pending office with a reason the owner will read. */
 async function reject(pool, { officeId, adminId, reason, ip, now = new Date() }) {
   const office = await withTransaction(pool, async (conn) => {
@@ -119,4 +158,4 @@ async function reject(pool, { officeId, adminId, reason, ip, now = new Date() })
   return office;
 }
 
-module.exports = { FAL_INQUIRY_URL, ReviewError, notifyNewOffice, pendingCount, approve, reject };
+module.exports = { FAL_INQUIRY_URL, ReviewError, notifyNewOffice, pendingCount, approve, reject, resubmit };

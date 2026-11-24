@@ -227,11 +227,19 @@ test('a new office needs its licence, waits for review, the admins are told; app
   assert.equal(missing.status, 422);
   assert.match(missing.text, /رقم ترخيص فال/);
 
-  const form = { name: 'تجربة-مراجعة', city: 'الرياض', phone: '0112345678', rega_license: '1200000033', cr_number: '7000000033' };
+  const form = { name: 'تجربة-مراجعة', city: 'الرياض', phone: '0112345678', rega_license: '1200000033', cr_number: '7000000033', accept_terms: '1' };
+  const { accept_terms: _terms, ...noTerms } = form;
+  const unticked = await http.request('/office/new', { method: 'POST', cookie, form: noTerms });
+  assert.equal(unticked.status, 422, 'the terms box must be ticked');
+  assert.match(unticked.text, /وافق على الشروط والأحكام/);
   const created = await http.request('/office/new', { method: 'POST', cookie, form });
   assert.equal(created.status, 302);
   const [[office]] = await db.pool.query('SELECT * FROM offices WHERE owner_id = (SELECT id FROM users WHERE phone = ?)', [phone(1)]);
   assert.equal(office.verification, 'pending');
+  assert.ok(office.terms_accepted_at, 'the consent time is stored');
+  const waiting = await http.request('/office', { cookie });
+  assert.match(waiting.text, /href="\/office\/review\/edit"/, 'the owner can correct the details');
+  assert.doesNotMatch(waiting.text, /id="office-nav"/, 'no empty menu while waiting');
 
   for (const path of ['/office', '/office/contracts', '/office/billing', '/office/settings']) {
     const res = await http.request(path, { cookie });
@@ -250,6 +258,22 @@ test('a new office needs its licence, waits for review, the admins are told; app
   assert.match(refused.text, /لم تتم الموافقة على المكتب/);
   assert.match(refused.text, /الرخصة منتهية/);
   await assert.rejects(officeReview.reject(db.pool, { officeId: office.id, adminId: admin.id, reason: 'مرة ثانية', ip: null }), /not_pending/);
+
+  // The owner corrects the details: the office goes back to the review queue.
+  const editPage = await http.request('/office/review/edit', { cookie });
+  assert.equal(editPage.status, 200);
+  assert.match(editPage.text, /value="1200000033"/);
+  const fixed = await http.request('/office/review/edit', { method: 'POST', cookie, form: { ...form, rega_license: '1200000044' } });
+  assert.equal(fixed.status, 302);
+  const [[resent]] = await db.pool.query('SELECT verification, verification_note, rega_license FROM offices WHERE id = ?', [office.id]);
+  assert.deepEqual({ ...resent }, { verification: 'pending', verification_note: null, rega_license: '1200000044' });
+  const [[resubmitAudit]] = await db.pool.query("SELECT after_json FROM audit_logs WHERE office_id = ? AND action = 'office.resubmit'", [office.id]);
+  const resubmitAfter = typeof resubmitAudit.after_json === 'string' ? JSON.parse(resubmitAudit.after_json) : resubmitAudit.after_json;
+  assert.deepEqual(resubmitAfter.changed, ['rega_license']);
+  assert.ok(!JSON.stringify(resubmitAfter).includes('1200000044'), 'never the licence number in the audit row');
+  const [resentNotes] = await db.pool.query("SELECT id FROM notifications WHERE user_id = ? AND kind = 'office_review' AND link = ?", [admin.id, `/admin/offices/${office.id}`]);
+  assert.equal(resentNotes.length, 2, 'the admins are told again');
+  await db.pool.query("UPDATE offices SET rega_license = '1200000033' WHERE id = ?", [office.id]);
 
   const before = Date.now();
   await officeReview.approve(db.pool, { officeId: office.id, adminId: admin.id, reason: 'سارية', ip: null });
