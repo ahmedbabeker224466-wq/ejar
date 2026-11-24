@@ -168,9 +168,157 @@ async function officeView(pool, officeId, env = process.env) {
     activeDomain: office ? office.custom_domain : null,
     slug: office ? office.public_slug : null,
     request: present(latest[0] || null),
-    records: recordsConfig(env),
+    records: { ...recordsConfig(env), ip: await serverIp(env) },
     serviceFeeHalalas: SERVICE_FEE_HALALAS,
   };
+}
+
+// ------------------------------------------------------------ self-service connect (owner, Nov 2026)
+
+let ipCache = { value: '', at: 0 };
+/**
+ * The address offices point their A record at: APP_DOMAIN_IP, else the A
+ * record of the platform host (looked up at most once an hour). '' when unknown.
+ */
+async function serverIp(env = process.env, now = Date.now()) {
+  const fixed = recordsConfig(env).ip;
+  if (fixed) return fixed;
+  const host = platformHost(env);
+  if (!host || host === 'localhost') return '';
+  if (ipCache.value && now - ipCache.at < 3600 * 1000) return ipCache.value;
+  try {
+    const r = resolverOverride && resolverOverride.resolve4 ? resolverOverride : new dns.promises.Resolver({ timeout: 3000, tries: 1 });
+    const [ip] = await r.resolve4(host);
+    if (net.isIPv4(ip)) ipCache = { value: ip, at: now };
+  } catch {
+    // keep the old value (or none)
+  }
+  return ipCache.value;
+}
+
+/** Pure: do the looked-up A records point at the server? */
+function dnsReady(found, ip) {
+  return Boolean(ip) && Array.isArray(found) && found.includes(ip);
+}
+
+async function lookupA(domain) {
+  const r = resolverOverride && resolverOverride.resolve4 ? resolverOverride : new dns.promises.Resolver({ timeout: 4000, tries: 2 });
+  try {
+    return { ok: true, values: await r.resolve4(domain) };
+  } catch (err) {
+    return { ok: false, values: [], error: String(err.code || 'lookup_failed').slice(0, 40) };
+  }
+}
+
+const CONNECT_TEXT = Object.freeze({
+  not_found: 'لم نجد طلب النطاق.',
+  not_open: 'هذا الطلب لم يعد بانتظار الربط.',
+  no_ip: 'لم يُضبط عنوان الخادم بعد. سيكمل فريق الدعم الربط لك.',
+  dns_not_ready: 'لم تصل السجلات إلى الإنترنت بعد. تأكد من إضافة السجل A بالقيمة الظاهرة، ثم حاول بعد قليل (قد يستغرق ذلك حتى 24 ساعة).',
+  taken: 'هذا الدومين مربوط بمكتب آخر.',
+  manual: 'تحققنا من السجلات بنجاح. سيكمل فريق الدعم الربط خلال ساعات، وسنبلغك عند اكتماله.',
+});
+
+/**
+ * «ربط»: the owner says the records are in place. Checks the A record, attaches
+ * the domain to the hosting account (services/hosting.js), then in ONE
+ * transaction (office row locked first) stores it on the office and marks the
+ * request active. When the hosting step is not available the request stays
+ * open and the platform admins are told to finish it.
+ * Returns { ok: true, ssl } | { ok: false, code, message, found? } | { ok: false, manual: true, message }.
+ */
+async function connectRequest(pool, { officeId, userId, requestId, ip = null, env = process.env, now = new Date() }) {
+  const hosting = require('./hosting');
+  if (!/^\d+$/.test(String(requestId))) return { ok: false, code: 'not_found', message: CONNECT_TEXT.not_found };
+  const scoped = scopeToOffice(pool, officeId);
+  const row = await scoped.selectOne('office_domain_requests', { id: Number(requestId) });
+  if (!row || row.type !== 'own') return { ok: false, code: 'not_found', message: CONNECT_TEXT.not_found };
+  if (!OPEN.includes(row.status)) return { ok: false, code: 'not_open', message: CONNECT_TEXT.not_open };
+  const target = await serverIp(env);
+  if (!target) return { ok: false, code: 'no_ip', message: CONNECT_TEXT.no_ip };
+  const found = await lookupA(row.domain);
+  if (!dnsReady(found.values, target)) {
+    await createAudit(pool).log(userId, officeId, 'domain.connect', 'domain_request', row.id, null, { outcome: 'dns_not_ready' }, ip);
+    return { ok: false, code: 'dns_not_ready', message: CONNECT_TEXT.dns_not_ready, found: found.values.filter((v) => net.isIPv4(v)).slice(0, 4) };
+  }
+  const [[clash]] = await pool.query('SELECT COUNT(*) AS n FROM offices WHERE custom_domain = ? AND id <> ?', [row.domain, officeId]);
+  if (Number(clash.n) > 0) return { ok: false, code: 'taken', message: CONNECT_TEXT.taken };
+
+  const attached = await hosting.attach(row.domain, env);
+  if (!attached.ok) {
+    await createAudit(pool).log(userId, officeId, 'domain.connect', 'domain_request', row.id, null, { outcome: 'manual', error_code: attached.code }, ip);
+    const day = now.toISOString().slice(0, 10);
+    await require('./platformNotify').notifyPlatformAdmins(pool, {
+      kind: 'domain_connect',
+      title: 'نطاق مكتب جاهز للربط اليدوي',
+      body: `سجلات الدومين ${row.domain} صحيحة، لكن الربط التلقائي لم يكتمل (${attached.code}). أضفه نطاقاً مُوقَفاً (Parked) ثم فعّل الطلب.`,
+      link: `/admin/domains/${row.id}`,
+      dedupeKey: `domain_connect:r${row.id}:${day}`,
+      now,
+    });
+    return { ok: false, manual: true, code: attached.code, message: CONNECT_TEXT.manual };
+  }
+
+  const outcome = await withTransaction(pool, async (conn) => {
+    await conn.query('SELECT id FROM offices WHERE id = ? FOR UPDATE', [officeId]);
+    const [[locked]] = await conn.query('SELECT status FROM office_domain_requests WHERE id = ? AND office_id = ? FOR UPDATE', [row.id, officeId]);
+    if (!locked || !OPEN.includes(locked.status)) return { ok: false, code: 'not_open', message: CONNECT_TEXT.not_open };
+    try {
+      await conn.query('UPDATE offices SET custom_domain = ? WHERE id = ?', [row.domain, officeId]);
+    } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY') return { ok: false, code: 'taken', message: CONNECT_TEXT.taken };
+      throw err;
+    }
+    await conn.query("UPDATE office_domain_requests SET status = 'active', activated_at = ? WHERE id = ?", [now, row.id]);
+    await createAudit(conn).write(userId, officeId, 'domain.connect', 'domain_request', row.id, { status: locked.status },
+      { outcome: 'connected', status: 'active', domain: row.domain, ssl: Boolean(attached.ssl) }, ip);
+    return { ok: true, ssl: Boolean(attached.ssl) };
+  });
+  if (!outcome.ok) {
+    await hosting.detach(row.domain, env);
+    return outcome;
+  }
+  require('./customHosts').clear();
+  await require('./platformNotify').notifyPlatformAdmins(pool, {
+    kind: 'domain_connect',
+    title: 'ربط مكتب نطاقه تلقائياً',
+    body: `الدومين: ${row.domain}`,
+    link: `/admin/domains/${row.id}`,
+    dedupeKey: `domain_connected:r${row.id}`,
+    now,
+  });
+  return outcome;
+}
+
+/**
+ * «إلغاء الربط»: the owner removes the active domain. The office goes back to the
+ * free link at once; the hosting alias is removed best effort.
+ */
+async function disconnectDomain(pool, { officeId, userId, ip = null, env = process.env }) {
+  const outcome = await withTransaction(pool, async (conn) => {
+    const [[office]] = await conn.query('SELECT custom_domain FROM offices WHERE id = ? FOR UPDATE', [officeId]);
+    if (!office || !office.custom_domain) return { ok: false };
+    await conn.query('UPDATE offices SET custom_domain = NULL WHERE id = ?', [officeId]);
+    await scopeToOffice(conn, officeId).query(
+      "UPDATE office_domain_requests SET status = 'cancelled' WHERE office_id = :office_id AND status = 'active' AND domain = ?",
+      [office.custom_domain],
+    );
+    await createAudit(conn).write(userId, officeId, 'domain.disconnect', 'office', officeId, { domain: office.custom_domain }, { domain: null }, ip);
+    return { ok: true, domain: office.custom_domain };
+  });
+  if (!outcome.ok) return outcome;
+  require('./customHosts').clear();
+  const detached = await require('./hosting').detach(outcome.domain, env);
+  if (!detached.ok && detached.code !== 'hosting_off') {
+    await require('./platformNotify').notifyPlatformAdmins(pool, {
+      kind: 'domain_connect',
+      title: 'نطاق أُلغي ربطه ويحتاج حذفاً يدوياً',
+      body: `أزل الدومين ${outcome.domain} من النطاقات الموقوفة (Parked) في cPanel.`,
+      link: '/admin/domains',
+      dedupeKey: `domain_detach:${outcome.domain}`,
+    });
+  }
+  return { ok: true };
 }
 
 /**
@@ -217,7 +365,7 @@ async function createRequest(pool, { officeId, userId, body = {}, ip = null, env
     const [[taken]] = await conn.query('SELECT COUNT(*) AS n FROM offices WHERE custom_domain = ? AND id <> ?', [main.domain, officeId]);
     if (Number(taken.n) > 0) return { ok: false, errors: { domain: ERRORS.taken } };
     const addon = mode === 'addon' ? await addonFor(conn, office.plan_code) : { halalas: null };
-    const status = type === 'reserve' ? 'pending_purchase' : 'pending_setup';
+    const status = type === 'reserve' ? 'pending_purchase' : method === 'records' ? 'awaiting_dns' : 'pending_setup';
     const id = await scoped.insert('office_domain_requests', {
       type,
       connection_method: method,
@@ -321,7 +469,7 @@ const NOTIFY_TEXT = {
   pending_purchase: 'وصلنا طلب حجز الدومين ونتحقق من توفره.',
   awaiting_nameservers: 'غيّر Nameservers الدومين عند مزودك إلى القيم الظاهرة في إعدادات مكتبك.',
   awaiting_dns: 'أضف سجلات DNS الظاهرة في إعدادات مكتبك عند مزود الدومين.',
-  active: 'أصبح نطاق مكتبك فعّالاً في سجلاتنا. ربط الموقع بالنطاق يتم يدوياً وسنبلغك عند اكتماله.',
+  active: 'أصبح نطاق مكتبك مربوطاً بصفحة مكتبك. شهادة الأمان (https) تصدر تلقائياً خلال ساعة غالباً.',
   rejected: 'تعذّر تنفيذ طلب النطاق. تواصل مع الدعم لمعرفة التفاصيل.',
 };
 
@@ -481,6 +629,11 @@ async function staleCount(pool, { days = STALE_DAYS } = {}) {
 }
 
 module.exports = {
+  serverIp,
+  dnsReady,
+  connectRequest,
+  disconnectDomain,
+  CONNECT_TEXT,
   STATUSES,
   OPEN,
   STATUS_LABELS,

@@ -41,7 +41,7 @@ test('the official values are exactly the approved table', () => {
 
   assert.deepEqual([basic.features.telegram, basic.features.whatsapp], [true, false], 'basic: site + email + Telegram');
   assert.deepEqual([pro.features.telegram, pro.features.whatsapp], [true, true], 'pro adds WhatsApp');
-  assert.deepEqual([basic.custom_domain, pro.custom_domain, enterprise.custom_domain], ['none', 'addon', 'included']);
+  assert.deepEqual([basic.custom_domain, pro.custom_domain, enterprise.custom_domain], ['none', 'included', 'included']);
   assert.deepEqual([basic.audit_level, pro.audit_level], ['basic', 'full']);
   assert.deepEqual([basic.support_level, pro.support_level, enterprise.support_level], ['email', 'email_whatsapp', 'priority']);
   assert.deepEqual(pricing.CUSTOM_DOMAIN_ADDON, { name_ar: 'نطاق مخصص', price_monthly: '49.00', currency: 'SAR', plans: ['pro'] });
@@ -104,19 +104,21 @@ test('pricing cards: honest lines per plan and the yearly months', () => {
   assert.ok(basic.includes('الإعلانات العامة المنشورة: حتى 10'));
   assert.ok(basic.includes('قراءة العقود بالذكاء الاصطناعي: حتى 20 شهرياً'));
   assert.ok(basic.includes('التذكيرات: الموقع + البريد الإلكتروني + تيليجرام'));
-  assert.ok(basic.includes('النطاق المخصص: غير متاح'));
+  assert.ok(basic.includes('ربط دومينك الخاص: غير متاح'));
   assert.ok(basic.includes('سجل العمليات: أساسي'));
   const pro = pricing.cardLines(row('pro'), addon, fmt);
   assert.ok(pro.includes('التذكيرات: الموقع + البريد الإلكتروني + تيليجرام + واتساب'));
-  assert.ok(pro.includes('النطاق المخصص: إضافة اختيارية بـ 49.00 ريال شهرياً (قريباً)'));
+  assert.ok(pro.includes('ربط صفحة مكتبك بدومينك الخاص'));
+  assert.ok(pricing.cardLines({ ...row('pro'), custom_domain: 'addon' }, addon, fmt).includes('ربط دومينك الخاص: إضافة بـ 49.00 ريال شهرياً'));
+  assert.ok(!pro.some((l) => l.includes('قريباً')), 'no coming-soon wording');
   assert.ok(pro.includes('الدعم: البريد الإلكتروني وواتساب'));
   const enterprise = pricing.cardLines(row('enterprise'), addon, fmt);
-  assert.ok(enterprise.includes('نطاق مخصص واحد مشمول (قريباً)'));
+  assert.ok(enterprise.includes('ربط صفحة مكتبك بدومينك الخاص'));
   assert.ok(enterprise.includes('دعم بأولوية'));
   assert.ok(enterprise.includes('الوحدات: حتى 600'));
   assert.ok(pricing.cardLines({ ...row('pro'), max_units: null }, addon, fmt).includes('الوحدات: بلا حد'));
   // The add-on shows only where the add-on record allows it.
-  assert.ok(pricing.cardLines(row('pro'), { ...addon, plans: [] }, fmt).includes('النطاق المخصص: غير متاح'));
+  assert.ok(pricing.cardLines({ ...row('pro'), custom_domain: 'addon' }, { ...addon, plans: [] }, fmt).includes('ربط دومينك الخاص: غير متاح'));
 
   assert.equal(pricing.paidMonths(14900, 149000), 10);
   assert.equal(pricing.paidMonths(14900, 178800), null, '12 months is not a saving');
@@ -200,7 +202,7 @@ test('migration on MySQL: placeholders move, admin edits stay, idempotent, offic
     assert.equal(Number(by.basic.max_units), 30);
     assert.equal(Number(by.pro.max_units), 999, 'admin limit kept');
     assert.equal(Number(by.pro.price_monthly), 349);
-    assert.equal(by.pro.custom_domain, 'addon');
+    assert.equal(by.pro.custom_domain, 'included');
     assert.equal(by.pro.support_level, 'email_whatsapp');
     assert.equal(Number(by.pro.is_public), 1, 'paid plans published once');
     assert.equal(Number(by.enterprise.max_units), 600);
@@ -213,6 +215,16 @@ test('migration on MySQL: placeholders move, admin edits stay, idempotent, offic
 
     // An admin change after the migration is not reverted by the next start.
     await conn.query("UPDATE plans SET custom_domain = 'none', is_public = 0 WHERE code = 'pro'");
+    assert.deepEqual(await pricing.applyOfficialPricing(conn), { updated: [], addon: false });
+
+    // The v2 step (custom domain included in Pro) runs once, then admin edits stay.
+    await conn.query('DELETE FROM settings WHERE setting_key = ?', [pricing.DOMAIN_V2_KEY]);
+    await conn.query("UPDATE plans SET custom_domain = 'addon' WHERE code = 'pro'");
+    const v2 = await pricing.applyOfficialPricing(conn);
+    assert.deepEqual(v2.updated, ['custom_domain_v2']);
+    const [[proNow]] = await conn.query("SELECT custom_domain FROM plans WHERE code = 'pro'");
+    assert.equal(proNow.custom_domain, 'included');
+    await conn.query("UPDATE plans SET custom_domain = 'none' WHERE code = 'pro'");
     assert.deepEqual(await pricing.applyOfficialPricing(conn), { updated: [], addon: false });
 
     const addon = await pricing.customDomainAddon(conn);
@@ -248,7 +260,7 @@ test('public pricing page: the three plans, monthly/yearly toggle, VAT and trial
   assert.match(basic, /<strong>1,490<\/strong> <span>ريال سنوياً<\/span>/);
   assert.match(basic, /تدفع 10 أشهر/);
   assert.doesNotMatch(basic, /واتساب/, 'no WhatsApp on basic');
-  assert.match(card('pro'), /الأكثر طلباً[\s\S]*349[\s\S]*3,490[\s\S]*واتساب[\s\S]*49 ريال شهرياً/);
+  assert.match(card('pro'), /الأكثر طلباً[\s\S]*349[\s\S]*3,490[\s\S]*واتساب[\s\S]*ربط صفحة مكتبك بدومينك الخاص/);
   assert.match(card('enterprise'), /799[\s\S]*7,990[\s\S]*الوحدات: حتى 600/);
   assert.doesNotMatch(text, /تقييم|★|خصم \d+%/, 'no fake reviews or discounts');
 });
@@ -288,7 +300,8 @@ test('office settings show the plan, its limits and the usage to every office ro
   assert.ok(page.text.includes(`باقتك: ${basic.name_ar}`));
   assert.match(page.text, new RegExp(`id="usage-max_units"[\\s\\S]*?<strong>2 من ${basic.max_units}</strong>`));
   assert.match(page.text, /id="usage-max_ai_reads_monthly"/);
-  assert.match(page.text, /التذكيرات: الموقع/);
+  assert.match(page.text, /التذكير: التطبيق/);
+  assert.match(page.text, /class="plan-lines"/);
   assert.match(page.text, /href="\/office\/billing"/, 'the owner gets the billing link');
 
   const staff = await http.addMember(owner.office.id, phone(2), 'office_staff');

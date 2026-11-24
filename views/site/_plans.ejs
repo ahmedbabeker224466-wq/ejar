@@ -13,9 +13,7 @@
           <p class="plan-card__price price--monthly"><strong><%= __(fmt(p.monthly)) %></strong> <%= __("ريال / شهرياً") %></p>
           <p class="plan-card__price price--yearly"><strong><%= __(fmt(p.yearly)) %></strong> <%= __("ريال / سنوياً") %></p>
           <% if (p.paidMonths) { %><p class="muted price--yearly"><%= __("تدفع") %> <%= __(p.paidMonths) %> <%= __("أشهر وتشترك 12 شهراً.") %></p><% } %>
-          <ul class="plan-card__limits">
-            <% p.lines.forEach(function (line) { %><li>✓ <%= __(line) %></li><% }) %>
-          </ul>
+          <%- include('../partials/plan-lines', { s: p.spec }) %>
           <a href="/register" class="btn btn--primary btn--block"><%= __("ابدأ التجربة المجانية") %></a>
         </li>
       <% }) %>

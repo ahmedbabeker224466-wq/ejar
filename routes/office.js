@@ -290,7 +290,18 @@ router.get('/office/audit', requirePerm('audit'), async (req, res, next) => {
 // ------------------------------------------------------------ settings
 
 const LINK_NOTICES = { link: 'تم تغيير رابط مكتبك. الرابط القديم يحوّل الزوار إلى الجديد.', page: 'تم حفظ إعدادات صفحة المكتب.' };
-const DOMAIN_NOTICES = { created: 'تم إرسال طلب النطاق. سنتابع معك وتصلك التحديثات في الإشعارات.', cancelled: 'تم إلغاء طلب النطاق.' };
+const DOMAIN_NOTICES = {
+  created: 'تم حفظ الدومين. أضف السجلين الظاهرين عند مزود الدومين ثم اضغط «ربط الدومين».',
+  cancelled: 'تم إلغاء طلب النطاق.',
+  connected: 'تم ربط الدومين بصفحة مكتبك. شهادة الأمان (https) تصدر تلقائياً خلال ساعة غالباً.',
+  disconnected: 'تم إلغاء ربط الدومين. يعمل رابطك المجاني كما هو.',
+};
+
+const connectLimit = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  keyFor: (req) => `office-domain-connect:${req.office.id}`,
+});
 
 async function renderSettings(req, res, { values, errors = {}, saved = false, status = 200, link = {}, domain = {} } = {}) {
   const current = values || formValues(await offices.officeDetails(db.pool, req.office.id));
@@ -304,7 +315,7 @@ async function renderSettings(req, res, { values, errors = {}, saved = false, st
     name: plan.name_ar,
     trial: plan.code === 'trial',
     usage,
-    lines: officialPricing.cardLines(plan, await officialPricing.customDomainAddon(db.pool), money.formatHalalas).slice(4),
+    spec: officialPricing.planSpec(plan, await officialPricing.customDomainAddon(db.pool)),
   } : null;
   const domainView = await domains.officeView(db.pool, req.office.id);
   return res.status(status).render('office/settings', {
@@ -317,7 +328,9 @@ async function renderSettings(req, res, { values, errors = {}, saved = false, st
       fmt: money.formatHalalas,
       errors: domain.errors || {},
       values: domain.values || {},
-      notice: DOMAIN_NOTICES[req.query.domain] || null,
+      notice: domain.notice || DOMAIN_NOTICES[req.query.domain] || null,
+      connectError: domain.connectError || null,
+      found: domain.found || [],
     },
     planInfo,
     canBilling: can(req.memberRole, 'billing'),
@@ -385,7 +398,8 @@ router.post('/office/settings/domain', requirePerm('billing'), async (req, res, 
     if (req.officeAccess && (req.officeAccess.locked || req.officeAccess.readOnly)) {
       return await renderSettings(req, res, { status: 402, domain: { values, errors: { form: 'اشتراكك منتهي. جدّد الاشتراك لطلب نطاق.' } } });
     }
-    const result = await domains.createRequest(db.pool, { officeId: req.office.id, userId: req.user.id, body: req.body, ip: req.ip });
+    // Offices connect a domain they bought (records method); reserving for them is no longer offered.
+    const result = await domains.createRequest(db.pool, { officeId: req.office.id, userId: req.user.id, body: { type: 'own', connection_method: 'records', domain: req.body.domain }, ip: req.ip });
     if (!result.ok) return await renderSettings(req, res, { status: 422, domain: { values, errors: result.errors } });
     return res.redirect('/office/settings?domain=created#domain');
   } catch (err) {
@@ -398,6 +412,30 @@ router.post('/office/settings/domain/:id/cancel', requirePerm('billing'), async 
     const ok = await domains.cancelRequest(db.pool, { officeId: req.office.id, userId: req.user.id, requestId: req.params.id, ip: req.ip });
     if (!ok) return res.status(404).render('errors/404', { title: 'الصفحة غير موجودة' });
     return res.redirect('/office/settings?domain=cancelled#domain');
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post('/office/settings/domain/:id/connect', requirePerm('billing'), connectLimit, async (req, res, next) => {
+  try {
+    if (req.officeAccess && (req.officeAccess.locked || req.officeAccess.readOnly)) {
+      return await renderSettings(req, res, { status: 402, domain: { errors: { form: 'اشتراكك منتهي. جدّد الاشتراك لربط الدومين.' } } });
+    }
+    const result = await domains.connectRequest(db.pool, { officeId: req.office.id, userId: req.user.id, requestId: req.params.id, ip: req.ip });
+    if (result.ok) return res.redirect('/office/settings?domain=connected#domain');
+    if (result.code === 'not_found') return res.status(404).render('errors/404', { title: 'الصفحة غير موجودة' });
+    if (result.manual) return await renderSettings(req, res, { domain: { notice: result.message } });
+    return await renderSettings(req, res, { status: 422, domain: { connectError: result.message, found: result.found || [] } });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post('/office/settings/domain/disconnect', requirePerm('billing'), async (req, res, next) => {
+  try {
+    await domains.disconnectDomain(db.pool, { officeId: req.office.id, userId: req.user.id, ip: req.ip });
+    return res.redirect('/office/settings?domain=disconnected#domain');
   } catch (err) {
     return next(err);
   }

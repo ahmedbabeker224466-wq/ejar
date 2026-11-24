@@ -141,6 +141,25 @@ async function backfillSlugs(pool) {
   return given;
 }
 
+const DEFAULT_ON_KEY = 'office_link.default_on_v1';
+
+/**
+ * Migration (ensureSchema, once): the page is switched on for every office
+ * that never chose a setting itself (no office.public_page audit row). Visibility
+ * still needs an approved office with access (VISIBLE_SQL).
+ */
+async function defaultPagesOn(pool) {
+  const [[done]] = await pool.query('SELECT setting_key FROM settings WHERE setting_key = ?', [DEFAULT_ON_KEY]);
+  if (done) return 0;
+  const [res] = await pool.query(
+    `UPDATE offices o SET o.public_page_enabled = 1
+      WHERE o.public_page_enabled = 0 AND o.public_slug IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM audit_logs a WHERE a.office_id = o.id AND a.action = 'office.public_page')`,
+  );
+  await pool.query('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)', [DEFAULT_ON_KEY, new Date().toISOString()]);
+  return res.affectedRows;
+}
+
 /** How many slug changes the office made in the window ending now. */
 async function recentChanges(scoped, now) {
   const [{ n }] = await scoped.query(
@@ -281,6 +300,8 @@ module.exports = {
   randomSlug,
   assignAutoSlug,
   backfillSlugs,
+  defaultPagesOn,
+  DEFAULT_ON_KEY,
   linkSettings,
   changeSlug,
   validatePageFields,

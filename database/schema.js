@@ -154,7 +154,7 @@ const TABLES = [
     'subscription_ends_at DATETIME NULL',
     'listings_banned TINYINT(1) NOT NULL DEFAULT 0', // the platform admin removed this office's right to publish listings
     'public_slug VARCHAR(40) NULL', // the office's public link /<slug> (services/officeLink.js)
-    'public_page_enabled TINYINT(1) NOT NULL DEFAULT 0',
+    'public_page_enabled TINYINT(1) NOT NULL DEFAULT 1',
     'public_description VARCHAR(300) NULL', // plain text the owner writes for the public page
     'custom_domain VARCHAR(253) NULL', // set by the platform admin on activation; routing is manual for now
     // New offices wait for the platform admin to check the FAL licence and the

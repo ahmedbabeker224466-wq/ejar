@@ -25,6 +25,7 @@ const moyasar = require('../services/moyasar');
 const platformSettings = require('../services/platformSettings');
 const images = require('../services/images');
 const money = require('../services/money');
+const officialPricing = require('../services/officialPricing');
 const logger = require('../utils/logger');
 const { riyadhDate } = require('../services/contractDates');
 const { requirePerm } = require('../middleware/permissions');
@@ -57,7 +58,9 @@ const siteUrl = (req) => (process.env.APP_URL || `${req.protocol}://${req.get('h
 
 async function planCards(currentPlanId) {
   const list = await plans.listPlans(db.pool, { onlyBuyable: true });
+  const addon = await officialPricing.customDomainAddon(db.pool);
   return list.map((plan) => ({
+    spec: officialPricing.planSpec(plan, addon),
     id: Number(plan.id),
     name: plan.name_ar,
     current: Number(plan.id) === Number(currentPlanId),

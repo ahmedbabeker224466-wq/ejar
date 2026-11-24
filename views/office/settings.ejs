@@ -53,9 +53,7 @@
     <% }) %>
   </ul>
   <h3><%= __("تشمل باقتك") %></h3>
-  <ul class="plan-card__limits">
-    <% planInfo.lines.forEach(function (line) { %><li>✓ <%= __(line) %></li><% }) %>
-  </ul>
+  <%- include('../partials/plan-lines', { s: planInfo.spec }) %>
   <% if (canBilling) { %><p><a href="/office/billing" class="btn btn--secondary"><%= __("الاشتراك وتغيير الباقة") %></a></p><% } %>
 </section>
 <% } %>

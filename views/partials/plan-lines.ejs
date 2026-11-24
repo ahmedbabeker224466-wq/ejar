@@ -1,0 +1,25 @@
+<%# The lines of one plan, the same everywhere (pricing page, office billing, office settings). s = officialPricing.planSpec(plan). %>
+<%
+  const plYes = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
+  const plNo = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg>';
+  const plNum = (n) => Number(n).toLocaleString('en-US');
+  const plLimit = (key, n) => (n === null || n === undefined ? t(key + 'Any') : t(key, { n: plNum(n) }));
+  const plChannels = [t('channel.app'), t('channel.email')].concat(s.telegram ? [t('channel.telegram')] : [], s.whatsapp ? [t('channel.whatsapp')] : []);
+  const plJoin = plChannels.length <= 1 ? plChannels.join('') : plChannels.slice(0, -1).join(lang === 'en' ? ', ' : '، ') + t('list.and') + plChannels[plChannels.length - 1];
+  const plSupport = { email: 'line.supportEmail', email_whatsapp: 'line.supportEmailWhatsapp', priority: 'line.supportPriority' };
+%>
+<ul class="<%= locals.listClass || 'plan-lines' %>">
+  <li><%- plYes %><span><%= plLimit('line.units', s.units) %></span></li>
+  <li><%- plYes %><span><%= plLimit('line.members', s.members) %></span></li>
+  <li><%- plYes %><span><%= plLimit('line.ai', s.ai) %></span></li>
+  <li><%- plYes %><span><%= plLimit('line.listings', s.listings) %></span></li>
+  <li><%- plYes %><span><%= t('line.channels', { list: plJoin }) %></span></li>
+  <li><%- plYes %><span><%= t('line.page') %></span></li>
+  <% if (s.domain === 'none') { %>
+    <li class="is-off"><%- plNo %><span><%= t('line.domainNone') %></span></li>
+  <% } else { %>
+    <li><%- plYes %><span><%= s.domain === 'included' ? t('line.domainIncluded') : t('line.domainAddon', { price: String(s.addonPrice).replace(/\.00$/, '') }) %></span></li>
+  <% } %>
+  <li><%- plYes %><span><%= t(s.audit === 'basic' ? 'line.auditBasic' : 'line.auditFull') %></span></li>
+  <li><%- plYes %><span><%= t(plSupport[s.support]) %></span></li>
+</ul>

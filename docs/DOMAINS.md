@@ -9,6 +9,20 @@ steps are manual (below). Since Prompt 24 it **does** answer on an active
 domain: a request whose Host is the office's live custom domain shows that
 office's public page (see "What a custom domain serves").
 
+## Self-service connect (owner's decision, Nov 2026)
+
+1. The owner (plan custom_domain included or addon) types the domain they bought. The request is saved as `own` / `records`, status `awaiting_dns`.
+2. The page shows two records: `A @ -> <server IP>` (APP_DOMAIN_IP, else the A record of the APP_URL host) and `CNAME www -> <domain>`.
+3. «ربط الدومين» (POST /office/settings/domain/:id/connect, 10 per 10 minutes per office) checks that the domain's A record contains the server IP, then services/hosting.js parks the domain on the cPanel account (API2 Park::park) and asks AutoSSL to run. In one transaction (office row locked) the domain is stored on the office and the request becomes active. Audit `domain.connect` with { outcome }.
+4. When no hosting driver is set (`hosting_off`) or cPanel refuses, the request stays open, the office sees «سيكمل فريق الدعم الربط خلال ساعات», and the platform admins get a `domain_connect` notification to park it by hand and activate the request.
+5. «إلغاء ربط الدومين» (POST /office/settings/domain/disconnect) clears offices.custom_domain, cancels the request and unparks the domain (best effort; admins are told if that fails).
+
+Hosting driver env (either):
+- `CPANEL_HOST`, `CPANEL_USER`, `CPANEL_API_TOKEN` (a cPanel API token; Manage API Tokens). HTTPS to port 2083.
+- nothing: on the cPanel server itself the `cpapi2` / `uapi` command line tools are used when present.
+
+Reserving a domain for the office is no longer offered in the office UI; old reserve and nameserver requests still show and the admin queue still handles them.
+
 ## What the office sees
 
 - **Plan gating** comes from the plan's `custom_domain` mode in `/admin/plans`

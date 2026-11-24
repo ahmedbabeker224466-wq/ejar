@@ -43,21 +43,7 @@
               <p class="mk-plan__vat price--monthly"><%= __(t('pricing.exVat')) %></p>
               <p class="mk-plan__vat price--yearly"><%= __(p.paidMonths ? t('pricing.paidMonths', { n: p.paidMonths }) : t('pricing.exVat')) %></p>
               <a href="/register" class="mk-btn mk-btn--block <%= __(pop ? 'mk-btn--accent' : 'mk-btn--ghost') %>"><%= __(t('pricing.start')) %></a>
-              <ul class="mk-plan__lines">
-                <li><%- yes %><span><%= __(limit('line.units', s.units)) %></span></li>
-                <li><%- yes %><span><%= __(limit('line.members', s.members)) %></span></li>
-                <li><%- yes %><span><%= __(limit('line.ai', s.ai)) %></span></li>
-                <li><%- yes %><span><%= __(limit('line.listings', s.listings)) %></span></li>
-                <li><%- yes %><span><%= __(t('line.channels', { list: joinList(channels(s)) })) %></span></li>
-                <li><%- yes %><span><%= __(t('line.page')) %></span></li>
-                <li><%- yes %><span><%= __(t(s.audit === 'basic' ? 'line.auditBasic' : 'line.auditFull')) %></span></li>
-                <li><%- yes %><span><%= __(t(supportKey[s.support])) %></span></li>
-                <% if (s.domain === 'none') { %>
-                  <li class="is-off"><%- no %><span><%= __(t('line.domainNone')) %></span></li>
-                <% } else { %>
-                  <li><%- yes %><span><%= __(s.domain === 'included' ? t('line.domainIncluded') : t('line.domainAddon', { price: String(s.addonPrice).replace(/\.00$/, '') })) %> <em class="mk-soon"><%= __(t('pricing.soon')) %></em></span></li>
-                <% } %>
-              </ul>
+              <%- include('../partials/plan-lines', { s: s, listClass: 'mk-plan__lines' }) %>
             </li>
           <% }) %>
         </ul>
@@ -90,7 +76,7 @@
           <tr><th scope="row"><%= __(t('cmp.whatsapp')) %></th><% plans.forEach(function (p) { %><td class="<%= __(p.code === popular ? 'is-pop' : '') %>"><%- mark(p.spec.whatsapp) %></td><% }) %></tr>
           <tr><th scope="row"><%= __(t('cmp.audit')) %></th><% plans.forEach(function (p) { %><td class="<%= __(p.code === popular ? 'is-pop' : '') %>"><%= __(t(p.spec.audit === 'basic' ? 'cmp.basic' : 'cmp.full')) %></td><% }) %></tr>
           <tr><th scope="row"><%= __(t('cmp.support')) %></th><% plans.forEach(function (p) { %><td class="<%= __(p.code === popular ? 'is-pop' : '') %>"><%= __(t(cmpSupport[p.spec.support])) %></td><% }) %></tr>
-          <tr><th scope="row"><%= __(t('cmp.domain')) %> <em class="mk-soon"><%= __(t('pricing.soon')) %></em></th><% plans.forEach(function (p) { %><td class="<%= __(p.code === popular ? 'is-pop' : '') %>"><% if (p.spec.domain === 'none') { %><%- mark(false) %><% } else { %><%= __(p.spec.domain === 'included' ? t('cmp.dIncluded') : t('cmp.dAddon', { price: String(p.spec.addonPrice).replace(/\.00$/, '') })) %><% } %></td><% }) %></tr>
+          <tr><th scope="row"><%= __(t('cmp.domain')) %></th><% plans.forEach(function (p) { %><td class="<%= __(p.code === popular ? 'is-pop' : '') %>"><% if (p.spec.domain === 'none') { %><%- mark(false) %><% } else { %><%= __(p.spec.domain === 'included' ? t('cmp.dIncluded') : t('cmp.dAddon', { price: String(p.spec.addonPrice).replace(/\.00$/, '') })) %><% } %></td><% }) %></tr>
         </tbody>
       </table>
     </div>

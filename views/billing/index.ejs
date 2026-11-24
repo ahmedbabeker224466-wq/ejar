@@ -60,10 +60,7 @@
         <h3><%= __(c.name) %><% if (c.current) { %> <span class="badge badge--bill-success"><%= __("باقتك") %></span><% } %></h3>
         <p class="plan-card__price"><strong><%= __(fmt(c.monthly)) %></strong> <%= __("ريال / شهر") %></p>
         <% if (c.yearly > 0) { %><p class="muted"><%= __(fmt(c.yearly)) %> <%= __("ريال / سنة") %></p><% } %>
-        <ul class="plan-card__limits">
-          <% c.limits.forEach(function (l) { %><li><%= __(l.label) %>: <%= __(l.limit === null ? __('بلا حد') : l.limit) %></li><% }) %>
-          <% c.features.forEach(function (f) { %><li class="<%= __(f.on ? '' : 'is-off') %>"><%= __(f.on ? '✓' : '✗') %> <%= __(f.label) %></li><% }) %>
-        </ul>
+        <%- include('../partials/plan-lines', { s: c.spec }) %>
         <div class="button-row">
           <a class="btn btn--primary btn--small" href="/office/billing/checkout?plan=<%= __(c.id) %>&amp;interval=monthly"><%= __(c.current ? __('تجديد شهري') : __('اشتراك شهري')) %></a>
           <% if (c.yearly > 0) { %><a class="btn btn--secondary btn--small" href="/office/billing/checkout?plan=<%= __(c.id) %>&amp;interval=yearly"><%= __(c.current ? __('تجديد سنوي') : __('اشتراك سنوي')) %></a><% } %>

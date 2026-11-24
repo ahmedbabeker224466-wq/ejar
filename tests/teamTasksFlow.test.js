@@ -294,7 +294,7 @@ test('team isolation: another office cannot see or change these members or invit
   assert.equal((await http.request(`/office/team/invites/${pending.id}/revoke`, { method: 'POST', cookie: b.cookie })).status, 302);
   assert.equal(await fx.count('SELECT COUNT(*) FROM invites WHERE id = ? AND revoked_at IS NULL', [pending.id]), 1, 'office B could not revoke it');
   const pageB = (await http.request('/office/team', { cookie: b.cookie })).text;
-  assert.ok(!pageB.includes(pending.code) && !pageB.includes('41'));
+  assert.ok(!pageB.includes(pending.code) && !pageB.includes(phone(41).slice(3)));
   assert.equal((await http.request('/office/team/abc/deactivate', { method: 'POST', cookie: a.cookie })).status, 404);
   assert.equal((await memberOf(41)).is_active, 1);
 });

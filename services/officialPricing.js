@@ -53,7 +53,7 @@ const OFFICIAL = Object.freeze({
   pro: {
     name_ar: 'الاحترافية', price_monthly: 349, price_yearly: 3490,
     max_contracts: null, max_units: 150, max_members: 6, max_ai_reads_monthly: 100, max_photos: 1000, max_listings: 50,
-    features: ALL_ON, custom_domain: 'addon', audit_level: 'full', support_level: 'email_whatsapp', sort_order: 3,
+    features: ALL_ON, custom_domain: 'included', audit_level: 'full', support_level: 'email_whatsapp', sort_order: 3,
   },
   enterprise: {
     name_ar: 'المؤسسات', price_monthly: 799, price_yearly: 7990,
@@ -65,6 +65,7 @@ const OFFICIAL = Object.freeze({
 // Above the largest plan: no price, contact form only (not a plan row).
 const CUSTOM_PLAN_FROM_UNITS = 600;
 
+const DOMAIN_V2_KEY = 'plans.custom_domain_v2';
 const CUSTOM_DOMAIN_ADDON = Object.freeze({ name_ar: 'نطاق مخصص', price_monthly: '49.00', currency: 'SAR', plans: ['pro'] });
 
 // The limits every active plan must carry (launch check "الباقات والأسعار").
@@ -152,6 +153,14 @@ async function applyOfficialPricing(pool) {
     }
   }
   const [addon] = await pool.query('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)', [ADDON_KEY, JSON.stringify(CUSTOM_DOMAIN_ADDON)]);
+  // Owner's decision (Nov 2026): the custom domain is included in Pro and
+  // Enterprise, with no add-on. Applied once; an admin edit afterwards stays.
+  const [[v2]] = await pool.query('SELECT setting_key FROM settings WHERE setting_key = ?', [DOMAIN_V2_KEY]);
+  if (!v2) {
+    const [changed] = await pool.query("UPDATE plans SET custom_domain = 'included' WHERE code IN ('pro', 'enterprise') AND custom_domain <> 'included'");
+    if (changed.affectedRows) updated.push('custom_domain_v2');
+    await pool.query('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)', [DOMAIN_V2_KEY, new Date().toISOString()]);
+  }
   return { updated, addon: addon.affectedRows === 1 };
 }
 
@@ -200,20 +209,36 @@ function cardLines(plan, addon, fmt) {
   for (const k of Object.keys(ALL_ON)) f[k] = raw[k] !== false;
   const channels = ['الموقع', 'البريد الإلكتروني', ...(f.telegram ? ['تيليجرام'] : []), ...(f.whatsapp ? ['واتساب'] : [])];
   const addonHere = plan.custom_domain === 'addon' && addon && Array.isArray(addon.plans) && addon.plans.includes(plan.code);
-  const domain = plan.custom_domain === 'included' ? 'نطاق مخصص واحد مشمول (قريباً)'
-    : addonHere ? `النطاق المخصص: إضافة اختيارية بـ ${fmt(Math.round(Number(addon.price_monthly) * 100))} ريال شهرياً (قريباً)`
-      : 'النطاق المخصص: غير متاح';
+  const domain = plan.custom_domain === 'included' ? 'ربط صفحة مكتبك بدومينك الخاص'
+    : addonHere ? `ربط دومينك الخاص: إضافة بـ ${fmt(Math.round(Number(addon.price_monthly) * 100))} ريال شهرياً`
+      : 'ربط دومينك الخاص: غير متاح';
   return [
     upTo('الوحدات', plan.max_units),
     upTo('أعضاء الفريق مع المالك', plan.max_members),
     upTo('قراءة العقود بالذكاء الاصطناعي', plan.max_ai_reads_monthly, ' شهرياً'),
     upTo('الإعلانات العامة المنشورة', plan.max_listings),
     `التذكيرات: ${channels.join(' + ')}`,
-    'رابط عام لصفحة مكتبك',
+    'رابط مجاني لصفحة مكتبك على ميعاد',
     domain,
     AUDIT_LABELS[plan.audit_level] || AUDIT_LABELS.full,
     SUPPORT_LABELS[plan.support_level] || SUPPORT_LABELS.email,
   ];
+}
+
+/**
+ * Pure: what a plan card shows, in one shape for the pricing page, the office
+ * billing page and office settings (views/partials/plan-lines.ejs words it).
+ */
+function planSpec(plan, addon) {
+  const features = planFeatures(plan);
+  const addonHere = plan.custom_domain === 'addon' && addon && Array.isArray(addon.plans) && addon.plans.includes(plan.code);
+  return {
+    units: plan.max_units, members: plan.max_members, ai: plan.max_ai_reads_monthly, listings: plan.max_listings,
+    telegram: features.telegram, whatsapp: features.whatsapp, audit: plan.audit_level === 'basic' ? 'basic' : 'full',
+    support: ['email', 'email_whatsapp', 'priority'].includes(plan.support_level) ? plan.support_level : 'email',
+    domain: plan.custom_domain === 'included' ? 'included' : addonHere ? 'addon' : 'none',
+    addonPrice: addonHere ? Number(addon.price_monthly).toFixed(2) : null,
+  };
 }
 
 /** Pure: the plan's feature switches with every missing key on (the same reading as cardLines). */
@@ -232,7 +257,9 @@ function paidMonths(monthlyHalalas, yearlyHalalas) {
 }
 
 module.exports = {
+  DOMAIN_V2_KEY,
   cardLines,
+  planSpec,
   planFeatures,
   paidMonths,
   OFFICIAL,

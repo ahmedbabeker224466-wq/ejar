@@ -90,17 +90,15 @@ async function enable(o, slug, description = '') {
 
 // ------------------------------------------------------------ new office and settings
 
-test('a new office gets office-xxxxxx with the page switched off; the link answers 404 until it is switched on', { skip }, async () => {
+test('a new office gets office-xxxxxx with the page on; it shows once the office is approved', { skip }, async () => {
   const o = await fx.office(1, 'تجربة-رابط-جديد', { units: 1 });
   const row = await officeRow(o.office.id);
   assert.match(row.public_slug, /^office-[a-z0-9]{6}$/);
-  assert.equal(Number(row.public_page_enabled), 0);
+  assert.equal(Number(row.public_page_enabled), 1, 'on from day one');
 
-  const hidden = await get(`/${row.public_slug}`);
-  const unknown = await get('/tpl-no-such-office');
-  assert.equal(hidden.status, 404);
-  assert.equal(unknown.status, 404);
-  assert.equal(hidden.text.replace(/office-[a-z0-9]{6}/g, ''), unknown.text.replace(/tpl-no-such-office/g, ''), 'a hidden page looks exactly like an unknown one');
+  const shown = await get(`/${row.public_slug}`);
+  assert.equal(shown.status, 200);
+  assert.match(shown.text, /noindex/, 'no published listing: not indexed');
 
   const settings = await get('/office/settings', o.cookie);
   assert.match(settings.text, /رابط مكتبك/);
@@ -109,10 +107,26 @@ test('a new office gets office-xxxxxx with the page switched off; the link answe
   assert.match(settings.text, /إظهار صفحة المكتب للعامة/);
   assert.match(settings.text, /يبقى الرابط القديم يحوّل/);
 
-  await post('/office/settings/public-page', o.cookie, { enabled: '1', description: '' });
-  const shown = await get(`/${row.public_slug}`);
-  assert.equal(shown.status, 200);
-  assert.match(shown.text, /noindex/, 'no published listing: not indexed');
+  await post('/office/settings/public-page', o.cookie, { enabled: '0', description: '' });
+  const hidden = await get(`/${row.public_slug}`);
+  const unknown = await get('/tpl-no-such-office');
+  assert.equal(hidden.status, 404);
+  assert.equal(unknown.status, 404);
+  assert.equal(hidden.text.replace(/office-[a-z0-9]{6}/g, ''), unknown.text.replace(/tpl-no-such-office/g, ''), 'a hidden page looks exactly like an unknown one');
+});
+
+test('the default-on migration switches on offices that never chose, once, and keeps a choice', { skip }, async () => {
+  const a = await fx.office(60, 'تجربة-رابط-افتراضي-أ', { landlords: 0, units: 0 });
+  const b = await fx.office(61, 'تجربة-رابط-افتراضي-ب', { landlords: 0, units: 0 });
+  await post('/office/settings/public-page', b.cookie, { enabled: '0', description: '' });
+  await db.pool.query('UPDATE offices SET public_page_enabled = 0 WHERE id IN (?, ?)', [a.office.id, b.office.id]);
+  await db.pool.query('DELETE FROM settings WHERE setting_key = ?', [officeLink.DEFAULT_ON_KEY]);
+  await officeLink.defaultPagesOn(db.pool);
+  assert.equal(Number((await officeRow(a.office.id)).public_page_enabled), 1);
+  assert.equal(Number((await officeRow(b.office.id)).public_page_enabled), 0, 'the office chose off');
+  await db.pool.query('UPDATE offices SET public_page_enabled = 0 WHERE id = ?', [a.office.id]);
+  assert.equal(await officeLink.defaultPagesOn(db.pool), 0, 'once only');
+  assert.equal(Number((await officeRow(a.office.id)).public_page_enabled), 0);
 });
 
 test('settings: staff cannot see or change the link; a manager can; every change is audited without the text', { skip }, async () => {
@@ -125,7 +139,7 @@ test('settings: staff cannot see or change the link; a manager can; every change
   assert.equal((await post('/office/settings/link', staff, { slug: SLUG('staff') })).status, 403);
   assert.equal((await post('/office/settings/public-page', staff, { enabled: '1' })).status, 403);
   assert.equal((await officeRow(o.office.id)).public_slug, before.public_slug);
-  assert.equal(Number((await officeRow(o.office.id)).public_page_enabled), 0);
+  assert.equal(Number((await officeRow(o.office.id)).public_page_enabled), Number(before.public_page_enabled));
   assert.equal((await post('/office/settings/link', null, { slug: SLUG('anon') })).status, 302, 'anonymous goes to login');
 
   assert.equal((await post('/office/settings/link', manager, { slug: SLUG('roles') })).status, 302);

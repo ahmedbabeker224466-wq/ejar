@@ -14,7 +14,7 @@ values; an admin can change them in `/admin/plans`.
 | Published public listings | 50 (= Pro) | 10 | 50 | 200 |
 | Reminder channels | all | site + email + Telegram | + WhatsApp | all |
 | Public office link | yes | yes | yes | yes |
-| Custom domain | no | not available | optional add-on, 49 SAR/month | 1 included |
+| Custom domain | no | not available | included | included |
 | Audit log | full | basic | full (+ reports) | full |
 | Support | email | email | email + WhatsApp | priority |
 
@@ -31,7 +31,7 @@ card on the pricing page, not a plan row.
 | AI contract reads / month | **yes** | `aiUsage.reserve` (slot reserved before any API call, released on failure) |
 | WhatsApp / Telegram channels | **yes** | plan feature switches (`features.officeAllows`): settings pages and delivery skip a channel the plan lacks |
 | Email and site channels | always on | not a plan feature |
-| Custom domain (none / add-on / included) | **stored only** | `plans.custom_domain` and settings `addons.custom_domain`; no domain or billing logic exists yet, the pricing page says «قريباً» |
+| Custom domain (none / add-on / included) | **enforced** | `plans.custom_domain` gates the self-service connect (docs/DOMAINS.md); settings `plans.custom_domain_v2` moved Pro to included once (Nov 2026) |
 | Audit log basic / full | **stored only** | `plans.audit_level`; the office audit page is the same for every plan |
 | Support level | **stored only** | `plans.support_level`; shown on the pricing page |
 
@@ -61,3 +61,7 @@ If `/pricing` shows no plans, the rows were never created: run
 `/admin/launch` check «الباقات والأسعار» fails while an active plan other
 than the trial has a monthly or yearly price of 0, an active plan lacks one of
 the four limits above, or no paid plan is published.
+
+## One source for plan lines (Nov 2026)
+
+The pricing page, the home page plans, office billing and office settings all render `views/partials/plan-lines.ejs` from `officialPricing.planSpec(plan, addon)`, so the lines never differ between pages.

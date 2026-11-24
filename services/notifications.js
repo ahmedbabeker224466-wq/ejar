@@ -42,6 +42,7 @@ const KIND_LABELS = {
   ops_report: 'التقرير الشهري للمنصة',
   contact_new: 'رسالة من نموذج التواصل',
   domain_update: 'تحديث طلب نطاق المكتب',
+  domain_connect: 'ربط نطاق مكتب',
   office_review: 'مكتب جديد بانتظار المراجعة',
   office_verified: 'نتيجة مراجعة المكتب',
   test: 'رسالة تجربة',

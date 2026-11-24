@@ -166,8 +166,9 @@ test('plan gating: none = locked with an upgrade button, nothing can be requeste
 test('add-on plan: the request is recorded with the add-on price (never charged); one open request at a time', { skip }, async () => {
   const o = await office(2, 'addon');
   const page = await get('/office/settings', o.cookie);
-  assert.match(page.text, /إضافة اختيارية بـ <strong>49\.00 ريال شهرياً<\/strong>/);
-  assert.match(page.text, /id="domain-type-own"[\s\S]*id="domain-type-reserve"[\s\S]*id="domain-type-none"/);
+  assert.match(page.text, /ربط الدومين إضافة بـ <strong>49\.00 ريال شهرياً<\/strong>/);
+  assert.match(page.text, /الدومين الذي اشتريته/);
+  assert.doesNotMatch(page.text, /احجز لي دوميناً/, 'reserving is no longer offered');
 
   const bad = await post('/office/settings/domain', o.cookie, { type: 'own', domain: 'https://tdom-a.com' });
   assert.equal(bad.status, 422);
@@ -179,17 +180,17 @@ test('add-on plan: the request is recorded with the add-on price (never charged)
   assert.equal(ok.status, 302);
   const [row] = await requestsOf(o.office.id);
   assert.equal(row.domain, 'tdom-a.com');
-  assert.equal(row.status, 'pending_setup');
-  assert.equal(row.connection_method, 'nameservers');
+  assert.equal(row.status, 'awaiting_dns');
+  assert.equal(row.connection_method, 'records', 'the office form always uses records');
   assert.equal(row.plan_mode, 'addon');
   assert.equal(Number(row.addon_monthly_halalas), 4900);
   assert.equal(Number(row.service_fee_halalas), 4000);
   assert.equal((await auditOf(o.office.id, 'domain.request')).length, 1);
 
   const shown = await get('/office/settings', o.cookie);
-  assert.match(shown.text, /بانتظار الإعداد/);
+  assert.match(shown.text, /بانتظار ضبط سجلات DNS/);
   assert.match(shown.text, /سيرسل لك الدعم القيم قريباً/);
-  assert.match(shown.text, /إلغاء الطلب/);
+  assert.match(shown.text, /إلغاء وإدخال دومين آخر/);
 
   const second = await post('/office/settings/domain', o.cookie, { type: 'own', domain: 'tdom-b.com' });
   assert.equal(second.status, 422);
@@ -204,13 +205,12 @@ test('one open request even under parallel submits (office row locked first)', {
   assert.equal((await requestsOf(o.office.id)).length, 1);
 });
 
-test('reserve on an included plan: alternatives, price text, cancel and a new request', { skip }, async () => {
+test('a legacy reserve request (service only): alternatives, price text, cancel and a new request', { skip }, async () => {
   const o = await office(4, 'included');
-  const dup = await post('/office/settings/domain', o.cookie, { type: 'reserve', domain: 'tdom-r.com', alt_1: 'tdom-r.com' });
-  assert.equal(dup.status, 422);
-  assert.ok(dup.text.includes(domains.ERRORS.duplicate));
-  const ok = await post('/office/settings/domain', o.cookie, { type: 'reserve', domain: 'tdom-r.com', alt_1: 'tdom-r2.com', alt_2: 'tdom-r3.sa' });
-  assert.equal(ok.status, 302);
+  const dup = await domains.createRequest(db.pool, { officeId: o.office.id, userId: o.user.id, body: { type: 'reserve', domain: 'tdom-r.com', alt_1: 'tdom-r.com' } });
+  assert.equal(dup.errors.alt_1, domains.ERRORS.duplicate);
+  const ok = await domains.createRequest(db.pool, { officeId: o.office.id, userId: o.user.id, body: { type: 'reserve', domain: 'tdom-r.com', alt_1: 'tdom-r2.com', alt_2: 'tdom-r3.sa' } });
+  assert.equal(ok.ok, true);
   const [row] = await requestsOf(o.office.id);
   assert.equal(row.status, 'pending_purchase');
   const alts = typeof row.alt_domains === 'string' ? JSON.parse(row.alt_domains) : row.alt_domains;
@@ -223,7 +223,8 @@ test('reserve on an included plan: alternatives, price text, cancel and a new re
   assert.equal((await requestsOf(o.office.id))[0].status, 'cancelled');
   assert.equal((await auditOf(o.office.id, 'domain.cancel')).length, 1);
   assert.equal((await post(`/office/settings/domain/${row.id}/cancel`, o.cookie)).status, 404, 'a cancelled request cannot be cancelled again');
-  assert.equal((await post('/office/settings/domain', o.cookie, { type: 'own', domain: 'tdom-r4.com', connection_method: 'records' })).status, 302, 'a new request after cancelling');
+  assert.equal((await post('/office/settings/domain', o.cookie, { type: 'reserve', domain: 'tdom-r4.com' })).status, 302, 'a new request after cancelling');
+  assert.equal((await requestsOf(o.office.id)).at(-1).type, 'own', 'the office form never creates a reserve request');
 });
 
 test('only the owner creates or cancels; managers and staff see the section', { skip }, async () => {
@@ -250,7 +251,8 @@ test('tenancy: office B can neither see nor cancel office A\'s request', { skip 
   await post('/office/settings/domain', a.cookie, { type: 'own', domain: 'tdom-secret-a.com' });
   const [row] = await requestsOf(a.office.id);
   assert.equal((await post(`/office/settings/domain/${row.id}/cancel`, b.cookie)).status, 404);
-  assert.equal((await requestsOf(a.office.id))[0].status, 'pending_setup');
+  assert.equal((await post(`/office/settings/domain/${row.id}/connect`, b.cookie)).status, 404);
+  assert.equal((await requestsOf(a.office.id))[0].status, 'awaiting_dns');
   assert.doesNotMatch((await get('/office/settings', b.cookie)).text, /tdom-secret-a/);
   const scopedB = require('../services/scopeToOffice').scopeToOffice(db.pool, b.office.id);
   assert.equal((await scopedB.select('office_domain_requests', { id: row.id })).length, 0);
@@ -260,8 +262,8 @@ test('tenancy: office B can neither see nor cancel office A\'s request', { skip 
 test('admin: queue, reason required, status flow with notification, NS values shown to the office, propagation, activation', { skip }, async () => {
   const a = await office(10, 'included');
   const b = await office(11, 'included');
-  await post('/office/settings/domain', a.cookie, { type: 'own', domain: 'tdom-live.com', connection_method: 'nameservers' });
-  await post('/office/settings/domain', b.cookie, { type: 'own', domain: 'tdom-live.com' });
+  await domains.createRequest(db.pool, { officeId: a.office.id, userId: a.user.id, body: { type: 'own', domain: 'tdom-live.com', connection_method: 'nameservers' } });
+  await domains.createRequest(db.pool, { officeId: b.office.id, userId: b.user.id, body: { type: 'own', domain: 'tdom-live.com' } });
   const [ra] = await requestsOf(a.office.id);
   const [rb] = await requestsOf(b.office.id);
 
@@ -324,20 +326,82 @@ test('admin: queue, reason required, status flow with notification, NS values sh
   assert.match((await post('/office/settings/domain', a.cookie, { type: 'own', domain: 'tdom-new.com' })).text, /لمكتبك نطاق فعّال/);
 });
 
-test('records method shows the configured CNAME and A values, or "soon" when empty', { skip }, async () => {
+test('records: the A value from APP_DOMAIN_IP and www pointing at the domain, or "soon" when unknown', { skip }, async () => {
   const o = await office(13, 'included');
-  await post('/office/settings/domain', o.cookie, { type: 'own', domain: 'tdom-rec.com', connection_method: 'records' });
-  assert.match((await get('/office/settings', o.cookie)).text, /سيرسل لك الدعم القيم قريباً/);
-  process.env.APP_DOMAIN_TARGET = 'apps.hosting-co.net';
+  await post('/office/settings/domain', o.cookie, { domain: 'tdom-rec.com' });
+  const soon = (await get('/office/settings', o.cookie)).text;
+  assert.match(soon, /سيرسل لك الدعم القيم قريباً/);
+  assert.doesNotMatch(soon, /action="\/office\/settings\/domain\/\d+\/connect"/, 'no connect button without a server address');
   process.env.APP_DOMAIN_IP = '203.0.113.7';
   try {
     const page = await get('/office/settings', o.cookie);
-    assert.match(page.text, /CNAME www →<\/span><output id="domain-cname">apps\.hosting-co\.net/);
-    assert.match(page.text, /A @ →<\/span><output id="domain-a">203\.0\.113\.7/);
+    assert.match(page.text, /<span role="cell">A<\/span><span role="cell">@<\/span><output id="domain-a" role="cell">203\.0\.113\.7/);
+    assert.match(page.text, /<span role="cell">CNAME<\/span><span role="cell">www<\/span><output id="domain-cname" role="cell">tdom-rec\.com/);
+    assert.match(page.text, /ربط الدومين/);
   } finally {
-    delete process.env.APP_DOMAIN_TARGET;
     delete process.env.APP_DOMAIN_IP;
   }
+});
+
+test('connect: DNS not ready, hosting off (admins told), connected, then disconnect', { skip }, async () => {
+  const hosting = require('../services/hosting');
+  const o = await office(15, 'included');
+  await post('/office/settings/domain', o.cookie, { domain: 'tdom-conn.com' });
+  const [row] = await requestsOf(o.office.id);
+  process.env.APP_DOMAIN_IP = '203.0.113.9';
+  let parked = [];
+  try {
+    domains.setResolver({ resolve4: async () => ['198.51.100.1'] });
+    const early = await post(`/office/settings/domain/${row.id}/connect`, o.cookie);
+    assert.equal(early.status, 422);
+    assert.match(early.text, /لم تصل السجلات إلى الإنترنت بعد[\s\S]*198\.51\.100\.1/);
+    assert.equal((await requestsOf(o.office.id))[0].status, 'awaiting_dns');
+
+    domains.setResolver({ resolve4: async () => ['203.0.113.9'] });
+    hosting.setMock({ attach: async () => ({ ok: false, code: 'hosting_off' }) });
+    const manual = await post(`/office/settings/domain/${row.id}/connect`, o.cookie);
+    assert.equal(manual.status, 200);
+    assert.match(manual.text, /سيكمل فريق الدعم الربط خلال ساعات/);
+    const [[note]] = await db.pool.query("SELECT COUNT(*) AS n FROM notifications n JOIN users u ON u.id = n.user_id WHERE u.phone = ? AND n.kind = 'domain_connect'", [phone(99)]);
+    assert.ok(Number(note.n) >= 1, 'the platform admin is told to finish it');
+
+    hosting.setMock({ attach: async (d) => { parked.push(d); return { ok: true, ssl: true }; }, detach: async (d) => { parked = parked.filter((x) => x !== d); return { ok: true }; } });
+    const done = await post(`/office/settings/domain/${row.id}/connect`, o.cookie);
+    assert.equal(done.status, 302);
+    assert.deepEqual(parked, ['tdom-conn.com']);
+    const [[off]] = await db.pool.query('SELECT custom_domain FROM offices WHERE id = ?', [o.office.id]);
+    assert.equal(off.custom_domain, 'tdom-conn.com');
+    assert.equal((await requestsOf(o.office.id))[0].status, 'active');
+    const audits = await auditOf(o.office.id, 'domain.connect');
+    assert.deepEqual(audits.map((a) => (typeof a.after_json === 'string' ? JSON.parse(a.after_json) : a.after_json).outcome), ['dns_not_ready', 'manual', 'connected']);
+    const page = (await get('/office/settings?domain=connected', o.cookie)).text;
+    assert.match(page, /تم ربط الدومين بصفحة مكتبك/);
+    assert.match(page, /إلغاء ربط الدومين/);
+
+    assert.equal((await post('/office/settings/domain/disconnect', o.cookie)).status, 302);
+    const [[after]] = await db.pool.query('SELECT custom_domain FROM offices WHERE id = ?', [o.office.id]);
+    assert.equal(after.custom_domain, null);
+    assert.deepEqual(parked, [], 'the hosting alias is removed');
+    assert.equal((await requestsOf(o.office.id))[0].status, 'cancelled');
+    assert.equal((await auditOf(o.office.id, 'domain.disconnect')).length, 1);
+  } finally {
+    domains.setResolver(null);
+    hosting.setMock(null);
+    delete process.env.APP_DOMAIN_IP;
+  }
+});
+
+test('hosting driver: off without settings, API2 replies read correctly, the token never in an error', () => {
+  const hosting = require('../services/hosting');
+  assert.equal(hosting.mode({}), 'off');
+  assert.equal(hosting.tokenConfig({ CPANEL_HOST: 'server.example.net', CPANEL_USER: 'abc', CPANEL_API_TOKEN: 'short' }), null);
+  assert.ok(hosting.tokenConfig({ CPANEL_HOST: 'https://server.example.net:2083/', CPANEL_USER: 'abc', CPANEL_API_TOKEN: 'A'.repeat(32) }));
+  assert.equal(hosting.api2Done({ cpanelresult: { data: [{ result: 1 }] } }), true);
+  assert.equal(hosting.api2Done({ cpanelresult: { data: [{ result: 0, reason: 'tdom.com is already parked' }] } }), true);
+  assert.equal(hosting.api2Done({ cpanelresult: { data: [{ result: 0, reason: 'You have reached the maximum' }] } }), false);
+  assert.equal(domains.dnsReady(['1.2.3.4'], '1.2.3.4'), true);
+  assert.equal(domains.dnsReady(['1.2.3.5'], '1.2.3.4'), false);
+  assert.equal(domains.dnsReady([], ''), false);
 });
 
 test('launch helper counts open requests unchanged for more than 3 days', { skip }, async () => {

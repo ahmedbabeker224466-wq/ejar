@@ -81,6 +81,7 @@ async function ensureSchema(targetPool = pool) {
     await require('../services/defaultPlan').backfillOfficePlans(targetPool);
     current = 'office slug backfill';
     await require('../services/officeLink').backfillSlugs(targetPool);
+    await require('../services/officeLink').defaultPagesOn(targetPool);
     result.created = (await countTables(targetPool)) - result.found;
     result.ok = true;
     return result;

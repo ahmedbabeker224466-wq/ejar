@@ -9,14 +9,19 @@
   <% } %>
 
   <% if (domain.activeDomain) { %>
-    <p><%= __("نطاق مكتبك:") %> <a href="https://<%= __(domain.activeDomain) %>/" dir="ltr" target="_blank" rel="noopener noreferrer"><strong>https://<%= __(domain.activeDomain) %></strong></a> <span class="badge badge--domain-active"><%= __("فعّال") %></span></p>
-    <p class="muted"><%= __("يعرض هذا العنوان صفحة مكتبك العامة وإعلاناتك. إذا لم يفتح بعد فقد يحتاج ساعات حتى تكتمل إعدادات الدومين. لتغيير النطاق تواصل مع الدعم.") %></p>
+    <p><%= __("نطاق مكتبك:") %> <a href="https://<%= __(domain.activeDomain) %>/" dir="ltr" target="_blank" rel="noopener noreferrer"><strong>https://<%= __(domain.activeDomain) %></strong></a> <span class="badge badge--domain-active"><%= __("مربوط") %></span></p>
+    <p class="muted"><%= __("يعرض هذا العنوان صفحة مكتبك العامة وإعلاناتك. شهادة الأمان (https) تصدر تلقائياً خلال ساعة غالباً بعد الربط.") %></p>
+    <% if (domain.canRequest) { %>
+      <form method="post" action="/office/settings/domain/disconnect">
+        <button type="submit" class="btn btn--danger"><%= __("إلغاء ربط الدومين") %></button>
+      </form>
+    <% } %>
   <% } else if (domain.request && domain.request.open) { %>
     <% const r = domain.request; %>
     <div class="domain-status" id="domain-request">
       <p><%= __("طلبك:") %> <strong dir="ltr"><%= __(r.domain) %></strong>
         <span class="badge badge--domain-<%= __(r.status) %>"><%= __(r.statusLabel) %></span></p>
-      <p class="muted"><%= __(r.type === 'own' ? __('لدي دومين') : __('احجز لي دوميناً')) %></p>
+      <% if (r.type !== 'own') { %><p class="muted"><%= __("احجز لي دوميناً") %></p><% } %>
 
       <% if (r.type === 'own' && r.connection_method === 'nameservers') { %>
         <% if (r.assigned_ns_1 && r.assigned_ns_2) { %>
@@ -30,15 +35,34 @@
           <p class="muted"><%= __("سيرسل لك الدعم القيم قريباً.") %></p>
         <% } %>
       <% } else if (r.type === 'own') { %>
-        <% if (domain.records.target || domain.records.ip) { %>
-          <p><%= __("أضف السجلات التالية عند مزود الدومين:") %></p>
-          <div class="copy-box" dir="ltr">
-            <% if (domain.records.target) { %><div class="invite-code"><span>CNAME www <%= dir === 'rtl' ? '→' : '←' %></span><output id="domain-cname"><%= __(domain.records.target) %></output><button type="button" class="btn btn--secondary" data-copy="#domain-cname" data-copied="<%= __("تم النسخ") %>"><%= __("نسخ") %></button></div><% } %>
-            <% if (domain.records.ip) { %><div class="invite-code"><span>A @ <%= dir === 'rtl' ? '→' : '←' %></span><output id="domain-a"><%= __(domain.records.ip) %></output><button type="button" class="btn btn--secondary" data-copy="#domain-a" data-copied="<%= __("تم النسخ") %>"><%= __("نسخ") %></button></div><% } %>
-          </div>
-        <% } else { %>
-          <p class="muted"><%= __("سيرسل لك الدعم القيم قريباً.") %></p>
-        <% } %>
+        <ol class="domain-steps">
+          <li class="is-done"><strong><%= __("اشترِ الدومين") %></strong><span><%= __("من أي مزود، مثل Namecheap أو GoDaddy أو SaudiNIC.") %></span></li>
+          <li>
+            <strong><%= __("أضف سجلين في إعدادات DNS عند مزود الدومين") %></strong>
+            <% if (domain.records.ip) { %>
+              <div class="dns-table" dir="ltr" role="table" aria-label="<%= __("سجلات DNS") %>">
+                <div class="dns-row dns-row--head" role="row"><span role="columnheader">Type</span><span role="columnheader">Host</span><span role="columnheader">Value</span><span></span></div>
+                <div class="dns-row" role="row"><span role="cell">A</span><span role="cell">@</span><output id="domain-a" role="cell"><%= __(domain.records.ip) %></output><button type="button" class="btn btn--secondary btn--small" data-copy="#domain-a" data-copied="<%= __("تم النسخ") %>"><%= __("نسخ") %></button></div>
+                <div class="dns-row" role="row"><span role="cell">CNAME</span><span role="cell">www</span><output id="domain-cname" role="cell"><%= __(r.domain) %></output><button type="button" class="btn btn--secondary btn--small" data-copy="#domain-cname" data-copied="<%= __("تم النسخ") %>"><%= __("نسخ") %></button></div>
+              </div>
+              <span class="muted"><%= __("احذف أي سجل A آخر للاسم @، فوجود سجلين يمنع الربط.") %></span>
+            <% } else { %>
+              <span class="muted"><%= __("سيرسل لك الدعم القيم قريباً.") %></span>
+            <% } %>
+          </li>
+          <li>
+            <strong><%= __("اضغط «ربط الدومين»") %></strong>
+            <span><%= __("نتحقق من السجلات ونربط الدومين بصفحة مكتبك تلقائياً. قد يحتاج وصول السجلات من دقائق إلى 24 ساعة.") %></span>
+            <% if (domain.connectError) { %>
+              <div class="flash flash--danger" role="alert"><%= __(domain.connectError) %><% if (domain.found.length) { %> <%= __("العنوان الظاهر الآن:") %> <span dir="ltr"><%= __(domain.found.join(', ')) %></span><% } %></div>
+            <% } %>
+            <% if (domain.canRequest && domain.records.ip) { %>
+              <form method="post" action="/office/settings/domain/<%= __(r.id) %>/connect">
+                <button type="submit" class="btn btn--success btn--block"><%= __("ربط الدومين") %></button>
+              </form>
+            <% } %>
+          </li>
+        </ol>
       <% } else { %>
         <% if (r.alt_domains.length) { %><p><%= __("البدائل:") %> <% r.alt_domains.forEach(function (a, i) { %><span dir="ltr"><%= __(a) %></span><%= __(i < r.alt_domains.length - 1 ? __('، ') : '') %><% }) %></p><% } %>
         <p><%= __("تكلفة الدومين الفعلية + رسم خدمة") %> <%= __(domain.fmt(r.service_fee_halalas)) %> <%= __("ريال، ويُسجَّل باسم المكتب.") %></p>
@@ -48,7 +72,7 @@
 
       <% if (domain.canRequest) { %>
         <form method="post" action="/office/settings/domain/<%= __(r.id) %>/cancel">
-          <button type="submit" class="btn btn--secondary btn--block"><%= __("إلغاء الطلب") %></button>
+          <button type="submit" class="btn btn--link"><%= __("إلغاء وإدخال دومين آخر") %></button>
         </form>
       <% } %>
     </div>
@@ -60,57 +84,23 @@
     </div>
   <% } else { %>
     <% if (domain.request && domain.request.status === 'rejected') { %><p class="muted"><%= __("طلبك السابق") %> (<span dir="ltr"><%= __(domain.request.domain) %></span>) <%= __("مرفوض. يمكنك تقديم طلب جديد.") %></p><% } %>
+    <p><%= __("اربط صفحة مكتبك بدومينك الخاص في ثلاث خطوات: تشتري الدومين، تضيف سجلين نعطيك قيمهما، ثم تضغط «ربط الدومين».") %></p>
     <% if (domain.mode === 'addon' && domain.addonHalalas) { %>
-      <p><%= __("النطاق الخاص إضافة اختيارية بـ") %> <strong><%= __(domain.fmt(domain.addonHalalas)) %> <%= __("ريال شهرياً") %></strong>. <%= __("لا تُخصم تلقائياً: نراجع الطلب ونتواصل معك قبل أي رسوم.") %></p>
-    <% } else if (domain.mode === 'included') { %>
-      <p><%= __("باقتك تشمل نطاقاً خاصاً واحداً.") %></p>
+      <p><%= __("ربط الدومين إضافة بـ") %> <strong><%= __(domain.fmt(domain.addonHalalas)) %> <%= __("ريال شهرياً") %></strong>.</p>
     <% } %>
 
     <% if (domain.canRequest) { %>
       <% const v = domain.values; const e = domain.errors; %>
       <form method="post" action="/office/settings/domain" novalidate class="domain-form">
-        <fieldset class="field domain-choice">
-          <legend><%= __("ماذا تريد؟") %></legend>
-          <input type="radio" id="domain-type-own" name="type" value="own" class="choice-input" <%= __(v.type === 'own' ? 'checked' : '') %>>
-          <label for="domain-type-own" class="choice"><%= __("لدي دومين") %></label>
-          <input type="radio" id="domain-type-reserve" name="type" value="reserve" class="choice-input" <%= __(v.type === 'reserve' ? 'checked' : '') %>>
-          <label for="domain-type-reserve" class="choice"><%= __("احجز لي دوميناً") %></label>
-          <input type="radio" id="domain-type-none" name="type" value="none" class="choice-input" <%= __(v.type !== 'own' && v.type !== 'reserve' ? 'checked' : '') %>>
-          <label for="domain-type-none" class="choice"><%= __("ليس الآن") %></label>
-
-          <div class="domain-fields">
-            <div class="field">
-              <label for="domain-name"><%= __("اسم الدومين") %></label>
-              <input id="domain-name" name="domain" class="input" type="text" dir="ltr" inputmode="url" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="253" placeholder="myoffice.sa" value="<%= __(v.domain || '') %>" <%= __(e.domain ? 'aria-invalid=true' : '') %>>
-              <% if (e.domain) { %><p class="field-error" role="alert"><%= __(e.domain) %></p><% } %>
-            </div>
-
-            <div class="domain-own">
-              <fieldset class="field">
-                <legend><%= __("طريقة الربط") %></legend>
-                <label class="check"><input type="radio" name="connection_method" value="nameservers" <%= __(v.connection_method !== 'records' ? 'checked' : '') %>> <%= __("تغيير Nameservers (الأسهل: نرسل لك قيمتين تضعهما عند مزودك)") %></label>
-                <label class="check"><input type="radio" name="connection_method" value="records" <%= __(v.connection_method === 'records' ? 'checked' : '') %>> <%= __("إضافة سجلات DNS (CNAME و A) مع إبقاء Nameservers كما هي") %></label>
-              </fieldset>
-            </div>
-
-            <div class="domain-reserve">
-              <div class="field">
-                <label for="domain-alt-1"><%= __("بديل أول (اختياري)") %></label>
-                <input id="domain-alt-1" name="alt_1" class="input" type="text" dir="ltr" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="253" value="<%= __(v.alt_1 || '') %>" <%= __(e.alt_1 ? 'aria-invalid=true' : '') %>>
-                <% if (e.alt_1) { %><p class="field-error" role="alert"><%= __(e.alt_1) %></p><% } %>
-              </div>
-              <div class="field">
-                <label for="domain-alt-2"><%= __("بديل ثانٍ (اختياري)") %></label>
-                <input id="domain-alt-2" name="alt_2" class="input" type="text" dir="ltr" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="253" value="<%= __(v.alt_2 || '') %>" <%= __(e.alt_2 ? 'aria-invalid=true' : '') %>>
-                <% if (e.alt_2) { %><p class="field-error" role="alert"><%= __(e.alt_2) %></p><% } %>
-              </div>
-              <p><%= __("تكلفة الدومين الفعلية + رسم خدمة") %> <%= __(domain.fmt(domain.serviceFeeHalalas)) %> <%= __("ريال، ويُسجَّل باسم المكتب.") %></p>
-              <p class="muted"><%= __("نتحقق من توفر الاسم بعد الطلب، ولا نضمن توفره قبل ذلك.") %></p>
-            </div>
-
-            <button type="submit" class="btn btn--primary btn--block"><%= __("إرسال الطلب") %></button>
-          </div>
-        </fieldset>
+        <input type="hidden" name="type" value="own">
+        <input type="hidden" name="connection_method" value="records">
+        <div class="field">
+          <label for="domain-name"><%= __("الدومين الذي اشتريته") %></label>
+          <input id="domain-name" name="domain" class="input" type="text" dir="ltr" inputmode="url" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="253" placeholder="myoffice.sa" value="<%= __(v.domain || '') %>" <%= __(e.domain ? 'aria-invalid=true' : '') %>>
+          <% if (e.domain) { %><p class="field-error" role="alert"><%= __(e.domain) %></p><% } %>
+          <p class="field-hint"><%= __("اكتب اسم الدومين فقط، مثل:") %> <bdi dir="ltr">myoffice.sa</bdi></p>
+        </div>
+        <button type="submit" class="btn btn--primary"><%= __("متابعة") %></button>
       </form>
     <% } else { %>
       <p class="muted"><%= __("طلب النطاق الخاص متاح لمالك المكتب فقط.") %></p>

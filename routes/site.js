@@ -40,17 +40,9 @@ async function planCards() {
   return list.map((p) => {
     const monthly = pricing.planPrice(p, 'monthly');
     const yearly = pricing.planPrice(p, 'yearly');
-    const features = officialPricing.planFeatures(p);
-    const addonHere = p.custom_domain === 'addon' && addon && Array.isArray(addon.plans) && addon.plans.includes(p.code);
     return {
       code: p.code, name: p.name_ar, monthly, yearly, paidMonths: officialPricing.paidMonths(monthly, yearly), lines: officialPricing.cardLines(p, addon, money.formatHalalas),
-      spec: {
-        units: p.max_units, members: p.max_members, ai: p.max_ai_reads_monthly, listings: p.max_listings,
-        telegram: features.telegram, whatsapp: features.whatsapp, audit: p.audit_level === 'basic' ? 'basic' : 'full',
-        support: ['email', 'email_whatsapp', 'priority'].includes(p.support_level) ? p.support_level : 'email',
-        domain: p.custom_domain === 'included' ? 'included' : addonHere ? 'addon' : 'none',
-        addonPrice: addonHere ? money.formatHalalas(Math.round(Number(addon.price_monthly) * 100)) : null,
-      },
+      spec: officialPricing.planSpec(p, addon),
     };
   });
 }

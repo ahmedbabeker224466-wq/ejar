@@ -152,6 +152,8 @@ async function createOffice(pool, { userId, fields, ip, termsAccepted = false, n
     const scoped = scopeToOffice(conn, officeId);
     // The public link starts as office-xxxxxx with the page switched off.
     await assignAutoSlug(conn, officeId);
+    // Owner's decision (Nov 2026): the free link works from day one, like a store link.
+    await conn.query('UPDATE offices SET public_page_enabled = 1 WHERE id = ?', [officeId]);
 
     const [roleUpdate] = await conn.query(
       "UPDATE users SET role = 'office_owner' WHERE id = ? AND role IS NULL",
