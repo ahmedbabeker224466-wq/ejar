@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="<%= lang %>" dir="<%= dir %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= __(title) %> | <%= __("إدارة المنصة") %></title>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#0b1530">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@800&text=miaad&display=swap">
+  <link rel="stylesheet" href="<%= assetUrl('/css/main.css') %>">
+</head>
+<body class="adm-auth">
+  <main class="adm-auth__main">
+    <div class="adm-auth__head">
+      <span class="adm-auth__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'aa' }) %></span>
+      <span class="brand-word" lang="en" dir="ltr">miaad</span>
+      <span class="adm-auth__tag">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Z"/></svg>
+        <%= __("إدارة المنصة") %>
+      </span>
+    </div>
+    <%- body %>
+    <p class="adm-auth__foot"><%= __("دخول مقيّد ومراقب. كل محاولة تُسجَّل.") %></p>
+  </main>
+</body>
+</html>

@@ -1,10 +1,6 @@
-<div class="auth-split">
 <section class="auth card">
-  <div class="auth__icon" aria-hidden="true">
-    <%- include('../partials/brand-mark', { bid: 'a' }) %>
-  </div>
   <h1><%= __("دخول الإدارة") %></h1>
-  <p class="lead"><%= __("هذه الصفحة لمدير المنصة فقط. اكتب بريد الإدارة ليصلك رمز الدخول، ثم تكتب رمز تطبيق المصادقة.") %></p>
+  <p class="lead"><%= __("الخطوة الأولى: رمز يصل إلى بريد الإدارة. الخطوة الثانية: رمز تطبيق المصادقة.") %></p>
 
   <% if (error) { %>
     <div class="flash flash--danger" role="alert"><%= __(error) %></div>
@@ -17,10 +13,7 @@
         autocomplete="email" maxlength="190" placeholder="name@example.com"
         value="<%= email %>" autofocus required>
     </div>
-    <button type="submit" class="btn btn--primary btn--block btn--large"><%= __("إرسال رمز الدخول") %></button>
+    <button type="submit" class="btn btn--primary btn--block btn--large adm-auth__btn"><%= __("إرسال رمز الدخول") %></button>
   </form>
 
-  <p class="auth__link"><a href="/"><%= __("العودة إلى الموقع") %></a></p>
-</section>
-<%- include('../partials/auth-art') %>
-</div>
+  </section>

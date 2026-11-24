@@ -90,9 +90,24 @@ const limit = rateLimit({
 
 router.use('/admin/login', noStore, sameOrigin, (req, res, next) => {
   res.set('X-Robots-Tag', 'noindex, nofollow');
-  // Same design as the public sign-in pages.
-  res.locals.layout = 'layouts/site';
-  res.locals.mkStd = true;
+  useAdminLayout(res);
+  next();
+});
+
+// Its own quiet layout, unlike the customer sign-in pages.
+function useAdminLayout(res) {
+  res.locals.layout = 'layouts/admin-auth';
+  res.locals.adminAuth = true;
+}
+
+// The authenticator step after an admin email code keeps the admin layout
+// (the flag lives in the signed step token, so no database read).
+router.use('/login/2fa', (req, res, next) => {
+  const step = auth.verifyStepToken(req.cookies[MFA_COOKIE], 'mfa');
+  if (step && step.admin) {
+    useAdminLayout(res);
+    res.set('X-Robots-Tag', 'noindex, nofollow');
+  }
   next();
 });
 
@@ -172,7 +187,7 @@ router.post('/admin/login/verify', limit, async (req, res, next) => {
     res.clearCookie(STEP_COOKIE, { path: '/' });
     await audit(req, 'email_ok', user.id);
     // The authenticator code is always the second step for the admin.
-    res.cookie(MFA_COOKIE, auth.signStepToken({ sub: String(user.id) }, 'mfa', STEP_SECONDS), auth.cookieOptions(STEP_SECONDS));
+    res.cookie(MFA_COOKIE, auth.signStepToken({ sub: String(user.id), admin: true }, 'mfa', STEP_SECONDS), auth.cookieOptions(STEP_SECONDS));
     return res.redirect(user.twofa_enabled ? '/login/2fa' : '/login/2fa/setup');
   } catch (err) {
     return next(err);

@@ -1,4 +1,4 @@
-<div class="auth-split">
+<% if (!locals.adminAuth) { %><div class="auth-split"><% } %>
 <section class="auth card">
   <h1><%= __("أدخل رمز الدخول") %></h1>
   <p class="lead"><%= __("أرسلنا رمزاً من 6 أرقام إلى") %> <bdi dir="ltr" class="nowrap"><%= __(phoneLocal) %></bdi></p>
@@ -40,5 +40,5 @@
   <p class="auth__link"><a href="<%= locals.changeHref || '/login' %>"><%= __(locals.changeLabel || "تغيير رقم الجوال") %></a></p>
 </section>
 <script src="<%= assetUrl('/js/otp.js') %>" defer></script>
-<%- include('../partials/auth-art') %>
-</div>
+<% if (!locals.adminAuth) { %><%- include('../partials/auth-art') %>
+</div><% } %>
