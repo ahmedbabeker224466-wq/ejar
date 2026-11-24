@@ -21,7 +21,7 @@
   <div class="mk-wrap">
     <div class="mk-cards">
       <% items.forEach(function (it) { %>
-        <article class="mk-card"><%- icon(it[1]) %><h2><%= __(t('feat.' + it[0] + '.t')) %></h2><p><%= __(t('feat.' + it[0] + '.p')) %></p></article>
+        <article class="mk-card" id="<%= it[0] %>"><%- icon(it[1]) %><h2><%= __(t('feat.' + it[0] + '.t')) %></h2><p><%= __(t('feat.' + it[0] + '.p')) %></p></article>
       <% }) %>
     </div>
   </div>

@@ -124,9 +124,9 @@ test('every public page: 200, one h1, title, description, canonical, robots, the
     assert.ok(!/ style="/.test(html), `${p}: no inline style`);
     assert.ok(!/(googletagmanager|google-analytics|facebook\.net|hotjar)/.test(html), `${p}: no tracker by default`);
   }
-  // Blocking scripts: none at all on the offices page (deferred own-origin files only elsewhere).
+  // Blocking scripts: none on the offices page; only deferred own-origin files (the header menus).
   const home = await text('/offices');
-  assert.equal((home.match(/<script(?![^>]*application\/ld\+json)/g) || []).length, 0);
+  for (const tag of home.match(/<script(?![^>]*application\/ld\+json)[^>]*>/g) || []) assert.match(tag, /^<script src="\/js\/[^"]+" defer>$/, tag);
   // Images carry their size and load lazily.
   const html = await text('/listings');
   for (const tag of html.match(/<img [^>]*>/g) || []) assert.match(tag, /width="\d+" height="\d+"/);

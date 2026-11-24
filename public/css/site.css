@@ -476,3 +476,131 @@ textarea.mk-input { min-height: 150px; resize: vertical; }
 .mk-logo .brand-word { font-size: 27px; padding-block-end: 3px; }
 .mk-mock__brand .brand-word { font-size: 18px; }
 .mk-footer__credit { color: #fff; font-weight: 600; unicode-bidi: isolate; } .mk-footer__credit:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------------
+   Nov 2026 clean-up: menus with icons, email sign-up in the hero,
+   one quiet background per section, no decorative circles.
+   ------------------------------------------------------------------ */
+.mk-hero::before, .mk-hero::after, .mk-phero::before, .mk-phero::after, .mk-endcta__card::before, .mk-endcta__card::after { display: none; }
+.mk-endcta { display: none; }
+
+/* Header menus */
+.mk-nav__links { align-items: center; }
+.mk-nav__link { position: relative; padding: 10px 14px; border-radius: 10px; }
+.mk-dd { position: relative; }
+.mk-dd > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 10px; cursor: pointer; font-weight: 500; user-select: none; }
+.mk-dd > summary::-webkit-details-marker { display: none; }
+.mk-dd > summary:focus-visible { outline: 3px solid #d9f520; outline-offset: 2px; }
+.mk-dd__chev { width: 16px; height: 16px; transition: transform .18s; }
+.mk-dd[open] .mk-dd__chev { transform: rotate(180deg); }
+.mk-dd__panel { position: absolute; top: calc(100% + 14px); inset-inline-start: 0; z-index: 60; display: flex; gap: 8px 36px; padding: 22px 24px; background: #fff; color: var(--mk-ink); border-radius: 16px; box-shadow: 0 24px 60px -18px rgba(15, 29, 69, .35), 0 0 0 1px rgba(15, 29, 69, .06); }
+.mk-dd--end .mk-dd__panel { inset-inline-start: auto; inset-inline-end: 0; }
+.mk-dd__col { display: flex; flex-direction: column; gap: 2px; min-width: 250px; }
+.mk-dd__head { font-size: 13.5px; font-weight: 700; color: var(--mk-deep); margin: 0 0 8px; padding-inline: 10px; }
+.mk-dd__item { display: flex; align-items: flex-start; gap: 12px; padding: 10px; border-radius: 12px; color: var(--mk-ink) !important; text-decoration: none; transition: background-color .15s; }
+.mk-dd__item:hover, .mk-dd__item:focus-visible { background: #f2f6ff; }
+.mk-dd__icon { flex: none; width: 36px; height: 36px; border-radius: 10px; background: #e3edff; color: #1d6bff; display: grid; place-items: center; }
+.mk-dd__icon svg { width: 20px; height: 20px; }
+.mk-dd__item b { display: block; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.mk-dd__item small { display: block; font-size: 13px; color: var(--mk-muted); line-height: 1.5; margin-block-start: 2px; }
+@media (min-width: 981px) {
+  .mk-nav .mk-dd > summary { color: #fff; }
+  .mk-nav .mk-dd > summary:hover, .mk-nav .mk-dd[open] > summary { background: rgba(255, 255, 255, .14); }
+  .mk-nav__link { color: #fff; opacity: .95; }
+  .mk-nav__link:hover { background: rgba(255, 255, 255, .14); }
+  .mk-nav__side .mk-dd > summary { font-weight: 600; font-size: 15.5px; }
+}
+@media (max-width: 980px) {
+  .mk-dd > summary { width: 100%; justify-content: space-between; min-height: 52px; font-size: 17px; padding-inline: 12px; color: var(--mk-ink); }
+  .mk-dd[open] > summary { background: #f2f6ff; }
+  .mk-dd__panel { position: static; flex-direction: column; gap: 10px; padding: 6px 0 12px; box-shadow: none; border-radius: 0; }
+  .mk-dd__col { min-width: 0; }
+  .mk-nav__link { min-height: 52px; display: flex; align-items: center; font-size: 17px; padding-inline: 12px; color: var(--mk-ink); }
+  .mk-nav__side .mk-dd { border: 1.5px solid var(--mk-line); border-radius: 12px; }
+}
+
+/* Hero: one blue field running on from the header, email sign-up like the product's own */
+.mk-hero { background: linear-gradient(180deg, #1d6bff 0%, #2f78ff 58%, #f4f7fd 58%); padding-block-start: 76px; }
+.mk-hero h1 { color: #fff; font-size: 52px; line-height: 1.25; max-width: 900px; }
+.mk-hero__lead { color: #e2ecff; max-width: 720px; }
+.mk-hero__note { color: #cfe0ff; }
+.mk-signup { display: flex; max-width: 560px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 16px 40px -18px rgba(5, 20, 60, .55); }
+.mk-signup__field { flex: 1; display: flex; align-items: center; gap: 10px; padding-inline: 16px; color: #7a86a6; }
+.mk-signup__field svg { width: 22px; height: 22px; flex: none; }
+.mk-signup input { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: 17px; color: var(--mk-ink); background: transparent; min-height: 58px; text-align: start; }
+.mk-signup input::placeholder { color: #8b95ae; }
+.mk-signup:focus-within { box-shadow: 0 0 0 3px #d9f520, 0 16px 40px -18px rgba(5, 20, 60, .55); }
+.mk-signup .mk-btn { border-radius: 0; min-height: 58px; padding-inline: 28px; white-space: nowrap; }
+.mk-mock { margin-block-start: 56px; }
+.mk-mock__screen { box-shadow: 0 30px 70px -30px rgba(5, 20, 60, .55); border: 1px solid rgba(15, 29, 69, .08); }
+.mk-mock__side { background: #0f1d45; border-inline-end: 0; }
+.mk-mock__side > span { color: #c7d1ec; }
+.mk-mock__side > span.is-on { background: rgba(255, 255, 255, .1); color: #fff; }
+.mk-mock__brand { color: #fff; }
+.mk-mock__note { text-align: center; font-size: 13px; color: var(--mk-muted); padding-block: 14px 0; }
+
+/* Features: one calm surface for every illustration */
+.mk-art--1, .mk-art--2, .mk-art--3, .mk-art--4 { background: #eef3fd; }
+.mk-checks svg { width: 18px; height: 18px; color: #1d6bff; }
+
+/* Heading aligned to the start of the column */
+.mk-head--start { text-align: start; margin-inline: 0; }
+
+/* One lease, from start to end: a timeline */
+.mk-tl { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: relative; }
+.mk-tl::before { content: ''; position: absolute; inset-inline: 0; top: 11px; height: 3px; background: #c9d8f8; border-radius: 3px; }
+.mk-tl li { position: relative; padding-block-start: 40px; padding-inline-end: 28px; }
+.mk-tl li::before { content: ''; position: absolute; top: 2px; inset-inline-start: 0; width: 21px; height: 21px; border-radius: 50%; background: #fff; border: 4px solid #1d6bff; }
+.mk-tl li.is-key::before { background: #d9f520; border-color: #0f1d45; }
+.mk-tl__when { display: inline-block; font-size: 13.5px; font-weight: 700; color: #1452c7; background: #e3edff; padding: 3px 10px; border-radius: 8px; margin-block-end: 10px; }
+.mk-tl li.is-key .mk-tl__when { background: #0f1d45; color: #fff; }
+.mk-tl h3 { font-size: 19px; line-height: 1.45; margin-block-end: 6px; }
+.mk-tl p { color: var(--mk-ink-2); font-size: 15.5px; }
+.mk-tl__note { margin-block-start: 34px; font-size: 14px; color: var(--mk-muted); }
+@media (max-width: 900px) {
+  .mk-tl { grid-template-columns: 1fr; gap: 26px; }
+  .mk-tl::before { inset-inline: auto; inset-inline-start: 9px; top: 0; bottom: 0; width: 3px; height: auto; }
+  .mk-tl li { padding-block-start: 0; padding-inline-start: 40px; padding-inline-end: 0; }
+}
+
+/* Privacy in one line under the FAQ */
+.mk-privacy-line { display: flex; gap: 12px; align-items: flex-start; margin-block-start: 28px; padding: 16px 18px; border-radius: 12px; background: var(--mk-bg); color: var(--mk-ink-2); font-size: 15px; }
+.mk-privacy-line svg { width: 22px; height: 22px; flex: none; color: #1d6bff; margin-block-start: 2px; }
+.mk-privacy-line a { color: #1d6bff; font-weight: 600; text-decoration: underline; }
+
+/* Inner page headings without the glow */
+.mk-phero { background: #1d6bff; }
+.mk-phero h1 { color: #fff; }
+.mk-phero p { color: #e2ecff; }
+
+@media (max-width: 720px) {
+  .mk-hero { padding-block-start: 48px; background: linear-gradient(180deg, #1d6bff 0%, #2f78ff 70%, #f4f7fd 70%); }
+  .mk-hero h1 { font-size: 32px; }
+  .mk-signup { flex-direction: column; border-radius: 12px; }
+  .mk-signup__field { border-block-end: 1px solid var(--mk-line); }
+  .mk-signup .mk-btn { width: 100%; }
+}
+@media (max-width: 980px) { .mk-dd__col, .mk-dd__item { width: 100%; } }
+
+/* Sign-in pages: the form beside a brand panel (like the product's own sign-in) */
+.mk-std:has(.auth-split) { background: #fff; }
+.auth-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; min-height: 620px; border-radius: 24px; overflow: hidden; border: 1px solid var(--mk-line); background: #fbfcff; box-shadow: 0 24px 60px -36px rgba(15, 29, 69, .4); }
+.mk-std .auth-split .auth { max-width: 440px; width: 100%; margin: auto; box-shadow: none; border: 0; background: transparent; padding: 48px 32px; }
+.mk-std .auth-split .auth .btn--primary { background: #d9f520; border-color: #d9f520; color: #0f1d45; }
+.mk-std .auth-split .auth .btn--primary:hover { filter: brightness(.96); }
+.auth-art { position: relative; overflow: hidden; background: #1d6bff; color: #fff; display: flex; align-items: flex-start; }
+.auth-art__swirl { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .95; }
+.auth-art__city { position: absolute; inset-inline: 0; bottom: 0; width: 100%; height: 46%; }
+.auth-art__inner { position: relative; padding: 56px 44px; display: flex; flex-direction: column; gap: 28px; width: 100%; }
+.auth-art__title { margin: 0; font-size: 30px; line-height: 1.4; font-weight: 700; max-width: 380px; text-wrap: balance; }
+.auth-art__card { display: flex; gap: 14px; align-items: flex-start; max-width: 380px; background: #fff; color: var(--mk-ink); border-radius: 16px; padding: 16px 18px; box-shadow: 0 20px 40px -18px rgba(5, 20, 60, .6); }
+.auth-art__mark { flex: none; width: 38px; height: 38px; }
+.auth-art__mark .brand-mark { width: 100%; height: 100%; }
+.auth-art__card b { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; }
+.auth-art__card small { font-weight: 500; color: var(--mk-muted); }
+.auth-art__card span { display: block; font-size: 14px; color: var(--mk-ink-2); line-height: 1.6; margin-block-start: 4px; }
+@media (max-width: 900px) {
+  .auth-split { grid-template-columns: 1fr; min-height: 0; border: 0; box-shadow: none; background: transparent; }
+  .auth-art { display: none; }
+  .mk-std .auth-split .auth { padding: 32px 4px; }
+}

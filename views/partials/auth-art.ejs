@@ -1,0 +1,19 @@
+<aside class="auth-art" aria-hidden="true">
+  <svg class="auth-art__swirl" viewBox="0 0 600 700" preserveAspectRatio="xMidYMid slice"><path d="M-40 520C80 380 260 640 330 470 400 300 160 250 230 140 300 30 520 120 640 40" fill="none" stroke="#d9f520" stroke-width="54" stroke-linecap="round"/></svg>
+  <svg class="auth-art__city" viewBox="0 0 600 260" preserveAspectRatio="xMidYMax meet">
+    <g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5" stroke-linejoin="round">
+      <path d="M40 260V120h90v140M70 150h30M70 180h30M70 210h30"/>
+      <path d="M150 260V60l70-30 70 30v200M185 90h70M185 120h70M185 150h70M185 180h70M185 210h70"/>
+      <path d="M310 260V140h110v120M335 170h60M335 200h60M335 230h60"/>
+      <path d="M440 260V90h100v170M465 120h50M465 150h50M465 180h50M465 210h50"/>
+      <path d="M10 260h580"/>
+    </g>
+  </svg>
+  <div class="auth-art__inner">
+    <p class="auth-art__title"><%= __(t('art.title')) %></p>
+    <div class="auth-art__card">
+      <span class="auth-art__mark"><%- include('brand-mark', { bid: 'art' }) %></span>
+      <div><b><%= __(t('art.card')) %> <small><%= __(t('art.cardWhen')) %></small></b><span><%= __(t('art.cardText')) %></span></div>
+    </div>
+  </div>
+</aside>

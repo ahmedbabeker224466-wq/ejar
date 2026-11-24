@@ -270,7 +270,7 @@ test('the English pricing and home pages: same plans from the database, LTR, bot
   const home = await http.request('/en');
   assert.equal(home.status, 200);
   assert.match(home.text, /<html lang="en" dir="ltr">/);
-  assert.match(home.text, /Never miss a lease renewal or rent payment again/);
+  assert.match(home.text, /Your office(?:'|&#39;)s lease deadlines, calculated and reminded on time/);
   assert.match((await http.request('/')).text, /href="\/en"[^>]*hreflang="en"/, 'the Arabic home links to English');
   const other = await http.request('/en/login');
   assert.equal(other.status, 302, 'pages without an English copy go back to Arabic');
