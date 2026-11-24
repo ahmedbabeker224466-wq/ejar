@@ -75,7 +75,14 @@ async function bank(pool = db.pool) {
 
 async function support(pool = db.pool) {
   const all = await loadAll(pool);
-  return { phone: all[KEYS.supportPhone] || '', email: all[KEYS.supportEmail] || '' };
+  // The admin settings win; SUPPORT_EMAIL / SUPPORT_PHONE / SUPPORT_WHATSAPP in the
+  // environment fill the gaps so the contact page is never empty.
+  const env = (k) => String(process.env[k] || '').trim();
+  return {
+    phone: all[KEYS.supportPhone] || env('SUPPORT_PHONE'),
+    email: all[KEYS.supportEmail] || env('SUPPORT_EMAIL'),
+    whatsapp: env('SUPPORT_WHATSAPP').replace(/\D/g, ''),
+  };
 }
 
 /** Kill switches and the maintenance banner message. */

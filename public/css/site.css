@@ -623,3 +623,25 @@ textarea.mk-input { min-height: 150px; resize: vertical; }
 @media (min-width: 981px) { .mk-dd:not(.mk-dd--wide) .mk-dd__panel { width: max-content; } }
 @media (min-width: 981px) and (max-width: 1180px) { .mk-dd:not(.mk-dd--wide) .mk-dd__col { width: 240px; } .mk-dd:not(.mk-dd--wide) .mk-dd__panel { gap: 8px 20px; padding: 18px; } }
 .mk-card[id] { scroll-margin-top: 100px; }
+.mk-hero__renter { margin-block-start: 6px; font-size: 15px; }
+.mk-hero__renter a { color: #fff; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+/* Compact language switch */
+.mk .mk-lang { min-height: 36px; padding: 0 10px; gap: 6px; font-size: 14px; border-radius: 9px; border-width: 1px; }
+.mk .mk-lang svg { width: 16px; height: 16px; }
+@media (min-width: 981px) and (max-width: 1180px) { .mk-nav__side { gap: 6px; } .mk-nav__side .mk-btn--accent { padding-inline: 14px; } }
+.mk-contact-ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-block-end: 8px; }
+.mk-contact-way { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--mk-line); border-radius: 14px; color: var(--mk-ink) !important; text-decoration: none; transition: border-color .15s, background-color .15s; }
+.mk-contact-way:hover { border-color: #1d6bff; background: #f2f6ff; }
+.mk-contact-way b { display: block; font-size: 15px; }
+.mk-contact-way small { display: block; font-size: 14px; color: var(--mk-ink-2); }
+.mk-contact-or { color: var(--mk-muted); font-size: 14.5px; margin: 14px 0 6px; }
+/* Pricing: cards sit below the blue heading band instead of over it, and stay compact */
+.mk-phero { padding-block: 72px 64px; }
+.mk-plans-sec { margin-block-start: 0; padding-block: 48px 80px; }
+.mk-period { margin-block-end: 44px; }
+.mk-plan { padding: 28px 26px; }
+.mk-plan__desc { min-height: 0; }
+.mk-plan__price { margin-block-start: 16px; }
+.mk-plan__lines { margin-block-start: 18px; font-size: 15px; }
+.mk-plan__lines li { padding-block: 7px; }
+.mk-lift { margin-block-start: 0; padding-block-start: 40px; }

@@ -31,7 +31,7 @@
       <span class="brand-word" lang="en" dir="ltr">miaad</span>
     </a>
     <% if (locals.localized || locals.langSwitch) { %>
-      <a href="<%= __(altLangHref) %>" class="mk-lang mk-lang--bar" hreflang="<%= __(lang === 'en' ? 'ar' : 'en') %>" lang="<%= __(lang === 'en' ? 'ar' : 'en') %>" aria-label="<%= __(t('lang.switchLabel')) %>"><%- globe %><%= __(t('lang.switch')) %></a>
+      <a href="<%= __(altLangHref) %>" class="mk-lang mk-lang--bar" hreflang="<%= __(lang === 'en' ? 'ar' : 'en') %>" lang="<%= __(lang === 'en' ? 'ar' : 'en') %>" aria-label="<%= __(t('lang.switchLabel')) %>"><%- globe %><span lang="<%= lang === 'en' ? 'ar' : 'en' %>"><%= lang === 'en' ? 'ع' : 'EN' %></span></a>
     <% } %>
     <input type="checkbox" id="mk-menu" class="mk-menu-toggle" aria-hidden="true" tabindex="-1">
     <label for="mk-menu" class="mk-menu-button" aria-label="<%= __(t('nav.menu')) %>">
@@ -64,6 +64,7 @@
           </div>
         </details>
         <a href="<%= L('/pricing') %>" class="mk-nav__link" <%- currentPath === '/pricing' ? 'aria-current="page"' : '' %>><%= __(t('nav.pricing')) %></a>
+        <a href="/listings" class="mk-nav__link" <%- currentPath === '/listings' ? 'aria-current="page"' : '' %>><%= __(t('nav.listings')) %></a>
         <details class="mk-dd">
           <summary><%= __(t('nav.resources')) %><%- chevron %></summary>
           <div class="mk-dd__panel">
@@ -83,7 +84,7 @@
       </nav>
       <div class="mk-nav__side">
         <% if (locals.localized || locals.langSwitch) { %>
-          <a href="<%= __(altLangHref) %>" class="mk-lang mk-lang--panel" hreflang="<%= __(lang === 'en' ? 'ar' : 'en') %>" lang="<%= __(lang === 'en' ? 'ar' : 'en') %>" aria-label="<%= __(t('lang.switchLabel')) %>"><%- globe %><%= __(t('lang.switch')) %></a>
+          <a href="<%= __(altLangHref) %>" class="mk-lang mk-lang--panel" hreflang="<%= __(lang === 'en' ? 'ar' : 'en') %>" lang="<%= __(lang === 'en' ? 'ar' : 'en') %>" aria-label="<%= __(t('lang.switchLabel')) %>"><%- globe %><span lang="<%= lang === 'en' ? 'ar' : 'en' %>"><%= lang === 'en' ? 'ع' : 'EN' %></span></a>
         <% } %>
         <% if (currentUser) { %>
           <a href="/logout" class="mk-btn mk-btn--quiet"><%= __(t('nav.logout')) %></a>
