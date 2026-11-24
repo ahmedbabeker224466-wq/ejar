@@ -2,7 +2,7 @@
 'use strict';
 
 // One-off: gives an existing user (found by login phone) an email address, so
-// they can use the email test sign-in (AUTH_EMAIL_TEST=true) without SQL.
+// they can sign in with an email code without SQL.
 // Run on the server (cPanel Terminal) from the app folder, with the database
 // settings in .env:
 //

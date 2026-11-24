@@ -122,13 +122,13 @@ test('everything in order: every check passes and the platform is ready', async 
   assert.deepEqual(checks.map((c) => c.id), [
     'node_env', 'sms_provider', 'secrets_strength', 'secrets_rotated', 'db_password_rotated', 'admin_2fa', 'admin_backup_codes', 'backup_recent', 'restore_drill',
     'backup_dir', 'seller_details', 'office_plans', 'plans_pricing', 'ejar_rules', 'legal_review', 'smtp', 'moyasar', 'app_url', 'office_links', 'cron_heartbeat', 'uploads_dir', 'npm_audit',
-    'domain_requests', 'auth_email_test',
+    'domain_requests',
   ]);
   for (const c of checks) {
     assert.equal(c.status, 'pass', `${c.id}: ${c.detailAr}`);
     assert.ok(c.titleAr && c.detailAr, c.id);
   }
-  assert.deepEqual(launch.summarize(checks), { pass: 24, warn: 0, fail: 0, ready: true });
+  assert.deepEqual(launch.summarize(checks), { pass: 23, warn: 0, fail: 0, ready: true });
 });
 
 test('each check turns warn or fail for its own reason, and nothing else changes', async () => {
@@ -158,7 +158,9 @@ test('each check turns warn or fail for its own reason, and nothing else changes
   delete noDb.db_password_rotated;
   await expectOnly('db_password_rotated', 'fail', fakePool({ records: noDb }));
   // 5
-  assert.equal(byId(await run(fakePool(), { ...goodEnv(), REQUIRE_ADMIN_2FA: 'false' })).admin_2fa.status, 'fail');
+  // 2FA is optional (owner's decision): the variable alone no longer fails the check.
+  assert.equal(byId(await run(fakePool(), { ...goodEnv(), REQUIRE_ADMIN_2FA: 'false' })).admin_2fa.status, 'pass');
+  assert.equal(byId(await run(fakePool({ admins: { total: 3, enabled: 2 } }), goodEnv())).admin_2fa.status, 'warn');
   assert.equal(byId(await run(fakePool(), { ...goodEnv(), REQUIRE_ADMIN_2FA: 'true' })).admin_2fa.status, 'pass');
   assert.match(byId(await run(fakePool({ admins: { total: 3, enabled: 2 } }), goodEnv())).admin_2fa.detailAr, /1 من 3/);
   assert.equal(byId(await run(fakePool({ admins: { total: 0, enabled: 0 } }), goodEnv())).admin_2fa.status, 'fail');
@@ -243,9 +245,6 @@ test('each check turns warn or fail for its own reason, and nothing else changes
   // 15b: domain requests pending for more than 3 days
   await expectOnly('domain_requests', 'warn', fakePool({ staleDomains: 2 }));
   // 16: the email test sign-in fails the launch while the flag is on, even with LAUNCH_MODE=testing
-  await expectOnly('auth_email_test', 'fail', null, { ...goodEnv(), AUTH_EMAIL_TEST: 'true' });
-  await expectOnly('auth_email_test', 'fail', null, { ...goodEnv(), AUTH_EMAIL_TEST: 'TRUE', LAUNCH_MODE: 'testing' });
-  await expectOnly('auth_email_test', 'pass', null, { ...goodEnv(), AUTH_EMAIL_TEST: 'false' });
 });
 
 test('no secret value appears in the results, whatever the secrets are', async () => {
@@ -374,7 +373,7 @@ test.describe('/admin/launch', { skip }, () => {
 
     const page = await http.request('/admin/launch', { cookie: admin.cookie });
     assert.equal(page.status, 200);
-    assert.equal((page.text.match(/id="check-/g) || []).length, 24);
+    assert.equal((page.text.match(/id="check-/g) || []).length, 23);
     assert.match(page.text, /جاهزية الإطلاق/);
     assert.match(page.text, /غير جاهز للإطلاق/);
     assert.match(page.text, /2025-09-25/, 'the Riyadh freeze value is shown for comparison');

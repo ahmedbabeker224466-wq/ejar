@@ -1,8 +1,15 @@
 <div class="page-head"><h1><%= __("إعدادات المنصة") %></h1></div>
 <% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
 
-<form method="post" action="/admin/settings/details" class="form-card" novalidate>
-  <h2><%= __("بيانات البائع (تظهر في الفواتير)") %></h2>
+<nav class="adm-subnav" aria-label="<%= __("أقسام الإعدادات") %>">
+  <a href="#seller"><%= __("بيانات الفواتير") %></a>
+  <a href="#bank"><%= __("الحساب البنكي") %></a>
+  <a href="#support"><%= __("التواصل مع الدعم") %></a>
+  <a href="#switches"><%= __("مفاتيح الإيقاف") %></a>
+  <a href="#analytics"><%= __("التحليلات") %></a>
+</nav>
+<form method="post" action="/admin/settings/details" class="form-card adm-settings" novalidate>
+  <h2 id="seller"><%= __("بيانات البائع (تظهر في الفواتير)") %></h2>
   <p class="muted"><%= __("لم تُحدَّد الجهة المُصدِرة للفواتير بعد، لذلك كل الحقول اختيارية. تظهر الفاتورة باسم «فاتورة ضريبية مبسطة» فقط عند إدخال الرقم الضريبي، وإلا فهي «إيصال دفع». هذا النظام لا يدّعي الربط مع الفوترة الإلكترونية (زاتكا).") %></p>
   <div class="field"><label for="legal_name"><%= __("الاسم القانوني") %></label><input id="legal_name" name="legal_name" class="input" maxlength="150" value="<%= __(values.legal_name) %>"></div>
   <div class="form-grid">
@@ -13,7 +20,7 @@
   </div>
   <div class="field"><label for="address"><%= __("العنوان") %></label><input id="address" name="address" class="input" maxlength="250" value="<%= __(values.address) %>"></div>
 
-  <h2><%= __("الحساب البنكي للحوالات") %></h2>
+  <h2 id="bank" class="adm-settings__sep"><%= __("الحساب البنكي للحوالات") %></h2>
   <div class="form-grid">
     <div class="field"><label for="bank_name"><%= __("اسم البنك") %></label><input id="bank_name" name="bank_name" class="input" maxlength="80" value="<%= __(values.bank_name) %>"></div>
     <div class="field"><label for="bank_account_name"><%= __("اسم صاحب الحساب") %></label><input id="bank_account_name" name="bank_account_name" class="input" maxlength="120" value="<%= __(values.bank_account_name) %>"></div>
@@ -21,34 +28,34 @@
       <% if (errors.bank_iban) { %><p class="field-error"><%= __(errors.bank_iban) %></p><% } %></div>
   </div>
 
-  <h2><%= __("التواصل مع الدعم") %></h2>
+  <h2 id="support" class="adm-settings__sep"><%= __("التواصل مع الدعم") %></h2>
   <div class="form-grid">
     <div class="field"><label for="support_phone"><%= __("جوال الدعم") %></label><input id="support_phone" name="support_phone" class="input" dir="ltr" maxlength="20" value="<%= __(values.support_phone) %>">
       <% if (errors.support_phone) { %><p class="field-error"><%= __(errors.support_phone) %></p><% } %></div>
     <div class="field"><label for="support_email"><%= __("بريد الدعم") %></label><input id="support_email" name="support_email" class="input" dir="ltr" maxlength="190" value="<%= __(values.support_email) %>">
       <% if (errors.support_email) { %><p class="field-error"><%= __(errors.support_email) %></p><% } %></div>
   </div>
-  <div class="field"><label for="reason-details"><%= __("سبب الإجراء (يُسجَّل في سجل التدقيق)") %></label><input id="reason-details" name="reason" class="input" maxlength="200" required>
+  <div class="field adm-settings__sep"><label for="reason-details"><%= __("سبب الإجراء (يُسجَّل في سجل التدقيق)") %></label><input id="reason-details" name="reason" class="input" maxlength="200" required>
     <% if (errors.reason) { %><p class="field-error"><%= __(errors.reason) %></p><% } %></div>
-  <button type="submit" class="btn btn--primary btn--large btn--block"><%= __("حفظ البيانات") %></button>
+  <button type="submit" class="btn btn--success btn--large"><%= __("حفظ البيانات") %></button>
 </form>
 
-<form method="post" action="/admin/settings/switches" class="form-card" novalidate>
+<form method="post" action="/admin/settings/switches" class="form-card adm-settings" id="switches" novalidate>
   <h2><%= __("مفاتيح الإيقاف") %></h2>
   <label class="check"><input type="checkbox" name="signups_disabled" value="1" <%= __(switches.signupsDisabled ? 'checked' : '') %>> <%= __("إيقاف التسجيل الجديد (من لديه حساب يدخل عادياً)") %></label>
   <label class="check"><input type="checkbox" name="ai_disabled" value="1" <%= __(switches.aiDisabled ? 'checked' : '') %>> <%= __("إيقاف قراءة العقود بالذكاء الاصطناعي (الإدخال اليدوي يعمل)") %></label>
   <div class="field"><label for="banner"><%= __("رسالة تظهر أعلى كل الصفحات (اتركها فارغة لإخفائها)") %></label><input id="banner" name="banner" class="input" maxlength="200" value="<%= __(switches.banner) %>"></div>
   <div class="field"><label for="reason-switches"><%= __("سبب الإجراء (يُسجَّل في سجل التدقيق)") %></label><input id="reason-switches" name="reason" class="input" maxlength="200" required>
     <% if (errors.reason_switches) { %><p class="field-error"><%= __(errors.reason_switches) %></p><% } %></div>
-  <button type="submit" class="btn btn--primary btn--large btn--block"><%= __("حفظ المفاتيح") %></button>
+  <button type="submit" class="btn btn--success btn--large"><%= __("حفظ المفاتيح") %></button>
 </form>
 
-<form method="post" action="/admin/settings/analytics" class="form-card" novalidate>
+<form method="post" action="/admin/settings/analytics" class="form-card adm-settings" id="analytics" novalidate>
   <h2><%= __("شيفرة التحليلات (اختيارية)") %></h2>
   <p class="muted"><%= __("فارغة افتراضياً ولا تُحمَّل أي شيفرة تتبع. الصق وسم") %> <code dir="ltr">&lt;script src="https://..."&gt;&lt;/script&gt;</code> <%= __("واحداً فقط من مزوّد معروف") %> (<span dir="ltr">Google Tag Manager<%= __("، Google Analytics، Plausible، Fathom، Cloudflare، Umami،") %> Simple Analytics</span>). <%= __("تظهر في الصفحات العامة فقط، لا في صفحات المكاتب أو الإدارة.") %></p>
   <div class="field"><label for="snippet"><%= __("الوسم") %></label><textarea id="snippet" name="snippet" class="textarea" rows="3" dir="ltr" maxlength="1000"><%= __(analytics) %></textarea>
     <% if (errors.snippet) { %><p class="field-error"><%= __(errors.snippet) %></p><% } %></div>
   <div class="field"><label for="reason-analytics"><%= __("سبب الإجراء (يُسجَّل في سجل التدقيق)") %></label><input id="reason-analytics" name="reason" class="input" maxlength="200" required>
     <% if (errors.reason_analytics) { %><p class="field-error"><%= __(errors.reason_analytics) %></p><% } %></div>
-  <button type="submit" class="btn btn--primary btn--large btn--block"><%= __("حفظ") %></button>
+  <button type="submit" class="btn btn--success btn--large"><%= __("حفظ") %></button>
 </form>

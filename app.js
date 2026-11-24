@@ -26,7 +26,6 @@ const { appLang } = require('./middleware/appLang');
 const { siteLayout } = require('./middleware/siteLayout');
 const { sameOrigin } = require('./middleware/security');
 const platformSettings = require('./services/platformSettings');
-const emailAuth = require('./services/emailAuth');
 const { extendCsp } = require('./services/analytics');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
@@ -104,7 +103,6 @@ app.use((req, res, next) => {
   res.locals.title = 'ميعاد';
   res.locals.unreadCount = 0;
   // TESTING ONLY: a red banner on every page while email sign-in without a code is on.
-  res.locals.emailTestMode = emailAuth.enabled();
   next();
 });
 

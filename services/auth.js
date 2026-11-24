@@ -175,7 +175,7 @@ function createAuthService({ pool = db.pool, signupsDisabled = () => platformSet
     }
     const [[row]] = await pool.query(
       `SELECT s.user_id, s.revoked_at, s.expires_at > UTC_TIMESTAMP() AS session_live,
-              u.id, u.phone, u.email, u.name, u.role, u.is_active, u.session_epoch, u.twofa_enabled, u.locale
+              u.id, u.phone, u.email, u.name, u.role, u.is_active, u.session_epoch, u.twofa_enabled, u.locale, u.admin_sections
          FROM user_sessions s JOIN users u ON u.id = s.user_id
         WHERE s.token_id = ?`,
       [payload.jti],
@@ -188,6 +188,7 @@ function createAuthService({ pool = db.pool, signupsDisabled = () => platformSet
       name: row.name,
       role: row.role, // always the current role from the database, not the token
       twofaEnabled: Boolean(row.twofa_enabled),
+      adminSections: row.admin_sections ? String(row.admin_sections).split(',').filter(Boolean) : [],
       locale: row.locale === 'en' ? 'en' : 'ar', // the user's language (middleware/appLang)
       tokenId: payload.jti,
     };
@@ -215,6 +216,7 @@ function createAuthService({ pool = db.pool, signupsDisabled = () => platformSet
 /** Where each role lands after signing in. No role yet: create an office. */
 function homeFor(role) {
   if (role === 'platform_admin') return '/platform';
+  if (role === 'platform_staff') return '/admin';
   if (['office_owner', 'office_manager', 'office_staff'].includes(role)) return '/office';
   if (role === 'landlord') return '/landlord';
   if (role === 'tenant') return '/tenant';

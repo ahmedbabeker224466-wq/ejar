@@ -27,6 +27,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-that-is-long
 process.env.SECRET_BOX_KEY = process.env.SECRET_BOX_KEY || '0123456789abcdef'.repeat(4);
 
 const PASSWORD = 'al-test-password-123';
+const sent = [];
 
 test('admin email and password are read from the environment', () => {
   const { adminEmail, adminPassword } = require('../routes/adminLogin');
@@ -38,7 +39,9 @@ test('admin email and password are read from the environment', () => {
 
 test.before(async () => {
   if (!TEST_DB) return;
-  for (const k of ['NODE_ENV', 'PLATFORM_ADMIN_PHONE', 'PLATFORM_ADMIN_EMAIL', 'PLATFORM_ADMIN_PASSWORD', 'REQUIRE_ADMIN_2FA']) saved[k] = process.env[k];
+  for (const k of ['NODE_ENV', 'PLATFORM_ADMIN_PHONE', 'PLATFORM_ADMIN_EMAIL', 'PLATFORM_ADMIN_PASSWORD', 'REQUIRE_ADMIN_2FA', 'SMTP_HOST', 'MAIL_FROM']) saved[k] = process.env[k];
+  process.env.SMTP_HOST = 'smtp.aqdi-test.example';
+  process.env.MAIL_FROM = 'miaad <noreply@aqdi-test.example>';
   process.env.NODE_ENV = 'test';
   process.env.PLATFORM_ADMIN_PHONE = phone(1);
   process.env.PLATFORM_ADMIN_EMAIL = ADMIN;
@@ -46,6 +49,7 @@ test.before(async () => {
   process.env.REQUIRE_ADMIN_2FA = 'false';
   db = require('../config/db');
   await db.ensureSchema();
+  require('../services/channels/email').setMailer({ sendMail: async (m) => { sent.push(m); return {}; } });
   routes = require('../routes/adminLogin');
   await cleanup();
   await db.pool.query("INSERT INTO users (phone, role) VALUES (?, 'platform_admin')", [phone(1)]);
@@ -104,6 +108,10 @@ test('the right email and password sign in; 2FA is optional and turned on inside
   assert.equal(ok.location, '/admin');
   const session = cookieOf(ok, 'aqdi_session');
   assert.ok(session);
+  await new Promise((r) => setTimeout(r, 50));
+  const alert = sent.find((m) => m.to === ADMIN && /تنبيه/.test(m.subject));
+  assert.ok(alert, 'a sign-in notice is mailed to the admin');
+  assert.ok(!alert.text.includes(PASSWORD), 'never the password');
 
   const page = await http.request('/admin/security', { cookie: session });
   assert.equal(page.status, 200);
@@ -153,4 +161,46 @@ test('2FA can be turned off inside with a current code', { skip }, async () => {
   routes.limit.counter.reset();
   const direct = await signIn(ADMIN, PASSWORD);
   assert.equal(direct.location, '/admin', 'email and password only again');
+});
+
+test('platform staff: created by the admin, sign in at /admin/login, reach only their sections', { skip }, async () => {
+  routes.limit.counter.reset();
+  // The admin signs in (2FA is off again after the previous test).
+  const adm = cookieOf(await signIn(ADMIN, PASSWORD), 'aqdi_session');
+  assert.ok(adm);
+  const STAFF = 'al-staff@aqdi-test.example';
+  await db.pool.query('DELETE FROM users WHERE email = ?', [STAFF]);
+
+  const bad = await http.request('/admin/staff', { method: 'POST', cookie: adm, form: { name: 'سارة', email: STAFF, password: 'short', sections: 'messages', reason: 'خدمة العملاء' } });
+  assert.equal(bad.status, 422);
+  const made = await http.request('/admin/staff', { method: 'POST', cookie: adm, form: { name: 'سارة', email: STAFF, password: 'staff-pass-12345', sections: ['messages', 'reports'], reason: 'خدمة العملاء' } });
+  assert.equal(made.location, '/admin/staff?done=staff_created');
+  const [[row]] = await db.pool.query('SELECT id, role, password_hash, admin_sections FROM users WHERE email = ?', [STAFF]);
+  assert.equal(row.role, 'platform_staff');
+  assert.ok(!String(row.password_hash).includes('staff-pass'), 'only a hash is stored');
+  assert.equal(row.admin_sections, 'reports,messages');
+
+  routes.limit.counter.reset();
+  assert.equal((await signIn(STAFF, 'wrong-pass-0000')).status, 401);
+  const st = await signIn(STAFF, 'staff-pass-12345');
+  assert.equal(st.location, '/admin');
+  const sc = cookieOf(st, 'aqdi_session');
+  assert.ok(sc);
+  const home = await http.request('/admin', { cookie: sc });
+  assert.equal(home.status, 302, 'the staff home is their first section');
+  assert.equal(home.location, '/admin/reports');
+  assert.equal((await http.request('/admin/messages', { cookie: sc })).status, 200);
+  for (const p of ['/admin/offices', '/admin/orders', '/admin/plans', '/admin/settings', '/admin/audit', '/admin/launch', '/admin/ops', '/admin/security']) {
+    assert.equal((await http.request(p, { cookie: sc })).status, 403, p);
+  }
+  assert.equal((await http.request('/admin/staff', { cookie: sc })).status, 403, 'staff never manage staff');
+  const page = await http.request('/admin/messages', { cookie: sc });
+  assert.doesNotMatch(page.text, /href="\/admin\/settings"/, 'the sidebar lists only their sections');
+
+  // Deactivating ends the session and blocks sign-in.
+  assert.equal((await http.request(`/admin/staff/${row.id}/active`, { method: 'POST', cookie: adm, form: { active: '0', reason: 'انتهى العمل' } })).status, 302);
+  assert.notEqual((await http.request('/admin/messages', { cookie: sc })).status, 200);
+  routes.limit.counter.reset();
+  assert.equal((await signIn(STAFF, 'staff-pass-12345')).status, 401);
+  await db.pool.query('DELETE FROM users WHERE email = ?', [STAFF]);
 });

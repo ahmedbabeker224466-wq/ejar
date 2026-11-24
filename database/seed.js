@@ -113,7 +113,7 @@ const BLOG_DRAFTS = [
   },
   {
     slug: 'riyadh-rent-increase-freeze-office-view',
-    title_ar: 'تجميد زيادة الإيجار في الرياض: وش يعني للمكتب',
+    title_ar: 'تجميد زيادة الإيجار في الرياض: ماذا يعني للمكتب؟',
     excerpt_ar: 'نظرة عملية لمكتب العقار على أثر قرار تجميد زيادة الإيجارات في الرياض على التجديد والتذكير.',
     body_ar: `${REVIEW_NOTE}
 

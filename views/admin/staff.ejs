@@ -1,0 +1,21 @@
+<div class="page-head"><h1><%= __("فريق الإدارة") %></h1><a href="/admin/staff/new" class="btn btn--primary btn--small"><%= __("موظف جديد") %></a></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
+<p class="muted"><%= __("حسابات لموظفيك بصلاحيات محدودة. يدخل الموظف من صفحة دخول الإدارة ببريده وكلمة مروره، ولا يرى إلا الأقسام التي تختارها له. الإعدادات والأمان وسجل التدقيق والتشغيل تبقى لك وحدك.") %></p>
+<% if (rows.length) { %>
+<div class="table-wrap">
+  <table class="table adm-table">
+    <thead><tr><th><%= __("الموظف") %></th><th><%= __("الأقسام") %></th><th><%= __("الحالة") %></th><th><%= __("آخر نشاط") %></th><th></th></tr></thead>
+    <tbody>
+      <% rows.forEach(function (m) { %>
+        <tr>
+          <td><a class="adm-strong" href="/admin/staff/<%= __(m.id) %>"><%= __(m.name || '—') %></a><span class="adm-sub" dir="ltr"><%= __(m.email) %></span></td>
+          <td><%= __(m.sections.filter(function (k) { return sections[k]; }).map(function (k) { return __(sections[k].label); }).join('، ') || '—') %></td>
+          <td><span class="badge badge--bill-<%= __(Number(m.is_active) ? 'success' : 'danger') %>"><%= __(Number(m.is_active) ? __('فعّال') : __('موقوف')) %></span></td>
+          <td dir="ltr"><%= __(m.last_seen_at ? stamp(m.last_seen_at) : '—') %></td>
+          <td><a class="btn btn--secondary btn--small" href="/admin/staff/<%= __(m.id) %>"><%= __("تعديل") %></a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %><p class="empty-state"><%= __("لا يوجد موظفون بعد.") %></p><% } %>

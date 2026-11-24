@@ -15,6 +15,7 @@ const { sanitizeSnippet } = require('../services/analytics');
 const { REPORT_REASONS } = require('../services/inquiries');
 const { createNotification } = require('../services/notifications');
 const { riyadhDate } = require('../services/contractDates');
+const email = require('../services/channels/email');
 
 const IMAGE_ERRORS = {
   type: 'غلاف المقال يجب أن يكون صورة JPG أو PNG أو WebP.', size: 'حجم الغلاف أكبر من 5 ميجابايت.', empty: 'ملف الغلاف فارغ.', corrupt: 'تعذّرت قراءة صورة الغلاف.',
@@ -100,23 +101,41 @@ module.exports = function register(router, { wrap, notFound, reasonOf, REASON_ER
 
   // ------------------------------------------------------------ contact messages
 
-  router.get('/admin/messages', wrap(async (req, res) => {
-    const [rows] = await db.pool.query('SELECT id, name, phone, email, message, handled_at, created_at FROM contact_messages ORDER BY (handled_at IS NULL) DESC, id DESC LIMIT 200');
-    return res.render('admin/messages', { title: 'رسائل التواصل', rows, done: doneText(req.query.done), error: null });
-  }));
+  const MESSAGE_COLUMNS = 'SELECT id, name, phone, email, message, handled_at, created_at FROM contact_messages ORDER BY (handled_at IS NULL) DESC, id DESC LIMIT 200';
+  const renderMessages = async (res, { done = null, error = null, status = 200, openId = null, draft = '' } = {}) => {
+    const [rows] = await db.pool.query(MESSAGE_COLUMNS);
+    return res.status(status).render('admin/messages', { title: 'رسائل التواصل', rows, done, error, openId, draft, mailReady: Boolean(email.smtpConfig()) });
+  };
+
+  router.get('/admin/messages', wrap(async (req, res) => renderMessages(res, { done: doneText(req.query.done) })));
 
   router.post('/admin/messages/:id/handled', wrap(async (req, res) => {
     const id = idOf(req.params.id);
     const [[row]] = id ? await db.pool.query('SELECT id FROM contact_messages WHERE id = ?', [id]) : [[]];
     if (!row) return notFound(res);
     const reason = reasonOf(req.body);
-    if (!reason) {
-      const [rows] = await db.pool.query('SELECT id, name, phone, email, message, handled_at, created_at FROM contact_messages ORDER BY (handled_at IS NULL) DESC, id DESC LIMIT 200');
-      return res.status(422).render('admin/messages', { title: 'رسائل التواصل', rows, done: null, error: REASON_ERROR });
-    }
+    if (!reason) return renderMessages(res, { error: REASON_ERROR, status: 422 });
     await db.pool.query('UPDATE contact_messages SET handled_at = COALESCE(handled_at, UTC_TIMESTAMP()) WHERE id = ?', [id]);
     await audit.write(req.user.id, null, 'admin.message.handled', 'contact_message', id, null, { reason }, req.ip);
     return res.redirect('/admin/messages?done=handled');
+  }));
+
+  // Reply by email to a visitor who left an address. The reply text is sent and
+  // never stored or audited; the message is marked handled.
+  router.post('/admin/messages/:id/reply', wrap(async (req, res) => {
+    const id = idOf(req.params.id);
+    const [[row]] = id ? await db.pool.query('SELECT id, email FROM contact_messages WHERE id = ?', [id]) : [[]];
+    if (!row) return notFound(res);
+    const body = String(req.body.body || '').replace(/\r\n/g, '\n').trim().slice(0, 3000);
+    if (!row.email) return renderMessages(res, { error: 'هذه الرسالة بلا بريد إلكتروني، فلا يمكن الرد عليها بالبريد.', status: 422 });
+    if (body.length < 5) return renderMessages(res, { error: 'اكتب نص الرد (5 أحرف على الأقل).', status: 422, openId: id, draft: body });
+    if (!email.smtpConfig()) return renderMessages(res, { error: 'البريد الصادر غير مضبوط على الخادم.', status: 503, openId: id, draft: body });
+    const text = `${body}\n\nفريق ميعاد`;
+    const sent = await email.send({ to: row.email, subject: 'رد من ميعاد على رسالتك', text });
+    if (!sent || !sent.ok) return renderMessages(res, { error: 'تعذّر إرسال الرد الآن. حاول مرة أخرى بعد قليل.', status: 502, openId: id, draft: body });
+    await db.pool.query('UPDATE contact_messages SET handled_at = COALESCE(handled_at, UTC_TIMESTAMP()) WHERE id = ?', [id]);
+    await audit.write(req.user.id, null, 'admin.message.reply', 'contact_message', id, null, { reason: 'رد بالبريد' }, req.ip);
+    return res.redirect('/admin/messages?done=replied');
   }));
 
   // ------------------------------------------------------------ blog

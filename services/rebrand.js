@@ -51,7 +51,15 @@ async function applyRebrand(pool) {
       await run(`UPDATE blog_posts SET \`${column}\` = ? WHERE slug = ? AND \`${column}\` = ?`, [value, post.slug, oldOf(value)]);
     }
   }
+  // Formal Arabic (owner's request, Nov 2026): earlier seeded wording, replaced only while unedited.
+  for (const [slug, column, from, to] of FUSHA_FIXES) {
+    await run(`UPDATE blog_posts SET \`${column}\` = ? WHERE slug = ? AND \`${column}\` = ?`, [to, slug, from]);
+  }
   return { changed };
 }
+
+const FUSHA_FIXES = Object.freeze([
+  ['riyadh-rent-increase-freeze-office-view', 'title_ar', 'تجميد زيادة الإيجار في الرياض: وش يعني للمكتب', 'تجميد زيادة الإيجار في الرياض: ماذا يعني للمكتب؟'],
+]);
 
 module.exports = { NAME, OLD_NAME, oldOf, applyRebrand };

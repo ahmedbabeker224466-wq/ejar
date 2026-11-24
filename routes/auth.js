@@ -30,7 +30,7 @@ const MESSAGES = {
   invalid_2fa: 'الرمز غير صحيح. اكتب الرمز الظاهر الآن في تطبيق المصادقة أو أحد رموز الاحتياط.',
 };
 
-// The email test sign-in (AUTH_EMAIL_TEST): its own wording, never mixed with the phone pages.
+// Email sign-in wording, never mixed with the phone pages.
 const EMAIL_MESSAGES = {
   invalid_email: 'البريد الإلكتروني غير صحيح. اكتبه بهذا الشكل: name@example.com',
   unknown: 'لا يوجد حساب بهذا البريد الإلكتروني. تأكد من كتابته، أو سجّل مكتبك من صفحة التسجيل.',
@@ -155,22 +155,16 @@ const EMAIL_PAGES = {
   },
 };
 
-// The test sign-in (AUTH_EMAIL_TEST) sends no code, so its wording says nothing about one.
-const EMAIL_TEST_LEADS = {
-  login: 'اكتب بريدك الإلكتروني المسجّل لتدخل إلى حسابك.',
-  register: 'اكتب بريدك الإلكتروني، ثم تكتب بيانات مكتبك. التجربة مجانية 14 يوماً.',
-};
-
 function renderEmailPage(res, intent, email, error, status = 200, next = null) {
   const mode = intent === 'register' ? 'register' : 'login';
-  const page = emailAuth.enabled() ? { ...EMAIL_PAGES[mode], lead: EMAIL_TEST_LEADS[mode] } : EMAIL_PAGES[mode];
+  const page = EMAIL_PAGES[mode];
   return res.status(status).render('pages/login-email', { ...page, intent: mode, email, error, next: safeNext(next) });
 }
 
-// While the email test sign-in is on, /login and /register show the email form.
-// /login?method=phone keeps the phone page for the platform admin (phone + 2FA).
+// While email codes can be sent (SMTP configured), /login and /register show the email form.
+// /login?method=phone keeps the phone page.
 function emailPagesOn() {
-  return emailAuth.enabled() || emailCode.enabled();
+  return emailCode.enabled();
 }
 
 function showEmailPage(req) {
@@ -195,12 +189,8 @@ router.get('/register', (req, res) => {
   return renderPhonePage(res, 'register', '', null);
 });
 
-// ------------------------------------------------------------ email test sign-in
-// TESTING ONLY (AUTH_EMAIL_TEST=true): no code is sent. Login gives an existing
-// user the normal session (same cookie, role routing and checks, and the 2FA
-// step for an owner who turned it on). Register creates a user with no role,
-// who then creates the office on /office/new like everyone else. Every attempt
-// is counted per IP (also invalid ones) and audited without the address.
+// ------------------------------------------------------------ email sign-in
+// Every attempt is counted per IP (also invalid ones).
 
 const emailLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -216,39 +206,14 @@ const emailLimit = rateLimit({
 
 router.post('/login/email', (req, res, next) => (emailPagesOn() ? next() : next('router')), emailLimit, async (req, res, next) => {
   try {
-    if (!emailAuth.enabled()) return await requestEmailCode(req, res);
-    const intent = req.body.intent === 'register' ? 'register' : 'login';
-    const nextPath = safeNext(req.body.next);
-    const typed = String(req.body.email || '').trim().slice(0, 190);
-    const refuse = async (error, userId = null) => {
-      await emailAuth.audit(db.pool, { action: intent === 'register' ? 'auth.email_register' : 'auth.email_login', userId, outcome: error, ip: req.ip });
-      return renderEmailPage(res, intent, error === 'invalid_email' ? typed : emailAuth.normalizeEmail(typed) || typed, EMAIL_MESSAGES[error], EMAIL_STATUS[error] || 422, nextPath);
-    };
-
-    if (intent === 'register') {
-      const made = await emailAuth.register(db.pool, typed, { signupsDisabled: () => platformSettings.signupsDisabled(db.pool) });
-      if (!made.ok) return await refuse(made.error);
-      await emailAuth.audit(db.pool, { action: 'auth.email_register', userId: made.user.id, outcome: 'ok', ip: req.ip });
-      return finishLogin(req, res, made.user, nextPath);
-    }
-
-    const found = await emailAuth.findForLogin(db.pool, typed);
-    if (!found.ok) return await refuse(found.error, found.user ? found.user.id : null);
-    const { user } = found;
-    await db.pool.query('UPDATE users SET last_seen_at = UTC_TIMESTAMP() WHERE id = ?', [user.id]);
-    await emailAuth.audit(db.pool, { action: 'auth.email_login', userId: user.id, outcome: 'ok', ip: req.ip });
-    if (auth.needsTwoFactor(user)) {
-      stepCookie(res, MFA_COOKIE, auth.signStepToken({ sub: String(user.id) }, 'mfa', STEP_SECONDS));
-      return res.redirect('/login/2fa');
-    }
-    return finishLogin(req, res, user, nextPath);
+    return await requestEmailCode(req, res);
   } catch (err) {
     return next(err);
   }
 });
 
 // ------------------------------------------------------------ email sign-in code
-// The normal email sign-in (AUTH_EMAIL_TEST off): a six-digit code goes to the
+// The email sign-in: a six-digit code goes to the
 // address, and only the right code signs in or creates the account. A new
 // address becomes a user with no role, who then creates the office on
 // /office/new. The platform admin never signs in by email.

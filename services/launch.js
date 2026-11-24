@@ -19,7 +19,6 @@ const dates = require('./contractDates');
 const RULES = require('../config/ejarRules');
 const platformSettings = require('./platformSettings');
 const email = require('./channels/email');
-const emailAuth = require('./emailAuth');
 const officialPricing = require('./officialPricing');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -223,10 +222,11 @@ async function runChecks({ pool = db.pool, env = process.env, now = new Date(), 
   const total = Number(admins.total);
   const enabled = Number(admins.enabled);
   const skip2fa = String(env.REQUIRE_ADMIN_2FA ?? '').trim().toLowerCase() === 'false';
-  if (skip2fa) out.push(result('admin_2fa', FAIL, 'المصادقة الثنائية للمدير', 'REQUIRE_ADMIN_2FA مضبوط على false. احذف هذا المتغير.'));
-  else if (total === 0) out.push(result('admin_2fa', FAIL, 'المصادقة الثنائية للمدير', 'لا يوجد مدير منصة نشط.'));
-  else if (enabled < total) out.push(result('admin_2fa', FAIL, 'المصادقة الثنائية للمدير', `${total - enabled} من ${total} مديري المنصة لم يفعّلوا المصادقة الثنائية.`));
-  else out.push(result('admin_2fa', PASS, 'المصادقة الثنائية للمدير', `كل مديري المنصة (${total}) فعّلوا المصادقة الثنائية، والمتغير غير مضبوط على false.`));
+  // Owner's decision (Nov 2026): 2FA for the admin is optional, so its absence is a warning, not a failure.
+  if (total === 0) out.push(result('admin_2fa', FAIL, 'المصادقة الثنائية للمدير', 'لا يوجد مدير منصة نشط.'));
+  else if (enabled < total) out.push(result('admin_2fa', WARN, 'المصادقة الثنائية للمدير', `${total - enabled} من ${total} مديري المنصة لم يفعّلوا التحقق بخطوتين. يُنصح بتفعيله من صفحة «الأمان».`));
+  else out.push(result('admin_2fa', PASS, 'المصادقة الثنائية للمدير', `كل مديري المنصة (${total}) فعّلوا التحقق بخطوتين.`));
+  void skip2fa;
   const codes = records.admin_backup_codes;
   out.push(codes
     ? result('admin_backup_codes', PASS, 'رموز المصادقة الاحتياطية', `أكّدت إعادة توليدها. ${recordLine(codes)}`, { confirm: 'admin_backup_codes', record: codes })
@@ -361,11 +361,6 @@ async function runChecks({ pool = db.pool, env = process.env, now = new Date(), 
   out.push(stale > 0
     ? result('domain_requests', WARN, 'طلبات الدومين', `${stale} طلب دومين مفتوح دون تحديث منذ أكثر من 3 أيام. افتح صفحة طلبات الدومين.`)
     : result('domain_requests', PASS, 'طلبات الدومين', 'لا توجد طلبات دومين متأخرة.'));
-
-  // 16. email test sign-in (AUTH_EMAIL_TEST): always a failure while it is on
-  out.push(emailAuth.flagOn(env)
-    ? result('auth_email_test', FAIL, 'الدخول التجريبي بالبريد', 'AUTH_EMAIL_TEST مفعّل: أي شخص يعرف بريد حساب يدخل إليه بدون رمز. احذفه من ملف البيئة وأعد تشغيل التطبيق قبل الإطلاق.')
-    : result('auth_email_test', PASS, 'الدخول التجريبي بالبريد', 'الدخول التجريبي بالبريد متوقف؛ الدخول برقم الجوال ورمز التحقق فقط.'));
 
   return out;
 }

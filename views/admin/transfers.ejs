@@ -7,29 +7,38 @@
   <a href="/admin/transfers?status=approved" <%- status === 'approved' ? 'aria-current="page"' : '' %>><%= __("مقبولة") %></a>
   <a href="/admin/transfers?status=rejected" <%- status === 'rejected' ? 'aria-current="page"' : '' %>><%= __("مرفوضة") %></a>
 </nav>
-<ul class="item-list">
+<% if (rows.length) { %>
+<div class="adm-msgs">
   <% rows.forEach(function (t) { %>
-    <li class="item">
-      <div class="item__title"><strong><%= __("حوالة") %> #<%= __(t.id) %></strong> <a href="/admin/offices/<%= __(t.officeId) %>"><%= __(t.officeName) %></a>
-        <span class="badge badge--bill-<%= __(t.status === 'approved' ? 'success' : t.status === 'rejected' ? 'danger' : 'info') %>"><%= __({ pending: __('بانتظار المراجعة'), approved: __('مقبولة'), rejected: __('مرفوضة') }[t.status]) %></span></div>
-      <div class="item__meta"><%= __("طلب") %> <%= __(t.orderId) %> · <%= __(t.planCode) %> · <%= __(t.interval === 'yearly' ? __('سنوي') : __('شهري')) %> · <%= __("المبلغ") %> <%= __(fmt(t.total)) %> <%= __(t.currency) %> · <%= __("المرجع:") %> <strong dir="ltr"><%= __(t.reference) %></strong> · <span dir="ltr"><%= __(stamp(t.createdAt)) %></span></div>
-      <% if (t.hasReceipt) { %><p><a href="/admin/transfers/<%= __(t.id) %>/receipt" target="_blank" rel="noopener noreferrer"><%= __("عرض صورة الإيصال") %></a></p><% } %>
+    <article class="adm-msg adm-transfer<%= t.status === 'pending' ? '' : ' is-done' %><%= t.status === 'rejected' ? ' is-rejected' : '' %>">
+      <header class="adm-msg__head">
+        <strong class="adm-msg__name"><a href="/admin/offices/<%= __(t.officeId) %>"><%= __(t.officeName) %></a></strong>
+        <span class="badge badge--bill-<%= __(t.status === 'approved' ? 'success' : t.status === 'rejected' ? 'danger' : 'warning') %>"><%= __({ pending: __('بانتظار المراجعة'), approved: __('مقبولة'), rejected: __('مرفوضة') }[t.status]) %></span>
+        <span class="adm-msg__date" dir="ltr"><%= __(stamp(t.createdAt)) %></span>
+      </header>
+      <dl class="adm-kv adm-transfer__kv">
+        <dt><%= __("المبلغ") %></dt><dd><%= __(fmt(t.total)) %> <%= __(t.currency) %></dd>
+        <dt><%= __("الباقة") %></dt><dd><%= __(t.planCode) %> · <%= __(t.interval === 'yearly' ? __('سنوي') : __('شهري')) %></dd>
+        <dt><%= __("مرجع الحوالة") %></dt><dd dir="ltr"><%= __(t.reference) %></dd>
+        <dt><%= __("رقم الطلب") %></dt><dd dir="ltr">#<%= __(t.orderId) %></dd>
+      </dl>
       <% if (t.note) { %><p class="muted"><%= __("ملاحظة:") %> <%= __(t.note) %></p><% } %>
-      <% if (t.status === 'pending') { %>
-        <div class="button-row">
-          <details class="danger-zone"><summary><%= __("قبول وتفعيل الباقة") %></summary>
-            <form method="post" action="/admin/transfers/<%= __(t.id) %>/approve" novalidate>
+      <div class="adm-msg__actions">
+        <% if (t.hasReceipt) { %><a class="btn btn--secondary btn--small" href="/admin/transfers/<%= __(t.id) %>/receipt" target="_blank" rel="noopener noreferrer"><%= __("عرض صورة الإيصال") %></a><% } %>
+        <% if (t.status === 'pending') { %>
+          <details><summary class="btn btn--success btn--small"><%= __("قبول وتفعيل الباقة") %></summary>
+            <form method="post" action="/admin/transfers/<%= __(t.id) %>/approve" class="adm-action__row" novalidate>
               <div class="field"><label for="ok-<%= __(t.id) %>"><%= __("سبب القبول (مثل: وصلت الحوالة في الكشف)") %></label><input id="ok-<%= __(t.id) %>" name="reason" class="input" maxlength="200" required></div>
-              <button type="submit" class="btn btn--primary btn--small"><%= __("قبول") %></button>
+              <button type="submit" class="btn btn--success"><%= __("قبول") %></button>
             </form></details>
-          <details class="danger-zone"><summary><%= __("رفض") %></summary>
-            <form method="post" action="/admin/transfers/<%= __(t.id) %>/reject" novalidate>
+          <details><summary class="btn btn--danger btn--small"><%= __("رفض") %></summary>
+            <form method="post" action="/admin/transfers/<%= __(t.id) %>/reject" class="adm-action__row" novalidate>
               <div class="field"><label for="reason-<%= __(t.id) %>"><%= __("سبب الرفض (يصل للمكتب)") %></label><input id="reason-<%= __(t.id) %>" name="reason" class="input" maxlength="200" required></div>
-              <button type="submit" class="btn btn--danger btn--small"><%= __("رفض الحوالة") %></button>
+              <button type="submit" class="btn btn--danger"><%= __("رفض الحوالة") %></button>
             </form></details>
-        </div>
-      <% } %>
-    </li>
+        <% } %>
+      </div>
+    </article>
   <% }) %>
-</ul>
-<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد حوالات.") %></p><% } %>
+</div>
+<% } else { %><p class="empty-state"><%= __("لا توجد حوالات.") %></p><% } %>

@@ -7,7 +7,8 @@
 // the authenticator (from /admin/security), or REQUIRE_ADMIN_2FA demands it,
 // the authenticator step follows; otherwise the session starts at once.
 // One generic error for a wrong email or password; attempts are limited per
-// IP and audited without the address.
+// IP and audited without the address. Each correct password mails the admin
+// a short sign-in notice (loginAlert).
 
 const crypto = require('node:crypto');
 const express = require('express');
@@ -17,6 +18,9 @@ const db = require('../config/db');
 const { normalizeSaudi } = require('../utils/phone');
 const { noStore, sameOrigin } = require('../middleware/security');
 const { rateLimit } = require('../middleware/rateLimit');
+const email = require('../services/channels/email');
+const platformStaff = require('../services/platformStaff');
+const { riyadhDate } = require('../services/contractDates');
 
 const router = express.Router();
 
@@ -65,6 +69,29 @@ async function adminUser(pool = db.pool, env = process.env) {
 
 function audit(req, outcome, userId = null) {
   return emailAuth.audit(db.pool, { action: 'auth.admin_login', userId, outcome, ip: req.ip, method: 'admin_password' });
+}
+
+/**
+ * Mails the admin a short notice after each correct password, so a sign-in
+ * they did not make shows up at once. Best effort: never blocks or fails the
+ * sign-in. Holds the Riyadh time and the browser only (no password, no IP).
+ */
+function loginAlert(req, who = null) {
+  const to = adminEmail();
+  if (!to) return;
+  const at = new Date();
+  const time = at.toLocaleTimeString('en-GB', { timeZone: 'Asia/Riyadh', hour: '2-digit', minute: '2-digit' });
+  const agent = String(req.get('user-agent') || '').slice(0, 120) || '—';
+  const text = [
+    who ? `دخل الموظف «${who}» إلى لوحة إدارة ميعاد.` : 'تم الدخول إلى لوحة إدارة ميعاد بكلمة المرور الصحيحة.',
+    `الوقت: ${riyadhDate(at)} ${time} بتوقيت الرياض`,
+    `المتصفح: ${agent}`,
+    '',
+    'إذا لم تكن أنت، فغيّر PLATFORM_ADMIN_PASSWORD من إعدادات تطبيق Node.js في السي بانل فوراً، ثم فعّل التحقق بخطوتين من صفحة «الأمان».',
+  ].join('\n');
+  Promise.resolve()
+    .then(() => email.send({ to, subject: 'تنبيه: دخول إلى لوحة إدارة ميعاد', text }))
+    .catch(() => {});
 }
 
 function renderStart(res, email, error, status = 200) {
@@ -121,9 +148,24 @@ router.post('/admin/login', limit, async (req, res, next) => {
     const passwordOk = sameSecret(password, adminPassword());
     const user = emailOk && passwordOk ? await adminUser() : null;
     if (!user) {
-      await audit(req, 'wrong');
-      return renderStart(res, typed, MESSAGES.wrong, 401);
+      // A platform_staff account (routes/adminStaff.js): bcrypt password, its own sections.
+      const member = await platformStaff.authenticate(db.pool, address, password);
+      if (!member) {
+        await audit(req, 'wrong');
+        return renderStart(res, typed, MESSAGES.wrong, 401);
+      }
+      loginAlert(req, member.name || 'موظف');
+      await db.pool.query('UPDATE users SET last_seen_at = UTC_TIMESTAMP() WHERE id = ?', [member.id]);
+      if (member.twofa_enabled) {
+        await audit(req, 'staff_password_ok', member.id);
+        res.cookie(MFA_COOKIE, auth.signStepToken({ sub: String(member.id), admin: true }, 'mfa', STEP_SECONDS), auth.cookieOptions(STEP_SECONDS));
+        return res.redirect('/login/2fa');
+      }
+      await audit(req, 'staff_success', member.id);
+      await auth.issueSession(req, res, member);
+      return res.redirect('/admin');
     }
+    loginAlert(req);
     if (user.twofa_enabled || auth.needsTwoFactor(user)) {
       await audit(req, 'password_ok', user.id);
       res.cookie(MFA_COOKIE, auth.signStepToken({ sub: String(user.id), admin: true }, 'mfa', STEP_SECONDS), auth.cookieOptions(STEP_SECONDS));

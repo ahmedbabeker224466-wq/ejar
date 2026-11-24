@@ -250,6 +250,29 @@ test('contact form: stored for the platform admin with a notification; validated
   assert.equal(audit.actor_id, admin.user.id);
   assert.equal(afterOf(audit).reason, 'تم الرد بالهاتف');
 
+  // Reply by email: needs text, sends to the visitor, marks handled, never stores or audits the text.
+  const [ins] = await db.pool.query("INSERT INTO contact_messages (name, email, message) VALUES ('اختبار-رد', 'reply@example.com', 'سؤال')");
+  const mails = [];
+  const mailEnv = { SMTP_HOST: process.env.SMTP_HOST, MAIL_FROM: process.env.MAIL_FROM };
+  process.env.SMTP_HOST = 'smtp.aqdi-test.example';
+  process.env.MAIL_FROM = 'miaad <noreply@aqdi-test.example>';
+  require('../services/channels/email').setMailer({ sendMail: async (m) => { mails.push(m); return {}; } });
+  try {
+    assert.equal((await post(`/admin/messages/${ins.insertId}/reply`, admin.cookie, { body: '' })).status, 422);
+    const replied = await post(`/admin/messages/${ins.insertId}/reply`, admin.cookie, { body: 'شكراً لتواصلك، الباقات في صفحة الأسعار.' });
+    assert.equal(replied.location, '/admin/messages?done=replied');
+    assert.equal(mails.length, 1);
+    assert.equal(mails[0].to, 'reply@example.com');
+    assert.match(mails[0].text, /الباقات في صفحة الأسعار/);
+    assert.ok((await one('SELECT handled_at FROM contact_messages WHERE id = ?', [ins.insertId])).handled_at);
+    const replyAudit = await one("SELECT * FROM audit_logs WHERE action = 'admin.message.reply' AND entity_id = ? ORDER BY id DESC LIMIT 1", [ins.insertId]);
+    assert.ok(replyAudit);
+    assert.ok(!JSON.stringify(replyAudit.after_json).includes('الأسعار'), 'the reply text is never audited');
+    assert.equal((await post(`/admin/messages/${ins.insertId}/reply`, null, { body: 'رد من مجهول' })).status, 302, 'signed out: refused');
+  } finally {
+    for (const [k, v] of Object.entries(mailEnv)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+  }
+
   // Honeypot: nothing stored.
   const before = await count("SELECT COUNT(*) FROM contact_messages WHERE name LIKE 'اختبار-%'");
   assert.equal((await send({ name: 'اختبار-روبوت', phone: '0555000111', message: 'spam', website: 'http://x' })).location, '/contact?sent=1');
@@ -371,7 +394,7 @@ test('the three seeded articles are drafts flagged for review, honest, and never
     assert.equal((await getPublic(`/blog/${row.slug}`)).status, 404, row.slug);
   }
   assert.deepEqual(rows.map((r) => r.title_ar).sort(), [
-    'تجميد زيادة الإيجار في الرياض: وش يعني للمكتب', 'كيف تتابع مواعيد عقود الإيجار', 'متى يبدأ التجديد وإشعار عدم التجديد',
+    'تجميد زيادة الإيجار في الرياض: ماذا يعني للمكتب؟', 'كيف تتابع مواعيد عقود الإيجار', 'متى يبدأ التجديد وإشعار عدم التجديد',
   ].sort());
   const sitemap = await text('/sitemap.xml');
   for (const row of rows) assert.ok(!sitemap.includes(row.slug));

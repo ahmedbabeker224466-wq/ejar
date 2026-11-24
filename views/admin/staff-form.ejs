@@ -1,0 +1,37 @@
+<p class="back-link"><a href="/admin/staff"><%= dir === 'rtl' ? '→' : '←' %> <%= __("فريق الإدارة") %></a></p>
+<div class="page-head"><h1><%= __(member ? member.name : 'موظف جديد') %></h1></div>
+<form method="post" action="<%= member ? '/admin/staff/' + member.id : '/admin/staff' %>" class="form-card adm-settings" novalidate>
+  <div class="form-grid">
+    <div class="field"><label for="name"><%= __("الاسم") %></label><input id="name" name="name" class="input" maxlength="120" value="<%= __(values.name) %>" required>
+      <% if (errors.name) { %><p class="field-error"><%= __(errors.name) %></p><% } %></div>
+    <div class="field"><label for="email"><%= __("البريد الإلكتروني") %></label>
+      <input id="email" name="email" class="input" type="email" dir="ltr" maxlength="190" value="<%= __(values.email) %>" <%= member ? 'readonly' : 'required' %>>
+      <% if (errors.email) { %><p class="field-error"><%= __(errors.email) %></p><% } %></div>
+  </div>
+  <div class="field"><label for="password"><%= __(member ? 'كلمة مرور جديدة (اتركها فارغة لتبقى كما هي)' : 'كلمة المرور (10 أحرف على الأقل)') %></label>
+    <input id="password" name="password" class="input" type="password" dir="ltr" autocomplete="new-password" maxlength="128" <%= member ? '' : 'required' %>>
+    <% if (errors.password) { %><p class="field-error"><%= __(errors.password) %></p><% } %></div>
+  <fieldset class="field adm-sections">
+    <legend><%= __("الأقسام المسموحة") %></legend>
+    <% Object.keys(sections).forEach(function (k) { %>
+      <label class="check"><input type="checkbox" name="sections" value="<%= __(k) %>" <%= values.sections.includes(k) ? 'checked' : '' %>> <%= __(sections[k].label) %></label>
+    <% }) %>
+    <% if (errors.sections) { %><p class="field-error"><%= __(errors.sections) %></p><% } %>
+  </fieldset>
+  <div class="field adm-settings__sep"><label for="reason"><%= __("سبب الإجراء (يُسجَّل في سجل التدقيق)") %></label><input id="reason" name="reason" class="input" maxlength="200" required>
+    <% if (errors.reason) { %><p class="field-error"><%= __(errors.reason) %></p><% } %></div>
+  <button type="submit" class="btn btn--success btn--large"><%= __(member ? 'حفظ' : 'إضافة الموظف') %></button>
+</form>
+
+<% if (member) { %>
+<section class="card detail-card <%= Number(member.is_active) ? 'adm-danger' : '' %>">
+  <h2><%= __(Number(member.is_active) ? 'إيقاف الموظف' : 'إعادة تفعيل الموظف') %></h2>
+  <p class="muted"><%= __(Number(member.is_active) ? 'يخرج الموظف من كل أجهزته فوراً ولا يستطيع الدخول حتى تعيد تفعيله.' : 'يستطيع الموظف الدخول مجدداً بكلمة مروره.') %></p>
+  <form method="post" action="/admin/staff/<%= __(member.id) %>/active" class="adm-action__row" novalidate>
+    <input type="hidden" name="active" value="<%= Number(member.is_active) ? '0' : '1' %>">
+    <div class="field"><label for="reason-active"><%= __("السبب") %></label><input id="reason-active" name="reason" class="input" maxlength="200" required>
+      <% if (errors.reason_active) { %><p class="field-error"><%= __(errors.reason_active) %></p><% } %></div>
+    <button type="submit" class="btn <%= Number(member.is_active) ? 'btn--danger' : 'btn--success' %>"><%= __(Number(member.is_active) ? 'إيقاف' : 'إعادة التفعيل') %></button>
+  </form>
+</section>
+<% } %>

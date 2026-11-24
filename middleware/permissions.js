@@ -58,6 +58,8 @@ const PLATFORM_ONLY = [
 ];
 
 const CAPABILITIES = {
+  // Limited admin accounts: the admin area only; each section is checked in routes/admin.js (staffSections).
+  platform_staff: ['platform.access'],
   platform_admin: [...new Set([...OFFICE_OWNER, ...LANDLORD, ...TENANT, ...PLATFORM_ONLY])],
   office_owner: OFFICE_OWNER,
   office_manager: OFFICE_OWNER.filter((c) => !OWNER_ONLY.includes(c)),

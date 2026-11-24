@@ -1,14 +1,21 @@
 <div class="page-head"><h1><%= __("أكواد الخصم") %></h1><a href="/admin/promos/new" class="btn btn--primary btn--small"><%= __("كود جديد") %></a></div>
 <% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
-<ul class="item-list">
-  <% rows.forEach(function (p) { %>
-    <li class="item">
-      <div class="item__title"><a href="/admin/promos/<%= __(p.id) %>"><strong dir="ltr"><%= __(p.code) %></strong></a>
-        <span class="badge badge--bill-<%= __(Number(p.is_active) ? 'success' : 'danger') %>"><%= __(Number(p.is_active) ? __('مفعّل') : __('موقوف')) %></span></div>
-      <div class="item__meta"><%= __(p.discount_type === 'percent' ? (Number(p.percent_bp) / 100) + '%' : fmtDec(p.fixed_amount) + __(' ريال')) %> ·
-        <%= __("استُخدم") %> <%= __(p.used) %><%= __(p.max_redemptions === null ? '' : __(' من ') + p.max_redemptions) %> (<%= __("مدفوع") %> <%= __(p.redeemed) %>) ·
-        <span dir="ltr"><%= __(stamp(p.valid_from)) %></span> <%= dir === 'rtl' ? '→' : '←' %> <span dir="ltr"><%= __(p.valid_to ? stamp(new Date(new Date(p.valid_to).getTime() - 1)) : '—') %></span></div>
-    </li>
-  <% }) %>
-</ul>
-<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد أكواد بعد.") %></p><% } %>
+<% if (rows.length) { %>
+<div class="table-wrap">
+  <table class="table adm-table">
+    <thead><tr><th><%= __("الكود") %></th><th><%= __("الخصم") %></th><th><%= __("الاستخدام") %></th><th><%= __("الصلاحية") %></th><th><%= __("الحالة") %></th><th></th></tr></thead>
+    <tbody>
+      <% rows.forEach(function (p) { %>
+        <tr>
+          <td><a class="adm-strong" dir="ltr" href="/admin/promos/<%= __(p.id) %>"><%= __(p.code) %></a></td>
+          <td><%= __(p.discount_type === 'percent' ? (Number(p.percent_bp) / 100) + '%' : fmtDec(p.fixed_amount) + __(' ريال')) %></td>
+          <td><%= __(p.used) %><%= __(p.max_redemptions === null ? '' : __(' من ') + p.max_redemptions) %><span class="adm-sub"><%= __("مدفوع") %> <%= __(p.redeemed) %></span></td>
+          <td dir="ltr"><%= __(stamp(p.valid_from)) %> - <%= __(p.valid_to ? stamp(new Date(new Date(p.valid_to).getTime() - 1)) : '—') %></td>
+          <td><span class="badge badge--bill-<%= __(Number(p.is_active) ? 'success' : 'danger') %>"><%= __(Number(p.is_active) ? __('مفعّل') : __('موقوف')) %></span></td>
+          <td><a class="btn btn--secondary btn--small" href="/admin/promos/<%= __(p.id) %>"><%= __("تعديل") %></a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %><p class="empty-state"><%= __("لا توجد أكواد بعد.") %></p><% } %>

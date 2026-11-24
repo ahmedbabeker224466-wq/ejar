@@ -7,7 +7,6 @@
 // with, approval by or compliance with Ejar, REGA or ZATCA.
 
 const ejarRules = require('../config/ejarRules');
-const emailAuth = require('../services/emailAuth');
 const emailCode = require('../services/emailCode');
 const express = require('express');
 const db = require('../config/db');
@@ -89,7 +88,7 @@ router.get(['/', '/offices'], wrap(async (req, res) => {
   return res.render('site/landing', {
     ...shared(),
     rules: { noticeDays: ejarRules.NON_RENEWAL_NOTICE_DAYS, rentChangeDays: ejarRules.RENT_CHANGE_NOTICE_DAYS },
-    emailSignup: emailAuth.enabled() || emailCode.enabled(),
+    emailSignup: emailCode.enabled(),
     layout: 'layouts/site', mkStd: false, title: t('brand'), metaTitle: t('meta.homeTitle'), plans: await planCards(), faqs: req.lang === 'en' ? [] : await siteContent.faqs(db.pool),
   });
 }));

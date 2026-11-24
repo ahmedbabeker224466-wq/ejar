@@ -1,34 +1,44 @@
 <div class="page-head"><h1><%= __("بلاغات الإعلانات") %></h1></div>
 <% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
 <% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
-<ul class="item-list">
+<% if (rows.length) { %>
+<div class="adm-msgs">
   <% rows.forEach(function (r) { %>
-    <li class="item">
-      <div class="item__title"><strong><%= __("بلاغ") %> #<%= __(r.id) %></strong> · <%= __(reasons[r.reason]) %>
-        <span class="badge badge--bill-<%= __(r.status === 'open' ? 'danger' : 'success') %>"><%= __({ open: __('مفتوح'), dismissed: __('أُغلق'), actioned: __('تم الإجراء') }[r.status]) %></span></div>
-      <div class="item__meta"><%= __("الإعلان") %> <a href="/listings/<%= __(r.listing_id) %>" target="_blank" rel="noopener noreferrer">#<%= __(r.listing_id) %></a> «<%= __(r.title) %>» · <a href="/admin/offices/<%= __(r.office_id) %>"><%= __(r.office_name) %></a> · <span dir="ltr"><%= __(stamp(r.created_at)) %></span> · <%= __("حالة الإعلان:") %> <%= __(r.listing_status) %><%= __(Number(r.admin_hidden) ? __(' (أخفته الإدارة)') : '') %></div>
-      <% if (r.note) { %><p class="pre-line"><%= __(r.note) %></p><% } %>
-      <% if (r.status === 'open') { %>
-        <details class="danger-zone"><summary><%= __("إجراء على البلاغ") %></summary>
-          <form method="post" action="/admin/reports/<%= __(r.id) %>/hide" novalidate>
-            <div class="field"><label for="h-<%= __(r.id) %>"><%= __("سبب إخفاء الإعلان (يصل للمكتب)") %></label><input id="h-<%= __(r.id) %>" name="reason" class="input" maxlength="200" required></div>
-            <button type="submit" class="btn btn--danger btn--small"><%= __("إخفاء الإعلان") %></button>
-          </form>
-          <form method="post" action="/admin/reports/<%= __(r.id) %>/dismiss" novalidate>
-            <div class="field"><label for="d-<%= __(r.id) %>"><%= __("سبب إغلاق البلاغ دون إجراء") %></label><input id="d-<%= __(r.id) %>" name="reason" class="input" maxlength="200" required></div>
-            <button type="submit" class="btn btn--secondary btn--small"><%= __("إغلاق البلاغ") %></button>
-          </form>
-        </details>
-      <% } %>
-      <% if (Number(r.admin_hidden)) { %>
-        <details class="danger-zone"><summary><%= __("إلغاء الإخفاء") %></summary>
-          <form method="post" action="/admin/listings/<%= __(r.listing_id) %>/unhide" novalidate>
-            <div class="field"><label for="u-<%= __(r.id) %>"><%= __("السبب") %></label><input id="u-<%= __(r.id) %>" name="reason" class="input" maxlength="200" required></div>
-            <button type="submit" class="btn btn--primary btn--small"><%= __("إلغاء الإخفاء") %></button>
-          </form></details>
-      <% } %>
-    </li>
+    <article class="adm-msg<%= r.status === 'open' ? '' : ' is-done' %>">
+      <header class="adm-msg__head">
+        <strong class="adm-msg__name"><%= __(reasons[r.reason]) %></strong>
+        <span class="badge badge--bill-<%= __(r.status === 'open' ? 'danger' : 'success') %>"><%= __({ open: __('مفتوح'), dismissed: __('أُغلق'), actioned: __('تم الإجراء') }[r.status]) %></span>
+        <% if (Number(r.admin_hidden)) { %><span class="badge badge--bill-warning"><%= __("الإعلان مخفي من الإدارة") %></span><% } %>
+        <span class="adm-msg__date" dir="ltr"><%= __(stamp(r.created_at)) %></span>
+      </header>
+      <dl class="adm-kv adm-transfer__kv">
+        <dt><%= __("الإعلان") %></dt><dd><a href="/listings/<%= __(r.listing_id) %>" target="_blank" rel="noopener noreferrer"><%= __(r.title) %></a></dd>
+        <dt><%= __("المكتب") %></dt><dd><a href="/admin/offices/<%= __(r.office_id) %>"><%= __(r.office_name) %></a></dd>
+      </dl>
+      <% if (r.note) { %><p class="adm-msg__text pre-line"><%= __(r.note) %></p><% } %>
+      <div class="adm-msg__actions">
+        <% if (r.status === 'open') { %>
+          <details><summary class="btn btn--danger btn--small"><%= __("إخفاء الإعلان") %></summary>
+            <form method="post" action="/admin/reports/<%= __(r.id) %>/hide" class="adm-action__row" novalidate>
+              <div class="field"><label for="h-<%= __(r.id) %>"><%= __("سبب إخفاء الإعلان (يصل للمكتب)") %></label><input id="h-<%= __(r.id) %>" name="reason" class="input" maxlength="200" required></div>
+              <button type="submit" class="btn btn--danger"><%= __("إخفاء") %></button>
+            </form></details>
+          <details><summary class="btn btn--secondary btn--small"><%= __("إغلاق البلاغ") %></summary>
+            <form method="post" action="/admin/reports/<%= __(r.id) %>/dismiss" class="adm-action__row" novalidate>
+              <div class="field"><label for="d-<%= __(r.id) %>"><%= __("سبب إغلاق البلاغ دون إجراء") %></label><input id="d-<%= __(r.id) %>" name="reason" class="input" maxlength="200" required></div>
+              <button type="submit" class="btn btn--secondary"><%= __("إغلاق") %></button>
+            </form></details>
+        <% } %>
+        <% if (Number(r.admin_hidden)) { %>
+          <details><summary class="btn btn--success btn--small"><%= __("إلغاء الإخفاء") %></summary>
+            <form method="post" action="/admin/listings/<%= __(r.listing_id) %>/unhide" class="adm-action__row" novalidate>
+              <div class="field"><label for="u-<%= __(r.id) %>"><%= __("السبب") %></label><input id="u-<%= __(r.id) %>" name="reason" class="input" maxlength="200" required></div>
+              <button type="submit" class="btn btn--success"><%= __("إلغاء الإخفاء") %></button>
+            </form></details>
+        <% } %>
+      </div>
+    </article>
   <% }) %>
-</ul>
-<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد بلاغات.") %></p><% } %>
+</div>
+<% } else { %><p class="empty-state"><%= __("لا توجد بلاغات.") %></p><% } %>
 <p class="muted"><%= __("لإيقاف نشر الإعلانات لمكتب كامل افتح صفحته من") %> <a href="/admin/offices"><%= __("المكاتب") %></a>.</p>

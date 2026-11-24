@@ -1,21 +1,41 @@
 <div class="page-head"><h1><%= __("رسائل التواصل") %></h1></div>
 <% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
 <% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
-<ul class="item-list">
-  <% rows.forEach(function (m) { %>
-    <li class="item">
-      <div class="item__title"><strong><%= __(m.name) %></strong> <span class="badge badge--bill-<%= __(m.handled_at ? 'success' : 'danger') %>"><%= __(m.handled_at ? __('تمت المعالجة') : __('جديدة')) %></span></div>
-      <div class="item__meta"><% if (m.phone) { %><span dir="ltr"><%= __(m.phone) %></span> <% } %><% if (m.email) { %><span dir="ltr"><%= __(m.email) %></span> <% } %>· <span dir="ltr"><%= __(stamp(m.created_at)) %></span></div>
-      <p class="pre-line"><%= __(m.message) %></p>
+<% if (!mailReady) { %><div class="flash flash--warning" role="note"><%= __("البريد الصادر غير مضبوط، لذلك الرد بالبريد غير متاح الآن.") %></div><% } %>
+<% if (rows.length) { %>
+<div class="adm-msgs">
+  <% rows.forEach(function (m) { const wa = m.phone ? String(m.phone).replace(/\D/g, '').replace(/^0/, '966') : ''; %>
+    <article class="adm-msg<%= m.handled_at ? ' is-done' : '' %>">
+      <header class="adm-msg__head">
+        <strong class="adm-msg__name"><%= __(m.name) %></strong>
+        <span class="badge badge--bill-<%= __(m.handled_at ? 'success' : 'danger') %>"><%= __(m.handled_at ? __('تمت المعالجة') : __('جديدة')) %></span>
+        <span class="adm-msg__date" dir="ltr"><%= __(stamp(m.created_at)) %></span>
+      </header>
+      <div class="adm-msg__contacts">
+        <% if (m.email) { %><a class="adm-chip" dir="ltr" href="mailto:<%= __(m.email) %>"><%= __(m.email) %></a><% } %>
+        <% if (m.phone) { %><a class="adm-chip" dir="ltr" href="tel:<%= __(m.phone) %>"><%= __(m.phone) %></a>
+          <a class="adm-chip" href="https://wa.me/<%= __(wa) %>" target="_blank" rel="noopener"><%= __("واتساب") %></a><% } %>
+      </div>
+      <p class="adm-msg__text pre-line"><%= __(m.message) %></p>
       <% if (!m.handled_at) { %>
-        <form method="post" action="/admin/messages/<%= __(m.id) %>/handled" class="inline-form" novalidate>
-          <label class="visually-hidden" for="mh-<%= __(m.id) %>"><%= __("السبب") %></label>
-          <input id="mh-<%= __(m.id) %>" name="reason" class="input" maxlength="200" placeholder="<%= __("كيف عولجت الرسالة؟") %>" required>
-          <button type="submit" class="btn btn--secondary btn--small"><%= __("تمت المعالجة") %></button>
-        </form>
+        <div class="adm-msg__actions">
+          <% if (m.email && mailReady) { %>
+          <details<%- openId === m.id ? ' open' : '' %>><summary class="btn btn--primary btn--small"><%= __("الرد بالبريد") %></summary>
+            <form method="post" action="/admin/messages/<%= __(m.id) %>/reply" novalidate>
+              <div class="field"><label for="rp-<%= __(m.id) %>"><%= __("نص الرد") %></label><textarea id="rp-<%= __(m.id) %>" name="body" class="textarea" rows="5" maxlength="3000" required><%= __(openId === m.id ? draft : '') %></textarea></div>
+              <p class="muted"><%= __("يصل الرد إلى بريد المرسل باسم ميعاد، ولا يُحفظ نصه في النظام.") %></p>
+              <button type="submit" class="btn btn--success"><%= __("إرسال الرد") %></button>
+            </form></details>
+          <% } %>
+          <details><summary class="btn btn--secondary btn--small"><%= __("تعليم كمعالجة") %></summary>
+            <form method="post" action="/admin/messages/<%= __(m.id) %>/handled" class="adm-action__row" novalidate>
+              <div class="field"><label for="mh-<%= __(m.id) %>"><%= __("كيف عولجت الرسالة؟") %></label><input id="mh-<%= __(m.id) %>" name="reason" class="input" maxlength="200" required></div>
+              <button type="submit" class="btn btn--secondary"><%= __("حفظ") %></button>
+            </form></details>
+        </div>
       <% } %>
-    </li>
+    </article>
   <% }) %>
-</ul>
-<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد رسائل.") %></p><% } %>
+</div>
+<% } else { %><p class="empty-state"><%= __("لا توجد رسائل.") %></p><% } %>
 <p class="muted"><%= __("بيانات التواصل هنا من الزائر نفسه لأجل الرد عليه فقط.") %></p>

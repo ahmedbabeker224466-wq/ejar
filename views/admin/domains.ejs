@@ -1,5 +1,5 @@
 <div class="page-head"><h1><%= __("طلبات الدومين") %></h1></div>
-<form method="get" action="/admin/domains" class="filter-bar" novalidate>
+<form method="get" action="/admin/domains" class="adm-filters" novalidate>
   <div class="field"><label for="status"><%= __("الحالة") %></label>
     <select id="status" name="status" class="select">
       <option value=""><%= __("الكل") %></option>
@@ -8,17 +8,25 @@
   <button type="submit" class="btn btn--primary"><%= __("عرض") %></button>
 </form>
 <p class="muted"><%= __(total) %> <%= __("طلب. الربط والشراء يدويان حالياً.") %></p>
-<ul class="item-list">
-  <% rows.forEach(function (r) { %>
-    <li class="item" id="domain-request-<%= __(r.id) %>">
-      <div class="item__title"><a href="/admin/domains/<%= __(r.id) %>"><strong dir="ltr"><%= __(r.domain) %></strong></a>
-        <span class="badge badge--domain-<%= __(r.status) %>"><%= __(r.statusLabel) %></span></div>
-      <div class="item__meta"><%= __(r.office_name) %> · <%= __(r.type === 'own' ? __('لدي دومين') : __('احجز لي دوميناً')) %><%= __(r.type === 'own' ? (r.connection_method === 'records' ? __(' (سجلات DNS)') : ' (Nameservers)') : '') %>
-        · <%= __("طُلب") %> <span dir="ltr"><%= __(stamp(r.created_at)) %></span> · <%= __("آخر تحديث") %> <span dir="ltr"><%= __(stamp(r.updated_at)) %></span><% if (r.activated_at) { %> · <%= __("فُعّل") %> <span dir="ltr"><%= __(stamp(r.activated_at)) %></span><% } %></div>
-    </li>
-  <% }) %>
-</ul>
-<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد طلبات مطابقة.") %></p><% } %>
+<% if (rows.length) { %>
+<div class="table-wrap">
+  <table class="table adm-table">
+    <thead><tr><th><%= __("الدومين") %></th><th><%= __("المكتب") %></th><th><%= __("النوع") %></th><th><%= __("الحالة") %></th><th><%= __("تاريخ الطلب") %></th><th><%= __("آخر تحديث") %></th></tr></thead>
+    <tbody>
+      <% rows.forEach(function (r) { %>
+        <tr id="domain-request-<%= __(r.id) %>">
+          <td><a class="adm-strong" dir="ltr" href="/admin/domains/<%= __(r.id) %>"><%= __(r.domain) %></a></td>
+          <td><%= __(r.office_name) %></td>
+          <td><%= __(r.type === 'own' ? __('لدي دومين') : __('احجز لي دوميناً')) %><% if (r.type === 'own') { %><span class="adm-sub"><%= __(r.connection_method === 'records' ? __('سجلات DNS') : 'Nameservers') %></span><% } %></td>
+          <td><span class="badge badge--domain-<%= __(r.status) %>"><%= __(r.statusLabel) %></span></td>
+          <td dir="ltr"><%= __(stamp(r.created_at)) %></td>
+          <td dir="ltr"><%= __(stamp(r.updated_at)) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } else { %><p class="empty-state"><%= __("لا توجد طلبات مطابقة.") %></p><% } %>
 <% if (pages > 1) { %>
   <nav class="pager" aria-label="<%= __("الصفحات") %>">
     <% if (page > 1) { %><a href="/admin/domains?status=<%= __(status) %>&amp;page=<%= __(page - 1) %>"><%= __("السابق") %></a><% } %>

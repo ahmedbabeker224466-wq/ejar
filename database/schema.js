@@ -48,10 +48,12 @@ function fk(tableName, column, parent, onDelete) {
 const TABLES = [
   // ---------------------------------------------------------------- ACCOUNTS
   table('users', [
-    'phone VARCHAR(20) NULL', // NULL only for an email test account (AUTH_EMAIL_TEST)
+    'phone VARCHAR(20) NULL', // NULL for an account that signed up by email
     'name VARCHAR(120) NULL',
     'email VARCHAR(190) NULL', // stored lower-case; unique (several NULLs allowed)
-    "role ENUM('platform_admin','office_owner','office_manager','office_staff','landlord','tenant') NULL",
+    "role ENUM('platform_admin','office_owner','office_manager','office_staff','landlord','tenant','platform_staff') NULL",
+    'password_hash VARCHAR(100) NULL', // bcrypt; platform_staff only (they sign in at /admin/login)
+    'admin_sections VARCHAR(255) NULL', // platform_staff: comma-separated admin sections (routes/adminStaff.js)
     'is_active TINYINT(1) NOT NULL DEFAULT 1',
     'phone_verified TINYINT(1) NOT NULL DEFAULT 0',
     "locale VARCHAR(10) NOT NULL DEFAULT 'ar'",
@@ -1222,6 +1224,8 @@ const TABLES = [
 // already includes them for new databases; ensureSchema() adds them to older
 // databases that are missing them.
 const COLUMN_ADDITIONS = [
+  { table: 'users', column: 'password_hash', definition: 'VARCHAR(100) NULL AFTER twofa_backup_codes' },
+  { table: 'users', column: 'admin_sections', definition: 'VARCHAR(255) NULL AFTER password_hash' },
   { table: 'offices', column: 'custom_domain', definition: 'VARCHAR(253) NULL AFTER public_description' },
   { table: 'plans', column: 'custom_domain', definition: "ENUM('none','addon','included') NOT NULL DEFAULT 'none' AFTER features" },
   { table: 'plans', column: 'audit_level', definition: "ENUM('basic','full') NOT NULL DEFAULT 'full' AFTER custom_domain" },
@@ -1298,6 +1302,13 @@ const COLUMN_ADDITIONS = [
 // ENUM values added after a table first shipped: MODIFY COLUMN runs only when
 // the value is missing from the column type (safe to repeat, never drops data).
 const ENUM_ADDITIONS = [
+  // Platform staff: limited admin accounts managed by the platform admin (Nov 2026).
+  {
+    table: 'users',
+    column: 'role',
+    value: 'platform_staff',
+    definition: "ENUM('platform_admin','office_owner','office_manager','office_staff','landlord','tenant','platform_staff') NULL",
+  },
   // Backups gained the 'running' state (a run is recorded before it finishes).
   {
     table: 'backups',
