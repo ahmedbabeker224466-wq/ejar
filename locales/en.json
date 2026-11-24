@@ -2754,6 +2754,13 @@
  "إرسال رمز الدخول": "Send sign-in code",
  "العودة إلى الموقع": "Back to the website",
  "دخول الإدارة بالبريد غير مفعّل على هذا الخادم.": "Admin sign-in by email is not enabled on this server.",
- "الخطوة الأولى: رمز يصل إلى بريد الإدارة. الخطوة الثانية: رمز تطبيق المصادقة.": "Step one: a code sent to the administration email. Step two: the code from your authenticator app.",
- "دخول مقيّد ومراقب. كل محاولة تُسجَّل.": "Restricted and monitored access. Every attempt is logged."
+ "لوحة إدارة المنصة": "Platform administration",
+ "خطوات الدخول": "Sign-in steps",
+ "رمز البريد": "Email code",
+ "تطبيق المصادقة": "Authenticator app",
+ "تحقق بخطوتين": "Two-step verification",
+ "اتصال مشفّر": "Encrypted connection",
+ "كل محاولة تُسجَّل": "Every attempt is logged",
+ "دخول مقيّد لمدير المنصة": "Restricted to the platform administrator",
+ "أدخل بريد الإدارة لنرسل إليه رمز تحقق صالحاً لخمس دقائق.": "Enter the administration email and we will send a verification code valid for five minutes."
 }

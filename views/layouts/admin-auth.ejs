@@ -13,17 +13,29 @@
   <link rel="stylesheet" href="<%= assetUrl('/css/main.css') %>">
 </head>
 <body class="adm-auth">
-  <main class="adm-auth__main">
-    <div class="adm-auth__head">
+  <header class="adm-auth__bar">
+    <div class="adm-auth__brand">
       <span class="adm-auth__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'aa' }) %></span>
       <span class="brand-word" lang="en" dir="ltr">miaad</span>
-      <span class="adm-auth__tag">
-        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Z"/></svg>
-        <%= __("إدارة المنصة") %>
-      </span>
+      <span class="adm-auth__sep" aria-hidden="true"></span>
+      <span class="adm-auth__area"><%= __("لوحة إدارة المنصة") %></span>
     </div>
+    <%- include('../partials/lang-switch') %>
+  </header>
+  <main class="adm-auth__main">
+    <% const step = locals.adminStep || 1; %>
+    <ol class="adm-steps" aria-label="<%= __("خطوات الدخول") %>">
+      <li class="<%= step === 1 ? 'is-current' : 'is-done' %>"<%- step === 1 ? ' aria-current="step"' : '' %>><span class="adm-steps__n">1</span><%= __("رمز البريد") %></li>
+      <li class="adm-steps__line" aria-hidden="true"></li>
+      <li class="<%= step === 2 ? 'is-current' : '' %>"<%- step === 2 ? ' aria-current="step"' : '' %>><span class="adm-steps__n">2</span><%= __("تطبيق المصادقة") %></li>
+    </ol>
     <%- body %>
-    <p class="adm-auth__foot"><%= __("دخول مقيّد ومراقب. كل محاولة تُسجَّل.") %></p>
+    <ul class="adm-auth__facts">
+      <li><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm-1 14-4-4 1.4-1.4L11 13.2l4.6-4.6L17 10l-6 6Z"/></svg><%= __("تحقق بخطوتين") %></li>
+      <li><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Z"/></svg><%= __("اتصال مشفّر") %></li>
+      <li><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M5 3h10l4 4v14H5V3Zm2 2v14h10V8h-3V5H7Zm2 6h6v2H9v-2Zm0 4h6v2H9v-2Z"/></svg><%= __("كل محاولة تُسجَّل") %></li>
+    </ul>
   </main>
+  <footer class="adm-auth__foot">© <%= new Date().getFullYear() %> <%= __("ميعاد") %> · <%= __("دخول مقيّد لمدير المنصة") %></footer>
 </body>
 </html>

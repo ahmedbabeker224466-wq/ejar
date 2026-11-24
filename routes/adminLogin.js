@@ -106,6 +106,7 @@ router.use('/login/2fa', (req, res, next) => {
   const step = auth.verifyStepToken(req.cookies[MFA_COOKIE], 'mfa');
   if (step && step.admin) {
     useAdminLayout(res);
+    res.locals.adminStep = 2;
     res.set('X-Robots-Tag', 'noindex, nofollow');
   }
   next();
