@@ -1,15 +1,23 @@
-<section class="card form-card">
+<div class="page-head">
   <h1><%= __("الإعدادات") %></h1>
-
-  <% if (saved) { %>
-    <div class="flash flash--success" role="status"><%= __("تم حفظ بيانات المكتب.") %></div>
-  <% } %>
-
   <div class="button-row">
     <% if (canEditOffice) { %><a href="/office/settings/reminders" class="btn btn--secondary"><%= __("إعدادات التذكيرات والقنوات") %></a><% } %>
     <a href="/settings/notifications" class="btn btn--secondary"><%= __("إشعاراتي") %></a>
   </div>
+</div>
 
+<nav class="ofx-subnav" aria-label="<%= __("أقسام الإعدادات") %>">
+  <a href="#office"><%= __("بيانات المكتب") %></a>
+  <% if (planInfo) { %><a href="#plan"><%= __("الباقة والاستخدام") %></a><% } %>
+  <a href="#domain"><%= __("نطاق مكتبك") %></a>
+  <% if (link) { %><a href="#office-link"><%= __("رابط مكتبك") %></a><% } %>
+</nav>
+
+<% if (saved) { %>
+  <div class="flash flash--success" role="status"><%= __("تم حفظ بيانات المكتب.") %></div>
+<% } %>
+
+<section class="card form-card" id="office">
   <h2><%= __("بيانات المكتب") %></h2>
   <% if (canEditOffice) { %>
     <% if (Object.keys(errors).length) { %>

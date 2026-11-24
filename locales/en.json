@@ -2907,5 +2907,17 @@
  "الصق مفتاح الخدمة.": "Paste the service key.",
  "تعديل إعدادات الذكاء الاصطناعي": "AI settings changed",
  "العقود والعقارات": "Contracts and properties",
- "المال": "Money"
+ "المال": "Money",
+ "تعديل نسبة عمولة المكتب": "Office commission rate changed",
+ "إضافة قيد محاسبي": "Ledger entry added",
+ "إلغاء قيد محاسبي": "Ledger entry voided",
+ "إضافة عميل محتمل": "Lead added",
+ "تعديل عميل محتمل": "Lead updated",
+ "نقل عميل محتمل إلى مرحلة أخرى": "Lead moved to another stage",
+ "طلب نطاق خاص": "Custom domain requested",
+ "إلغاء طلب النطاق الخاص": "Custom domain request cancelled",
+ "عميل محتمل": "Lead",
+ "قيد محاسبي": "Ledger entry",
+ "طلب نطاق": "Domain request",
+ "الباقة والاستخدام": "Plan and usage"
 }

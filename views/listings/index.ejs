@@ -17,4 +17,4 @@
     </li>
   <% }) %>
 </ul>
-<% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد إعلانات بعد. اختر وحدة شاغرة وأنشئ إعلاناً.") %></p><% } %>
+<% if (!rows.length) { %><section class="card empty-card"><p class="lead"><%= __("لا توجد إعلانات بعد. اختر وحدة شاغرة وأنشئ إعلاناً.") %></p><a href="/office/listings/new" class="btn btn--primary"><%= __("إعلان جديد") %></a></section><% } %>

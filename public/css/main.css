@@ -2538,3 +2538,27 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 .office-body .button-row + h2, .office-body .button-row + section, .office-body .button-row + form { margin-top: 22px; }
 .office-body .form-card > h1 + .button-row, .office-body .form-card > .flash + .button-row { margin-top: 4px; }
 .office-body .checklist .is-done .checklist__box { background: var(--color-success) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 15px no-repeat; border-color: var(--color-success); }
+/* Empty states: one quiet icon, the sentence, the next step */
+.office-body .empty-card { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 40px 24px; }
+.office-body .empty-card::before {
+  content: ''; width: 56px; height: 56px; border-radius: 16px; margin-bottom: 4px;
+  background: #eef3ff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b6af5' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 13h5l1.5 2.5h5L16 13h5'/%3E%3Cpath d='M5.5 5.5h13L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z'/%3E%3C/svg%3E") center / 28px no-repeat;
+}
+.office-body .empty-card .lead { max-width: 520px; margin: 0; font-size: 1rem; }
+.office-body .empty-card h2 { margin: 0; }
+.office-body .empty-card .btn { margin-top: 6px; }
+/* In-page section links (office settings) */
+.ofx-subnav { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; padding: 6px; background: #fff; border: 1px solid var(--ofx-line, #e4e8f1); border-radius: 12px; width: fit-content; max-width: 100%; }
+.ofx-subnav a { padding: 7px 14px; border-radius: 8px; color: var(--ofx-muted, #5f6b87); font-weight: 600; font-size: .9rem; text-decoration: none; white-space: nowrap; }
+.ofx-subnav a:hover { background: #f2f5fb; color: var(--ofx-ink, #0f1d45); }
+.office-body [id] { scroll-margin-top: 84px; }
+.office-body .page-head .button-row { margin: 0; }
+.office-body .ofx-subnav ~ .card { max-width: 860px; }
+@media (min-width: 900px) {
+  /* Long forms: two fields per row inside each group */
+  .office-body .form-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+  .office-body .form-group > :not(.field) { grid-column: 1 / -1; }
+  /* Detail lists: two label/value pairs per row */
+  .office-body .detail-card > .details { grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr); column-gap: 20px; }
+}
+.office-body .form-group > legend { font-size: 1.02rem; font-weight: 700; }
