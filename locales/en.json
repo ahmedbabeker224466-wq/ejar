@@ -2748,5 +2748,11 @@
  "اكتب الرمز الذي أرسله لك مكتب العقار وبريدك الإلكتروني، وسنرسل إليه رمز تحقق لتدخل إلى حسابك.": "Enter the code your real estate office sent you and your email address, and we will send you a verification code to access your account.",
  "8 خانات من حروف إنجليزية وأرقام، كما وصلتك.": "8 characters of English letters and digits, exactly as you received them.",
  "اكتب بريدك الإلكتروني بصيغة صحيحة، مثل name@example.com.": "Enter a valid email address, such as name@example.com.",
- "الرمز غير صحيح أو انتهت صلاحيته. أعد المحاولة أو اطلب رمزاً جديداً.": "The code is incorrect or has expired. Please try again or request a new code."
+ "الرمز غير صحيح أو انتهت صلاحيته. أعد المحاولة أو اطلب رمزاً جديداً.": "The code is incorrect or has expired. Please try again or request a new code.",
+ "دخول الإدارة": "Admin sign-in",
+ "هذه الصفحة لمدير المنصة فقط. اكتب بريد الإدارة ليصلك رمز الدخول، ثم تكتب رمز تطبيق المصادقة.": "This page is for the platform administrator only. Enter the administration email to receive a sign-in code, then enter the code from your authenticator app.",
+ "بريد الإدارة": "Administration email",
+ "إرسال رمز الدخول": "Send sign-in code",
+ "العودة إلى الموقع": "Back to the website",
+ "دخول الإدارة بالبريد غير مفعّل على هذا الخادم.": "Admin sign-in by email is not enabled on this server."
 }

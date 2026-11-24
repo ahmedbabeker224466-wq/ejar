@@ -13,6 +13,7 @@ const expressLayouts = require('express-ejs-layouts');
 const { createAssetVersion } = require('./services/assetVersion');
 const routes = require('./routes');
 const authRoutes = require('./routes/auth');
+const adminLoginRoutes = require('./routes/adminLogin');
 const areaRoutes = require('./routes/areas');
 const officeRoutes = require('./routes/office');
 const officePage = require('./routes/officePage');
@@ -154,6 +155,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(adminLoginRoutes);
 app.use(routes);
 app.use(authRoutes);
 app.use(officeRoutes);

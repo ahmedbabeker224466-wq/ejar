@@ -112,8 +112,8 @@ function routeTable() {
 
 // Routes that answer a visitor who is not signed in, by design.
 const PUBLIC = [
-  /^GET \/(health|healthz|health\/detail|features|offices|pricing|about|privacy|terms|disclaimer|contact|blog|blog\/feed\.xml|blog\/:slug|blog\/:slug\/cover|sitemap\.xml|robots\.txt|listings|listings\/:id|listings\/photos\/:id\/:variant|listings\/:id\/report|login|register|join|login\/verify|login\/2fa|login\/2fa\/setup|logout)?$/,
-  /^POST \/(contact|listings\/:id\/inquiry|listings\/:id\/report|login|login\/verify|login\/resend|login\/2fa|login\/2fa\/setup|register|webhooks\/moyasar|webhooks\/telegram\/:secret|cron\/run\/:job)$/,
+  /^GET \/(health|healthz|health\/detail|features|offices|pricing|about|privacy|terms|disclaimer|contact|blog|blog\/feed\.xml|blog\/:slug|blog\/:slug\/cover|sitemap\.xml|robots\.txt|listings|listings\/:id|listings\/photos\/:id\/:variant|listings\/:id\/report|login|register|join|login\/verify|login\/2fa|login\/2fa\/setup|logout|admin\/login|admin\/login\/verify)?$/,
+  /^POST \/(contact|listings\/:id\/inquiry|listings\/:id\/report|login|login\/verify|login\/resend|login\/2fa|login\/2fa\/setup|admin\/login|admin\/login\/verify|admin\/login\/resend|register|webhooks\/moyasar|webhooks\/telegram\/:secret|cron\/run\/:job)$/,
 ];
 const isPublic = (r) => PUBLIC.some((re) => re.test(`${r.method} ${r.path}`));
 const fill = (p) => p.replace(/:(\w+)/g, (m, name) => (/token|slug|secret|variant/.test(name) ? 'x' : '1'));
@@ -127,12 +127,12 @@ test('the route table is large and every route is either public by design or pro
   for (const r of hidden) {
     const res = await http.request(fill(r.path), { method: r.method, form: isWrite(r) ? { x: '1' } : undefined });
     assert.ok([301, 302, 401, 403, 404].includes(res.status), `${r.method} ${r.path} answered ${res.status} to a visitor`);
-    if (res.status === 302) assert.match(res.location, /^\/(login|register|join)/, `${r.method} ${r.path} redirects to ${res.location}`);
+    if (res.status === 302) assert.match(res.location, /^\/(login|register|join|admin\/login)/, `${r.method} ${r.path} redirects to ${res.location}`);
   }
 });
 
 test('tenants and landlords get nothing from /office and /admin, staff nothing from owner-only pages', { skip }, async () => {
-  const routes = routeTable().filter((r) => /^\/(office|admin|platform)(\/|$)/.test(r.path));
+  const routes = routeTable().filter((r) => /^\/(office|admin|platform)(\/|$)/.test(r.path) && !isPublic(r));
   assert.ok(routes.length > 150);
   for (const who of [tenant, landlord]) {
     for (const r of routes) {

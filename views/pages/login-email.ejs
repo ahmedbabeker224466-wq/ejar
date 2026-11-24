@@ -26,12 +26,10 @@
         maxlength="190"
         placeholder="name@example.com"
         value="<%= __(email) %>"
-        aria-describedby="email-hint"
         <%= __(error ? 'aria-invalid=true' : '') %>
         autofocus
         required
       >
-      <p id="email-hint" class="field-hint"><%= __("مثال:") %> name@example.com</p>
     </div>
     <button type="submit" class="btn btn--primary btn--block btn--large"><%= __(button) %></button>
   </form>

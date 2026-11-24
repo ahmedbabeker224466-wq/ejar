@@ -70,7 +70,7 @@ function twoFactorGuard(req, res, next) {
   return next();
 }
 
-router.use('/admin', noStore, sameOrigin, requireAuth, requirePerm('platform.access'), twoFactorGuard, (req, res, next) => {
+router.use('/admin', noStore, sameOrigin, (req, res, next) => (req.user || req.method !== 'GET' ? next() : res.redirect('/admin/login')), requireAuth, requirePerm('platform.access'), twoFactorGuard, (req, res, next) => {
   res.locals.layout = 'layouts/admin';
   res.locals.adminNav = NAV.map((item) => ({ ...item, current: isCurrent(item, req.baseUrl + req.path) }));
   res.locals.userDisplay = req.user.name || req.user.phone || req.user.email;

@@ -123,7 +123,7 @@ test('only a signed-in platform admin opens /admin; everyone else is refused on 
   const manager = await http.addMember(owner.office.id, phone(3), 'office_manager');
   for (const p of PAGES) {
     assert.equal((await http.request(p)).status, 302, `${p} signed out`);
-    assert.equal((await http.request(p)).location, '/login');
+    assert.equal((await http.request(p)).location, '/admin/login');
     for (const cookie of [owner.cookie, staff, manager]) assert.equal((await http.request(p, { cookie })).status, 403, `${p} office role`);
     assert.equal((await aget(p)).status, 200, `${p} admin`);
   }
