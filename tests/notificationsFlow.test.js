@@ -180,7 +180,7 @@ test('reminders: decision deadline in 7 days reaches office, landlord and tenant
     assert.equal(n.link, link);
     assert.equal(Number(n.contract_id), id);
     assert.equal(Number(n.office_id), o.office.id);
-    assert.ok(n.body.endsWith(DISCLAIMER));
+    assert.ok(!n.body.includes(DISCLAIMER));
     assert.ok(n.body.includes(engine.noticeDeadline(end)));
     assert.match(n.title, /بعد 7 يوم/);
     assert.doesNotMatch(n.body, /اسم-سري/, 'the tenant label never goes into a message');

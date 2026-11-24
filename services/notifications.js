@@ -2,8 +2,9 @@
 
 // The notification center: one row per person per message (the on-site
 // channel, always on), plus a delivery_log row per outside channel the person
-// has switched on. Message text holds nicknames, dates and amounts only and
-// always ends with the disclaimer. A notification belongs to its user_id:
+// has switched on. Message text holds nicknames, dates and amounts only. The
+// old disclaimer line is no longer added and is stripped from older rows
+// (owner's decision, Nov 2026). A notification belongs to its user_id:
 // every read and write here filters by it.
 
 const { afterQuietHours, isValidClock } = require('./contractDates');
@@ -48,10 +49,13 @@ const KIND_LABELS = {
   test: 'رسالة تجربة',
 };
 
-/** Appends the disclaimer once. */
+/** The message text without the old disclaimer line (kept name: every sender passes text through it). */
 function withDisclaimer(body) {
-  const text = String(body || '').trim();
-  return text.endsWith(DISCLAIMER) ? text : `${text}\n\n${DISCLAIMER}`;
+  return String(body || '')
+    .split(/\n{2,}/)
+    .filter((part) => part.trim() !== DISCLAIMER)
+    .join('\n\n')
+    .trim();
 }
 
 /** Only links inside the app ('/...') are stored. */
@@ -184,7 +188,7 @@ async function listFor(pool, userId, { kind = '', page = 1, pageSize = PAGE_SIZE
       WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ${Number(pageSize)} OFFSET ${(current - 1) * pageSize}`,
     params,
   );
-  return { rows, total, page: current, pages };
+  return { rows: rows.map((r) => ({ ...r, body: withDisclaimer(r.body) })), total, page: current, pages };
 }
 
 /** Marks one of the person's notifications read. False when it is not theirs. */

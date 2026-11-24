@@ -136,7 +136,7 @@ test('create end to end: schedule, deadlines, unit rented, tenant invite, events
   assert.equal(form.status, 200);
   assert.match(form.text, /لا تكتب الاسم الكامل أو رقم الهوية/);
   assert.match(form.text, /name="auto_renew" value="1" checked/, 'auto renew defaults from the rules');
-  assert.match(form.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
+  assert.doesNotMatch(form.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
 
   const id = await created(o);
   const [[c]] = await db.pool.query('SELECT * FROM contracts WHERE id = ?', [id]);
@@ -179,7 +179,7 @@ test('create end to end: schedule, deadlines, unit rented, tenant invite, events
   const link = decodeURIComponent(/href="(https:\/\/wa\.me\/[^"]+)"/.exec(page.text)[1].replace(/&amp;/g, '&'));
   assert.ok(link.includes(inv[0].code) && link.includes('https://aqdi.example/join'));
   assert.equal((page.text.match(/class="payment"/g) || []).length, 12);
-  assert.match(page.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
+  assert.doesNotMatch(page.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
 
   const list = await http.request('/office/contracts', { cookie: o.cookie });
   assert.match(list.text, /شقة 1 · مستأجر-سري/);

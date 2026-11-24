@@ -91,7 +91,7 @@ test('thread: office, landlord and tenant talk; others are notified (no text); h
   const ownerNote = (await notes(o.user))[0];
   assert.equal(ownerNote.link, `/office/messages/${contractId}`);
   assert.doesNotMatch(`${ownerNote.title} ${ownerNote.body}`, /السلام|script|اختبار/);
-  assert.ok(ownerNote.body.endsWith('تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط'));
+  assert.ok(!ownerNote.body.includes('تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط'));
   assert.equal((await notes(landlord.user))[0].link, `/landlord/messages/${contractId}`);
   assert.equal((await notes(tenant.user)).length, 0);
   assert.equal((await notes(staffUser)).length, 0);
@@ -101,7 +101,7 @@ test('thread: office, landlord and tenant talk; others are notified (no text); h
     assert.equal(page.status, 200, kind);
     assert.match(page.text, /السلام عليكم &lt;script&gt;alert\(1\)&lt;\/script&gt; &amp; &#34;اختبار&#34;/);
     assert.doesNotMatch(page.text, /<script>alert/);
-    assert.match(page.text, /تطبيق خاص غير تابع لمنصة إيجار/);
+    assert.doesNotMatch(page.text, /تطبيق خاص غير تابع لمنصة إيجار/);
   }
   assert.equal((await say(staff, 'office', contractId, 'تم استلام رسالتك')).status, 302);
   assert.equal((await say(landlord, 'landlord', contractId, 'أوافق')).status, 302);

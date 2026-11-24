@@ -167,7 +167,7 @@ test('reports page and CSVs: numbers, permissions, scoped data only', { skip }, 
   const page = (await http.request('/office/reports', { cookie: o.cookie })).text;
   for (const title of ['الإشغال حسب المبنى', 'عقود تنتهي خلال 30 / 60 / 90 يوماً', 'الدفعات المتأخرة', 'المحصّل مقابل المتوقع شهرياً', 'الصيانة حسب الحالة والنوع', 'عبء عمل الفريق']) assert.ok(page.includes(title), title);
   assert.equal((page.match(/تصدير CSV/g) || []).length, 6, 'one export per report');
-  assert.match(page, /تطبيق خاص غير تابع لمنصة إيجار/);
+  assert.doesNotMatch(page, /تطبيق خاص غير تابع لمنصة إيجار/);
   assert.doesNotMatch(page, /<script>|=cmd\|' \/C/, 'labels are escaped, formulas stay text');
   assert.doesNotMatch(page, /مبنى المكتب الآخر/);
 
@@ -348,7 +348,7 @@ test('landlord statement: own units only, exact totals, same CSV rules, tenants 
   assert.match(page.text, /كشف الحساب/);
   assert.match(page.text, /مكتب الكشف/);
   assert.match(page.text, /500\.25/);
-  assert.match(page.text, /تطبيق خاص غير تابع لمنصة إيجار/);
+  assert.doesNotMatch(page.text, /تطبيق خاص غير تابع لمنصة إيجار/);
   assert.match(page.text, /href="\/landlord\/statement"/, 'the statement is in the landlord navigation');
   assert.doesNotMatch(page.text, /شقة 2-1/, 'the other landlord\'s unit is not listed');
 

@@ -121,7 +121,7 @@ async function deliverPending({ pool, now = new Date(), limit = 100 }) {
           contacts: await contactsFor(pool, row.user_id),
           officeChannel: await loadOffice(row.office_id, row.channel),
           title: row.title,
-          body: row.body,
+          body: withDisclaimer(row.body),
         });
       }
       state = nextState(result, attempts, now);

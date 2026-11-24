@@ -137,7 +137,7 @@ test('tenant request with photos: re-encoded JPEG <= 1600 px, EXIF removed, stor
   assert.equal(ownerNote.kind, 'maintenance_new');
   assert.equal(ownerNote.link, `/office/maintenance/${id}`);
   assert.doesNotMatch(`${ownerNote.title} ${ownerNote.body}`, /تسرب|مهم/, 'the description never goes into a notification');
-  assert.ok(ownerNote.body.endsWith('تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط'));
+  assert.ok(!ownerNote.body.includes('تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط'));
   assert.equal((await notes(landlord.user))[0].link, `/landlord/maintenance/${id}`);
   assert.equal((await notes(tenant.user)).length, 0);
 
@@ -145,7 +145,7 @@ test('tenant request with photos: re-encoded JPEG <= 1600 px, EXIF removed, stor
   const detail = await http.request(`/tenant/maintenance/${id}`, { cookie: tenant.cookie });
   assert.equal(detail.status, 200);
   assert.match(detail.text, /&lt;b&gt;مهم&lt;\/b&gt;/);
-  assert.match(detail.text, /تطبيق خاص غير تابع لمنصة إيجار/);
+  assert.doesNotMatch(detail.text, /تطبيق خاص غير تابع لمنصة إيجار/);
   assert.equal((detail.text.match(/\/maintenance\/photos\/\d+"/g) || []).length / 2, 2);
   const list = await http.request('/tenant/maintenance', { cookie: tenant.cookie });
   assert.match(list.text, /شقة 1-1 · سباكة/);

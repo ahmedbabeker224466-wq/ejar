@@ -9,7 +9,6 @@
 <nav class="ofx-subnav" aria-label="<%= __("أقسام الإعدادات") %>">
   <a href="#office"><%= __("بيانات المكتب") %></a>
   <% if (planInfo) { %><a href="#plan"><%= __("الباقة والاستخدام") %></a><% } %>
-  <a href="#domain"><%= __("نطاق مكتبك") %></a>
   <% if (link) { %><a href="#office-link"><%= __("رابط مكتبك") %></a><% } %>
 </nav>
 
@@ -41,7 +40,7 @@
 <% if (planInfo) { %>
 <section class="card detail-card" id="plan">
   <h2><%= __("باقتك:") %> <%= __(planInfo.name) %></h2>
-  <% if (planInfo.trial) { %><p class="muted"><%= __("أنت في التجربة المجانية بحدود الباقة الاحترافية.") %></p><% } %>
+  <% if (planInfo.trial) { %><p class="muted"><%= __("أنت في التجربة المجانية بحدود الباقة الأساسية.") %></p><% } %>
   <h3><%= __("الحدود والاستخدام") %></h3>
   <ul class="usage-list">
     <% planInfo.usage.forEach(function (u) { %>
@@ -58,7 +57,6 @@
 </section>
 <% } %>
 
-<%- include('_domain') %>
 
 <% if (link) { %>
 <section class="card form-card" id="office-link">
@@ -93,7 +91,6 @@
     </div>
     <button type="submit" class="btn btn--primary btn--block"><%= __("حفظ إعدادات الصفحة") %></button>
   </form>
-  <p class="disclaimer"><%= __("تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط") %></p>
 </section>
 <script src="<%= assetUrl('/js/officeLink.js') %>" defer></script>
 <% } %>

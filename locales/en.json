@@ -1904,7 +1904,7 @@
  "رقم الجوال": "Mobile number",
  "نرسل رمز تأكيد برسالة نصية إلى هذا الرقم.": "We will text a confirmation code to this number.",
  "أرسل رمز التأكيد": "Send the confirmation code",
- "مربوط": "Linked",
+ "مربوط": "Connected",
  "إلغاء الربط": "Unlink",
  "رمز الربط (صالح لمدة": "Linking code (valid for",
  "دقيقة):": "minutes):",
@@ -2919,5 +2919,18 @@
  "عميل محتمل": "Lead",
  "قيد محاسبي": "Ledger entry",
  "طلب نطاق": "Domain request",
- "الباقة والاستخدام": "Plan and usage"
+ "الباقة والاستخدام": "Plan and usage",
+ "أنت في التجربة المجانية بحدود الباقة الأساسية.": "You are on the free trial with the Basic plan's limits.",
+ "يوماً بدون بطاقة، بحدود الباقة الأساسية.": "days with no card, with the Basic plan's limits.",
+ "ربط الدومين": "Connect domain",
+ "التسويق": "Marketing",
+ "الدومين الذي اشتريته": "The domain you bought",
+ "اكتب اسم الدومين فقط، مثل:": "Type the domain name only, for example:",
+ "إلغاء ربط الدومين": "Disconnect domain",
+ "إلغاء وإدخال دومين آخر": "Cancel and enter another domain",
+ "اشترِ الدومين": "Buy the domain",
+ "أضف سجلين في إعدادات DNS عند مزود الدومين": "Add two records in your domain provider DNS settings",
+ "اضغط «ربط الدومين»": "Press «Connect domain»",
+ "ربط الدومين غير متاح في باقتك الحالية.": "Connecting a domain is not available in your current plan.",
+ "اشترك في الباقة الاحترافية أو باقة المؤسسات لتربط صفحة مكتبك بدومينك الخاص.": "Subscribe to the Professional or Enterprise plan to connect your office page to your own domain."
 }

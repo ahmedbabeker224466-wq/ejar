@@ -213,6 +213,7 @@ async function lookupA(domain) {
 const CONNECT_TEXT = Object.freeze({
   not_found: 'لم نجد طلب النطاق.',
   not_open: 'هذا الطلب لم يعد بانتظار الربط.',
+  plan: 'ربط الدومين غير متاح في باقتك الحالية.',
   no_ip: 'لم يُضبط عنوان الخادم بعد. سيكمل فريق الدعم الربط لك.',
   dns_not_ready: 'لم تصل السجلات إلى الإنترنت بعد. تأكد من إضافة السجل A بالقيمة الظاهرة، ثم حاول بعد قليل (قد يستغرق ذلك حتى 24 ساعة).',
   taken: 'هذا الدومين مربوط بمكتب آخر.',
@@ -234,6 +235,7 @@ async function connectRequest(pool, { officeId, userId, requestId, ip = null, en
   const row = await scoped.selectOne('office_domain_requests', { id: Number(requestId) });
   if (!row || row.type !== 'own') return { ok: false, code: 'not_found', message: CONNECT_TEXT.not_found };
   if (!OPEN.includes(row.status)) return { ok: false, code: 'not_open', message: CONNECT_TEXT.not_open };
+  if ((await planMode(pool, officeId)) === 'none') return { ok: false, code: 'plan', message: CONNECT_TEXT.plan };
   const target = await serverIp(env);
   if (!target) return { ok: false, code: 'no_ip', message: CONNECT_TEXT.no_ip };
   const found = await lookupA(row.domain);

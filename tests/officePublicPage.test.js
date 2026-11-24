@@ -225,7 +225,7 @@ test('public page: name, city, escaped description and this office\'s published 
   for (const secret of ['شقة 1-1', 'مالك 1', 'اسم-سري', 'office@private.example', '966112223344', '0112223344', phone(30), `0${phone(30).slice(3)}`]) {
     assert.ok(!page.text.includes(secret), `no ${secret}`);
   }
-  assert.match(page.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
+  assert.doesNotMatch(page.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
   assert.match(page.text, new RegExp(`<link rel="canonical" href="https://aqdi.example/${SLUG('page-a')}">`));
   assert.match(page.text, /content="index,follow"/);
   assert.match(page.response.headers.get('cache-control') || '', /public, max-age=60/);

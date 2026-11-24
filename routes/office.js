@@ -303,7 +303,35 @@ const connectLimit = rateLimit({
   keyFor: (req) => `office-domain-connect:${req.office.id}`,
 });
 
-async function renderSettings(req, res, { values, errors = {}, saved = false, status = 200, link = {}, domain = {} } = {}) {
+/** The «ربط الدومين» page (its own menu item, owner's request Nov 2026). Actions stay owner-only ('billing'). */
+async function renderDomain(req, res, { status = 200, domain = {} } = {}) {
+  const domainView = await domains.officeView(db.pool, req.office.id);
+  return res.status(status).render('office/domain', {
+    title: 'ربط الدومين',
+    domain: {
+      ...domainView,
+      freeLink: domainView.slug ? `${seo.baseUrl(req).replace(/^https?:\/\//, '')}/${domainView.slug}` : null,
+      canRequest: can(req.memberRole, 'billing'),
+      canEditLink: can(req.memberRole, 'settings.office'),
+      fmt: money.formatHalalas,
+      errors: domain.errors || {},
+      values: domain.values || {},
+      notice: domain.notice || DOMAIN_NOTICES[req.query.domain] || null,
+      connectError: domain.connectError || null,
+      found: domain.found || [],
+    },
+  });
+}
+
+router.get('/office/domain', requirePerm('settings.basic'), async (req, res, next) => {
+  try {
+    return await renderDomain(req, res);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+async function renderSettings(req, res, { values, errors = {}, saved = false, status = 200, link = {} } = {}) {
   const current = values || formValues(await offices.officeDetails(db.pool, req.office.id));
   const canEditOffice = can(req.memberRole, 'settings.office');
   const linkState = canEditOffice ? await officeLink.linkSettings(db.pool, req.office.id) : null;
@@ -317,21 +345,9 @@ async function renderSettings(req, res, { values, errors = {}, saved = false, st
     usage,
     spec: officialPricing.planSpec(plan, await officialPricing.customDomainAddon(db.pool)),
   } : null;
-  const domainView = await domains.officeView(db.pool, req.office.id);
   return res.status(status).render('office/settings', {
     licenceLocked: true,
     licenceRequired: true,
-    domain: {
-      ...domainView,
-      freeLink: domainView.slug ? `${seo.baseUrl(req).replace(/^https?:\/\//, '')}/${domainView.slug}` : null,
-      canRequest: can(req.memberRole, 'billing'),
-      fmt: money.formatHalalas,
-      errors: domain.errors || {},
-      values: domain.values || {},
-      notice: domain.notice || DOMAIN_NOTICES[req.query.domain] || null,
-      connectError: domain.connectError || null,
-      found: domain.found || [],
-    },
     planInfo,
     canBilling: can(req.memberRole, 'billing'),
     title: 'الإعدادات',
@@ -394,14 +410,14 @@ router.post('/office/settings/domain', requirePerm('billing'), async (req, res, 
       alt_1: String(req.body.alt_1 || '').slice(0, 260),
       alt_2: String(req.body.alt_2 || '').slice(0, 260),
     };
-    if (values.type === 'none') return res.redirect('/office/settings#domain');
+    if (values.type === 'none') return res.redirect('/office/domain');
     if (req.officeAccess && (req.officeAccess.locked || req.officeAccess.readOnly)) {
-      return await renderSettings(req, res, { status: 402, domain: { values, errors: { form: 'اشتراكك منتهي. جدّد الاشتراك لطلب نطاق.' } } });
+      return await renderDomain(req, res, { status: 402, domain: { values, errors: { form: 'اشتراكك منتهي. جدّد الاشتراك لطلب نطاق.' } } });
     }
     // Offices connect a domain they bought (records method); reserving for them is no longer offered.
     const result = await domains.createRequest(db.pool, { officeId: req.office.id, userId: req.user.id, body: { type: 'own', connection_method: 'records', domain: req.body.domain }, ip: req.ip });
-    if (!result.ok) return await renderSettings(req, res, { status: 422, domain: { values, errors: result.errors } });
-    return res.redirect('/office/settings?domain=created#domain');
+    if (!result.ok) return await renderDomain(req, res, { status: 422, domain: { values, errors: result.errors } });
+    return res.redirect('/office/domain?domain=created');
   } catch (err) {
     return next(err);
   }
@@ -411,7 +427,7 @@ router.post('/office/settings/domain/:id/cancel', requirePerm('billing'), async 
   try {
     const ok = await domains.cancelRequest(db.pool, { officeId: req.office.id, userId: req.user.id, requestId: req.params.id, ip: req.ip });
     if (!ok) return res.status(404).render('errors/404', { title: 'الصفحة غير موجودة' });
-    return res.redirect('/office/settings?domain=cancelled#domain');
+    return res.redirect('/office/domain?domain=cancelled');
   } catch (err) {
     return next(err);
   }
@@ -420,13 +436,13 @@ router.post('/office/settings/domain/:id/cancel', requirePerm('billing'), async 
 router.post('/office/settings/domain/:id/connect', requirePerm('billing'), connectLimit, async (req, res, next) => {
   try {
     if (req.officeAccess && (req.officeAccess.locked || req.officeAccess.readOnly)) {
-      return await renderSettings(req, res, { status: 402, domain: { errors: { form: 'اشتراكك منتهي. جدّد الاشتراك لربط الدومين.' } } });
+      return await renderDomain(req, res, { status: 402, domain: { errors: { form: 'اشتراكك منتهي. جدّد الاشتراك لربط الدومين.' } } });
     }
     const result = await domains.connectRequest(db.pool, { officeId: req.office.id, userId: req.user.id, requestId: req.params.id, ip: req.ip });
-    if (result.ok) return res.redirect('/office/settings?domain=connected#domain');
+    if (result.ok) return res.redirect('/office/domain?domain=connected');
     if (result.code === 'not_found') return res.status(404).render('errors/404', { title: 'الصفحة غير موجودة' });
-    if (result.manual) return await renderSettings(req, res, { domain: { notice: result.message } });
-    return await renderSettings(req, res, { status: 422, domain: { connectError: result.message, found: result.found || [] } });
+    if (result.manual) return await renderDomain(req, res, { domain: { notice: result.message } });
+    return await renderDomain(req, res, { status: 422, domain: { connectError: result.message, found: result.found || [] } });
   } catch (err) {
     return next(err);
   }
@@ -435,7 +451,7 @@ router.post('/office/settings/domain/:id/connect', requirePerm('billing'), conne
 router.post('/office/settings/domain/disconnect', requirePerm('billing'), async (req, res, next) => {
   try {
     await domains.disconnectDomain(db.pool, { officeId: req.office.id, userId: req.user.id, ip: req.ip });
-    return res.redirect('/office/settings?domain=disconnected#domain');
+    return res.redirect('/office/domain?domain=disconnected');
   } catch (err) {
     return next(err);
   }

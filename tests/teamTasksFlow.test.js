@@ -311,7 +311,7 @@ test('tasks board: create with assignee, due date and link; move; comments; noti
   const board = await http.request('/office/tasks', { cookie: o.cookie });
   assert.equal(board.status, 200);
   assert.match(board.text, /لا توجد مهام. أضف أول مهمة/);
-  assert.match(board.text, /تطبيق خاص غير تابع لمنصة إيجار/);
+  assert.doesNotMatch(board.text, /تطبيق خاص غير تابع لمنصة إيجار/);
 
   assert.equal((await addTask(o.cookie, { title: '  ' })).status, 422);
   assert.equal((await addTask(o.cookie, { title: 'ب'.repeat(161) })).status, 422);
@@ -422,7 +422,7 @@ test('task due-tomorrow reminder: once per task and person, idempotent, catch-up
   assert.equal(first[0].link, `/office/tasks/${due1}`);
   assert.equal(first[0].dedupe_key, `task_due:t${due1}:u${staff.user.id}:${tomorrow}`);
   assert.doesNotMatch(first[0].body, /تستحق غداً\b.*تستحق/);
-  assert.ok(first[0].body.endsWith('تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط'));
+  assert.ok(!first[0].body.includes('تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط'));
   assert.equal((await count(staff2.user)).length, 1);
   assert.equal((await count(departed.user)).length, 0, 'a deactivated assignee gets nothing');
   assert.equal((await count(o.user)).length, 0);

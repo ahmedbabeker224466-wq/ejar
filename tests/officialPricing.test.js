@@ -36,7 +36,8 @@ test('the official values are exactly the approved table', () => {
   assert.deepEqual(pick(basic), [149, 1490, 30, 2, 20, 10]);
   assert.deepEqual(pick(pro), [349, 3490, 150, 6, 100, 50]);
   assert.deepEqual(pick(enterprise), [799, 7990, 600, 20, 400, 200]);
-  assert.deepEqual(pick(trial), [0, 0, 150, 6, 100, 50], 'trial limits equal Pro, price 0');
+  assert.deepEqual(pick(trial), [0, 0, 30, 2, 20, 10], 'trial limits equal Basic, price 0 (owner, Nov 2026)');
+  assert.deepEqual([trial.features.whatsapp, trial.custom_domain, trial.audit_level], [false, 'none', 'basic'], 'no Pro extras in the trial');
   for (const p of [basic, pro, enterprise]) assert.equal(p.price_yearly, p.price_monthly * 10, 'a year costs 10 months');
 
   assert.deepEqual([basic.features.telegram, basic.features.whatsapp], [true, false], 'basic: site + email + Telegram');
@@ -83,7 +84,7 @@ test('migration (pure): placeholders become the official values; admin edits and
   assert.deepEqual([enterprise.price_monthly, enterprise.max_units, enterprise.max_members, enterprise.max_listings], [799, 600, 20, 200]);
 
   // A trial created by hand with no limits keeps them; only the one-time columns change.
-  const handTrial = pricing.planUpdates('trial', { code: 'trial', price_monthly: '0.00', price_yearly: '0.00', max_units: null, max_members: null, features: null, custom_domain: 'included', audit_level: 'full', support_level: 'email', is_active: 1, is_public: 1 }, { firstTime: true });
+  const handTrial = pricing.planUpdates('trial', { code: 'trial', price_monthly: '0.00', price_yearly: '0.00', max_units: null, max_members: null, features: null, custom_domain: 'none', audit_level: 'basic', support_level: 'email', is_active: 1, is_public: 1 }, { firstTime: true });
   assert.deepEqual(handTrial, {});
 
   // Second run: nothing left to change.
@@ -207,7 +208,7 @@ test('migration on MySQL: placeholders move, admin edits stay, idempotent, offic
     assert.equal(Number(by.pro.is_public), 1, 'paid plans published once');
     assert.equal(Number(by.enterprise.max_units), 600);
     assert.equal(by.enterprise.custom_domain, 'included');
-    assert.equal(Number(by.trial.max_units), 150);
+    assert.equal(Number(by.trial.max_units), 30);
     assert.equal(Number(by.trial.price_monthly), 0);
     const basicFeatures = typeof by.basic.features === 'string' ? JSON.parse(by.basic.features) : by.basic.features;
     assert.equal(basicFeatures.telegram, true);
@@ -218,11 +219,13 @@ test('migration on MySQL: placeholders move, admin edits stay, idempotent, offic
     assert.deepEqual(await pricing.applyOfficialPricing(conn), { updated: [], addon: false });
 
     // The v2 step (custom domain included in Pro) runs once, then admin edits stay.
-    await conn.query('DELETE FROM settings WHERE setting_key IN (?, ?)', [pricing.DOMAIN_V2_KEY, pricing.DOMAIN_TRIAL_KEY]);
-    await conn.query("UPDATE plans SET custom_domain = 'none' WHERE code = 'trial'");
+    await conn.query('DELETE FROM settings WHERE setting_key IN (?, ?)', [pricing.DOMAIN_V2_KEY, pricing.TRIAL_BASIC_KEY]);
+    await conn.query("UPDATE plans SET custom_domain = 'included', max_units = 150 WHERE code = 'trial'");
     await conn.query("UPDATE plans SET custom_domain = 'addon' WHERE code = 'pro'");
     const v2 = await pricing.applyOfficialPricing(conn);
-    assert.deepEqual(v2.updated, ['custom_domain_v2', 'custom_domain_trial']);
+    assert.deepEqual(v2.updated, ['custom_domain_v2', 'trial_basic']);
+    const [[trialNow]] = await conn.query("SELECT custom_domain, max_units FROM plans WHERE code = 'trial'");
+    assert.deepEqual([trialNow.custom_domain, Number(trialNow.max_units)], ['none', 30]);
     const [[proNow]] = await conn.query("SELECT custom_domain FROM plans WHERE code = 'pro'");
     assert.equal(proNow.custom_domain, 'included');
     await conn.query("UPDATE plans SET custom_domain = 'none' WHERE code = 'pro'");

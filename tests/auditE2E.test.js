@@ -160,7 +160,7 @@ test('happy path: office, landlord, building, unit, contract, tenant, reminder, 
     assert.equal(Number(n.n), 1, `user ${u.id} was not reminded`);
   }
   const note = await one("SELECT title, body FROM notifications WHERE user_id = ? AND kind = 'decision_60'", [tenant.user.id]);
-  assert.match(note.body, /تطبيق خاص غير تابع لمنصة إيجار/);
+  assert.doesNotMatch(note.body, /تطبيق خاص غير تابع لمنصة إيجار/);
 
   // 5. A payment is tracked.
   const payment = await one('SELECT id, amount FROM contract_payments WHERE contract_id = ? ORDER BY due_date, id LIMIT 1', [contractId]);

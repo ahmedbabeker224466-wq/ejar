@@ -130,7 +130,7 @@ async function addMember(officeId, p, role, { active = 1, userRole = role } = {}
 
 function navHrefs(html) {
   const nav = html.slice(html.indexOf('<nav id="office-nav"'), html.indexOf('</nav>', html.indexOf('<nav id="office-nav"')));
-  return [...nav.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
+  return [...nav.matchAll(/href="([^"]+)"/g)].map((m) => m[1]).filter((h) => h !== '/logout');
 }
 
 // ------------------------------------------------------------ registration
@@ -208,7 +208,7 @@ test('register end to end: new phone -> code -> /office/new -> office, owner, me
   assert.equal(home.status, 200);
   assert.match(home.text, /مكتب اختبار التسجيل/);
   assert.match(home.text, /تجربتك المجانية تنتهي بعد 14 يوم/);
-  assert.match(home.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
+  assert.doesNotMatch(home.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
   assert.equal((home.text.match(/class="stat__value">0</g) || []).length, 6, 'six stats, all zero');
   assert.match(home.text, /يحتاج إجراء/);
   for (const href of ['/office/landlords', '/office/units', '/office/contracts', '/office/team', '/office/settings']) {
@@ -502,8 +502,8 @@ test('the sidebar shows only the items each role may open', { skip }, async () =
   const manager = await addMember(owner.office.id, phone(30), 'office_manager');
   const staff = await addMember(owner.office.id, phone(31), 'office_staff');
   const all = ['/office', '/office/contracts', '/office/landlords', '/office/units', '/office/tenants',
-    '/office/payments', '/office/accounting', '/office/billing', '/office/maintenance', '/office/tasks', '/office/messages',
-    '/office/leads', '/office/listings', '/office/reports', '/office/team', '/office/audit', '/office/settings'];
+    '/office/payments', '/office/accounting', '/office/maintenance', '/office/tasks', '/office/messages',
+    '/office/leads', '/office/listings', '/office/domain', '/office/reports', '/office/team', '/office/audit', '/office/billing', '/office/settings'];
 
   assert.deepEqual(navHrefs((await request('/office', { cookie: owner.cookie })).text), all);
   assert.deepEqual(
@@ -512,8 +512,9 @@ test('the sidebar shows only the items each role may open', { skip }, async () =
   );
   assert.deepEqual(navHrefs((await request('/office', { cookie: staff })).text), [
     '/office', '/office/contracts', '/office/landlords', '/office/units', '/office/tenants',
-    '/office/payments', '/office/maintenance', '/office/tasks', '/office/messages', '/office/leads', '/office/settings',
+    '/office/payments', '/office/maintenance', '/office/tasks', '/office/messages', '/office/leads', '/office/domain', '/office/settings',
   ]);
+  assert.match((await request('/office', { cookie: owner.cookie })).text, /class="office-nav__logout"/, 'sign-out sits at the end of the menu');
 
   const page = await request('/office/payments', { cookie: staff });
   assert.match(page.text, /<a href="\/office\/payments" aria-current="page">/);

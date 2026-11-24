@@ -92,7 +92,7 @@ test('tenants page: empty state, then one row per contract with unit, stage and 
   assert.match(page.text, /badge--link-joined/);
   assert.match(page.text, /badge--link-invited/);
   assert.match(page.text, /badge--link-not_invited/);
-  assert.match(page.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
+  assert.doesNotMatch(page.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
 
   const onlyJoined = await get('/office/tenants?status=joined', a.cookie);
   assert.ok(onlyJoined.text.includes(`/office/contracts/${joined}"`));

@@ -16,6 +16,12 @@
         <button type="submit" class="btn btn--danger"><%= __("إلغاء ربط الدومين") %></button>
       </form>
     <% } %>
+  <% } else if (domain.mode === 'none') { %>
+    <div class="domain-locked">
+      <p><strong><%= __("ربط الدومين غير متاح في باقتك الحالية.") %></strong></p>
+      <p class="muted"><%= __("اشترك في الباقة الاحترافية أو باقة المؤسسات لتربط صفحة مكتبك بدومينك الخاص.") %></p>
+      <% if (domain.canRequest) { %><a href="/office/billing" class="btn btn--primary"><%= __("الاشتراك وتغيير الباقة") %></a><% } else { %><p class="muted"><%= __("الترقية متاحة لمالك المكتب.") %></p><% } %>
+    </div>
   <% } else if (domain.request && domain.request.open) { %>
     <% const r = domain.request; %>
     <div class="domain-status" id="domain-request">
@@ -75,12 +81,6 @@
           <button type="submit" class="btn btn--link"><%= __("إلغاء وإدخال دومين آخر") %></button>
         </form>
       <% } %>
-    </div>
-  <% } else if (domain.mode === 'none') { %>
-    <div class="domain-locked">
-      <p><strong>🔒 <%= __("النطاق الخاص غير متاح في باقتك الحالية.") %></strong></p>
-      <p class="muted"><%= __("رقِّ باقتك لتربط مكتبك بنطاق خاص مثل myoffice.sa.") %></p>
-      <% if (domain.canRequest) { %><a href="/office/billing" class="btn btn--primary"><%= __("ترقية الباقة") %></a><% } else { %><p class="muted"><%= __("الترقية متاحة لمالك المكتب.") %></p><% } %>
     </div>
   <% } else { %>
     <% if (domain.request && domain.request.status === 'rejected') { %><p class="muted"><%= __("طلبك السابق") %> (<span dir="ltr"><%= __(domain.request.domain) %></span>) <%= __("مرفوض. يمكنك تقديم طلب جديد.") %></p><% } %>

@@ -152,10 +152,10 @@ const auditOf = async (officeId, action) => (await db.pool.query('SELECT * FROM 
 
 test('plan gating: none = locked with an upgrade button, nothing can be requested', { skip }, async () => {
   const o = await office(1, 'none');
-  const page = await get('/office/settings', o.cookie);
+  const page = await get('/office/domain', o.cookie);
   assert.equal(page.status, 200);
   assert.match(page.text, /id="domain"[\s\S]*نطاق مكتبك/);
-  assert.match(page.text, /النطاق الخاص غير متاح في باقتك الحالية[\s\S]*href="\/office\/billing"[^>]*>ترقية الباقة/);
+  assert.match(page.text, /ربط الدومين غير متاح في باقتك الحالية[\s\S]*href="\/office\/billing"[^>]*>الاشتراك وتغيير الباقة/);
   assert.match(page.text, /aqdi-test\.net\/office-[a-z0-9]{6}/, 'the free link is always shown');
   const res = await post('/office/settings/domain', o.cookie, { type: 'own', domain: 'tdom-none.com' });
   assert.equal(res.status, 422);
@@ -165,7 +165,7 @@ test('plan gating: none = locked with an upgrade button, nothing can be requeste
 
 test('add-on plan: the request is recorded with the add-on price (never charged); one open request at a time', { skip }, async () => {
   const o = await office(2, 'addon');
-  const page = await get('/office/settings', o.cookie);
+  const page = await get('/office/domain', o.cookie);
   assert.match(page.text, /ربط الدومين إضافة بـ <strong>49\.00 ريال شهرياً<\/strong>/);
   assert.match(page.text, /الدومين الذي اشتريته/);
   assert.doesNotMatch(page.text, /احجز لي دوميناً/, 'reserving is no longer offered');
@@ -187,7 +187,7 @@ test('add-on plan: the request is recorded with the add-on price (never charged)
   assert.equal(Number(row.service_fee_halalas), 4000);
   assert.equal((await auditOf(o.office.id, 'domain.request')).length, 1);
 
-  const shown = await get('/office/settings', o.cookie);
+  const shown = await get('/office/domain', o.cookie);
   assert.match(shown.text, /بانتظار ضبط سجلات DNS/);
   assert.match(shown.text, /سيرسل لك الدعم القيم قريباً/);
   assert.match(shown.text, /إلغاء وإدخال دومين آخر/);
@@ -215,7 +215,7 @@ test('a legacy reserve request (service only): alternatives, price text, cancel 
   assert.equal(row.status, 'pending_purchase');
   const alts = typeof row.alt_domains === 'string' ? JSON.parse(row.alt_domains) : row.alt_domains;
   assert.deepEqual(alts, ['tdom-r2.com', 'tdom-r3.sa']);
-  const page = await get('/office/settings', o.cookie);
+  const page = await get('/office/domain', o.cookie);
   assert.match(page.text, /تكلفة الدومين الفعلية \+ رسم خدمة 40\.00 ريال، ويُسجَّل باسم المكتب/);
   assert.match(page.text, /نتحقق من توفر الاسم بعد الطلب/);
 
@@ -233,7 +233,7 @@ test('only the owner creates or cancels; managers and staff see the section', { 
   const staff = await http.addMember(o.office.id, phone(7), 'office_staff');
   for (const cookie of [manager, staff]) {
     assert.equal((await post('/office/settings/domain', cookie, { type: 'own', domain: 'tdom-m.com' })).status, 403);
-    const page = await get('/office/settings', cookie);
+    const page = await get('/office/domain', cookie);
     assert.match(page.text, /نطاق مكتبك/);
     assert.match(page.text, /طلب النطاق الخاص متاح لمالك المكتب فقط/);
   }
@@ -253,7 +253,7 @@ test('tenancy: office B can neither see nor cancel office A\'s request', { skip 
   assert.equal((await post(`/office/settings/domain/${row.id}/cancel`, b.cookie)).status, 404);
   assert.equal((await post(`/office/settings/domain/${row.id}/connect`, b.cookie)).status, 404);
   assert.equal((await requestsOf(a.office.id))[0].status, 'awaiting_dns');
-  assert.doesNotMatch((await get('/office/settings', b.cookie)).text, /tdom-secret-a/);
+  assert.doesNotMatch((await get('/office/domain', b.cookie)).text, /tdom-secret-a/);
   const scopedB = require('../services/scopeToOffice').scopeToOffice(db.pool, b.office.id);
   assert.equal((await scopedB.select('office_domain_requests', { id: row.id })).length, 0);
   assert.equal(await domains.cancelRequest(db.pool, { officeId: b.office.id, userId: b.user.id, requestId: row.id }), false);
@@ -292,7 +292,7 @@ test('admin: queue, reason required, status flow with notification, NS values sh
   const [auditRows] = await db.pool.query("SELECT after_json FROM audit_logs WHERE action = 'admin.domain.update' AND entity_id = ?", [ra.id]);
   assert.match(JSON.stringify(auditRows[0].after_json), /أسندت القيم/);
 
-  const officePage = await get('/office/settings', a.cookie);
+  const officePage = await get('/office/domain', a.cookie);
   assert.match(officePage.text, /غيّر Nameservers الدومين عند مزودك إلى القيمتين التاليتين[\s\S]*ns1\.zone-dns\.net[\s\S]*ns2\.zone-dns\.net/);
   assert.doesNotMatch(officePage.text, /ملاحظة خاصة|zone-123/, 'the admin note and zone ref stay private');
 
@@ -313,7 +313,7 @@ test('admin: queue, reason required, status flow with notification, NS values sh
   const [[offA]] = await db.pool.query('SELECT custom_domain FROM offices WHERE id = ?', [a.office.id]);
   assert.equal(offA.custom_domain, 'tdom-live.com');
   assert.ok((await requestsOf(a.office.id))[0].activated_at);
-  assert.match((await get('/office/settings', a.cookie)).text, /نطاق مكتبك: <a href="https:\/\/tdom-live\.com\/"[^>]*><strong>https:\/\/tdom-live\.com<\/strong>/);
+  assert.match((await get('/office/domain', a.cookie)).text, /نطاق مكتبك: <a href="https:\/\/tdom-live\.com\/"[^>]*><strong>https:\/\/tdom-live\.com<\/strong>/);
   assert.equal((await db.pool.query("SELECT COUNT(*) AS n FROM notifications WHERE user_id = ? AND kind = 'domain_update'", [a.user.id]))[0][0].n, 2);
 
   // The same domain cannot become active for a second office, nor be requested again.
@@ -329,12 +329,12 @@ test('admin: queue, reason required, status flow with notification, NS values sh
 test('records: the A value from APP_DOMAIN_IP and www pointing at the domain, or "soon" when unknown', { skip }, async () => {
   const o = await office(13, 'included');
   await post('/office/settings/domain', o.cookie, { domain: 'tdom-rec.com' });
-  const soon = (await get('/office/settings', o.cookie)).text;
+  const soon = (await get('/office/domain', o.cookie)).text;
   assert.match(soon, /سيرسل لك الدعم القيم قريباً/);
   assert.doesNotMatch(soon, /action="\/office\/settings\/domain\/\d+\/connect"/, 'no connect button without a server address');
   process.env.APP_DOMAIN_IP = '203.0.113.7';
   try {
-    const page = await get('/office/settings', o.cookie);
+    const page = await get('/office/domain', o.cookie);
     assert.match(page.text, /<span role="cell">A<\/span><span role="cell">@<\/span><output id="domain-a" role="cell">203\.0\.113\.7/);
     assert.match(page.text, /<span role="cell">CNAME<\/span><span role="cell">www<\/span><output id="domain-cname" role="cell">tdom-rec\.com/);
     assert.match(page.text, /ربط الدومين/);
@@ -374,7 +374,7 @@ test('connect: DNS not ready, hosting off (admins told), connected, then disconn
     assert.equal((await requestsOf(o.office.id))[0].status, 'active');
     const audits = await auditOf(o.office.id, 'domain.connect');
     assert.deepEqual(audits.map((a) => (typeof a.after_json === 'string' ? JSON.parse(a.after_json) : a.after_json).outcome), ['dns_not_ready', 'manual', 'connected']);
-    const page = (await get('/office/settings?domain=connected', o.cookie)).text;
+    const page = (await get('/office/domain?domain=connected', o.cookie)).text;
     assert.match(page, /تم ربط الدومين بصفحة مكتبك/);
     assert.match(page, /إلغاء ربط الدومين/);
 

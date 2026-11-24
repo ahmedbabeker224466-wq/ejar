@@ -108,15 +108,15 @@ test('Riyadh freeze: no rent-increase wording; freeze notice for office and land
   assert.match(reminders.messageFor({ kind: 'rent_change_90', audience: 'landlord', n: 30, contract: jeddah, officeName: 'م' }).body, /تغيير الإيجار/);
 });
 
-test('messages hold nicknames, dates and amounts only, and get the disclaimer', () => {
+test('messages hold nicknames, dates and amounts only, and no disclaimer line (owner, Nov 2026)', () => {
   const c = { unit_label: 'شقة 3', end_date: '2027-01-31', city: 'جدة', tenant_label: 'سري جداً' };
   const { title, body } = reminders.messageFor({ kind: 'payment_due', audience: 'tenant', n: 3, contract: c, payment: { amount: '3000', due_date: '2026-10-04' }, officeName: 'مكتب النخبة' });
   assert.match(title, /شقة 3/);
   assert.match(body, /3,000\.00 ريال/);
   assert.match(body, /2026-10-04/);
   assert.doesNotMatch(body, /سري/);
-  assert.ok(notifications.withDisclaimer(body).endsWith('تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط'));
-  assert.equal(notifications.withDisclaimer(notifications.withDisclaimer('x')), notifications.withDisclaimer('x'), 'added once');
+  assert.ok(!notifications.withDisclaimer(body).includes('غير تابع لمنصة إيجار'));
+  assert.equal(notifications.withDisclaimer('x\n\nتطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط'), 'x', 'stripped from older text');
 });
 
 test('rule days parsing: Arabic digits and commas, ranges, limits', () => {

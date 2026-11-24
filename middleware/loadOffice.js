@@ -19,15 +19,16 @@ const OFFICE_NAV = [
   { key: 'tenants', href: '/office/tenants', label: 'المستأجرون', capability: 'tenants', group: 'العقود والعقارات' },
   { key: 'payments', href: '/office/payments', label: 'الدفعات', capability: 'payments.read', group: 'المال' },
   { key: 'accounting', href: '/office/accounting', label: 'المحاسبة', capability: 'accounting', group: 'المال' },
-  { key: 'billing', href: '/office/billing', label: 'الاشتراك', capability: 'billing', group: 'المال' },
   { key: 'maintenance', href: '/office/maintenance', label: 'الصيانة', capability: 'maintenance', group: 'العمل اليومي' },
   { key: 'tasks', href: '/office/tasks', label: 'مهام المكتب', capability: 'tasks', group: 'العمل اليومي' },
   { key: 'messages', href: '/office/messages', label: 'الرسائل', capability: 'messages', group: 'العمل اليومي' },
-  { key: 'leads', href: '/office/leads', label: 'العملاء المحتملون', capability: 'leads', group: 'العمل اليومي' },
-  { key: 'listings', href: '/office/listings', label: 'الإعلانات', capability: 'listings', group: 'العمل اليومي' },
+  { key: 'leads', href: '/office/leads', label: 'العملاء المحتملون', capability: 'leads', group: 'التسويق' },
+  { key: 'listings', href: '/office/listings', label: 'الإعلانات', capability: 'listings', group: 'التسويق' },
+  { key: 'domain', href: '/office/domain', label: 'ربط الدومين', capability: 'settings.basic', group: 'التسويق' },
   { key: 'reports', href: '/office/reports', label: 'التقارير', capability: 'reports', group: 'المكتب' },
   { key: 'team', href: '/office/team', label: 'الفريق', capability: 'team', group: 'المكتب' },
   { key: 'audit', href: '/office/audit', label: 'سجل التدقيق', capability: 'audit', group: 'المكتب' },
+  { key: 'billing', href: '/office/billing', label: 'الاشتراك', capability: 'billing', group: 'المكتب' },
   { key: 'settings', href: '/office/settings', label: 'الإعدادات', capability: 'settings.basic', group: 'المكتب' },
 ];
 
@@ -38,7 +39,7 @@ const ROLE_LABELS = {
 };
 
 // Pages that stay open while the office is suspended or its trial is over.
-const OPEN_WHEN_LOCKED = ['/office/billing', '/office/settings'];
+const OPEN_WHEN_LOCKED = ['/office/billing', '/office/settings', '/office/domain'];
 
 function isCurrent(item, path) {
   if (item.href === '/office') return path === '/office' || path === '/office/';
@@ -51,6 +52,12 @@ function navFor(role, path) {
     ...item,
     current: isCurrent(item, path),
   }));
+}
+
+async function planLocks(pool, officeId) {
+  const { planJoin } = require('../services/defaultPlan');
+  const [[row]] = await pool.query(`SELECT p.custom_domain AS mode FROM offices o ${planJoin()} WHERE o.id = ?`, [officeId]);
+  return !row || !['addon', 'included'].includes(row.mode) ? ['domain'] : [];
 }
 
 function loadOffice(pool = db.pool) {
@@ -95,6 +102,8 @@ function loadOffice(pool = db.pool) {
       res.locals.roleLabel = ROLE_LABELS[req.memberRole];
       res.locals.userDisplay = req.user.name || toLocal(req.user.phone) || req.user.email || '';
       res.locals.officeNav = navFor(req.memberRole, path);
+      // Items the plan does not include show a lock (the page itself explains and offers the upgrade).
+      res.locals.navLocks = await planLocks(pool, req.office.id);
       res.locals.access = req.officeAccess;
       res.locals.can = (capability) => can(req.memberRole, capability);
       return next();

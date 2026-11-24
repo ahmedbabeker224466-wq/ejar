@@ -289,7 +289,7 @@ test('receipt-style statement: printable, no personal data, for office, landlord
     assert.match(res.text, /1,000\.50/);
     assert.match(res.text, /مرجع &lt;b&gt;1&lt;\/b&gt;/, 'escaped');
     assert.match(res.text, /data-print/);
-    assert.match(res.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
+    assert.doesNotMatch(res.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
     const body = res.text.slice(res.text.indexOf('id="receipt"'), res.text.indexOf('</section>', res.text.indexOf('id="receipt"')));
     assert.doesNotMatch(body, /اسم-سري|966500|050\d{7}/, 'no tenant label, no phone');
     assert.match(res.text, /شقة 1-1/);

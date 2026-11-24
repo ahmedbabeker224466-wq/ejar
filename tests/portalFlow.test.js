@@ -225,7 +225,7 @@ test('landlord joins with a code (normalized input) and sees their dashboard wit
   assert.ok(page.text.includes(engine.rentChangeDeadline(c.end_date)), 'rent change deadline = end - 90 from the engine');
   assert.ok(page.text.includes(`باقي ${engine.daysUntil(TODAY, c.end_date)} يوم`), 'days left from the engine');
   assert.match(page.text, /تقريبي/);
-  assert.match(page.text, new RegExp(DISCLAIMER));
+  assert.doesNotMatch(page.text, new RegExp(DISCLAIMER));
   assert.doesNotMatch(page.text, /الإيجار مجمّد في الرياض/, 'no freeze outside Riyadh');
   assert.doesNotMatch(page.text, /name="status"/, 'read only: no office forms');
 

@@ -2581,3 +2581,9 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 .dns-row output { font-family: ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
 .btn--link { background: none; border: 0; padding: 4px 0; color: var(--color-text-muted, #5f6b87); text-decoration: underline; cursor: pointer; min-height: 0; }
 @media (max-width: 480px) { .dns-row { grid-template-columns: 56px 44px 1fr; } .dns-row .btn { grid-column: 1 / -1; } .dns-row--head span:last-child { display: none; } }
+/* Office menu: plan lock and sign-out at the end */
+.office-body .office-nav__lock { margin-inline-start: auto; display: inline-flex; color: #f5c451; }
+.office-body .office-nav__lock svg { width: 15px; height: 15px; }
+.office-body .office-nav__end { margin-top: 18px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.12); }
+.office-body .office-nav a.office-nav__logout { color: #ffb4b4; }
+.office-body .office-nav a.office-nav__logout:hover { background: rgba(239,68,68,.16); color: #fff; }

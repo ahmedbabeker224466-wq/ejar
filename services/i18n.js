@@ -296,7 +296,7 @@ const STRINGS = Object.freeze({
     'home.pricingMore': 'تفاصيل الباقات',
     'home.faqTitle': 'أسئلة شائعة',
     'cta.title': 'جرّب ميعاد على عقود مكتبك',
-    'cta.text': '{days} يوماً مجاناً بحدود الباقة الاحترافية، دون بطاقة دفع.',
+    'cta.text': '{days} يوماً مجاناً بحدود الباقة الأساسية، دون بطاقة دفع.',
     'cta.button': 'سجّل مكتبك الآن',
 
     'pricing.title': 'اشتراك واحد لمكتبك، والملّاك والمستأجرون مجاناً',
@@ -315,7 +315,7 @@ const STRINGS = Object.freeze({
     'pricing.contact': 'تواصل معنا',
     'pricing.none': 'لا توجد باقات منشورة حالياً.',
     'pricing.vatNote': 'الأسعار لا تشمل ضريبة القيمة المضافة {vat}%، وتظهر كاملة قبل الدفع.',
-    'pricing.trialNote': 'التجربة المجانية {days} يوماً دون بطاقة، بحدود الباقة الاحترافية.',
+    'pricing.trialNote': 'التجربة المجانية {days} يوماً دون بطاقة، بحدود الباقة الأساسية.',
     'pricing.faq': 'أسئلة عن الاشتراك',
     'pricing.soon': 'قريباً',
     'pricing.compare': 'مقارنة الباقات',
@@ -376,7 +376,7 @@ const STRINGS = Object.freeze({
     'faq.q3': 'كم يدفع الملّاك والمستأجرون؟',
     'faq.a3': 'لا شيء. الاشتراك على المكتب فقط، ويدخل المالك والمستأجر برمز دعوة.',
     'faq.q4': 'هل توجد تجربة مجانية؟',
-    'faq.a4': 'نعم، {days} يوماً بحدود الباقة الاحترافية، دون بطاقة دفع.',
+    'faq.a4': 'نعم، {days} يوماً بحدود الباقة الأساسية، دون بطاقة دفع.',
 
     // Features page
     'meta.featuresTitle': 'المزايا',
@@ -768,7 +768,7 @@ const STRINGS = Object.freeze({
     'home.pricingMore': 'Plan details',
     'home.faqTitle': 'Frequently asked questions',
     'cta.title': 'Try Mi3aad with your office\'s leases',
-    'cta.text': '{days} days free with Professional plan limits. No card required.',
+    'cta.text': '{days} days free with Basic plan limits. No card required.',
     'cta.button': 'Register your office now',
 
     'pricing.title': 'One subscription for your office, free for landlords and tenants',
@@ -787,7 +787,7 @@ const STRINGS = Object.freeze({
     'pricing.contact': 'Contact us',
     'pricing.none': 'No plans are published at the moment.',
     'pricing.vatNote': 'Prices exclude {vat}% VAT; the full amount is shown before payment.',
-    'pricing.trialNote': 'The {days}-day free trial requires no card and includes Professional plan limits.',
+    'pricing.trialNote': 'The {days}-day free trial requires no card and includes Basic plan limits.',
     'pricing.faq': 'Subscription questions',
     'pricing.soon': 'Available soon',
     'pricing.compare': 'Compare plans',
@@ -848,7 +848,7 @@ const STRINGS = Object.freeze({
     'faq.q3': 'How much do landlords and tenants pay?',
     'faq.a3': 'Nothing. Only the office subscribes, and landlords and tenants join with an invitation code.',
     'faq.q4': 'Is there a free trial?',
-    'faq.a4': 'Yes, {days} days with Professional plan limits. No card required.',
+    'faq.a4': 'Yes, {days} days with Basic plan limits. No card required.',
 
     // Features page
     'meta.featuresTitle': 'Features',
