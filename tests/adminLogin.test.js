@@ -32,7 +32,7 @@ test('admin email and password are read from the environment', () => {
   const { adminEmail, adminPassword } = require('../routes/adminLogin');
   assert.equal(adminEmail({ PLATFORM_ADMIN_EMAIL: ' CEO@Mi3aad.com ' }), 'ceo@mi3aad.com');
   assert.equal(adminEmail({}), null);
-  assert.equal(adminPassword({ PLATFORM_ADMIN_PASSWORD: 'short' }), null, 'under 12 characters = off');
+  assert.equal(adminPassword({ PLATFORM_ADMIN_PASSWORD: 'short' }), null, 'under 8 characters = off');
   assert.equal(adminPassword({ PLATFORM_ADMIN_PASSWORD: PASSWORD }), PASSWORD);
 });
 

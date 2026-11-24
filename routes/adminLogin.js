@@ -1,7 +1,7 @@
 'use strict';
 
 // Platform admin sign-in at /admin/login: the admin's email
-// (PLATFORM_ADMIN_EMAIL) and password (PLATFORM_ADMIN_PASSWORD, at least 12
+// (PLATFORM_ADMIN_EMAIL) and password (PLATFORM_ADMIN_PASSWORD, at least 8
 // characters), both set in the server environment. The account is the active
 // platform_admin user with PLATFORM_ADMIN_PHONE. When that user has turned on
 // the authenticator (from /admin/security), or REQUIRE_ADMIN_2FA demands it,
@@ -22,7 +22,7 @@ const router = express.Router();
 
 const MFA_COOKIE = 'aqdi_mfa';
 const STEP_SECONDS = 10 * 60;
-const MIN_PASSWORD = 12;
+const MIN_PASSWORD = 8;
 
 const MESSAGES = {
   wrong: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
@@ -35,7 +35,7 @@ function adminEmail(env = process.env) {
   return emailAuth.normalizeEmail(env.PLATFORM_ADMIN_EMAIL || '') || null;
 }
 
-/** The configured password, or null when missing or shorter than 12 characters. */
+/** The configured password, or null when missing or shorter than 8 characters. */
 function adminPassword(env = process.env) {
   const value = String(env.PLATFORM_ADMIN_PASSWORD || '');
   return value.length >= MIN_PASSWORD ? value : null;
