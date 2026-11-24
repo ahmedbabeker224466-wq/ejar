@@ -622,3 +622,4 @@ textarea.mk-input { min-height: 150px; resize: vertical; }
 }
 @media (min-width: 981px) { .mk-dd:not(.mk-dd--wide) .mk-dd__panel { width: max-content; } }
 @media (min-width: 981px) and (max-width: 1180px) { .mk-dd:not(.mk-dd--wide) .mk-dd__col { width: 240px; } .mk-dd:not(.mk-dd--wide) .mk-dd__panel { gap: 8px 20px; padding: 18px; } }
+.mk-card[id] { scroll-margin-top: 100px; }

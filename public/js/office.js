@@ -25,6 +25,14 @@
     backdrop.addEventListener('click', function () {
       setOpen(false);
     });
+    // Choosing a link closes the panel at once (also for same-page links), and
+    // a page restored from the back/forward cache never comes back with it open.
+    nav.addEventListener('click', function (event) {
+      if (event.target.closest('a')) setOpen(false);
+    });
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted) setOpen(false);
+    });
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape' && document.body.classList.contains('nav-open')) {
         setOpen(false);
