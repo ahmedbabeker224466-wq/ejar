@@ -75,7 +75,7 @@
         </li>
       <% }) %>
     </ul>
-    <p><a href="/office/contracts?stage=action"><%= __("عرض كل العقود التي تحتاج إجراء") %></a></p>
+    <p><a href="/office/contracts?stage=action" class="btn btn--secondary btn--small"><%= __("عرض كل العقود التي تحتاج إجراء") %></a></p>
   <% } else { %>
     <p class="empty-state"><%= __("لا يوجد ما يحتاج إجراءً الآن. سنعرض هنا العقود التي يقترب موعد قرارها.") %></p>
   <% } %>
@@ -107,7 +107,7 @@
                   <li class="delivery-reason delivery-reason--<%= __(d.kind) %>"><strong><%= __({ email: __('بريد'), whatsapp: __('واتساب'), telegram: __('تيليجرام') }[d.channel]) %>:</strong> <%= __({ not_configured: __('لم يُرسل لأن القناة غير مضبوطة'), failed: __('فشل الإرسال'), pending: __('بالانتظار') }[d.kind]) %>. <%= __(d.reason) %></li>
                 <% }) %>
               </ul>
-              <p class="item__meta"><a href="<%= __(can('settings.office') ? '/office/settings/reminders' : '/settings/notifications') %>"><%= __("راجع إعدادات القنوات") %></a></p>
+              <p class="item__meta"><a class="btn btn--secondary btn--small" href="<%= __(can('settings.office') ? '/office/settings/reminders' : '/settings/notifications') %>"><%= __("راجع إعدادات القنوات") %></a></p>
             <% } %>
           <% } %>
         </li>
@@ -116,7 +116,7 @@
   <% } else { %>
     <p class="empty-state"><%= __("لم تُرسل إشعارات بعد. تبدأ التذكيرات تلقائياً كل صباح الساعة 7.") %></p>
   <% } %>
-  <% if (can('settings.office')) { %><p><a href="/office/settings/reminders"><%= __("إعدادات التذكيرات والقنوات") %></a></p><% } %>
+  <% if (can('settings.office')) { %><p><a href="/office/settings/reminders" class="btn btn--secondary"><%= __("إعدادات التذكيرات والقنوات") %></a></p><% } %>
 </section>
 
 <% if (setupSteps.length) { %>

@@ -207,7 +207,7 @@ test('register end to end: new phone -> code -> /office/new -> office, owner, me
   const home = await request('/office', { cookie });
   assert.equal(home.status, 200);
   assert.match(home.text, /مكتب اختبار التسجيل/);
-  assert.match(home.text, /تجربتك المجانية تنتهي بعد 14 يوم/);
+  assert.match(home.text, /تجربتك المجانية تنتهي بعد 14 يوماً/);
   assert.doesNotMatch(home.text, /تطبيق خاص غير تابع لمنصة إيجار، والتواريخ للتذكير فقط/);
   assert.equal((home.text.match(/class="stat__value">0</g) || []).length, 6, 'six stats, all zero');
   assert.match(home.text, /يحتاج إجراء/);
@@ -467,7 +467,7 @@ test('suspended and expired-trial offices are locked except billing and settings
   await setStatus('trial', 'UTC_TIMESTAMP() + INTERVAL 3 DAY');
   const open = await request('/office', { cookie: owner.cookie });
   assert.equal(open.status, 200);
-  assert.match(open.text, /تجربتك المجانية تنتهي بعد 3 يوم/);
+  assert.match(open.text, /تجربتك المجانية تنتهي بعد 3 أيام/);
 
   await setStatus('past_due');
   const pastDue = await request('/office', { cookie: owner.cookie });

@@ -2587,3 +2587,13 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 .office-body .office-nav__end { margin-top: 18px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.12); }
 .office-body .office-nav a.office-nav__logout { color: #ffb4b4; }
 .office-body .office-nav a.office-nav__logout:hover { background: rgba(239,68,68,.16); color: #fff; }
+/* Banner action as a clear button, no underlined link */
+.office-body .office-banner { align-items: center; gap: 12px; }
+.office-body .office-banner a { text-decoration: none; display: inline-flex; align-items: center; min-height: 36px; padding: 6px 16px; border-radius: 999px; font-weight: 700; font-size: .9rem; background: var(--color-success, #15803d); color: #fff; }
+.office-body .office-banner a:hover { filter: brightness(.95); color: #fff; }
+.office-body .office-banner--danger a { background: var(--color-danger, #c62828); }
+/* Office panel links: no underlines; standalone actions are buttons */
+.office-body .office-main a:not(.btn) { text-decoration: none; font-weight: 600; }
+.office-body .office-main a:not(.btn):hover { text-decoration: underline; text-underline-offset: 3px; }
+.office-body .back-link a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid #dfe4ef; border-radius: 999px; background: #fff; color: #1d3b8f; font-size: .9rem; }
+.office-body .back-link a:hover { text-decoration: none; background: #f2f5fc; }

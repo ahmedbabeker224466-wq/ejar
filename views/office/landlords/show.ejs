@@ -96,7 +96,7 @@
       <% }) %>
     </ul>
     <% if (units.total > units.rows.length) { %>
-      <p><a href="/office/units?landlord=<%= __(landlord.id) %>"><%= __("عرض كل الوحدات") %></a></p>
+      <p><a href="/office/units?landlord=<%= __(landlord.id) %>" class="btn btn--secondary btn--small"><%= __("عرض كل الوحدات") %></a></p>
     <% } %>
   <% } else { %>
     <p class="muted"><%= __("لا توجد وحدات لهذا المالك بعد.") %></p>

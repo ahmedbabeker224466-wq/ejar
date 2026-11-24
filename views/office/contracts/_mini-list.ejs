@@ -9,7 +9,7 @@
       </li>
     <% }) %>
   </ul>
-  <% if (list.total > list.rows.length) { %><p><a href="<%= __(more) %>"><%= __("عرض كل العقود") %></a></p><% } %>
+  <% if (list.total > list.rows.length) { %><p><a href="<%= __(more) %>" class="btn btn--secondary btn--small"><%= __("عرض كل العقود") %></a></p><% } %>
 <% } else { %>
   <p class="muted"><%= __("لا توجد عقود بعد.") %></p>
 <% } %>
