@@ -534,7 +534,7 @@ test('audit viewer: filters by action, office, actor and date; non-admins cannot
   assert.match(byActor.text, /extend_trial/);
   const none = await aget(`/admin/audit?actor=966500009999&office=${o.office.id}`);
   assert.doesNotMatch(none.text, /extend_trial/);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = require('../services/contractDates').riyadhDate(new Date());
   assert.match((await aget(`/admin/audit?office=${o.office.id}&from=${today}&to=${today}`)).text, /extend_trial/);
   assert.doesNotMatch((await aget(`/admin/audit?office=${o.office.id}&from=2020-01-01&to=2020-01-02`)).text, /extend_trial/);
   assert.equal((await aget('/admin/audit?page=999&from=garbage')).status, 200, 'bad filters fall back instead of failing');
