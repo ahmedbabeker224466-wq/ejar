@@ -1,0 +1,32 @@
+<div class="page-head"><h1><%= __("الأمان") %></h1></div>
+
+<section class="form-card">
+  <h2><%= __("التحقق بخطوتين") %></h2>
+  <% if (enabled) { %>
+    <p><span class="badge badge--calm"><%= __("مفعّل") %></span></p>
+    <p class="muted"><%= __("عند الدخول إلى لوحة الإدارة يُطلب رمز من تطبيق المصادقة بعد كلمة المرور. إذا فقدت جوالك فاستخدم أحد رموز الاحتياط.") %></p>
+  <% } else { %>
+    <p><span class="badge badge--urgent"><%= __("غير مفعّل") %></span></p>
+    <p class="muted"><%= __("خطوة حماية اختيارية: بعد تفعيلها يُطلب رمز من تطبيق المصادقة في جوالك بعد كلمة المرور.") %></p>
+
+    <% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
+
+    <ol class="steps">
+      <li><%= __("ثبّت تطبيق مصادقة في جوالك، مثل Google Authenticator أو Microsoft Authenticator.") %></li>
+      <li>
+        <%= __("أدخل هذا المفتاح في التطبيق:") %>
+        <code class="secret" dir="ltr"><%= __(secretGroups.join(' ')) %></code>
+        <a href="<%= __(uri) %>" class="btn btn--secondary btn--small"><%= __("أو افتح هذا الرابط من الجوال نفسه") %></a>
+      </li>
+      <li><%= __("اكتب الرمز المكوّن من 6 أرقام الظاهر في التطبيق:") %></li>
+    </ol>
+
+    <form method="post" action="/admin/security/2fa" novalidate>
+      <div class="field">
+        <label for="code"><%= __("الرمز من التطبيق") %></label>
+        <input id="code" name="code" class="input input--code" type="text" dir="ltr" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+      </div>
+      <button type="submit" class="btn btn--success btn--large"><%= __("تفعيل التحقق بخطوتين") %></button>
+    </form>
+  <% } %>
+</section>

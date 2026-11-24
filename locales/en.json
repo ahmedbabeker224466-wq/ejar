@@ -2756,11 +2756,21 @@
  "دخول الإدارة بالبريد غير مفعّل على هذا الخادم.": "Admin sign-in by email is not enabled on this server.",
  "لوحة إدارة المنصة": "Platform administration",
  "خطوات الدخول": "Sign-in steps",
- "رمز البريد": "Email code",
  "تطبيق المصادقة": "Authenticator app",
  "تحقق بخطوتين": "Two-step verification",
  "اتصال مشفّر": "Encrypted connection",
  "كل محاولة تُسجَّل": "Every attempt is logged",
  "دخول مقيّد لمدير المنصة": "Restricted to the platform administrator",
- "أدخل بريد الإدارة لنرسل إليه رمز تحقق صالحاً لخمس دقائق.": "Enter the administration email and we will send a verification code valid for five minutes."
+ "أدخل بريد الإدارة وكلمة المرور.": "Enter the administration email and password.",
+ "البريد الإلكتروني أو كلمة المرور غير صحيحة.": "The email or password is incorrect.",
+ "دخول الإدارة غير مضبوط على هذا الخادم.": "Admin sign-in is not configured on this server.",
+ "كلمة المرور": "Password",
+ "الأمان": "Security",
+ "غير مفعّل": "Off",
+ "عند الدخول إلى لوحة الإدارة يُطلب رمز من تطبيق المصادقة بعد كلمة المرور. إذا فقدت جوالك فاستخدم أحد رموز الاحتياط.": "When you sign in to the administration panel, a code from your authenticator app is requested after the password. If you lose your phone, use one of your backup codes.",
+ "خطوة حماية اختيارية: بعد تفعيلها يُطلب رمز من تطبيق المصادقة في جوالك بعد كلمة المرور.": "An optional protection step: once enabled, a code from the authenticator app on your phone is requested after the password.",
+ "أدخل هذا المفتاح في التطبيق:": "Enter this key in the app:",
+ "أو افتح هذا الرابط من الجوال نفسه": "Or open this link on the same phone",
+ "الرمز غير صحيح. تأكد من وقت جوالك واكتب الرمز الظاهر الآن.": "The code is incorrect. Check your phone's clock and enter the code shown now.",
+ "محاولات محدودة": "Limited attempts"
 }

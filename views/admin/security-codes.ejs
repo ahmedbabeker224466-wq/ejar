@@ -1,0 +1,10 @@
+<div class="page-head"><h1><%= __("رموز الاحتياط") %></h1></div>
+<section class="form-card">
+  <p><span class="badge badge--calm"><%= __("تم التفعيل") %></span></p>
+  <p><%= __("احفظ هذه الرموز في مكان آمن. إذا فقدت جوالك تستطيع الدخول بأحدها بدلاً من رمز التطبيق.") %> <%= __("كل رمز يعمل مرة واحدة فقط.") %></p>
+  <div class="flash flash--warning" role="note"><%= __("لن تظهر هذه الرموز مرة أخرى.") %></div>
+  <ul class="backup-codes" dir="ltr">
+    <% codes.forEach(function (code) { %><li><code><%= __(code) %></code></li><% }) %>
+  </ul>
+  <a href="/admin" class="btn btn--primary btn--large"><%= __("حفظتها، تابع") %></a>
+</section>

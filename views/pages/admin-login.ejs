@@ -1,6 +1,6 @@
 <section class="auth card">
   <h1><%= __("تسجيل الدخول") %></h1>
-  <p class="lead"><%= __("أدخل بريد الإدارة لنرسل إليه رمز تحقق صالحاً لخمس دقائق.") %></p>
+  <p class="lead"><%= __("أدخل بريد الإدارة وكلمة المرور.") %></p>
 
   <% if (error) { %>
     <div class="flash flash--danger" role="alert"><%= __(error) %></div>
@@ -13,10 +13,18 @@
       <svg class="adm-input__icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M3 5h18v14H3V5Zm2 2v.5l7 4.5 7-4.5V7H5Zm14 2.9-7 4.5-7-4.5V17h14V9.9Z"/></svg>
       <input id="email" name="email" class="input" type="email" dir="ltr" inputmode="email"
         autocomplete="email" maxlength="190" placeholder="name@example.com"
-        value="<%= email %>" autofocus required>
+        value="<%= email %>" <%= email ? "" : "autofocus" %> required>
       </div>
     </div>
-    <button type="submit" class="btn btn--primary btn--block btn--large adm-auth__btn"><%= __("إرسال رمز الدخول") %></button>
+    <div class="field">
+      <label for="password"><%= __("كلمة المرور") %></label>
+      <div class="adm-input">
+      <svg class="adm-input__icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Z"/></svg>
+      <input id="password" name="password" class="input" type="password" dir="ltr"
+        autocomplete="current-password" maxlength="200" required>
+      </div>
+    </div>
+    <button type="submit" class="btn btn--primary btn--block btn--large adm-auth__btn"><%= __("دخول") %></button>
   </form>
 
 </section>

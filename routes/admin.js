@@ -54,6 +54,7 @@ const NAV = [
   { key: 'launch', href: '/admin/launch', label: 'جاهزية الإطلاق' },
   { key: 'ops', href: '/admin/ops', label: 'التشغيل والنسخ الاحتياطي' },
   { key: 'audit', href: '/admin/audit', label: 'سجل التدقيق' },
+  { key: 'security', href: '/admin/security', label: 'الأمان' },
 ];
 
 function isCurrent(item, path) {
@@ -575,6 +576,7 @@ router.get('/admin/audit', wrap(async (req, res) => {
 
 require('./adminContent')(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText });
 require('./adminLaunch')(router, { wrap, notFound, reasonOf, REASON_ERROR, audit, doneText });
+require('./adminSecurity')(router, { wrap, audit });
 require('./adminDomains')(router, { wrap, notFound, reasonOf, REASON_ERROR, doneText });
 require('./adminOps')(router, { wrap, reasonOf, REASON_ERROR, audit, doneText });
 
