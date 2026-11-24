@@ -157,13 +157,16 @@ test('launch fixes: share image, structured data, no admin link on /login, blog 
   assert.match(listings, /data-city="الرياض"/);
 });
 
-test('the disclaimer is visible inside the app: office, admin, notifications', { skip }, async () => {
+test('the disclaimer is visible inside the app: office and notifications, not the admin panel', { skip }, async () => {
   const o = await fx.office(1, 'تجربة-موقع-1', { landlords: 0, units: 0 });
-  for (const [p, cookie] of [['/office', o.cookie], ['/office/billing', o.cookie], ['/office/settings', o.cookie], ['/admin', admin.cookie], ['/notifications', o.cookie]]) {
+  for (const [p, cookie] of [['/office', o.cookie], ['/office/billing', o.cookie], ['/office/settings', o.cookie], ['/notifications', o.cookie]]) {
     const res = await fetch(`${http.base()}${p}`, { headers: cookie ? { Cookie: cookie } : {}, redirect: 'manual' });
     assert.equal(res.status, 200, p);
     assert.ok((await res.text()).includes(DISCLAIMER), p);
   }
+  // The owner removed it from his own admin panel (Nov 2026).
+  const adminPage = await fetch(`${http.base()}/admin`, { headers: { Cookie: admin.cookie }, redirect: 'manual' });
+  assert.ok(!(await adminPage.text()).includes(DISCLAIMER));
   // Pages behind a login are never indexed.
   assert.match(await text('/login'), /<meta name="robots" content="noindex,nofollow">/);
 });
