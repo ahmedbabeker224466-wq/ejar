@@ -83,7 +83,7 @@ test('migration (pure): placeholders become the official values; admin edits and
   assert.deepEqual([enterprise.price_monthly, enterprise.max_units, enterprise.max_members, enterprise.max_listings], [799, 600, 20, 200]);
 
   // A trial created by hand with no limits keeps them; only the one-time columns change.
-  const handTrial = pricing.planUpdates('trial', { code: 'trial', price_monthly: '0.00', price_yearly: '0.00', max_units: null, max_members: null, features: null, custom_domain: 'none', audit_level: 'full', support_level: 'email', is_active: 1, is_public: 1 }, { firstTime: true });
+  const handTrial = pricing.planUpdates('trial', { code: 'trial', price_monthly: '0.00', price_yearly: '0.00', max_units: null, max_members: null, features: null, custom_domain: 'included', audit_level: 'full', support_level: 'email', is_active: 1, is_public: 1 }, { firstTime: true });
   assert.deepEqual(handTrial, {});
 
   // Second run: nothing left to change.
@@ -218,10 +218,11 @@ test('migration on MySQL: placeholders move, admin edits stay, idempotent, offic
     assert.deepEqual(await pricing.applyOfficialPricing(conn), { updated: [], addon: false });
 
     // The v2 step (custom domain included in Pro) runs once, then admin edits stay.
-    await conn.query('DELETE FROM settings WHERE setting_key = ?', [pricing.DOMAIN_V2_KEY]);
+    await conn.query('DELETE FROM settings WHERE setting_key IN (?, ?)', [pricing.DOMAIN_V2_KEY, pricing.DOMAIN_TRIAL_KEY]);
+    await conn.query("UPDATE plans SET custom_domain = 'none' WHERE code = 'trial'");
     await conn.query("UPDATE plans SET custom_domain = 'addon' WHERE code = 'pro'");
     const v2 = await pricing.applyOfficialPricing(conn);
-    assert.deepEqual(v2.updated, ['custom_domain_v2']);
+    assert.deepEqual(v2.updated, ['custom_domain_v2', 'custom_domain_trial']);
     const [[proNow]] = await conn.query("SELECT custom_domain FROM plans WHERE code = 'pro'");
     assert.equal(proNow.custom_domain, 'included');
     await conn.query("UPDATE plans SET custom_domain = 'none' WHERE code = 'pro'");

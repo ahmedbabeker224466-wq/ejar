@@ -42,7 +42,7 @@ const OFFICIAL = Object.freeze({
   trial: {
     name_ar: 'تجربة مجانية', price_monthly: 0, price_yearly: 0,
     max_contracts: null, max_units: 150, max_members: 6, max_ai_reads_monthly: 100, max_photos: 1000, max_listings: 50,
-    features: ALL_ON, custom_domain: 'none', audit_level: 'full', support_level: 'email', sort_order: 1,
+    features: ALL_ON, custom_domain: 'included', audit_level: 'full', support_level: 'email', sort_order: 1,
   },
   basic: {
     name_ar: 'الأساسية', price_monthly: 149, price_yearly: 1490,
@@ -66,6 +66,7 @@ const OFFICIAL = Object.freeze({
 const CUSTOM_PLAN_FROM_UNITS = 600;
 
 const DOMAIN_V2_KEY = 'plans.custom_domain_v2';
+const DOMAIN_TRIAL_KEY = 'plans.custom_domain_trial_v1';
 const CUSTOM_DOMAIN_ADDON = Object.freeze({ name_ar: 'نطاق مخصص', price_monthly: '49.00', currency: 'SAR', plans: ['pro'] });
 
 // The limits every active plan must carry (launch check "الباقات والأسعار").
@@ -160,6 +161,13 @@ async function applyOfficialPricing(pool) {
     const [changed] = await pool.query("UPDATE plans SET custom_domain = 'included' WHERE code IN ('pro', 'enterprise') AND custom_domain <> 'included'");
     if (changed.affectedRows) updated.push('custom_domain_v2');
     await pool.query('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)', [DOMAIN_V2_KEY, new Date().toISOString()]);
+  }
+  // The trial carries Pro limits, so it includes the custom domain too (once).
+  const [[trialMark]] = await pool.query('SELECT setting_key FROM settings WHERE setting_key = ?', [DOMAIN_TRIAL_KEY]);
+  if (!trialMark) {
+    const [changed] = await pool.query("UPDATE plans SET custom_domain = 'included' WHERE code = 'trial' AND custom_domain <> 'included'");
+    if (changed.affectedRows) updated.push('custom_domain_trial');
+    await pool.query('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)', [DOMAIN_TRIAL_KEY, new Date().toISOString()]);
   }
   return { updated, addon: addon.affectedRows === 1 };
 }
@@ -258,6 +266,7 @@ function paidMonths(monthlyHalalas, yearlyHalalas) {
 
 module.exports = {
   DOMAIN_V2_KEY,
+  DOMAIN_TRIAL_KEY,
   cardLines,
   planSpec,
   planFeatures,
