@@ -126,7 +126,7 @@
       <% setupSteps.forEach(function (step) { %>
         <li>
           <a href="<%= __(step.href) %>"<%- step.done ? ' class="is-done"' : '' %>>
-            <span class="checklist__box" aria-hidden="true"><%= __(step.done ? '✓' : '') %></span>
+            <span class="checklist__box" aria-hidden="true"></span>
             <span><%= __(step.label) %></span>
             <span class="visually-hidden"><%= __(step.done ? __('(مكتمل)') : __('(لم يكتمل)')) %></span>
           </a>

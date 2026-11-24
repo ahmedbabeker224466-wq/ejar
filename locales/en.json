@@ -2905,5 +2905,7 @@
  "اسم النموذج حروف إنجليزية وأرقام فقط، مثل gemini-2.5-flash.": "The model name is Latin letters and digits only, like gemini-2.5-flash.",
  "المفتاح غير صحيح. انسخه كما هو من لوحة المزوّد.": "The key is not valid. Copy it exactly from the provider console.",
  "الصق مفتاح الخدمة.": "Paste the service key.",
- "تعديل إعدادات الذكاء الاصطناعي": "AI settings changed"
+ "تعديل إعدادات الذكاء الاصطناعي": "AI settings changed",
+ "العقود والعقارات": "Contracts and properties",
+ "المال": "Money"
 }
