@@ -35,6 +35,7 @@ const KIND_LABELS = {
   billing_alert: 'تنبيه مالي',
   listing_inquiry: 'استفسار على إعلان',
   listing_expiring: 'إعلان على وشك أن يُخفى',
+  listing_hidden: 'أُخفيت إعلانات بلا رخصة إعلان',
   listing_report: 'بلاغ عن إعلان',
   backup_failed: 'فشل النسخ الاحتياطي',
   ops_alert: 'تنبيه تشغيلي',

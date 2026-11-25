@@ -3129,5 +3129,7 @@
  "القرى": "Al Qura",
  "منطقة الجوف": "Al Jouf Region",
  "دومة الجندل": "Dumat Al Jandal",
- "طبرجل": "Tabarjal"
+ "طبرجل": "Tabarjal",
+ "أُخفيت إعلانات بلا رخصة إعلان": "Listings without an ad licence were hidden",
+ "أُخفي {0} من إعلاناتك لأنها بلا رقم رخصة إعلان. أضف رقم الرخصة في كل إعلان ثم انشره من جديد.": "{0} of your listings were hidden because they have no ad licence number. Add the licence number to each listing, then publish it again."
 }

@@ -404,6 +404,42 @@ async function runExpiry({ pool, now = new Date() }) {
   return processed;
 }
 
+const UNLICENSED_KEY = 'listings.hide_unlicensed_v1';
+
+/**
+ * Migration (ensureSchema, once, owner's decision Nov 2026): published
+ * listings without a REGA ad licence number are hidden. The office adds the
+ * number and publishes again; each owner gets one notification.
+ */
+async function hideUnlicensed(pool, now = new Date()) {
+  const [[done]] = await pool.query('SELECT setting_key FROM settings WHERE setting_key = ?', [UNLICENSED_KEY]);
+  if (done) return 0;
+  const [rows] = await pool.query(
+    "SELECT id, office_id FROM listings WHERE status = 'published' AND (ad_license_number IS NULL OR ad_license_number = '')",
+  );
+  const perOffice = new Map();
+  for (const row of rows) {
+    const result = await scopeToOffice(pool, row.office_id).query(
+      "UPDATE listings SET status = 'hidden' WHERE id = ? AND status = 'published' AND (ad_license_number IS NULL OR ad_license_number = '') AND office_id = :office_id",
+      [row.id],
+    );
+    if (result.affectedRows !== 1) continue;
+    perOffice.set(row.office_id, (perOffice.get(row.office_id) || 0) + 1);
+    await createAudit(pool).log(null, row.office_id, 'listing.hide', 'listing', Number(row.id), { status: 'published' }, { status: 'hidden', reason: 'no_ad_license' }, null);
+  }
+  for (const [officeId, count] of perOffice) {
+    const [[office]] = await pool.query('SELECT owner_id FROM offices WHERE id = ?', [officeId]);
+    if (!office || !office.owner_id) continue;
+    await createNotification(pool, {
+      userId: office.owner_id, officeId, kind: 'listing_hidden', title: 'أُخفيت إعلانات بلا رخصة إعلان',
+      body: `أُخفي ${count} من إعلاناتك لأنها بلا رقم رخصة إعلان. أضف رقم الرخصة في كل إعلان ثم انشره من جديد.`,
+      link: '/office/listings', dedupeKey: `listing_hidden:o${officeId}:v1`, now,
+    });
+  }
+  await pool.query('INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)', [UNLICENSED_KEY, now.toISOString()]);
+  return rows.length;
+}
+
 // ------------------------------------------------------------ public side
 
 // A listing is public only while published, not expired, not hidden by the
@@ -536,6 +572,7 @@ async function publicIndex(pool, now = new Date(), limit = 5000) {
 }
 
 module.exports = {
+  hideUnlicensed,
   similarPublic,
   displayTitle,
   TYPE_LABELS,

@@ -82,6 +82,8 @@ async function ensureSchema(targetPool = pool) {
     current = 'office slug backfill';
     await require('../services/officeLink').backfillSlugs(targetPool);
     await require('../services/officeLink').defaultPagesOn(targetPool);
+    current = 'hide unlicensed listings';
+    await require('../services/listings').hideUnlicensed(targetPool);
     result.created = (await countTables(targetPool)) - result.found;
     result.ok = true;
     return result;
