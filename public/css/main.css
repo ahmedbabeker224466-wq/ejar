@@ -3130,3 +3130,4 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 [dir="rtl"] input[type="date"], [dir="rtl"] input[type="month"], [dir="rtl"] input[type="time"], [dir="rtl"] input[type="datetime-local"] { direction: ltr; text-align: right; }
 .office-body .vd-card__phone a { border: 0; display: inline-flex; padding: 3px 10px; border-radius: 8px; background: #f1f5ff; }
 .office-body .vd-card__phone a:hover { background: #e2ebff; }
+.office-body .detail-card form + form { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--ofx-line-soft, #eef1f7); }
