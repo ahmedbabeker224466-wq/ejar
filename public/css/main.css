@@ -2614,3 +2614,59 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 .office-body .setup__text span { font-size: .88rem; color: #5f6b87; }
 .office-body .setup__item.is-done .setup__text strong { color: #5f6b87; }
 .office-body .setup__state { font-size: .85rem; font-weight: 700; color: var(--color-success, #15803d); }
+/* Office billing: plan cards with a monthly/yearly switch, usage tiles */
+.office-body .bill-plans__head h2 { margin-bottom: 2px; }
+.office-body .bill-toggle { display: inline-flex; gap: 4px; padding: 4px; margin: 6px 0 18px; border-radius: 999px; background: #eef2fb; }
+.office-body .bill-toggle label { cursor: pointer; padding: 8px 20px; border-radius: 999px; font-weight: 700; color: #5f6b87; display: inline-flex; gap: 6px; align-items: center; }
+.office-body .bill-toggle label span { font-size: .75rem; font-weight: 700; color: var(--color-success, #15803d); background: #e3f4ea; padding: 2px 8px; border-radius: 999px; }
+.office-body #bi-m:checked ~ .bill-toggle label[for="bi-m"], .office-body #bi-y:checked ~ .bill-toggle label[for="bi-y"] { background: #fff; color: #0f1d45; box-shadow: 0 1px 3px rgba(15,29,69,.12); }
+.office-body #bi-m:focus-visible ~ .bill-toggle label[for="bi-m"], .office-body #bi-y:focus-visible ~ .bill-toggle label[for="bi-y"] { outline: 2px solid #2b6cf6; }
+.office-body .bill-plans .when-y { display: none; }
+.office-body #bi-y:checked ~ .bill-grid .when-y { display: flex; }
+.office-body #bi-y:checked ~ .bill-grid .when-m { display: none; }
+.office-body .bill-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; list-style: none; padding: 0; margin: 0; align-items: stretch; }
+.office-body .bill-card { position: relative; display: flex; flex-direction: column; padding: 24px 20px 20px; border: 1px solid #e3e8f2; border-radius: 16px; background: #fff; }
+.office-body .bill-card.is-featured { border: 2px solid #2b6cf6; box-shadow: 0 10px 28px rgba(43,108,246,.12); }
+.office-body .bill-card.is-current { border: 2px solid var(--color-success, #15803d); }
+.office-body .bill-card__tag { position: absolute; top: -12px; inset-inline-start: 20px; padding: 3px 12px; border-radius: 999px; font-size: .78rem; font-weight: 700; background: #2b6cf6; color: #fff; }
+.office-body .bill-card__tag--current { background: var(--color-success, #15803d); }
+.office-body .bill-card h3 { margin: 0 0 8px; font-size: 1.15rem; }
+.office-body .bill-card__price { display: flex; align-items: baseline; gap: 6px; margin: 0 0 16px; padding-bottom: 16px; border-bottom: 1px solid #eef1f7; }
+.office-body .bill-card__price strong { font-size: 2rem; line-height: 1; color: #0f1d45; }
+.office-body .bill-card__price span { color: #5f6b87; font-size: .9rem; }
+.office-body .bill-card .plan-lines { flex: 1; }
+.office-body .bill-card__cta { margin-top: auto; }
+.office-body .bill-card__cta .btn { min-height: 46px; }
+.office-body .usage-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.office-body .usage-item { display: grid; gap: 6px; padding: 14px; border: 1px solid #e3e8f2; border-radius: 12px; background: #fbfcfe; }
+.office-body .usage-item__label { color: #5f6b87; font-size: .88rem; }
+.office-body .usage-item__value { font-size: 1.35rem; color: #0f1d45; direction: ltr; text-align: right; }
+.office-body .usage-item__value span { font-size: .9rem; font-weight: 600; color: #8a94ad; }
+.office-body .usage-bar { display: block; height: 8px; border-radius: 999px; background: #e7ecf6; overflow: hidden; }
+.office-body .usage-bar > span { display: block; height: 100%; border-radius: inherit; background: #2b6cf6; min-width: 0; }
+.office-body .usage-bar--warn > span { background: #d97706; }
+.office-body .usage-bar--danger > span { background: #c62828; }
+
+/* Width steps for progress bars (inline styles are blocked by the CSP) */
+.office-body .pct-0 { width: 0%; }
+.office-body .pct-5 { width: 5%; }
+.office-body .pct-10 { width: 10%; }
+.office-body .pct-15 { width: 15%; }
+.office-body .pct-20 { width: 20%; }
+.office-body .pct-25 { width: 25%; }
+.office-body .pct-30 { width: 30%; }
+.office-body .pct-35 { width: 35%; }
+.office-body .pct-40 { width: 40%; }
+.office-body .pct-45 { width: 45%; }
+.office-body .pct-50 { width: 50%; }
+.office-body .pct-55 { width: 55%; }
+.office-body .pct-60 { width: 60%; }
+.office-body .pct-65 { width: 65%; }
+.office-body .pct-70 { width: 70%; }
+.office-body .pct-75 { width: 75%; }
+.office-body .pct-80 { width: 80%; }
+.office-body .pct-85 { width: 85%; }
+.office-body .pct-90 { width: 90%; }
+.office-body .pct-95 { width: 95%; }
+.office-body .pct-100 { width: 100%; }
+.office-body .usage-item__value { direction: rtl; text-align: right; }

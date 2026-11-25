@@ -8,7 +8,7 @@
     <dt><%= __("الباقة") %></dt><dd><%= __(plan ? plan.name_ar : __('غير محددة')) %></dd>
     <dt><%= __("الحالة") %></dt><dd><span class="badge badge--bill-<%= __(status.tone) %>"><%= __(status.label) %></span></dd>
     <% if (status.until) { %><dt><%= __("صالحة حتى") %></dt><dd dir="ltr"><%= __(status.until) %></dd><% } %>
-    <% if (interval) { %><dt><%= __("نوع الاشتراك") %></dt><dd><%= __(interval === 'yearly' ? __('سنوي') : __('شهري')) %></dd><% } %>
+    <% if (interval && !access.onTrial) { %><dt><%= __("نوع الاشتراك") %></dt><dd><%= __(interval === 'yearly' ? __('سنوي') : __('شهري')) %></dd><% } %>
   </dl>
   <% if (access.readOnly) { %>
     <p class="flash flash--danger"><%= __("انتهى الاشتراك: الحساب في وضع القراءة فقط لمدة") %> <%= __(access.graceDaysLeft) %> <%= __("يوم، ثم يُوقف. بياناتك محفوظة") %> <%= __(keepDays) %> <%= __("يوماً بعد الإيقاف.") %></p>
@@ -21,14 +21,54 @@
   <% } %>
 </section>
 
+
+
+<% if (!suspendedByAdmin) { %>
+<section class="card detail-card bill-plans">
+  <div class="bill-plans__head">
+    <div>
+      <h2><%= __(access.onTrial || access.locked || access.readOnly ? __('اختر باقتك') : __('ترقية أو تجديد')) %></h2>
+      <p class="muted"><%= __("الأسعار قبل ضريبة القيمة المضافة") %> (<%= __(vatPercent) %>%)<%= __("، وتظهر كاملة قبل الدفع.") %></p>
+    </div>
+  </div>
+  <% if (!online) { %><p class="flash flash--info"><%= __("الدفع الإلكتروني غير مفعّل. يمكنك الدفع بالحوالة البنكية.") %></p><% } %>
+  <input type="radio" name="bill-interval" id="bi-m" class="visually-hidden" checked>
+  <input type="radio" name="bill-interval" id="bi-y" class="visually-hidden">
+  <div class="bill-toggle" role="group" aria-label="<%= __("مدة الاشتراك") %>">
+    <label for="bi-m"><%= __("شهري") %></label>
+    <label for="bi-y"><%= __("سنوي") %> <span><%= __("شهران مجاناً") %></span></label>
+  </div>
+  <ul class="plan-grid bill-grid">
+    <% cards.forEach(function (c) { %>
+      <li class="bill-card<%= __(c.current ? ' is-current' : '') %><%= __(c.code === 'pro' ? ' is-featured' : '') %>">
+        <% if (c.current) { %><span class="bill-card__tag bill-card__tag--current"><%= __("باقتك الحالية") %></span><% } else if (c.code === 'pro') { %><span class="bill-card__tag"><%= __("الأكثر اختياراً") %></span><% } %>
+        <h3><%= __(c.name) %></h3>
+        <p class="bill-card__price when-m"><strong><%= __(fmt(c.monthly).replace(/\.00$/, '')) %></strong> <span><%= __("ريال شهرياً") %></span></p>
+        <% if (c.yearly > 0) { %><p class="bill-card__price when-y"><strong><%= __(fmt(c.yearly).replace(/\.00$/, '')) %></strong> <span><%= __("ريال سنوياً") %></span></p><% } %>
+        <%- include('../partials/plan-lines', { s: c.spec }) %>
+        <div class="bill-card__cta">
+          <a class="btn btn--success btn--block when-m" href="/office/billing/checkout?plan=<%= __(c.id) %>&amp;interval=monthly"><%= __(c.current ? __('تجديد شهري') : __('اشتراك شهري')) %></a>
+          <% if (c.yearly > 0) { %><a class="btn btn--success btn--block when-y" href="/office/billing/checkout?plan=<%= __(c.id) %>&amp;interval=yearly"><%= __(c.current ? __('تجديد سنوي') : __('اشتراك سنوي')) %></a><% } %>
+        </div>
+      </li>
+    <% }) %>
+  </ul>
+  <% if (!cards.length) { %><p class="empty-state"><%= __("لا توجد باقات متاحة للشراء الآن.") %></p><% } %>
+</section>
+<% } %>
+
 <section class="card detail-card">
   <h2><%= __("الاستخدام") %></h2>
-  <ul class="usage-list">
-    <% usage.forEach(function (u) { %>
-      <li class="usage">
-        <div class="usage__head"><span><%= __(u.label) %></span>
-          <strong><%= __(u.used) %><%= __(u.limit === null ? __(' (بلا حد)') : __(' من ') + u.limit) %></strong></div>
-        <% if (u.limit !== null) { %><meter class="usage__meter" min="0" max="<%= __(u.limit) %>" value="<%= __(Math.min(u.used, u.limit)) %>" low="<%= __(Math.floor(u.limit * 0.7)) %>" high="<%= __(Math.floor(u.limit * 0.9)) %>" optimum="0"><%= __(u.used) %> / <%= __(u.limit) %></meter><% } %>
+  <ul class="usage-grid">
+    <% usage.forEach(function (u) { const pct = u.limit ? Math.min(100, Math.round(u.used / u.limit * 100)) : 0; const tone = pct >= 90 ? 'danger' : pct >= 70 ? 'warn' : 'ok'; %>
+      <li class="usage-item">
+        <span class="usage-item__label"><%= __(u.label) %></span>
+        <% if (u.limit === null) { %>
+          <strong class="usage-item__value"><%= __(u.used) %> <span><%= __("بلا حد") %></span></strong>
+        <% } else { %>
+          <strong class="usage-item__value"><%= __(u.used) %> <span><%= __("من") %> <%= __(u.limit) %></span></strong>
+          <span class="usage-bar usage-bar--<%= tone %>" role="meter" aria-valuemin="0" aria-valuemax="<%= __(u.limit) %>" aria-valuenow="<%= __(Math.min(u.used, u.limit)) %>"><span class="pct-<%= Math.round(pct / 5) * 5 %>"></span></span>
+        <% } %>
       </li>
     <% }) %>
   </ul>
@@ -49,28 +89,6 @@
   </section>
 <% } %>
 
-<% if (!suspendedByAdmin) { %>
-<section class="card detail-card">
-  <h2><%= __(access.onTrial || access.locked || access.readOnly ? __('اختر باقتك') : __('ترقية أو تجديد')) %></h2>
-  <p class="muted"><%= __("الأسعار قبل ضريبة القيمة المضافة") %> (<%= __(vatPercent) %>%) <%= __("وتظهر في صفحة المراجعة قبل الدفع.") %></p>
-  <% if (!online) { %><p class="flash flash--info"><%= __("الدفع الإلكتروني غير مفعّل. يمكنك الدفع بالحوالة البنكية.") %></p><% } %>
-  <ul class="plan-grid">
-    <% cards.forEach(function (c) { %>
-      <li class="plan-card<%= __(c.current ? ' plan-card--current' : '') %>">
-        <h3><%= __(c.name) %><% if (c.current) { %> <span class="badge badge--bill-success"><%= __("باقتك") %></span><% } %></h3>
-        <p class="plan-card__price"><strong><%= __(fmt(c.monthly)) %></strong> <%= __("ريال / شهر") %></p>
-        <% if (c.yearly > 0) { %><p class="muted"><%= __(fmt(c.yearly)) %> <%= __("ريال / سنة") %></p><% } %>
-        <%- include('../partials/plan-lines', { s: c.spec }) %>
-        <div class="button-row">
-          <a class="btn btn--primary btn--small" href="/office/billing/checkout?plan=<%= __(c.id) %>&amp;interval=monthly"><%= __(c.current ? __('تجديد شهري') : __('اشتراك شهري')) %></a>
-          <% if (c.yearly > 0) { %><a class="btn btn--secondary btn--small" href="/office/billing/checkout?plan=<%= __(c.id) %>&amp;interval=yearly"><%= __(c.current ? __('تجديد سنوي') : __('اشتراك سنوي')) %></a><% } %>
-        </div>
-      </li>
-    <% }) %>
-  </ul>
-  <% if (!cards.length) { %><p class="empty-state"><%= __("لا توجد باقات متاحة للشراء الآن.") %></p><% } %>
-</section>
-<% } %>
 
 <section class="card detail-card">
   <h2><%= __("الفواتير") %></h2>

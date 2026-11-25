@@ -62,6 +62,7 @@ async function planCards(currentPlanId) {
   return list.map((plan) => ({
     spec: officialPricing.planSpec(plan, addon),
     id: Number(plan.id),
+    code: plan.code,
     name: plan.name_ar,
     current: Number(plan.id) === Number(currentPlanId),
     monthly: pricing.planPrice(plan, 'monthly'),

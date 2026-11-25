@@ -127,7 +127,7 @@
         <h2><%= __("ابدأ تجهيز مكتبك") %></h2>
         <p class="muted"><%= __(doneCount) %> <%= __("من") %> <%= __(setupSteps.length) %> <%= __("خطوات مكتملة") %></p>
       </div>
-      <div class="setup__bar" role="progressbar" aria-valuemin="0" aria-valuemax="<%= setupSteps.length %>" aria-valuenow="<%= doneCount %>"><span style="width: <%= Math.round(doneCount / setupSteps.length * 100) %>%"></span></div>
+      <div class="setup__bar" role="progressbar" aria-valuemin="0" aria-valuemax="<%= setupSteps.length %>" aria-valuenow="<%= doneCount %>"><span class="pct-<%= Math.round(doneCount / setupSteps.length * 20) * 5 %>"></span></div>
     </div>
     <ol class="setup__list">
       <% setupSteps.forEach(function (step, i) { %>
