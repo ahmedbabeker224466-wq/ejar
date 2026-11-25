@@ -13,6 +13,7 @@
 
 const engine = require('./contractEngine');
 const { addDays } = require('./contractDates');
+const { arCount } = require('./tr');
 const { scopeToOffice } = require('./scopeToOffice');
 const { officeAccess } = require('./offices');
 const { createNotification } = require('./notifications');
@@ -141,7 +142,7 @@ function messageFor({ kind, audience, n, contract, payment = null, officeName, l
     title = n === 0 ? `دفعة مستحقة اليوم: ${unit}` : `دفعة تستحق ${daysText(n)}: ${unit}`;
     body = `عقد ${unit}${from}: دفعة ${money(payment.amount)} تاريخ استحقاقها ${ltr(payment.due_date)}.`;
   } else if (kind === 'payment_late') {
-    title = `دفعة متأخرة ${n} يوم: ${unit}`;
+    title = `دفعة متأخرة ${arCount(n, 'يوم')}: ${unit}`;
     body = `عقد ${unit}${from}: دفعة ${money(payment.amount)} كان استحقاقها ${ltr(payment.due_date)} ولم تُسجَّل مدفوعة بعد.`;
   } else {
     title = `انتهى العقد: ${unit}`;

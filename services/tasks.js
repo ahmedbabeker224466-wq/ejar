@@ -79,7 +79,7 @@ async function checkRefs(pool, officeId, values) {
 }
 
 const SELECT_TASK = `
-  SELECT t.*, a.name AS assignee_name, a.phone AS assignee_phone, c.name AS creator_name, c.phone AS creator_phone
+  SELECT t.*, a.name AS assignee_name, a.phone AS assignee_phone, a.email AS assignee_email, c.name AS creator_name, c.phone AS creator_phone, c.email AS creator_email
     FROM office_tasks t
     LEFT JOIN users a ON a.id = t.assigned_to
     LEFT JOIN users c ON c.id = t.created_by`;
@@ -91,8 +91,8 @@ function shape(row, today) {
     id: Number(row.id),
     due,
     statusLabel: STATUSES[row.status],
-    assigneeLabel: row.assigned_to ? team.displayName({ name: row.assignee_name, phone: row.assignee_phone }) : null,
-    creatorLabel: row.created_by ? team.displayName({ name: row.creator_name, phone: row.creator_phone }) : null,
+    assigneeLabel: row.assigned_to ? team.displayName({ name: row.assignee_name, phone: row.assignee_phone, email: row.assignee_email }) : null,
+    creatorLabel: row.created_by ? team.displayName({ name: row.creator_name, phone: row.creator_phone, email: row.creator_email }) : null,
     overdue: Boolean(due && row.status !== 'done' && engine.isAfter(today, due)),
     linkLabel: row.entity_type ? LINK_TYPES[row.entity_type] : null,
     linkUrl: row.entity_type ? LINK_URLS[row.entity_type](row.entity_id) : null,
@@ -187,7 +187,7 @@ async function moveTask(pool, officeId, { id, status, actorId, ip }) {
 
 async function commentsFor(pool, officeId, taskId) {
   const rows = await scopeToOffice(pool, officeId).query(
-    `SELECT n.id, n.body, n.created_at, u.name, u.phone FROM internal_notes n LEFT JOIN users u ON u.id = n.author_id
+    `SELECT n.id, n.body, n.created_at, u.name, u.phone, u.email FROM internal_notes n LEFT JOIN users u ON u.id = n.author_id
       WHERE n.entity_type = 'task' AND n.entity_id = ? AND n.office_id = :office_id ORDER BY n.id`,
     [taskId],
   );

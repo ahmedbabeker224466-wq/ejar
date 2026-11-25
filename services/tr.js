@@ -60,10 +60,35 @@ function translate(lang, text, vars) {
   return translateRaw(lang, text, vars);
 }
 
+// Arabic counted nouns after a number ("7 يوم" -> "7 أيام", "67 يوم" -> "67 يوماً").
+const COUNTED = {
+  'يوم': { one: 'يوم واحد', two: 'يومان', few: 'أيام', many: 'يوماً' },
+  'دفعة': { one: 'دفعة واحدة', two: 'دفعتان', few: 'دفعات', many: 'دفعة' },
+  'عقد': { one: 'عقد واحد', two: 'عقدان', few: 'عقود', many: 'عقداً' },
+};
+const COUNTED_RE = /(^|[^\d.,\-/])(\d+) (يوم|دفعة|عقد)(?=$|[\s.،:؛)]|<)/g;
+
+/** The Arabic phrase for n of a counted noun: 1 يوم واحد, 2 يومان, 3-10 أيام, 11-99 يوماً, 100 يوم. */
+function arCount(n, noun) {
+  const forms = COUNTED[noun];
+  const num = Number(n);
+  if (!forms || !Number.isInteger(num) || num < 0) return `${n} ${noun}`;
+  if (num === 1) return forms.one;
+  if (num === 2) return forms.two;
+  const r = num % 100;
+  if (r >= 3 && r <= 10) return `${num} ${forms.few}`;
+  if (r >= 11) return `${num} ${forms.many}`;
+  return `${num} ${noun}`;
+}
+
+function fixCounts(text) {
+  return typeof text === 'string' ? text.replace(COUNTED_RE, (m, pre, n, noun) => pre + arCount(n, noun)) : text;
+}
+
 function translateRaw(lang, text, vars) {
   if (text === null || text === undefined) return text;
   if (typeof text !== 'string') return text;
-  if (lang !== 'en' || !ARABIC.test(text)) return fill(text, vars);
+  if (lang !== 'en' || !ARABIC.test(text)) return lang === 'en' ? fill(text, vars) : fixCounts(fill(text, vars));
   // A multi-line text (an email or a notification body): line by line.
   if (/\n/.test(text.trim())) return text.split('\n').map((line) => translateRaw(lang, line, vars)).join('\n');
   const lead = text.match(/^\s*/)[0];
@@ -99,4 +124,4 @@ function langOf(value) {
 
 load();
 
-module.exports = { translate, load, langOf, LANGS, FILE };
+module.exports = { arCount, fixCounts, translate, load, langOf, LANGS, FILE };

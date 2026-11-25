@@ -20,4 +20,4 @@
     <tfoot><tr><td></td><td><%= __("الإجمالي") %><div class="ac-only-m"><%= __("له") %> <span class="ac-num"><%= __(fmt(s.credits)) %></span> · <%= __("عليه") %> <span class="ac-num"><%= __(fmt(s.debits)) %></span></div></td><td class="ac-amount ac-num ac-col-cd"><%= __(fmt(s.credits)) %></td><td class="ac-amount ac-num ac-col-cd"><%= __(fmt(s.debits)) %></td></tr></tfoot>
   </table></div>
 <% } %>
-<p class="muted ac-note"><%= __("التحويلات إلى المالك من ضمن «عليه». المبالغ بالريال السعودي، وتُحسب عمولة المكتب بنسبة") %> <%= __(s.percent) %>% <%= __("من الإيجار المحصّل.") %></p>
+<p class="muted ac-note"><% if (s.lines.length) { %><%= __("ما حُوّل إلى المالك يظهر في عمود «عليه».") %> <% } %><%= __(`المبالغ بالريال السعودي، وعمولة المكتب ${s.percent}% من الإيجار المحصّل.`) %></p>

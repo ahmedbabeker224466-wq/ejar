@@ -644,7 +644,7 @@ test('dashboard numbers, needs-action board, checklist, landlord and unit pages'
   const board = home.text.slice(home.text.indexOf('class="board"'), home.text.indexOf('عرض كل العقود التي تحتاج إجراء'));
   assert.ok(board.includes(`/office/contracts/${urgentId}`));
   assert.ok(!board.includes(`/office/contracts/${calmId}`), 'calm contracts are not on the board');
-  assert.match(board, /باقي 3 يوم على موعد القرار/);
+  assert.match(board, /باقي 3 أيام على موعد القرار/);
   assert.match(board, /badge--stage-urgent/);
 
   const action = await http.request('/office/contracts?stage=action', { cookie: o.cookie });

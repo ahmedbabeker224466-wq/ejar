@@ -93,7 +93,7 @@ const IMAGE_ERRORS = {
 
 const SELECT_REQUEST = `
   SELECT r.*, u.label AS unit_label, u.landlord_id, u.city AS unit_city, b.name AS building_name,
-         a.name AS assignee_name, a.phone AS assignee_phone,
+         a.name AS assignee_name, a.phone AS assignee_phone, a.email AS assignee_email,
          (SELECT COUNT(*) FROM maintenance_photos ph WHERE ph.request_id = r.id) AS photo_count
     FROM maintenance_requests r
     LEFT JOIN units u ON u.id = r.unit_id AND u.office_id = :office_id
@@ -109,7 +109,7 @@ function shape(row) {
     priorityLabel: PRIORITIES[row.priority],
     statusLabel: STATUSES[row.status],
     isOpen: OPEN.includes(row.status),
-    assigneeLabel: row.assigned_to ? team.displayName({ name: row.assignee_name, phone: row.assignee_phone }) : null,
+    assigneeLabel: row.assigned_to ? team.displayName({ name: row.assignee_name, phone: row.assignee_phone, email: row.assignee_email }) : null,
   };
 }
 
@@ -142,7 +142,7 @@ async function requestForViewer(pool, viewer, id) {
 async function messagesFor(pool, officeId, requestId, kind) {
   const visible = kind === 'office' ? ['public', 'landlord', 'internal'] : kind === 'landlord' ? ['public', 'landlord'] : ['public'];
   const rows = await scopeToOffice(pool, officeId).query(
-    `SELECT m.id, m.sender_role, m.visibility, m.body, m.created_at, u.name, u.phone, m.sender_id
+    `SELECT m.id, m.sender_role, m.visibility, m.body, m.created_at, u.name, u.phone, u.email, m.sender_id
        FROM maintenance_messages m LEFT JOIN users u ON u.id = m.sender_id
       WHERE m.request_id = ? AND m.visibility IN (?) AND m.request_id IN (SELECT id FROM maintenance_requests WHERE office_id = :office_id)
       ORDER BY m.id`,

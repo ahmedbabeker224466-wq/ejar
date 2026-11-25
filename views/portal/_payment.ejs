@@ -3,3 +3,6 @@
   <strong><%= __(Number(p.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })) %> <%= __("ريال") %></strong>
   <span class="badge badge--pay-<%= __(p.shownStatus) %>"><%= __(paymentLabels[p.shownStatus]) %></span>
 </div>
+<% var paidPart = Number(p.paid_amount || 0); if (paidPart > 0 && p.shownStatus !== 'paid' && paidPart < Number(p.amount)) { %>
+  <p class="payment__partial muted"><%= __(`دُفع منها ${paidPart.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ريال، والمتبقي ${(Math.round((Number(p.amount) - paidPart) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ريال.`) %></p>
+<% } %>

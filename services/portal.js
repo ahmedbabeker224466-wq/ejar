@@ -42,7 +42,7 @@ async function paymentsByContract(scoped, contractIds, today) {
   const byContract = new Map(contractIds.map((id) => [Number(id), []]));
   if (!contractIds.length) return byContract;
   const rows = await scoped.query(
-    `SELECT id, contract_id, due_date, amount, currency, status, paid_at, reported_at FROM contract_payments
+    `SELECT id, contract_id, due_date, amount, paid_amount, currency, status, paid_at, reported_at FROM contract_payments
       WHERE contract_id IN (?) AND office_id = :office_id ORDER BY due_date, id`,
     [contractIds],
   );

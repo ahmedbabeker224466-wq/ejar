@@ -91,24 +91,34 @@
   </div>
   <p class="muted"><%= __("آخر 7 أيام، عبر البريد وواتساب وتيليجرام. التذكيرات تظهر دائماً داخل الموقع.") %></p>
   <% if (sent.latest.length) { %>
-    <ul class="item-list">
+    <% var chName = { email: __('بريد'), whatsapp: __('واتساب'), telegram: __('تيليجرام') };
+       var seen = {}; var problems = [];
+       sent.latest.forEach(function (n) { n.deliveries.forEach(function (d) {
+         if (!d.reason || d.kind === 'sent') return;
+         var key = d.channel + '|' + d.kind + '|' + d.reason;
+         if (!seen[key]) { seen[key] = true; problems.push(d); }
+       }); }); %>
+    <% if (problems.length) { %>
+      <div class="delivery-why">
+        <ul class="delivery-reasons">
+          <% problems.forEach(function (d) { %>
+            <li class="delivery-reason delivery-reason--<%= d.kind %>"><strong><%= chName[d.channel] %>:</strong> <%= __({ not_configured: __('لم يُرسل لأن القناة غير مضبوطة'), failed: __('فشل الإرسال'), pending: __('بالانتظار') }[d.kind]) %>. <%= __(d.reason) %></li>
+          <% }) %>
+        </ul>
+        <a class="btn btn--secondary btn--small" href="<%= can('settings.office') ? '/office/settings/reminders' : '/settings/notifications' %>"><%= __("راجع إعدادات القنوات") %></a>
+      </div>
+    <% } %>
+    <ul class="sent-list">
       <% sent.latest.forEach(function (n) { %>
-        <li class="item">
-          <p class="item__title"><%= __(n.title) %></p>
-          <p class="item__meta"><%= __(kindLabels[n.kind] || '') %> · <span dir="ltr"><%= __(riyadhTime(n.created_at)) %></span></p>
+        <li class="sent-row">
+          <div class="sent-row__main">
+            <span class="sent-row__title"><%= __(n.title) %></span>
+            <span class="sent-row__meta"><%= __(kindLabels[n.kind] || '') %> · <span dir="ltr"><%= __(riyadhTime(n.created_at)) %></span></span>
+          </div>
           <% if (n.deliveries.length) { %>
-            <div class="delivery-dots">
-              <% n.deliveries.forEach(function (d) { %><span class="badge badge--delivery-<%= __(d.status) %>"><%= __({ email: __('بريد'), whatsapp: __('واتساب'), telegram: __('تيليجرام') }[d.channel]) %>: <%= __({ sent: __('أُرسل'), failed: __('فشل'), skipped: __('لم يُرسل'), pending: __('بالانتظار') }[d.status]) %></span><% }) %>
-            </div>
-            <% const problems = n.deliveries.filter(function (d) { return d.reason && d.kind !== 'sent'; }); %>
-            <% if (problems.length) { %>
-              <ul class="delivery-reasons">
-                <% problems.forEach(function (d) { %>
-                  <li class="delivery-reason delivery-reason--<%= __(d.kind) %>"><strong><%= __({ email: __('بريد'), whatsapp: __('واتساب'), telegram: __('تيليجرام') }[d.channel]) %>:</strong> <%= __({ not_configured: __('لم يُرسل لأن القناة غير مضبوطة'), failed: __('فشل الإرسال'), pending: __('بالانتظار') }[d.kind]) %>. <%= __(d.reason) %></li>
-                <% }) %>
-              </ul>
-              <p class="item__meta"><a class="btn btn--secondary btn--small" href="<%= __(can('settings.office') ? '/office/settings/reminders' : '/settings/notifications') %>"><%= __("راجع إعدادات القنوات") %></a></p>
-            <% } %>
+            <span class="sent-row__channels">
+              <% n.deliveries.forEach(function (d) { %><span class="ch ch--<%= d.status %>" title="<%= __({ sent: __('أُرسل'), failed: __('فشل'), skipped: __('لم يُرسل'), pending: __('بالانتظار') }[d.status]) %>"><%= chName[d.channel] %></span><% }) %>
+            </span>
           <% } %>
         </li>
       <% }) %>

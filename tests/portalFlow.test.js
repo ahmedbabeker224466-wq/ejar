@@ -9,6 +9,7 @@ if (process.env.TEST_DB_NAME) process.env.DB_NAME = process.env.TEST_DB_NAME;
 
 const { retryOnDeadlock } = require('../services/transaction');
 const test = require('node:test');
+const { arCount } = require('../services/tr');
 const assert = require('node:assert/strict');
 const { createOfficeHttp } = require('./helpers/officeHttp');
 
@@ -223,7 +224,7 @@ test('landlord joins with a code (normalized input) and sees their dashboard wit
   const [[c]] = await db.pool.query('SELECT end_date FROM contracts WHERE id = ?', [contractId]);
   assert.ok(page.text.includes(engine.noticeDeadline(c.end_date)), 'decision deadline = end - 60 from the engine');
   assert.ok(page.text.includes(engine.rentChangeDeadline(c.end_date)), 'rent change deadline = end - 90 from the engine');
-  assert.ok(page.text.includes(`باقي ${engine.daysUntil(TODAY, c.end_date)} يوم`), 'days left from the engine');
+  assert.ok(page.text.includes(`باقي ${arCount(engine.daysUntil(TODAY, c.end_date), 'يوم')}`), 'days left from the engine');
   assert.match(page.text, /تقريبي/);
   assert.doesNotMatch(page.text, new RegExp(DISCLAIMER));
   assert.doesNotMatch(page.text, /الإيجار مجمّد في الرياض/, 'no freeze outside Riyadh');
@@ -260,7 +261,7 @@ test('tenant joins with the contract code and sees dates, countdown, decision de
   assert.equal(page.status, 200);
   const [[c]] = await db.pool.query('SELECT start_date, end_date FROM contracts WHERE id = ?', [contractId]);
   assert.ok(page.text.includes(c.start_date) && page.text.includes(c.end_date));
-  assert.ok(page.text.includes(`باقي ${engine.daysUntil(TODAY, c.end_date)} يوم على نهاية العقد`));
+  assert.ok(page.text.includes(`باقي ${arCount(engine.daysUntil(TODAY, c.end_date), 'يوم')} على نهاية العقد`));
   assert.ok(page.text.includes(engine.noticeDeadline(c.end_date)));
   assert.ok(page.text.includes(`${engine.formatHijri(c.end_date)} تقريبي`));
   assert.match(page.text, /36,000\.00 ريال/);
@@ -556,9 +557,9 @@ test('landlord needs-action list: undecided near deadlines and reported payments
   const first = page.text.indexOf(`/landlord/contracts/${urgent}"`);
   const second = page.text.indexOf(`/landlord/contracts/${soon}"`);
   assert.ok(first > 0 && second > first, 'urgent before soon');
-  assert.ok(page.text.includes(`باقي ${engine.daysUntil(TODAY, engine.noticeDeadline(endUrgent))} يوم على آخر موعد لقرار التجديد`));
+  assert.ok(page.text.includes(`باقي ${arCount(engine.daysUntil(TODAY, engine.noticeDeadline(endUrgent)), 'يوم')} على آخر موعد لقرار التجديد`));
 
-  assert.match(page.text, /متأخرة منذ \d+ يوم/, 'late installments are listed too');
+  assert.match(page.text, /متأخرة منذ (\d+ (يوم|أيام|يوماً)|يوم واحد|يومان)/, 'late installments are listed too');
 
   // Once paid and decided, the contract leaves the list.
   await db.pool.query("UPDATE contract_payments SET status = 'paid', paid_at = UTC_TIMESTAMP() WHERE contract_id IN (?)", [[urgent, soon]]);

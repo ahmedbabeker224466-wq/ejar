@@ -9,15 +9,22 @@ const { toLocal, maskPhone } = require('../utils/phone');
 
 const ROLE_LABELS = { office_owner: 'مالك المكتب', office_manager: 'مدير', office_staff: 'موظف' };
 
-/** The name a person shows under: their profile name, else their masked phone. */
+/** An email shown only in part: "amr…@gmail.com". */
+function maskEmail(email) {
+  const [local, domain] = String(email || '').split('@');
+  if (!local || !domain) return '';
+  return `${local.slice(0, Math.min(3, local.length))}…@${domain}`;
+}
+
+/** The name a person shows under: their profile name, else their masked phone, else their masked email. */
 function displayName(row) {
-  return (row.name && String(row.name).trim()) || maskPhone(row.phone) || toLocal(row.phone);
+  return (row.name && String(row.name).trim()) || (row.phone ? maskPhone(row.phone) : '') || maskEmail(row.email) || 'عضو الفريق';
 }
 
 /** Members of the office (active first), with display names. */
 async function listMembers(pool, officeId, { activeOnly = false } = {}) {
   const rows = await scopeToOffice(pool, officeId).query(
-    `SELECT m.id AS member_id, m.user_id, m.role, m.is_active, m.joined_at, u.name, u.phone
+    `SELECT m.id AS member_id, m.user_id, m.role, m.is_active, m.joined_at, u.name, u.phone, u.email
        FROM office_members m JOIN users u ON u.id = m.user_id
       WHERE m.office_id = :office_id${activeOnly ? ' AND m.is_active = 1' : ''}
       ORDER BY m.is_active DESC, FIELD(m.role, 'office_owner', 'office_manager', 'office_staff'), m.id`,
@@ -25,7 +32,7 @@ async function listMembers(pool, officeId, { activeOnly = false } = {}) {
   return rows.map((r) => ({ ...r, user_id: Number(r.user_id), is_active: Boolean(Number(r.is_active)), display: displayName(r), roleLabel: ROLE_LABELS[r.role] }));
 }
 
-module.exports = { ROLE_LABELS, displayName, listMembers };
+module.exports = { ROLE_LABELS, displayName, maskEmail, listMembers };
 
 // ------------------------------------------------------------ staff management
 

@@ -55,7 +55,7 @@
   <% if (rows.length === 0) { %>
     <section class="card empty-card"><p class="lead"><%= __("لا توجد عقود تطابق البحث.") %></p><a href="/office/contracts" class="btn btn--secondary"><%= __("عرض كل العقود") %></a></section>
   <% } else { %>
-    <p class="muted"><%= __(total) %> <%= __("عقد") %></p>
+    <p class="muted"><%= __(`${total} عقد`) %></p>
     <ul class="item-list">
       <% rows.forEach(function (c) { %>
         <li class="card item">

@@ -29,3 +29,16 @@ test('every English value keeps the placeholders of its Arabic key', () => {
     assert.equal(got, want, ar);
   }
 });
+
+test('Arabic counted nouns follow the number', () => {
+  const { arCount, translate } = require('../services/tr');
+  assert.equal(arCount(1, 'يوم'), 'يوم واحد');
+  assert.equal(arCount(2, 'يوم'), 'يومان');
+  assert.equal(arCount(7, 'يوم'), '7 أيام');
+  assert.equal(arCount(67, 'يوم'), '67 يوماً');
+  assert.equal(arCount(100, 'يوم'), '100 يوم');
+  assert.equal(arCount(208, 'يوم'), '208 أيام');
+  assert.equal(translate('ar', '4 دفعة، المجموع'), '4 دفعات، المجموع');
+  assert.equal(translate('ar', 'دفعة 1 · 2026-02-01'), 'دفعة 1 · 2026-02-01');
+  assert.equal(translate('en', 'باقي 7 يوم'), '7 days left');
+});

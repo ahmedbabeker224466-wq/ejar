@@ -33,7 +33,7 @@
   <% if (exp.data.length === 0) { %><p class="empty-state"><%= __("لا توجد عقود تنتهي خلال 90 يوماً.") %></p><% } else { %>
     <ul class="item-list">
       <% exp.data.forEach(function (r) { %>
-        <li class="item"><div class="item__title"><a href="/office/contracts/<%= __(r.id) %>"><%= __(r.unit || __('وحدة')) %></a> <span class="badge badge--stage-<%= __(r.bucket === 30 ? 'urgent' : r.bucket === 60 ? 'soon' : 'calm') %>"><%= __("باقي") %> <%= __(r.days) %> <%= __("يوم") %></span></div><p class="item__meta"><%= __("المالك:") %> <%= __(r.landlord || '—') %> · <%= __("النهاية") %> <span dir="ltr"><%= __(r.end) %></span></p></li>
+        <li class="item"><div class="item__title"><a href="/office/contracts/<%= __(r.id) %>"><%= __(r.unit || __('وحدة')) %></a> <span class="badge badge--stage-<%= __(r.bucket === 30 ? 'urgent' : r.bucket === 60 ? 'soon' : 'calm') %>"><%= __(`باقي ${r.days} يوم`) %></span></div><p class="item__meta"><%= __("المالك:") %> <%= __(r.landlord || '—') %> · <%= __("النهاية") %> <span dir="ltr"><%= __(r.end) %></span></p></li>
       <% }) %>
     </ul>
   <% } %>
@@ -47,7 +47,7 @@
     <p class="lead"><strong><%= __(od.totals.count) %></strong> <%= __("دفعة متأخرة، المتبقي") %> <strong><%= __(fmt(od.totals.remaining)) %></strong> <%= __("ريال.") %></p>
     <div class="table-wrap"><table class="table">
       <thead><tr><th><%= __("الوحدة") %></th><th><%= __("الاستحقاق") %></th><th><%= __("التأخر") %></th><th><%= __("المتبقي") %></th></tr></thead>
-      <tbody><% od.data.slice(0, 20).forEach(function (r) { %><tr><td><%= __(r.unit_label || '—') %></td><td dir="ltr"><%= __(String(r.due_date).slice(0, 10)) %></td><td><%= __(r.daysOverdue) %> <%= __("يوم") %></td><td><%= __(fmt(r.remainingHalalas)) %></td></tr><% }) %></tbody>
+      <tbody><% od.data.slice(0, 20).forEach(function (r) { %><tr><td><%= __(r.unit_label || '—') %></td><td dir="ltr"><%= __(String(r.due_date).slice(0, 10)) %></td><td><%= __(`${r.daysOverdue} يوم`) %></td><td><%= __(fmt(r.remainingHalalas)) %></td></tr><% }) %></tbody>
     </table></div>
     <% if (od.data.length > 20) { %><p class="muted"><%= __("عرضنا أول 20.") %> <a href="/office/payments"><%= __("كل المتأخرات") %></a> <%= __("أو صدّر الملف.") %></p><% } %>
   <% } %>

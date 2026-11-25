@@ -20,7 +20,7 @@
       <label for="days"><%= __("تأخر لا يقل عن") %></label>
       <select id="days" name="days" class="select">
         <option value=""><%= __("أي مدة") %></option>
-        <% buckets.forEach(function (d) { %><option value="<%= __(d) %>" <%= __(filters.minDays === d ? 'selected' : '') %>><%= __(d) %> <%= __("يوم") %></option><% }) %>
+        <% buckets.forEach(function (d) { %><option value="<%= __(d) %>" <%= __(filters.minDays === d ? 'selected' : '') %>><%= __(`${d} يوم`) %></option><% }) %>
       </select>
     </div>
     <div class="field">
@@ -51,7 +51,7 @@
       <li class="item">
         <div class="item__title">
           <a href="/office/contracts/<%= __(r.contract_id) %>#payments"><%= __(r.unit_label || __('وحدة')) %></a>
-          <span class="badge badge--pay-late"><%= __("متأخرة") %> <%= __(r.daysOverdue) %> <%= __("يوم") %></span>
+          <span class="badge badge--pay-late"><%= __(`متأخرة ${r.daysOverdue} يوم`) %></span>
           <% if (r.status === 'tenant_reported') { %><span class="badge badge--pay-tenant_reported"><%= __("أبلغ المستأجر بالدفع") %></span><% } %>
         </div>
         <p class="item__meta"><%= __("المالك:") %> <%= __(r.landlord_label || '—') %> · <%= __("الاستحقاق") %> <span dir="ltr"><%= __(String(r.due_date).slice(0, 10)) %></span></p>

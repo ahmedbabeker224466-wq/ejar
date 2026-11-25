@@ -2,8 +2,8 @@
 <% if (locals.currentArea) { %>
   <nav class="area-links" aria-label="<%= __("صفحات") %> <%= __(currentArea === 'landlord' ? __('المالك') : __('المستأجر')) %>">
     <% const items = currentArea === 'landlord'
-      ? [['/landlord', __('الرئيسية')], ['/landlord/maintenance', __('الصيانة')], ['/landlord/messages', __('الرسائل')], ['/landlord/statement', __('كشف الحساب')], ['/landlord/account', __('حسابي الشهري')]]
-      : [['/tenant', __('الرئيسية')], ['/tenant/maintenance', __('الصيانة')], ['/tenant/messages', __('الرسائل')]]; %>
+      ? [['/landlord', __('الرئيسية')], ['/landlord/maintenance', __('الصيانة')], ['/landlord/messages', __('الرسائل')], ['/landlord/statement', __('كشف الحساب')], ['/landlord/account', __('حسابي الشهري')], ['/landlord/review', __('تقييم المكتب')]]
+      : [['/tenant', __('الرئيسية')], ['/tenant/maintenance', __('الصيانة')], ['/tenant/messages', __('الرسائل')], ['/tenant/review', __('تقييم المكتب')]]; %>
     <% items.forEach(function (item) { const here = item[0] === '/' + currentArea ? currentPath === item[0] : (currentPath === item[0] || currentPath.indexOf(item[0] + '/') === 0); %>
       <a href="<%= __(item[0]) %>" class="area-links__item<%= __(here ? ' is-current' : '') %>" <%- here ? 'aria-current="page"' : '' %>><%= __(item[1]) %></a>
     <% }) %>

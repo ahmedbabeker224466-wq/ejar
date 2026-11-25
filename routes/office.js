@@ -190,7 +190,7 @@ const SETUP_STEPS = [
   { label: 'أضف أول مالك', hint: 'لقب المالك ومدينته وجواله، ويدخل لوحته برمز دعوة.', href: '/office/landlords/new', capability: 'landlords', done: (c) => c.landlordsTotal > 0 },
   { label: 'أضف أول عقار أو وحدة', hint: 'المبنى ووحداته، أو وحدة مستقلة.', href: '/office/units/new', capability: 'units', done: (c) => c.units.total + c.units.buildings > 0 },
   { label: 'أضف أول عقد', hint: 'ارفع ملف العقد من إيجار وتُقرأ التواريخ والمبالغ تلقائياً.', href: '/office/contracts/new', capability: 'contracts', done: (c) => c.contractsTotal > 0 },
-  { label: 'ادعُ أحد أعضاء فريقك', hint: 'مدير أو موظف برقم جواله.', href: '/office/team', capability: 'team', done: (c) => c.membersTotal > 1 },
+  { label: 'ادعُ أحد أعضاء فريقك', hint: 'مدير أو موظف بجواله أو بريده.', href: '/office/team', capability: 'team', done: (c) => c.membersTotal > 1 },
   { label: 'فعّل قناة للتذكيرات', hint: 'تيليجرام أو واتساب ليصل التذكير خارج الموقع.', href: '/office/settings/reminders', capability: 'settings.office', done: (c) => c.channelsTotal > 0 },
 ];
 

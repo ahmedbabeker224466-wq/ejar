@@ -63,7 +63,7 @@
         </div>
       <% } else if (access.readOnly) { %>
         <div class="office-banner office-banner--danger" role="alert">
-          <%= __("انتهى اشتراك المكتب: الحساب في وضع القراءة فقط وسيتوقف بعد") %> <%= __(access.graceDaysLeft) %> <%= __("يوم.") %>
+          <%= __(`انتهى اشتراك المكتب: الحساب في وضع القراءة فقط وسيتوقف بعد ${access.graceDaysLeft} يوم.`) %>
           <% if (can('billing')) { %><a href="/office/billing"><%= __("جدّد الاشتراك") %></a><% } %>
         </div>
       <% } else if (access.pastDue) { %>

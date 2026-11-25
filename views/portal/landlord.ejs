@@ -19,7 +19,7 @@
               <p class="muted board__days"><%= __("دفعة") %> <span dir="ltr"><%= __(a.payment.due_date) %></span>: <%= __("أكّد الاستلام أو ارفضه") %></p>
             <% } else { %>
               <span class="badge badge--pay-late"><%= __(paymentLabels.late) %></span>
-              <p class="muted board__days"><%= __("دفعة") %> <span dir="ltr"><%= __(a.payment.due_date) %></span> <%= __("متأخرة منذ") %> <%= __(-a.days) %> <%= __("يوم") %></p>
+              <p class="muted board__days"><%= __("دفعة") %> <span dir="ltr"><%= __(a.payment.due_date) %></span> <%= __(`متأخرة منذ ${-a.days} يوم`) %></p>
             <% } %>
             <p class="muted"><%= __("المكتب:") %> <%= __(a.office.office_name) %></p>
           </div>
