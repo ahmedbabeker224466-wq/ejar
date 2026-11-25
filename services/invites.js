@@ -73,7 +73,7 @@ async function createLandlordInvite(scoped, { landlordId, createdBy, ip = null, 
  * Inserts one invite row with a fresh code. The UNIQUE key on invites.code is
  * the collision check: a duplicate is retried with a new code.
  */
-async function insertInvite(scoped, { kind, landlordId = null, contractId = null, roleHint = null, phone = null, createdBy, ip, now, generate, revoked }) {
+async function insertInvite(scoped, { kind, landlordId = null, contractId = null, roleHint = null, phone = null, email = null, createdBy, ip, now, generate, revoked }) {
   const expiresAt = inviteExpiresAt(now);
   for (let attempt = 1; attempt <= MAX_CODE_ATTEMPTS; attempt += 1) {
     const code = generate();
@@ -85,6 +85,7 @@ async function insertInvite(scoped, { kind, landlordId = null, contractId = null
         contract_id: contractId,
         role_hint: roleHint,
         phone,
+        email,
         created_by: createdBy,
         expires_at: expiresAt,
       });
@@ -128,20 +129,21 @@ async function createTenantInvite(scoped, { contractId, createdBy, ip = null, no
  * staff invite in this office. `scoped` is scopeToOffice() on a connection
  * inside a transaction. The code works only for that phone.
  */
-async function createStaffInvite(scoped, { phone, role, createdBy, ip = null, now = new Date(), generate = generateInviteCode }) {
+async function createStaffInvite(scoped, { phone = null, email = null, role, createdBy, ip = null, now = new Date(), generate = generateInviteCode }) {
+  const column = email ? 'email' : 'phone';
   const revoked = await scoped.query(
     `UPDATE invites SET revoked_at = UTC_TIMESTAMP()
-      WHERE kind = 'staff' AND phone = ? AND used_at IS NULL AND revoked_at IS NULL
+      WHERE kind = 'staff' AND ${column} = ? AND used_at IS NULL AND revoked_at IS NULL
         AND expires_at > UTC_TIMESTAMP() AND office_id = :office_id`,
-    [phone],
+    [email || phone],
   );
-  return insertInvite(scoped, { kind: 'staff', roleHint: role, phone, createdBy, ip, now, generate, revoked: revoked.affectedRows });
+  return insertInvite(scoped, { kind: 'staff', roleHint: role, phone: email ? null : phone, email, createdBy, ip, now, generate, revoked: revoked.affectedRows });
 }
 
 /** The office's active staff invites (unused, unrevoked, unexpired), newest first. */
 async function pendingStaffInvites(scoped) {
   return scoped.query(
-    `SELECT id, code, phone, role_hint, expires_at, created_at FROM invites
+    `SELECT id, code, phone, email, role_hint, expires_at, created_at FROM invites
       WHERE kind = 'staff' AND used_at IS NULL AND revoked_at IS NULL AND expires_at > UTC_TIMESTAMP() AND office_id = :office_id
       ORDER BY id DESC`,
   );

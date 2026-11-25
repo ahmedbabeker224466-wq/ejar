@@ -30,11 +30,12 @@ const DONE = {
   activated: 'تمت إعادة تفعيل العضو.',
 };
 const ERRORS = {
-  invalid_phone: 'اكتب رقم جوال سعودي صحيح يبدأ بـ 05.',
+  invalid_phone: 'اكتب رقم جوال سعودي صحيح يبدأ بـ 05، أو بريداً إلكترونياً.',
+  invalid_email: 'اكتب بريداً إلكترونياً صحيحاً.',
   invalid_role: 'اختر الدور: مدير أو موظف.',
   forbidden: 'ليس لديك صلاحية لهذا الإجراء.',
   already_member: 'هذا الرقم عضو في مكتبك بالفعل. فعّله من القائمة إن كان موقوفاً.',
-  phone_used: 'هذا الرقم مسجل بحساب آخر في ميعاد ولا يمكن إضافته للفريق. استخدم رقماً آخر.',
+  phone_used: 'هذا الرقم أو البريد مسجل بحساب آخر في ميعاد ولا يمكن إضافته للفريق. استخدم غيره.',
   not_found: 'العضو غير موجود.',
 };
 
@@ -61,7 +62,7 @@ async function render(req, res, { status = 200, error = null, values = {} } = {}
     pending: overview.pending.map((i) => ({
       ...i,
       shareLink: invites.inviteShareLink({ code: i.code, officeName: req.office.name, baseUrl: baseUrl(req), phone: i.phone, kind: 'staff' }),
-      phoneLocal: toLocal(i.phone),
+      phoneLocal: i.email || toLocal(i.phone),
     })),
     values: { phone: '', role: 'office_staff', ...values },
     error,
@@ -77,7 +78,7 @@ router.post('/office/team/invite', guard, inviteLimit, wrap(async (req, res) => 
     actor: { id: req.user.id, role: req.memberRole }, phone: req.body.phone, role, ip: req.ip,
   });
   if (!result.ok) {
-    return render(req, res, { status: result.error === 'limit' ? 409 : 422, error: result.message || ERRORS[result.error], values: { phone: String(req.body.phone || '').slice(0, 20), role } });
+    return render(req, res, { status: result.error === 'limit' ? 409 : 422, error: result.message || ERRORS[result.error], values: { phone: String(req.body.phone || '').slice(0, 190), role } });
   }
   return res.redirect('/office/team?done=invited#invites');
 }));

@@ -1301,6 +1301,7 @@ const COLUMN_ADDITIONS = [
   { table: 'blog_posts', column: 'meta_description', definition: 'VARCHAR(300) NULL AFTER meta_title' },
   { table: 'blog_posts', column: 'needs_review', definition: 'TINYINT(1) NOT NULL DEFAULT 0 AFTER meta_description' },
   { table: 'invites', column: 'phone', definition: 'VARCHAR(20) NULL AFTER role_hint' },
+  { table: 'invites', column: 'email', definition: 'VARCHAR(190) NULL AFTER phone' },
   { table: 'maintenance_requests', column: 'assigned_to', definition: 'BIGINT UNSIGNED NULL AFTER priority' },
   { table: 'maintenance_requests', column: 'seen_at', definition: 'DATETIME NULL AFTER assigned_vendor_id' },
   { table: 'maintenance_requests', column: 'seen_by', definition: 'BIGINT UNSIGNED NULL AFTER seen_at' },

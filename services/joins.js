@@ -68,7 +68,7 @@ async function joinWithCode(pool, { userId, code: input, ip = null, now = new Da
   if (!code) return { ok: false, reason: 'invalid' };
   try {
     return await withTransaction(pool, async (conn) => {
-      const [[user]] = await conn.query('SELECT id, role, phone FROM users WHERE id = ? FOR UPDATE', [userId]);
+      const [[user]] = await conn.query('SELECT id, role, phone, email FROM users WHERE id = ? FOR UPDATE', [userId]);
       if (!user) throw new JoinRefused('invalid');
       if (OFFICE_ROLES.has(user.role)) throw new JoinRefused('office_user');
 
@@ -79,8 +79,11 @@ async function joinWithCode(pool, { userId, code: input, ip = null, now = new Da
       const scoped = scopeToOffice(conn, invite.office_id);
 
       if (invite.kind === 'staff') {
-        // A staff code works for one phone, for a person with no role yet, and only while the plan has room.
-        if (!user.phone || user.phone !== invite.phone || user.role !== null || !STAFF_ROLES.has(invite.role_hint)) throw new JoinRefused('invalid');
+        // A staff code works for one phone or email, for a person with no role yet, and only while the plan has room.
+        const sameAddress = invite.email
+          ? Boolean(user.email) && String(user.email).toLowerCase() === String(invite.email).toLowerCase()
+          : Boolean(user.phone) && user.phone === invite.phone;
+        if (!sameAddress || user.role !== null || !STAFF_ROLES.has(invite.role_hint)) throw new JoinRefused('invalid');
         await conn.query('SELECT id FROM offices WHERE id = ? FOR UPDATE', [invite.office_id]);
         const usage = await planLimits.memberUsage(scoped, { lock: true });
         if (!planLimits.checkLimit({ ...usage, adding: 1 }).ok) throw new JoinRefused('member_limit');

@@ -34,6 +34,7 @@ const { createAudit } = require('./audit');
 const invites = require('./invites');
 const planLimits = require('./planLimits');
 const { normalizeSaudi } = require('../utils/phone');
+const { normalizeEmail } = require('./emailAuth');
 
 const ASSIGNABLE = ['office_manager', 'office_staff'];
 
@@ -77,11 +78,14 @@ async function overview(pool, officeId, actor) {
  * 'already_member' | 'phone_used' | 'limit', message? }.
  */
 async function inviteStaff(pool, officeId, { actor, phone: rawPhone, role, ip }) {
-  const phone = normalizeSaudi(rawPhone);
-  if (!phone) return { ok: false, error: 'invalid_phone' };
+  // One field takes a Saudi mobile or an email address; the code works only for that one.
+  const raw = String(rawPhone || '').trim();
+  const email = raw.includes('@') ? normalizeEmail(raw) : null;
+  const phone = email ? null : normalizeSaudi(raw);
+  if (!phone && !email) return { ok: false, error: raw.includes('@') ? 'invalid_email' : 'invalid_phone' };
   if (!ASSIGNABLE.includes(role)) return { ok: false, error: 'invalid_role' };
   if (!canManage(actor.role, role)) return { ok: false, error: 'forbidden' };
-  const [[user]] = await pool.query('SELECT id, role FROM users WHERE phone = ?', [phone]);
+  const [[user]] = await pool.query(`SELECT id, role FROM users WHERE ${email ? 'email' : 'phone'} = ?`, [email || phone]);
   if (user) {
     const [member] = await scopeToOffice(pool, officeId).query('SELECT id FROM office_members WHERE user_id = ? AND office_id = :office_id', [user.id]);
     if (member) return { ok: false, error: 'already_member' };
@@ -92,12 +96,12 @@ async function inviteStaff(pool, officeId, { actor, phone: rawPhone, role, ip })
     const usage = await planLimits.memberUsage(scoped, { lock: true }); // first: see planLimits
     const [{ n }] = await scoped.query(
       `SELECT COUNT(*) AS n FROM invites WHERE kind = 'staff' AND used_at IS NULL AND revoked_at IS NULL AND expires_at > UTC_TIMESTAMP()
-         AND phone <> ? AND office_id = :office_id`,
-      [phone],
+         AND NOT (${email ? 'email' : 'phone'} <=> ?) AND office_id = :office_id`,
+      [email || phone],
     );
     const check = planLimits.checkLimit({ limit: usage.limit, current: usage.current + Number(n), adding: 1 });
     if (!check.ok) return { ok: false, error: 'limit', message: planLimits.memberLimitMessage({ limit: check.limit, current: check.current }) };
-    return invites.createStaffInvite(scoped, { phone, role, createdBy: actor.id, ip });
+    return invites.createStaffInvite(scoped, { phone, email, role, createdBy: actor.id, ip });
   });
 }
 

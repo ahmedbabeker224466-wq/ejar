@@ -38,12 +38,12 @@
 
 <section class="card detail-card" id="invites">
   <h2><%= __("دعوة عضو جديد") %></h2>
-  <p class="muted"><%= __("اكتب رقم جوال الشخص. نعطيك رمزاً يعمل لهذا الرقم فقط؛ يدخل به من صفحة") %> "<%= __("الانضمام برمز") %>" <%= __("بعد تسجيل الدخول.") %></p>
+  <p class="muted"><%= __("اكتب رقم جوال الشخص أو بريده. نعطيك رمزاً يعمل لهذا الرقم أو البريد فقط؛ يدخل به من صفحة") %> "<%= __("الانضمام برمز") %>" <%= __("بعد تسجيل الدخول.") %></p>
   <form method="post" action="/office/team/invite" novalidate>
     <div class="form-grid">
       <div class="field">
-        <label for="phone"><%= __("رقم الجوال") %></label>
-        <input id="phone" name="phone" class="input" type="tel" inputmode="numeric" dir="ltr" maxlength="14" placeholder="05XXXXXXXX" value="<%= __(values.phone) %>" required>
+        <label for="phone"><%= __("رقم الجوال أو البريد الإلكتروني") %></label>
+        <input id="phone" name="phone" class="input" type="text" inputmode="email" autocomplete="off" dir="ltr" maxlength="190" placeholder="05XXXXXXXX / name@example.com" value="<%= values.phone %>" required>
       </div>
       <div class="field">
         <label for="role"><%= __("الدور") %></label>

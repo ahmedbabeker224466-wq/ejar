@@ -452,3 +452,24 @@ test('task due-tomorrow reminder: once per task and person, idempotent, catch-up
   const none = await reminders.computeDueReminders({ pool: db.pool, today: dayAfter, lastRun: tomorrow, now: new Date(), officeId: o.office.id });
   assert.equal(none.created, 0);
 });
+
+test('a staff invite by email works only for that email', { skip }, async () => {
+  const o = await fx.office(70, 'تجربة-فريق-بريد');
+  const email = `tt-staff-${Date.now()}@aqdi-test.example`;
+  const res = await http.request('/office/team/invite', { method: 'POST', cookie: o.cookie, form: { phone: `  ${email.toUpperCase()} `, role: 'office_staff' } });
+  assert.equal(res.status, 302);
+  const [[row]] = await db.pool.query("SELECT code, phone, email FROM invites WHERE kind = 'staff' AND email = ? AND office_id = ?", [email, o.office.id]);
+  assert.equal(row.phone, null);
+  assert.equal((await http.request('/office/team/invite', { method: 'POST', cookie: o.cookie, form: { phone: 'not-an@email', role: 'office_staff' } })).status, 422);
+
+  // Another person (other phone, no such email) cannot use the code.
+  const stranger = await fx.person(73);
+  assert.notEqual((await join(stranger.cookie, row.code)).location, '/office');
+  // The person with that email can.
+  const p = await fx.person(74);
+  await db.pool.query('UPDATE users SET email = ? WHERE phone = ?', [email, phone(74)]);
+  const ok = await join(p.cookie, row.code);
+  assert.equal(ok.location, '/office', ok.status + ' ' + ok.text.slice(ok.text.indexOf('flash'), ok.text.indexOf('flash') + 200));
+  assert.equal((await memberOf(72)).role, 'office_staff');
+  await db.pool.query('UPDATE users SET email = NULL WHERE phone = ?', [phone(74)]);
+});

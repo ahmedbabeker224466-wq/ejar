@@ -3131,5 +3131,9 @@
  "دومة الجندل": "Dumat Al Jandal",
  "طبرجل": "Tabarjal",
  "أُخفيت إعلانات بلا رخصة إعلان": "Listings without an ad licence were hidden",
- "أُخفي {0} من إعلاناتك لأنها بلا رقم رخصة إعلان. أضف رقم الرخصة في كل إعلان ثم انشره من جديد.": "{0} of your listings were hidden because they have no ad licence number. Add the licence number to each listing, then publish it again."
+ "أُخفي {0} من إعلاناتك لأنها بلا رقم رخصة إعلان. أضف رقم الرخصة في كل إعلان ثم انشره من جديد.": "{0} of your listings were hidden because they have no ad licence number. Add the licence number to each listing, then publish it again.",
+ "اكتب رقم جوال سعودي صحيح يبدأ بـ 05، أو بريداً إلكترونياً.": "Enter a valid Saudi mobile number starting with 05, or an email address.",
+ "هذا الرقم أو البريد مسجل بحساب آخر في ميعاد ولا يمكن إضافته للفريق. استخدم غيره.": "This number or email is registered to another Mi3aad account and cannot be added to the team. Use another one.",
+ "اكتب رقم جوال الشخص أو بريده. نعطيك رمزاً يعمل لهذا الرقم أو البريد فقط؛ يدخل به من صفحة": "Enter the person’s mobile number or email. We give you a code that works only for that number or email; they use it from the page",
+ "رقم الجوال أو البريد الإلكتروني": "Mobile number or email"
 }
