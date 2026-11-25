@@ -73,6 +73,7 @@ async function renderOffice(req, res, office) {
     fmt: money.formatHalalas,
     icon: require('../services/listingIcons').icon,
     types: require('../services/listings').TYPE_LABELS,
+    displayTitle: require('../services/listings').displayTitle,
   });
 }
 

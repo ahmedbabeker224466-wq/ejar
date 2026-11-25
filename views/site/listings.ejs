@@ -49,7 +49,7 @@
 <p class="results-count"><strong><%= __(total) %></strong> <%= __("إعلان متاح للإيجار السنوي") %></p>
 <ul class="lgrid">
   <% rows.forEach(function (l) { %>
-    <%- include('_listing-card', { l, fmt, icon, types }) %>
+    <%- include('_listing-card', { l, fmt, icon, types, displayTitle }) %>
   <% }) %>
 </ul>
 <% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد إعلانات مطابقة الآن.") %></p><% } %>

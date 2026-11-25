@@ -27,7 +27,7 @@ const reportIp = hourly('report-ip', rules.REPORT_PER_IP_PER_HOUR, (req) => req.
 
 const { icon } = require('../services/listingIcons');
 
-const common = { types: listings.TYPE_LABELS, featureLabels: listings.FEATURES, fmt: money.formatHalalas, reasons: inquiries.REPORT_REASONS, icon };
+const common = { displayTitle: listings.displayTitle, types: listings.TYPE_LABELS, featureLabels: listings.FEATURES, fmt: money.formatHalalas, reasons: inquiries.REPORT_REASONS, icon };
 
 // ------------------------------------------------------------ search
 
@@ -96,7 +96,7 @@ async function renderListing(req, res, found, { values = {}, errors = {}, status
   const similar = await listings.similarPublic(db.pool, listing, { officeId: req.customOffice ? req.customOffice.id : null });
   return res.status(status).render('site/listing', {
     ...common,
-    title: listing.title,
+    title: listings.displayTitle(listing, req.lang, res.locals.__),
     listing,
     photos,
     similar,

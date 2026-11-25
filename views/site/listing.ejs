@@ -4,7 +4,7 @@
 
   <header class="ld__head">
     <div>
-      <h1><%= __(listing.title) %></h1>
+      <h1><%= displayTitle(listing, lang, __) %></h1>
       <p class="ld__place"><%- icon('pin') %><%= place %></p>
     </div>
     <% if (listing.adLicense) { %><p class="ld__licence"><%- icon('shield') %><span><%= __("رقم ترخيص الإعلان") %></span> <bdi dir="ltr"><%= __(listing.adLicense) %></bdi></p><% } %>
@@ -117,7 +117,7 @@
   <% if (similar.length) { %>
     <section class="ld-similar">
       <h2><%= __("عقارات مشابهة في") %> <%= __(listing.city) %></h2>
-      <ul class="lgrid lgrid--3"><% similar.forEach(function (l) { %><%- include('_listing-card', { l, fmt, icon, types }) %><% }) %></ul>
+      <ul class="lgrid lgrid--3"><% similar.forEach(function (l) { %><%- include('_listing-card', { l, fmt, icon, types, displayTitle }) %><% }) %></ul>
     </section>
   <% } %>
 

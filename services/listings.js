@@ -498,6 +498,15 @@ async function publicForOffice(pool, officeId, { page = 1 } = {}, now = new Date
   return { rows: rows.map(present), total, page: current, pages };
 }
 
+const TYPE_EN = { apartment: 'Apartment', villa: 'Villa', shop: 'Shop', office: 'Office', warehouse: 'Warehouse', land: 'Land', other: 'Property' };
+
+/** The listing title for the page language: the stored Arabic title, or the same parts in English. */
+function displayTitle(listing, lang, cityName = (c) => c) {
+  if (lang !== 'en') return listing.title;
+  const hood = listing.neighborhood && listing.neighborhood !== OTHER ? `${listing.neighborhood}, ` : '';
+  return `${TYPE_EN[listing.unitType] || TYPE_EN.other} for rent in ${hood}${cityName(listing.city)}`;
+}
+
 /** Up to `limit` other public listings in the same city, newest first (the "similar" row on a listing page). */
 async function similarPublic(pool, listing, { limit = 3, officeId = null } = {}, now = new Date()) {
   const where = [PUBLIC_WHERE, 'l.city = ?', 'l.id <> ?'];
@@ -522,6 +531,7 @@ async function publicIndex(pool, now = new Date(), limit = 5000) {
 
 module.exports = {
   similarPublic,
+  displayTitle,
   TYPE_LABELS,
   FEATURES,
   STATUS_LABELS,

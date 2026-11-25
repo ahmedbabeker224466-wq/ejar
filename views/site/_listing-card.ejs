@@ -1,7 +1,7 @@
 <li class="lcard">
   <a href="/listings/<%= __(l.id) %>" class="lcard__link">
     <span class="lcard__media">
-      <% if (l.coverId) { %><img src="/listings/photos/<%= __(l.coverId) %>/thumb" alt="<%= __(l.title) %>" width="480" height="360" loading="lazy">
+      <% if (l.coverId) { %><img src="/listings/photos/<%= __(l.coverId) %>/thumb" alt="<%= displayTitle(l, lang, __) %>" width="480" height="360" loading="lazy">
       <% } else { %><span class="lcard__noimg" role="img" aria-label="<%= __("بدون صورة") %>"><%- icon('photos', 'lcard__noimg-icon') %></span><% } %>
       <span class="lcard__type"><%= __((locals.types && types[l.unitType]) || __('عقار')) %></span>
       <% if (l.photoCount > 1) { %><span class="lcard__count"><%- icon('photos') %><%= __(l.photoCount) %></span><% } %>
