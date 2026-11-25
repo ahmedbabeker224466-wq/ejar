@@ -27,6 +27,7 @@
         <div class="search-bar__field"><label class="visually-hidden" for="f-max"><%= __("أعلى إيجار سنوي") %></label><input id="f-max" name="max_price" class="input" inputmode="numeric" dir="ltr" maxlength="9" placeholder="<%= __("أعلى إيجار") %>" value="<%= __(rawFilters.max_price) %>"></div>
         <div class="search-bar__field"><label class="visually-hidden" for="f-sort"><%= __("الترتيب") %></label>
           <select id="f-sort" name="sort" class="select">
+            <option value="rating" <%= __(filters.sort === 'rating' ? 'selected' : '') %>><%= __("الأعلى تقييماً") %></option>
             <option value="newest" <%= __(filters.sort === 'newest' ? 'selected' : '') %>><%= __("الأحدث") %></option>
             <option value="price_asc" <%= __(filters.sort === 'price_asc' ? 'selected' : '') %>><%= __("الأقل سعراً") %></option>
             <option value="price_desc" <%= __(filters.sort === 'price_desc' ? 'selected' : '') %>><%= __("الأعلى سعراً") %></option>

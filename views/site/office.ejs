@@ -1,9 +1,25 @@
 <section class="card">
   <h1><%= __(office.name) %></h1>
   <p class="muted"><%= __(office.city) %></p>
+  <% if (rating.count) { %><p class="stars-line"><span class="stars" aria-label="<%= rating.avg %> <%= __("من 5") %>"><% for (let i = 1; i <= 5; i++) { %><%- icon('star', i <= Math.round(rating.avg) ? 'li-icon star-on' : 'li-icon star-off') %><% } %></span> <b><%= rating.avg %></b> <span class="muted">(<%= rating.count %> <%= __("تقييم من مستأجرين وملّاك") %>)</span></p><% } %>
   <% if (office.description) { %><p class="office-page__about"><%= __(office.description) %></p><% } %>
   <p class="muted"><%= __("لطلب معاينة افتح الإعلان واختر اليوم والوقت المناسبين.") %></p>
 </section>
+
+<% if (comments.length) { %>
+  <section class="card reviews-list">
+    <h2><%= __("آراء العملاء") %></h2>
+    <ul>
+      <% comments.forEach(function (c) { %>
+        <li>
+          <span class="stars"><% for (let i = 1; i <= 5; i++) { %><%- icon('star', i <= c.rating ? 'li-icon star-on' : 'li-icon star-off') %><% } %></span>
+          <p><%= c.comment %></p>
+          <span class="muted"><%= __(roleLabels[c.role]) %> · <bdi dir="ltr"><%= c.month %></bdi></span>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+<% } %>
 
 <% if (total) { %>
   <p class="muted"><%= __(total) %> <%= __("إعلان") %></p>

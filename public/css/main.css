@@ -2771,3 +2771,22 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
   .ld-gallery__item:not(.ld-gallery__item--main) { display: none; }
 }
 .visit-req { margin: 6px 0; padding: 8px 12px; border-radius: 10px; background: #ecfdf3; color: #14532d; }
+/* Office ratings */
+.star-icon, .star-on { color: #f5a524; fill: #f5a524; }
+.star-off { color: #d5dbe7; fill: #e7ebf3; }
+.stars { display: inline-flex; gap: 2px; vertical-align: middle; }
+.stars .li-icon { width: 18px; height: 18px; }
+.stars-mini { display: inline-flex; align-items: center; gap: 3px; margin-inline-start: auto; color: #0f1d45; font-size: .85rem; white-space: nowrap; }
+.stars-mini .li-icon { width: 15px; height: 15px; }
+.stars-mini span { color: #5f6b87; }
+.lcard__office-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stars-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.reviews-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.reviews-list li { padding: 14px; border: 1px solid #e7ebf3; border-radius: 12px; display: grid; gap: 6px; }
+.reviews-list p { margin: 0; }
+.rate-pick { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 4px; border: 0; padding: 0; margin: 0 0 12px; }
+.rate-pick input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.rate-pick label { cursor: pointer; color: #d5dbe7; }
+.rate-pick label svg { width: 34px; height: 34px; fill: currentColor; }
+.rate-pick input:checked ~ label, .rate-pick label:hover, .rate-pick label:hover ~ label { color: #f5a524; }
+.rate-pick input:focus-visible + label { outline: 2px solid #2b6cf6; border-radius: 6px; }

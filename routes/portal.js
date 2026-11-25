@@ -406,5 +406,42 @@ router.post('/tenant/contracts/:id/requests', tenantArea, requirePerm('own.contr
   return res.redirect(`/tenant?done=${done}#contract-${view.contract.id}`);
 }));
 
+// ------------------------------------------------------------ rate the office (owner's decision, Nov 2026)
+
+const reviews = require('../services/reviews');
+const { icon } = require('../services/listingIcons');
+const { rateLimit } = require('../middleware/rateLimit');
+
+const reviewLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, keyFor: (req) => `office-review:${req.user.id}` });
+const REVIEW_DONE = { saved: 'تم حفظ تقييمك. شكراً لك.', pending: 'تم حفظ تقييمك، ويظهر تعليقك بعد مراجعته.' };
+
+async function renderReview(req, res, kind, { status = 200, errors = {}, values = {}, officeId = null } = {}) {
+  const offices = await reviews.eligibleOffices(db.pool, req.user.id);
+  const mine = await reviews.ownReviews(db.pool, req.user.id, offices.map((o) => o.officeId));
+  return res.status(status).render('portal/review', {
+    title: 'تقييم المكتب',
+    base: `/${kind}`,
+    offices,
+    mine,
+    errors,
+    values,
+    errorOffice: officeId,
+    icon,
+    commentMax: reviews.COMMENT_MAX,
+    commentStatus: reviews.COMMENT_STATUS,
+    message: REVIEW_DONE[req.query.done] || null,
+  });
+}
+
+for (const [kind, area, perm] of [['landlord', landlordArea, 'own.contracts'], ['tenant', tenantArea, 'own.contract']]) {
+  router.get(`/${kind}/review`, area, requirePerm(perm), wrap((req, res) => renderReview(req, res, kind)));
+  router.post(`/${kind}/review`, area, requirePerm(perm), reviewLimit, wrap(async (req, res) => {
+    const result = await reviews.save(db.pool, { userId: req.user.id, officeId: Number(req.body.office_id), body: req.body, ip: req.ip });
+    if (!result.ok && result.error === 'not_eligible') return res.status(404).render('errors/404', { title: 'الصفحة غير موجودة' });
+    if (!result.ok) return renderReview(req, res, kind, { status: 422, errors: result.errors, values: { ...result.values, rating: req.body.rating }, officeId: Number(req.body.office_id) });
+    return res.redirect(`/${kind}/review?done=${result.commentPending ? 'pending' : 'saved'}`);
+  }));
+}
+
 module.exports = router;
 module.exports.loadArea = loadArea;

@@ -44,6 +44,7 @@ const KIND_LABELS = {
   contact_new: 'رسالة من نموذج التواصل',
   domain_update: 'تحديث طلب نطاق المكتب',
   domain_connect: 'ربط نطاق مكتب',
+  review_pending: 'تعليق تقييم بانتظار المراجعة',
   office_review: 'مكتب جديد بانتظار المراجعة',
   office_verified: 'نتيجة مراجعة المكتب',
   test: 'رسالة تجربة',

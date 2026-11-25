@@ -27,6 +27,24 @@ module.exports = function register(router, { wrap, notFound, reasonOf, REASON_ER
   });
   const idOf = (raw) => (/^[1-9]\d{0,17}$/.test(String(raw)) ? Number(raw) : null);
 
+  // ------------------------------------------------------------ office reviews (comments wait for approval)
+
+  const reviewsSvc = require('../services/reviews');
+  async function renderReviews(req, res, { error = null, status = 200 } = {}) {
+    const rows = await reviewsSvc.pendingList(db.pool);
+    return res.status(status).render('admin/reviews', { title: 'تقييمات المكاتب', rows, roleLabels: reviewsSvc.ROLE_LABELS, error, done: doneText(req.query.done) });
+  }
+  router.get('/admin/reviews', wrap((req, res) => renderReviews(req, res)));
+  for (const [action, decision] of [['approve', 'approved'], ['reject', 'rejected']]) {
+    router.post(`/admin/reviews/:id/${action}`, wrap(async (req, res) => {
+      const reason = reasonOf(req.body);
+      if (!reason) return renderReviews(req, res, { error: REASON_ERROR, status: 422 });
+      const changed = await reviewsSvc.moderate(db.pool, { id: req.params.id, decision, adminId: req.user.id, reason, ip: req.ip });
+      if (!changed) return notFound(res);
+      return res.redirect(`/admin/reviews?done=${action === 'approve' ? 'review_approved' : 'review_rejected'}`);
+    }));
+  }
+
   // ------------------------------------------------------------ listing reports
 
   async function renderReports(req, res, { error = null, status = 200 } = {}) {

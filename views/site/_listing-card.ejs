@@ -14,7 +14,7 @@
         <% if (l.area !== null) { %><span><%- icon('area') %><%= __(l.area) %> <%= __("م²") %></span><% } %>
       </span>
       <span class="lcard__price"><strong><%= __(fmt(l.price).replace(/\.00$/, '')) %></strong> <%= __("ريال سنوياً") %></span>
-      <span class="lcard__office"><%- icon('office') %><%= __(l.officeName) %></span>
+      <span class="lcard__office"><%- icon('office') %><span class="lcard__office-name"><%= l.officeName %></span><% if (l.officeRatingCount) { %><span class="stars-mini" title="<%= __("تقييم المكتب") %>"><%- icon('star', 'li-icon star-icon') %><b><%= l.officeRating %></b> <span>(<%= l.officeRatingCount %>)</span></span><% } %></span>
     </span>
   </a>
 </li>

@@ -639,6 +639,23 @@ const TABLES = [
     fk('listing_inquiries', 'office_id', 'offices', 'CASCADE'),
   ]),
 
+  // Office ratings by linked tenants and landlords (services/reviews.js). One per person per office.
+  table('office_reviews', [
+    `office_id ${REF} NOT NULL`,
+    `user_id ${REF} NOT NULL`,
+    "role ENUM('tenant','landlord') NOT NULL",
+    'rating TINYINT UNSIGNED NOT NULL',
+    'comment VARCHAR(300) NULL',
+    "comment_status ENUM('none','pending','approved','rejected') NOT NULL DEFAULT 'none'",
+    `moderated_by ${REF} NULL`,
+    'moderated_at DATETIME NULL',
+    'UNIQUE KEY uq_office_reviews (office_id, user_id)',
+    'KEY idx_office_reviews_status (comment_status, updated_at)',
+    fk('office_reviews', 'office_id', 'offices', 'CASCADE'),
+    fk('office_reviews', 'user_id', 'users', 'CASCADE'),
+    fk('office_reviews', 'moderated_by', 'users', 'SET NULL'),
+  ]),
+
   // Abuse reports from the public page, handled by the platform admin. No reporter data is kept.
   table('listing_reports', [
     `listing_id ${REF} NOT NULL`,

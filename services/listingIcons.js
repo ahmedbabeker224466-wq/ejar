@@ -13,6 +13,7 @@ const PATHS = Object.freeze({
   photos: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-8 8"/>',
   office: '<path d="M4 20V6l8-3v17M12 9h8v11M8 8v.01M8 12v.01M8 16v.01M16 13v.01M16 17v.01"/>',
   cal: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  star: '<path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
   ac: '<rect x="3" y="5" width="18" height="8" rx="2"/><path d="M7 17v2M12 17v3M17 17v2M7 10h10"/>',
   kitchen: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 10h14M9 6.5h.01M13 6.5h.01"/>',

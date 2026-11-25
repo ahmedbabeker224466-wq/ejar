@@ -39,7 +39,7 @@ router.get('/listings', wrap(async (req, res) => {
   for (const [key, value] of Object.entries({
     city: filters.city, neighborhood: filters.neighborhood, type: filters.type, min_price: req.query.min_price && filters.minPrice ? req.query.min_price : '',
     max_price: req.query.max_price && filters.maxPrice ? req.query.max_price : '', rooms: filters.rooms ? `${filters.rooms.min}${filters.rooms.exact ? '' : '+'}` : '',
-    sort: filters.sort === 'newest' ? '' : filters.sort,
+    sort: filters.sort === 'rating' ? '' : filters.sort,
   })) if (value) query.set(key, String(value));
   publicPage(req, res, {
     description: 'تصفح إعلانات العقارات للإيجار: شقق وفلل ومحلات ومكاتب في مدن المملكة، مع الصور والمواصفات والإيجار السنوي.',

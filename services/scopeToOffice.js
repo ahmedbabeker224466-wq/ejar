@@ -21,6 +21,7 @@ class OfficeScopeError extends Error {
 /** Tables that carry office_id NOT NULL. */
 const OFFICE_TABLES = new Set([
   'office_members',
+  'office_reviews',
   'office_slug_history',
   'office_domain_requests',
   'office_branches',

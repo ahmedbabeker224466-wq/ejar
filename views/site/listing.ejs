@@ -65,7 +65,8 @@
         <span class="ld-office__icon"><%- icon('office') %></span>
         <div>
           <span class="muted"><%= __("يعرض هذا العقار") %></span>
-          <strong><%= __(listing.officeName) %></strong>
+          <strong><%= listing.officeName %></strong>
+          <% if (listing.officeRatingCount) { %><span class="stars-mini"><%- icon('star', 'li-icon star-icon') %><b><%= listing.officeRating %></b> <span>(<%= listing.officeRatingCount %> <%= __("تقييم") %>)</span></span><% } else { %><span class="muted"><%= __("لا توجد تقييمات بعد") %></span><% } %>
         </div>
         <% if (listing.officeSlug && !locals.isCustomHost) { %><a class="btn btn--secondary btn--small" href="/<%= __(listing.officeSlug) %>"><%= __("كل إعلانات المكتب") %></a><% } %>
       </section>

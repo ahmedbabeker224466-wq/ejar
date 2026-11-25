@@ -65,7 +65,13 @@ async function renderOffice(req, res, office) {
   }
   // A page without a published listing is not worth indexing.
   if (result.total === 0) res.locals.indexable = false;
+  const reviewsSvc = require('../services/reviews');
+  const rating = await reviewsSvc.summary(db.pool, office.id);
+  const comments = await reviewsSvc.publicComments(db.pool, office.id);
   return res.render('site/office', {
+    rating,
+    comments,
+    roleLabels: reviewsSvc.ROLE_LABELS,
     title: office.name,
     office,
     pageBase: onOwnDomain ? '/' : `/${office.slug}`,

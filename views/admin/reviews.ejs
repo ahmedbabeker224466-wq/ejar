@@ -1,0 +1,31 @@
+<div class="page-head"><h1><%= __("تقييمات المكاتب") %></h1></div>
+<% if (done) { %><div class="flash flash--success" role="status"><%= __(done) %></div><% } %>
+<% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
+<p class="muted"><%= __("النجوم تُحتسب فوراً. التعليقات تظهر في صفحة المكتب بعد موافقتك فقط، وبدون اسم كاتبها.") %></p>
+<% if (rows.length) { %>
+<div class="adm-msgs">
+  <% rows.forEach(function (r) { %>
+    <article class="adm-msg">
+      <header class="adm-msg__head">
+        <strong class="adm-msg__name"><a href="/admin/offices/<%= r.office_id %>"><%= r.office_name %></a></strong>
+        <span class="badge badge--bill-warning"><%= r.rating %> <%= __("من 5") %></span>
+        <span class="badge badge--role"><%= __(roleLabels[r.role]) %></span>
+        <span class="adm-msg__date" dir="ltr"><%= __(stamp(r.updated_at)) %></span>
+      </header>
+      <p class="adm-msg__text pre-line"><%= r.comment %></p>
+      <div class="adm-msg__actions">
+        <details><summary class="btn btn--success btn--small"><%= __("نشر التعليق") %></summary>
+          <form method="post" action="/admin/reviews/<%= r.id %>/approve" class="adm-action__row" novalidate>
+            <div class="field"><label for="a-<%= r.id %>"><%= __("السبب") %></label><input id="a-<%= r.id %>" name="reason" class="input" maxlength="200" value="تعليق مناسب" required></div>
+            <button type="submit" class="btn btn--success"><%= __("نشر") %></button>
+          </form></details>
+        <details><summary class="btn btn--danger btn--small"><%= __("رفض التعليق") %></summary>
+          <form method="post" action="/admin/reviews/<%= r.id %>/reject" class="adm-action__row" novalidate>
+            <div class="field"><label for="x-<%= r.id %>"><%= __("سبب الرفض") %></label><input id="x-<%= r.id %>" name="reason" class="input" maxlength="200" required></div>
+            <button type="submit" class="btn btn--danger"><%= __("رفض") %></button>
+          </form></details>
+      </div>
+    </article>
+  <% }) %>
+</div>
+<% } else { %><p class="empty-state"><%= __("لا توجد تعليقات بانتظار المراجعة.") %></p><% } %>

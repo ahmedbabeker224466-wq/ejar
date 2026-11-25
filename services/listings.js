@@ -32,7 +32,9 @@ const TYPE_LABELS = {
 };
 const FEATURES = { ...AMENITIES, furnished: 'مفروش' };
 const STATUS_LABELS = { draft: 'مسودة', published: 'منشور', rented: 'مؤجر', hidden: 'مخفي', pending_review: 'قيد المراجعة' };
-const SORTS = { newest: 'l.published_at DESC, l.id DESC', price_asc: 'l.price ASC, l.id DESC', price_desc: 'l.price DESC, l.id DESC', area_desc: 'l.area_sqm DESC, l.id DESC' };
+const { RATING_COLUMNS, SCORE_SQL } = require('./reviews');
+// 'rating' (the default, owner's decision Nov 2026): offices with the best smoothed rating first, newest within.
+const SORTS = { rating: 'office_score DESC, l.published_at DESC, l.id DESC', newest: 'l.published_at DESC, l.id DESC', price_asc: 'l.price ASC, l.id DESC', price_desc: 'l.price DESC, l.id DESC', area_desc: 'l.area_sqm DESC, l.id DESC' };
 
 const has = (map, key) => typeof key === 'string' && Object.hasOwn(map, key);
 
@@ -147,6 +149,8 @@ function present(row) {
     updatedAt: row.updated_at,
     officeName: row.office_name,
     officeSlug: row.office_slug && Number(row.office_page_on) ? row.office_slug : null,
+    officeRating: row.office_rating === undefined || row.office_rating === null ? null : Number(row.office_rating),
+    officeRatingCount: row.office_rating_count === undefined ? 0 : Number(row.office_rating_count),
     coverId: row.cover_id === undefined || row.cover_id === null ? null : Number(row.cover_id),
     photoCount: row.photo_count === undefined ? undefined : Number(row.photo_count),
     inquiryCount: row.inquiry_count === undefined ? undefined : Number(row.inquiry_count),
@@ -411,7 +415,9 @@ const PUBLIC_COLUMNS = `l.id, l.office_id, l.unit_id, l.title, l.description, l.
   l.rooms, l.bathrooms, l.area_sqm, l.features, l.ad_license_number, l.published_at, l.expires_at, l.admin_hidden, l.admin_hidden_reason, l.updated_at, o.name AS office_name,
   o.public_slug AS office_slug, o.public_page_enabled AS office_page_on,
   (SELECT p.id FROM unit_photos p WHERE p.unit_id = l.unit_id ORDER BY p.is_cover DESC, p.sort_order ASC, p.id ASC LIMIT 1) AS cover_id,
-  (SELECT COUNT(*) FROM unit_photos p WHERE p.unit_id = l.unit_id) AS photo_count`;
+  (SELECT COUNT(*) FROM unit_photos p WHERE p.unit_id = l.unit_id) AS photo_count,
+  ${RATING_COLUMNS},
+  ${SCORE_SQL} AS office_score`;
 
 /** Reads the public search filters from a query string: only valid values survive. */
 function parseFilters(query = {}) {
@@ -428,7 +434,7 @@ function parseFilters(query = {}) {
   const max = money.parseAmount(String(query.max_price ?? ''));
   if (min !== null) filters.minPrice = min;
   if (max !== null) filters.maxPrice = max;
-  filters.sort = has(SORTS, query.sort) ? query.sort : 'newest';
+  filters.sort = has(SORTS, query.sort) ? query.sort : 'rating';
   const page = Number(query.page);
   filters.page = Number.isInteger(page) && page >= 1 && page <= 10000 ? page : 1;
   return filters;
