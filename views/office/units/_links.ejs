@@ -28,7 +28,7 @@
   <label for="city"><%= __("المدينة") %></label>
   <select id="city" name="city" class="select" data-city-select <%- errors.city ? 'aria-invalid="true"' : '' %>>
     <option value=""><%= __("مدينة المبنى") %></option>
-    <% cities.forEach(function (city) { %><option value="<%= __(city) %>" <%= __(values.city === city ? 'selected' : '') %>><%= __(city) %></option><% }) %>
+    <%- include('../../partials/city-options', { selected: values.city }) %>
   </select>
   <% if (errors.city) { %><p class="field-error"><%= __(errors.city) %></p><% } %>
 </div>

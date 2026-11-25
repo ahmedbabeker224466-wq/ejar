@@ -1,0 +1,7 @@
+<%# City <option>s grouped by region. Values stay Arabic (what the server checks); only the text is translated. Locals: selected. %>
+<% cityGroups.forEach(function (g) { %>
+  <optgroup label="<%= __(g.label) %>">
+    <% g.cities.forEach(function (c) { %><option value="<%= c %>"<%= selected === c ? ' selected' : '' %>><%= __(c) %></option><% }) %>
+  </optgroup>
+<% }) %>
+<option value="<%= otherCity %>"<%= selected === otherCity ? ' selected' : '' %>><%= __(otherCity) %></option>

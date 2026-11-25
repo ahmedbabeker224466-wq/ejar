@@ -34,14 +34,14 @@
       </select><% if (errors.unit_type) { %><p class="field-error"><%= __(errors.unit_type) %></p><% } %></div>
     <div class="field"><label for="city"><%= __("المدينة") %></label>
       <select id="city" name="city" class="select" data-hood-city>
-        <% cities.forEach(function (c) { %><option value="<%= __(c) %>" <%= __(values.city === c ? 'selected' : '') %>><%= __(c) %></option><% }) %>
+        <%- include('../partials/city-options', { selected: values.city }) %>
       </select><% if (errors.city) { %><p class="field-error"><%= __(errors.city) %></p><% } %></div>
     <div class="field"><label for="neighborhood"><%= __("الحي") %></label>
       <select id="neighborhood" name="neighborhood" class="select" data-hood-select>
         <option value=""><%= __("اختر الحي") %></option>
         <% cities.forEach(function (c) { var list = (byCity[c] || []).concat([other]); %>
-          <optgroup label="<%= __(c) %>" data-city="<%= __(c) %>">
-            <% list.forEach(function (n) { %><option value="<%= __(n) %>" <%= __(values.city === c && values.neighborhood === n ? 'selected' : '') %>><%= __(n) %></option><% }) %>
+          <optgroup label="<%= __(c) %>" data-city="<%= c %>">
+            <% list.forEach(function (n) { %><option value="<%= n %>" <%= __(values.city === c && values.neighborhood === n ? 'selected' : '') %>><%= __(n) %></option><% }) %>
           </optgroup>
         <% }) %>
       </select><% if (errors.neighborhood) { %><p class="field-error"><%= __(errors.neighborhood) %></p><% } %></div>

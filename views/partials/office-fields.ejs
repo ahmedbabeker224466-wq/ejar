@@ -9,9 +9,7 @@
 <div class="field">
   <label for="city"><%= __("المدينة") %></label>
   <select id="city" name="city" class="select" required <%- errors.city ? 'aria-invalid="true" aria-describedby="city-error"' : '' %>>
-    <% cities.forEach(function (city) { %>
-      <option value="<%= __(city) %>" <%= __(values.city === city ? 'selected' : '') %>><%= __(city) %></option>
-    <% }) %>
+    <%- include('city-options', { selected: values.city }) %>
   </select>
   <% if (errors.city) { %><p id="city-error" class="field-error"><%= __(errors.city) %></p><% } %>
 </div>

@@ -38,6 +38,8 @@ const app = express();
 app.locals.__ = (text, vars) => require('./services/tr').translate('ar', text, vars);
 app.locals.lang = 'ar';
 app.locals.dir = 'rtl';
+app.locals.cityGroups = require('./config/saudiCities').CITY_GROUPS;
+app.locals.otherCity = require('./config/saudiCities').OTHER_CITY;
 
 // Behind Passenger every connection arrives from the local proxy (127.0.0.1),
 // so the visitor's address comes from X-Forwarded-For: with 'loopback' Express

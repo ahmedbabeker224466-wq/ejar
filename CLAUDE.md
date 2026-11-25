@@ -45,6 +45,7 @@ Everything else is written with Node's built-in modules: TOTP with crypto, Whats
 - Status: staff switch vacant <-> maintenance by hand; 'rented' is set and cleared only by the contract system through unitStatus.setRented(scoped, unitId) and setVacant(scoped, unitId). setVacant changes only a rented unit.
 - Delete: a building only when it has no units; a unit only when not rented and with no contract, maintenance request or listing. Both checks live inside the DELETE statement.
 - Plan limits: services/planLimits.js. checkLimit({ limit, current, adding }) is pure (limit NULL = unlimited). Any create that counts against a limit runs in a transaction whose FIRST statement is unitUsage(scoped, { lock: true }): it locks the office row and counts with a locking read, so parallel creates cannot pass the limit. Use the same pattern for contracts and members.
+- Cities (config/saudiCities.js): REGIONS (13) and CITIES with a region key, the capital first in each region; dropdowns use views/partials/city-options.ejs (optgroup per region, app.locals.cityGroups); option values stay Arabic and only the label is translated. Neighborhood lists exist only for the bigger cities (others offer «حي آخر»).
 - Amenities are fixed keys (services/units.js AMENITIES) stored in unit_amenities and shown in Arabic.
 - Transactions go through services/transaction.js withTransaction (retries a deadlock victim).
 

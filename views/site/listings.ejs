@@ -6,14 +6,14 @@
       <div class="search-bar__field"><label class="visually-hidden" for="f-city"><%= __("المدينة") %></label>
         <select id="f-city" name="city" class="select" data-hood-city>
           <option value=""><%= __("كل المدن") %></option>
-          <% cities.forEach(function (c) { %><option value="<%= __(c) %>" <%= __(filters.city === c ? 'selected' : '') %>><%= __(c) %></option><% }) %>
+          <%- include('../partials/city-options', { selected: filters.city }) %>
         </select></div>
       <div class="search-bar__field"><label class="visually-hidden" for="f-hood"><%= __("الحي") %></label>
           <select id="f-hood" name="neighborhood" class="select" data-hood-select>
             <option value=""><%= __("كل الأحياء") %></option>
             <% cities.forEach(function (c) { if (!(byCity[c] || []).length) return; var list = byCity[c].concat([other]); %>
-              <optgroup label="<%= __(c) %>" data-city="<%= __(c) %>">
-                <% list.forEach(function (n) { %><option value="<%= __(n) %>" <%= __(filters.neighborhood === n && (!filters.city || filters.city === c) ? 'selected' : '') %>><%= __(n) %></option><% }) %>
+              <optgroup label="<%= __(c) %>" data-city="<%= c %>">
+                <% list.forEach(function (n) { %><option value="<%= n %>" <%= __(filters.neighborhood === n && (!filters.city || filters.city === c) ? 'selected' : '') %>><%= __(n) %></option><% }) %>
               </optgroup>
             <% }) %>
           </select></div>
