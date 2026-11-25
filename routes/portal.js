@@ -50,6 +50,8 @@ const AREAS = {
   tenant: { href: '/tenant', label: 'صفحة المستأجر' },
 };
 
+const calendar = require('../services/calendar');
+
 const DONE = {
   recorded: 'تم تسجيل الدفعة.',
   undone: 'تم التراجع عن الدفعة.',
@@ -62,6 +64,7 @@ const DONE = {
   pending_exists: 'لديك طلب سابق قيد المراجعة.',
   not_allowed: 'لا يمكن تقديم هذا الطلب الآن.',
   unchanged: 'لم يتغير شيء: ربما تم التعامل مع هذا الطلب من قبل.',
+  intent: 'وصل رأيك في التجديد إلى المكتب.',
 };
 
 // ------------------------------------------------------------ area guard
@@ -336,9 +339,11 @@ router.post('/landlord/contracts/:id/payments/:paymentId/entries/:entryId/undo',
   return res.redirect(`/landlord/contracts/${view.contract.id}?done=undone#payments`);
 }));
 
-function renderReceipt(res, { view, officeName, backUrl }) {
+function renderReceipt(res, { view, officeName, backUrl, heading = null, numbers = null }) {
   return res.render('payments/receipt', {
-    title: 'كشف دفعات العقد',
+    title: heading || 'كشف دفعات العقد',
+    heading,
+    numbers,
     officeName,
     unitLabel: view.contract.unit_label,
     startDate: view.contract.start_date,
@@ -399,6 +404,51 @@ router.post('/tenant/contracts/:id/payments/:paymentId/report', tenantArea, requ
     contractId: view.contract.id, paymentId, userId: req.user.id, ip: req.ip,
   });
   return res.redirect(`/tenant?done=${changed ? 'reported' : 'unchanged'}#contract-${view.contract.id}`);
+}));
+
+// One installment as a printable receipt (paid or partly paid only).
+router.get('/tenant/contracts/:id/payments/:paymentId/receipt', tenantArea, requirePerm('own.contract'), wrap(async (req, res) => {
+  const view = await tenantView(req);
+  if (!view) return notFound(res);
+  const history = await paymentEntries.historyFor(db.pool, view.link.office_id, view.contract.id, today());
+  const paymentId = parseId(req.params.paymentId);
+  const index = history.findIndex((p) => Number(p.id) === paymentId);
+  if (index < 0 || !history[index].paidHalalas) return notFound(res);
+  return renderReceipt(res, {
+    view: { ...view, payments: [history[index]] }, officeName: view.link.office_name,
+    backUrl: `/tenant#contract-${view.contract.id}`, heading: 'إيصال دفعة', numbers: [index + 1],
+  });
+}));
+
+// The contract's dates as a calendar file the phone can import.
+for (const kind of ['tenant', 'landlord']) {
+  router.get(`/${kind}/contracts/:id/calendar.ics`, kind === 'tenant' ? tenantArea : landlordArea, requirePerm(kind === 'tenant' ? 'own.contract' : 'own.contracts'), wrap(async (req, res) => {
+    const view = kind === 'tenant'
+      ? await tenantView(req)
+      : await portal.landlordContract(db.pool, req.links, parseId(req.params.id), today());
+    if (!view) return notFound(res);
+    const text = calendar.contractCalendar({
+      contract: view.contract,
+      described: view.described,
+      payments: view.payments,
+      officeName: view.link.office_name,
+      host: req.get('host') || 'mi3aad.com',
+    });
+    res.set('Content-Type', 'text/calendar; charset=utf-8');
+    res.set('Content-Disposition', `attachment; filename="mi3aad-contract-${view.contract.id}.ics"`);
+    res.set('Cache-Control', 'no-store');
+    return res.send(text);
+  }));
+}
+
+router.post('/tenant/contracts/:id/intent', tenantArea, requirePerm('own.contract'), wrap(async (req, res) => {
+  const view = await tenantView(req);
+  if (!view) return notFound(res);
+  const outcome = await feedback.recordIntent(db.pool, view.link.office_id, {
+    contract: view.contract, userId: req.user.id, intent: String(req.body.intent || ''), today: today(), ip: req.ip,
+  });
+  const done = outcome === 'not_allowed' ? 'not_allowed' : outcome === 'unchanged' ? 'unchanged' : 'intent';
+  return res.redirect(`/tenant?done=${done}#contract-${view.contract.id}`);
 }));
 
 router.post('/tenant/contracts/:id/requests', tenantArea, requirePerm('own.contract'), wrap(async (req, res) => {

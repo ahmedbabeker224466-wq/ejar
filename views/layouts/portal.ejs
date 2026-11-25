@@ -16,10 +16,10 @@
 <%# Shell for the landlord and tenant areas: the same look as the office panel, with the area's own menu. %>
 <body class="office-body portal-body">
   <%- include('../partials/platform-banner') %>
-  <% const icons = {home:'<path d="M3 11 12 4l9 7v9H5v-9"/>',maintenance:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',messages:'<path d="M4 5h16v11H9l-5 4z"/>',statement:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',account:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',review:'<path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>'};
+  <% const icons = {home:'<path d="M3 11 12 4l9 7v9H5v-9"/>',maintenance:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',messages:'<path d="M4 5h16v11H9l-5 4z"/>',statement:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',account:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',insights:'<path d="M3 20h18"/><path d="M6 16l4-5 4 3 5-7"/>',review:'<path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>'};
      const base = '/' + currentArea;
      const items = currentArea === 'landlord'
-       ? [['home', base, 'الرئيسية'], ['maintenance', base + '/maintenance', 'الصيانة'], ['messages', base + '/messages', 'الرسائل'], ['statement', base + '/statement', 'كشف الحساب'], ['account', base + '/account', 'حسابي الشهري'], ['review', base + '/review', 'تقييم المكتب']]
+       ? [['home', base, 'الرئيسية'], ['maintenance', base + '/maintenance', 'الصيانة'], ['messages', base + '/messages', 'الرسائل'], ['insights', base + '/insights', 'أداء عقاراتك'], ['statement', base + '/statement', 'كشف الحساب'], ['account', base + '/account', 'حسابي الشهري'], ['review', base + '/review', 'تقييم المكتب']]
        : [['home', base, 'الرئيسية'], ['maintenance', base + '/maintenance', 'الصيانة'], ['messages', base + '/messages', 'الرسائل'], ['review', base + '/review', 'تقييم المكتب']];
      const isHere = function (href) { return href === base ? (currentPath === base || currentPath.indexOf(base + '/contracts') === 0) : (currentPath === href || currentPath.indexOf(href + '/') === 0); };
      const me = locals.currentUser || {};

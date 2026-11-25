@@ -440,7 +440,7 @@ const TABLES = [
     `office_id ${REF} NOT NULL`,
     `contract_id ${REF} NOT NULL`,
     `user_id ${REF} NULL`,
-    "request_type ENUM('rent_reduction') NOT NULL",
+    "request_type ENUM('rent_reduction','renew_intent','leave_intent') NOT NULL",
     'note VARCHAR(500) NULL',
     "status ENUM('pending','accepted','rejected') NOT NULL DEFAULT 'pending'",
     `handled_by ${REF} NULL`,
@@ -539,6 +539,7 @@ const TABLES = [
     'trade VARCHAR(60) NOT NULL',
     'phone VARCHAR(20) NOT NULL',
     'notes TEXT NULL',
+    'is_active TINYINT(1) NOT NULL DEFAULT 1',
     fk('vendors', 'office_id', 'offices', 'CASCADE'),
   ]),
 
@@ -561,6 +562,8 @@ const TABLES = [
     `cost ${MONEY} NULL`,
     CURRENCY,
     'closed_at DATETIME NULL',
+    'tenant_rating TINYINT UNSIGNED NULL',
+    'rated_at DATETIME NULL',
     'KEY idx_maintenance_requests_office_status (office_id, status)',
     fk('maintenance_requests', 'office_id', 'offices', 'CASCADE'),
     fk('maintenance_requests', 'unit_id', 'units', 'CASCADE'),
@@ -1323,6 +1326,10 @@ const COLUMN_ADDITIONS = [
   { table: 'notifications', column: 'kind', definition: 'VARCHAR(40) NULL AFTER office_id' },
   { table: 'notifications', column: 'contract_id', definition: 'BIGINT UNSIGNED NULL AFTER link' },
   { table: 'notifications', column: 'dedupe_key', definition: 'VARCHAR(190) NULL AFTER contract_id' },
+  // Vendors can be switched off; tenants rate a finished maintenance request (Nov 2026).
+  { table: 'vendors', column: 'is_active', definition: 'TINYINT(1) NOT NULL DEFAULT 1 AFTER notes' },
+  { table: 'maintenance_requests', column: 'tenant_rating', definition: 'TINYINT UNSIGNED NULL AFTER closed_at' },
+  { table: 'maintenance_requests', column: 'rated_at', definition: 'DATETIME NULL AFTER tenant_rating' },
 ];
 
 // ENUM values added after a table first shipped: MODIFY COLUMN runs only when
@@ -1367,6 +1374,13 @@ const ENUM_ADDITIONS = [
     column: 'status',
     value: 'todo',
     definition: "ENUM('todo','doing','done') NOT NULL DEFAULT 'todo'",
+  },
+  // Tenants tell the office whether they want to renew (Nov 2026).
+  {
+    table: 'contract_requests',
+    column: 'request_type',
+    value: 'leave_intent',
+    definition: "ENUM('rent_reduction','renew_intent','leave_intent') NOT NULL",
   },
 ];
 

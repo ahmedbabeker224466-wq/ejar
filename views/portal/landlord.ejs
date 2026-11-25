@@ -9,7 +9,7 @@
        if (c.described.daysToNotice >= 0 && (!nextDecision || c.described.daysToNotice < nextDecision.days)) nextDecision = { days: c.described.daysToNotice, date: c.described.noticeDeadline, unit: c.unit_label };
      });
    }); %>
-<div class="page-head"><h1><%= __("عقاراتك وعقودك") %></h1></div>
+<div class="page-head"><h1><%= __("عقاراتك وعقودك") %></h1><a href="/landlord/insights" class="btn btn--secondary btn--small"><%- picon('chart') %> <%= __("أداء عقاراتك") %></a></div>
 <% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
 
 <div class="pt-stats">

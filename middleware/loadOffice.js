@@ -21,6 +21,7 @@ const OFFICE_NAV = [
   { key: 'payments', href: '/office/payments', label: 'الدفعات', capability: 'payments.read', group: 'المال' },
   { key: 'accounting', href: '/office/accounting', label: 'المحاسبة', capability: 'accounting', group: 'المال' },
   { key: 'maintenance', href: '/office/maintenance', label: 'الصيانة', capability: 'maintenance', group: 'العمل اليومي' },
+  { key: 'vendors', href: '/office/vendors', label: 'فنيو الصيانة', capability: 'maintenance', group: 'العمل اليومي' },
   { key: 'tasks', href: '/office/tasks', label: 'مهام المكتب', capability: 'tasks', group: 'العمل اليومي' },
   { key: 'messages', href: '/office/messages', label: 'الرسائل', capability: 'messages', group: 'العمل اليومي' },
   { key: 'leads', href: '/office/leads', label: 'العملاء المحتملون', capability: 'leads', group: 'التسويق' },

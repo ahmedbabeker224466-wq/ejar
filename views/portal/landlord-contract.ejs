@@ -62,7 +62,7 @@
 <section class="card detail-card" id="payments">
   <div class="page-head">
     <h2><%= __("الدفعات") %> (<%= __(payments.length) %>)</h2>
-    <a href="/landlord/contracts/<%= __(contract.id) %>/receipt" class="btn btn--secondary btn--small"><%= __("كشف قابل للطباعة") %></a>
+    <div class="button-row"><a href="/landlord/contracts/<%= __(contract.id) %>/calendar.ics" class="btn btn--secondary btn--small"><%= __("أضف المواعيد لتقويمك") %></a><a href="/landlord/contracts/<%= __(contract.id) %>/receipt" class="btn btn--secondary btn--small"><%= __("كشف قابل للطباعة") %></a></div>
   </div>
   <% if (payments.length) { %>
     <ul class="payments">

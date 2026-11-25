@@ -143,6 +143,7 @@ const JOBS = {
   backup: { schedule: '0 2 * * *', label: 'النسخ الاحتياطي المشفّر', run: async ({ pool, now, trigger }) => (await backup.runBackup({ pool, now, trigger }), 1) },
   sms_balance: { schedule: '0 10 * * *', label: 'فحص رصيد الرسائل', run: ({ pool, now }) => ops.runSmsBalance({ pool, now }) },
   health_ping: { schedule: '*/15 * * * *', label: 'فحص صحة النظام', run: ({ pool, now }) => ops.runHealthPing({ pool, now }) },
+  landlord_monthly: { schedule: '30 6 1 * *', label: 'الملخص الشهري للملاك', run: ({ pool, now }) => require('./landlordInsights').runMonthlySummary({ pool, now }) },
   reports: { schedule: '0 5 1 * *', label: 'التقرير الشهري للمنصة', run: ({ pool, now }) => ops.generateMonthlyReport({ pool, now }) },
 };
 

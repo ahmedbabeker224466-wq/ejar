@@ -11,6 +11,7 @@
 
 <% contracts.forEach(function (view) { const c = view.contract; const d = view.described; const s = view.summary; const next = s.next;
    const total = view.upcoming.length; const paidCount = s.counts.paid; const paidPct = total ? Math.round(paidCount * 100 / total) : 0;
+   const intent = view.requests.find(function (r) { return r.status === 'pending' && (r.request_type === 'renew_intent' || r.request_type === 'leave_intent'); });
    const open = view.upcoming.filter(function (p) { return p.shownStatus !== 'paid'; }); const done = view.upcoming.filter(function (p) { return p.shownStatus === 'paid'; }); %>
   <article class="pt-contract" id="contract-<%= __(c.id) %>">
     <section class="pt-hero">
@@ -63,6 +64,13 @@
         <% if (d.live) { %>
           <p class="pt-tile__value"><%= __(d.daysToNotice >= 0 ? d.daysToNotice : 0) %> <small><%= __("يوماً") %></small></p>
           <p class="pt-tile__sub"><%= __("أبلغ المكتب بقرارك قبل") %> <span dir="ltr"><%= __(d.noticeDeadline) %></span></p>
+          <% if (d.daysToEnd >= 0) { %>
+            <form method="post" action="/tenant/contracts/<%= __(c.id) %>/intent" class="pt-intent">
+              <button type="submit" name="intent" value="renew_intent" class="btn btn--small <%= intent && intent.request_type === 'renew_intent' ? 'btn--success' : 'btn--secondary' %>"<%= intent && intent.request_type === 'renew_intent' ? ' aria-pressed=true' : '' %>><%= __("أرغب في التجديد") %></button>
+              <button type="submit" name="intent" value="leave_intent" class="btn btn--small <%= intent && intent.request_type === 'leave_intent' ? 'btn--danger' : 'btn--secondary' %>"<%= intent && intent.request_type === 'leave_intent' ? ' aria-pressed=true' : '' %>><%= __("لا أرغب") %></button>
+            </form>
+            <% if (intent) { %><p class="pt-tile__sub pt-intent__state"><%= __("أبلغت المكتب:") %> <b><%= __(requestTypes[intent.request_type]) %></b></p><% } %>
+          <% } %>
         <% } else { %>
           <p class="pt-tile__value">—</p>
         <% } %>
@@ -77,7 +85,7 @@
       <a href="/tenant/maintenance#new" class="pt-quick__item"><%- picon('wrench') %><span><%= __("صيانة جديدة") %></span></a>
       <a href="/tenant/messages/<%= __(c.id) %>" class="pt-quick__item"><%- picon('message') %><span><%= __("راسل المكتب") %></span></a>
       <a href="/tenant/contracts/<%= __(c.id) %>/receipt" class="pt-quick__item"><%- picon('receipt') %><span><%= __("كشف الدفعات") %></span></a>
-      <a href="/tenant/review" class="pt-quick__item"><%- picon('star') %><span><%= __("قيّم المكتب") %></span></a>
+      <a href="/tenant/contracts/<%= __(c.id) %>/calendar.ics" class="pt-quick__item"><%- picon('clock') %><span><%= __("أضف المواعيد لتقويمك") %></span></a>
     </nav>
 
     <section class="card pt-section">
@@ -121,7 +129,7 @@
           <summary><%= __("الدفعات المدفوعة") %> (<%= __(done.length) %>)</summary>
           <ul class="payments pt-payments">
             <% done.forEach(function (p) { const i = view.upcoming.indexOf(p); %>
-              <li class="payment pt-pay pt-pay--paid"><%- include('_payment', { p: p, index: i, paymentLabels: paymentLabels }) %></li>
+              <li class="payment pt-pay pt-pay--paid"><%- include('_payment', { p: p, index: i, paymentLabels: paymentLabels }) %><a class="pt-receipt" href="/tenant/contracts/<%= __(c.id) %>/payments/<%= __(p.id) %>/receipt"><%- picon('receipt') %> <%= __("الإيصال") %></a></li>
             <% }) %>
           </ul>
         </details>

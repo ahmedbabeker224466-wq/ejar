@@ -1,0 +1,67 @@
+<% const monthName = function (ym) { const names = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']; return __(names[Number(ym.slice(5, 7)) - 1]); }; %>
+<div class="page-head"><h1><%= __("أداء عقاراتك") %></h1></div>
+<p class="muted page-lead"><%= __("الإيجار المحصّل في آخر 12 شهراً، ونسبة الإشغال، ومقارنة بين وحداتك.") %></p>
+
+<div class="pt-stats">
+  <div class="pt-stat"><span class="pt-stat__icon"><%- picon('wallet') %></span><div><p class="pt-stat__label"><%= __("المحصّل في 12 شهراً") %></p><p class="pt-stat__value"><%= fmt(totalH) %> <small><%= __("ريال") %></small></p></div></div>
+  <div class="pt-stat"><span class="pt-stat__icon"><%- picon('chart') %></span><div><p class="pt-stat__label"><%= __("متوسط الشهر") %></p><p class="pt-stat__value"><%= fmt(averageH) %> <small><%= __("ريال") %></small></p></div></div>
+  <div class="pt-stat"><span class="pt-stat__icon"><%- picon('building') %></span><div><p class="pt-stat__label"><%= __("نسبة الإشغال") %></p><p class="pt-stat__value"><%= occupancy.pct %>% <small><%= occupancy.rented %>/<%= occupancy.units %></small></p></div></div>
+  <div class="pt-stat"><span class="pt-stat__icon"><%- picon('star') %></span><div><p class="pt-stat__label"><%= __("أفضل شهر") %></p><p class="pt-stat__value"><%= bestMonth ? monthName(bestMonth) : '—' %> <small><%= bestMonth ? bestMonth.slice(0, 4) : '' %></small></p></div></div>
+</div>
+
+<section class="card pt-section">
+  <div class="pt-section__head"><h2><%= __("الإيجار المحصّل شهرياً") %></h2><span class="muted"><%= __("بالريال") %></span></div>
+  <% if (totalH > 0) { %>
+    <div class="ins-chart" role="img" aria-label="<%= __("رسم بياني للإيجار المحصّل في آخر 12 شهراً") %>">
+      <% months.forEach(function (m) { %>
+        <div class="ins-chart__col" title="<%= monthName(m.ym) %> <%= m.ym.slice(0, 4) %>: <%= fmt(m.h) %>">
+          <span class="ins-chart__val"><%= m.h ? fmt(m.h).replace(/\.00$/, '') : '' %></span>
+          <span class="ins-chart__bar pt-h-<%= Math.round(m.pct / 5) * 5 %>"></span>
+          <span class="ins-chart__lbl"><%= monthName(m.ym) %></span>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <p class="empty-state"><%= __("لم يُسجَّل إيجار محصّل في آخر 12 شهراً بعد.") %></p>
+  <% } %>
+</section>
+
+<div class="ins-two">
+  <section class="card pt-section">
+    <div class="pt-section__head"><h2><%= __("الوحدات الشاغرة") %></h2><span class="pt-count pt-count--soft"><%= vacant.length %></span></div>
+    <% if (vacant.length) { %>
+      <ul class="ins-vacant">
+        <% vacant.forEach(function (u) { %>
+          <li class="<%= u.vacantDays && u.vacantDays > 60 ? 'is-long' : '' %>">
+            <b><%= u.label %></b>
+            <span class="muted"><%= u.office %></span>
+            <span class="ins-vacant__days"><%= u.vacantDays ? __(`شاغرة منذ ${u.vacantDays} يوم`) : __(u.neverRented ? 'لم تؤجَّر عبر ميعاد بعد' : 'شاغرة') %></span>
+          </li>
+        <% }) %>
+      </ul>
+      <p class="muted ins-hint"><%= __("الوحدة الشاغرة أكثر من 60 يوماً تظهر باللون الأحمر. تواصل مع المكتب لعرضها في إعلان.") %></p>
+    <% } else { %>
+      <p class="pt-clear"><%- picon('check') %> <span><%= __("كل وحداتك مؤجرة الآن.") %></span></p>
+    <% } %>
+  </section>
+
+  <section class="card pt-section">
+    <div class="pt-section__head"><h2><%= __("مقارنة الوحدات") %></h2><span class="muted"><%= __("آخر 12 شهراً") %></span></div>
+    <% if (units.length) { %>
+      <table class="ins-table">
+        <thead><tr><th><%= __("الوحدة") %></th><th><%= __("المحصّل") %></th><th><%= __("طلبات الصيانة") %></th></tr></thead>
+        <tbody>
+          <% units.forEach(function (u) { %>
+            <tr>
+              <td><b><%= u.label %></b><span class="ins-table__bar"><span class="pt-bar__fill pt-w-<%= maxUnitH ? Math.round(u.incomeH * 20 / maxUnitH) * 5 : 0 %>"></span></span></td>
+              <td><%= fmt(u.incomeH) %></td>
+              <td><span class="pt-chip <%= u.maintenance >= 3 ? 'pt-chip--warn' : 'pt-chip--soft' %>"><%= u.maintenance %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p class="empty-state"><%= __("لا توجد وحدات باسمك بعد.") %></p>
+    <% } %>
+  </section>
+</div>

@@ -80,13 +80,13 @@ const ALL = OFFICE_NAV.map((i) => i.key);
 const NAV = {
   office_owner: ALL,
   office_manager: ALL.filter((k) => !['billing'].includes(k)),
-  office_staff: ['home', 'contracts', 'landlords', 'units', 'tenants', 'payments', 'maintenance', 'tasks', 'messages', 'leads', 'domain', 'settings'],
+  office_staff: ['home', 'contracts', 'landlords', 'units', 'tenants', 'payments', 'maintenance', 'vendors', 'tasks', 'messages', 'leads', 'domain', 'settings'],
 };
 
-test('the navigation has the 18 items in order, settings last', () => {
+test('the navigation has the 19 items in order, settings last', () => {
   assert.deepEqual(ALL, [
     'home', 'billing', 'contracts', 'landlords', 'units', 'tenants', 'payments', 'accounting', 'maintenance',
-    'tasks', 'messages', 'leads', 'listings', 'domain', 'reports', 'team', 'audit', 'settings',
+    'vendors', 'tasks', 'messages', 'leads', 'listings', 'domain', 'reports', 'team', 'audit', 'settings',
   ]);
 });
 

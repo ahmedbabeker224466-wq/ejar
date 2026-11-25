@@ -94,8 +94,10 @@ const IMAGE_ERRORS = {
 const SELECT_REQUEST = `
   SELECT r.*, u.label AS unit_label, u.landlord_id, u.city AS unit_city, b.name AS building_name,
          a.name AS assignee_name, a.phone AS assignee_phone, a.email AS assignee_email,
-         (SELECT COUNT(*) FROM maintenance_photos ph WHERE ph.request_id = r.id) AS photo_count
+         (SELECT COUNT(*) FROM maintenance_photos ph WHERE ph.request_id = r.id) AS photo_count,
+         v.name AS vendor_name, v.trade AS vendor_trade, v.phone AS vendor_phone
     FROM maintenance_requests r
+    LEFT JOIN vendors v ON v.id = r.assigned_vendor_id AND v.office_id = :office_id
     LEFT JOIN units u ON u.id = r.unit_id AND u.office_id = :office_id
     LEFT JOIN buildings b ON b.id = u.building_id AND b.office_id = :office_id
     LEFT JOIN users a ON a.id = r.assigned_to`;
@@ -149,6 +151,20 @@ async function messagesFor(pool, officeId, requestId, kind) {
     [requestId, visible],
   );
   return rows.map((m) => ({ ...m, author: m.sender_role === 'office' ? team.displayName(m) : m.sender_role === 'landlord' ? 'المالك' : 'المستأجر' }));
+}
+
+/** The tenant rates a finished request once (1-5). Returns true when stored. */
+async function rateRequest(pool, officeId, { requestId, contractId, rating, userId, ip }) {
+  const stars = Number(rating);
+  if (!Number.isInteger(stars) || stars < 1 || stars > 5) return false;
+  const result = await scopeToOffice(pool, officeId).query(
+    `UPDATE maintenance_requests SET tenant_rating = ?, rated_at = UTC_TIMESTAMP()
+      WHERE id = ? AND contract_id = ? AND status = 'done' AND tenant_rating IS NULL AND office_id = :office_id`,
+    [stars, requestId, contractId],
+  );
+  if (!result || result.affectedRows !== 1) return false;
+  await createAudit(pool).log(userId, officeId, 'maintenance.rated', 'maintenance_request', requestId, null, { rating: stars }, ip);
+  return true;
 }
 
 async function photosFor(pool, officeId, requestId) {
@@ -460,6 +476,7 @@ async function photoForUser(pool, user, photoId, { membership = null, landlordLi
 }
 
 module.exports = {
+  rateRequest,
   CATEGORIES,
   PRIORITIES,
   STATUSES,

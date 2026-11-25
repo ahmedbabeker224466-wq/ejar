@@ -16,6 +16,7 @@ const maintenance = require('../services/maintenance');
 const images = require('../services/images');
 const team = require('../services/team');
 const portal = require('../services/portal');
+const vendors = require('../services/vendors');
 const { membershipsFor } = require('../services/offices');
 const { landlordLinks, tenantLinks } = require('../services/memberships');
 const { parseId } = require('../services/landlords');
@@ -53,6 +54,8 @@ const DONE = {
   status: 'تم تحديث حالة الطلب.',
   assigned: 'تم تحديث المسؤول عن الطلب.',
   message: 'تمت الإضافة.',
+  vendor: 'تم تحديث الفني المسؤول.',
+  rated: 'شكراً لتقييمك.',
 };
 
 const LABELS = {
@@ -70,6 +73,7 @@ async function renderDetail(req, res, { kind, found, base, status = 200, error =
     maintenance.photosFor(db.pool, officeId, request.id),
   ]);
   const members = kind === 'office' ? await team.listMembers(db.pool, officeId, { activeOnly: true }) : [];
+  const vendorList = kind === 'office' ? await vendors.listVendors(db.pool, officeId, { activeOnly: true }) : [];
   return res.status(status).render('maintenance/detail', {
     title: `طلب صيانة: ${request.unit_label || 'وحدة'}`,
     kind,
@@ -79,6 +83,9 @@ async function renderDetail(req, res, { kind, found, base, status = 200, error =
     base,
     listUrl: kind === 'office' ? '/office/maintenance' : `/${kind}/maintenance`,
     members,
+    vendorList,
+    vendorPhone: request.vendor_phone ? require('../utils/phone').toLocal(request.vendor_phone) : '',
+    tradeLabels: vendors.TRADES,
     nextStatuses: kind === 'office' ? maintenance.TRANSITIONS[request.status] : [],
     labels: LABELS,
     visibility: maintenance.VISIBILITY,
@@ -167,6 +174,18 @@ office.post('/office/maintenance/:id/assign', requirePerm('maintenance'), wrap(a
   return res.redirect(`${base}?done=assigned`);
 }));
 
+office.post('/office/maintenance/:id/vendor', requirePerm('maintenance'), wrap(async (req, res) => {
+  const found = await loadOfficeRequest(req, res);
+  if (!found) return notFound(res);
+  const raw = String(req.body.vendor || '');
+  const vendorId = raw === '' ? null : parseId(raw);
+  const base = `/office/maintenance/${found.request.id}`;
+  if (raw !== '' && !vendorId) return notFound(res);
+  const result = await vendors.assignToRequest(db.pool, req.office.id, found.request.id, vendorId, { actorId: req.user.id, ip: req.ip });
+  if (!result.ok) return renderDetail(req, res, { kind: 'office', found, base, status: 422, error: 'اختر فنياً فعّالاً من قائمة الفنيين.' });
+  return res.redirect(`${base}?done=vendor`);
+}));
+
 office.post('/office/maintenance/:id/messages', requirePerm('maintenance'), wrap(async (req, res) => {
   const id = parseId(req.params.id);
   return postMessage(req, res, {
@@ -224,6 +243,15 @@ portalRouter.get('/tenant/maintenance/:id', tenantArea, requirePerm('own.mainten
 portalRouter.post('/tenant/maintenance/:id/messages', tenantArea, requirePerm('own.maintenance'), wrap(async (req, res) => {
   const id = parseId(req.params.id);
   return postMessage(req, res, { kind: 'tenant', viewer: { kind: 'tenant', links: req.links }, base: `/tenant/maintenance/${id}`, role: 'tenant' });
+}));
+
+portalRouter.post('/tenant/maintenance/:id/rate', tenantArea, requirePerm('own.maintenance'), wrap(async (req, res) => {
+  const found = await maintenance.requestForViewer(db.pool, { kind: 'tenant', links: req.links }, parseId(req.params.id));
+  if (!found) return notFound(res);
+  await maintenance.rateRequest(db.pool, found.officeId, {
+    requestId: found.request.id, contractId: found.request.contract_id, rating: req.body.rating, userId: req.user.id, ip: req.ip,
+  });
+  return res.redirect(`/tenant/maintenance/${found.request.id}?done=rated`);
 }));
 
 const createLimit = rateLimit({

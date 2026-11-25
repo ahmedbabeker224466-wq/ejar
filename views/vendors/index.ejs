@@ -1,0 +1,76 @@
+<div class="page-head">
+  <div>
+    <h1><%= __("فنيو الصيانة") %></h1>
+    <p class="muted"><%= __("الفنيون والشركات الذين يعمل معهم المكتب. يظهر رقم الفني لفريق المكتب فقط.") %></p>
+  </div>
+</div>
+<% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
+
+<div class="vd-layout">
+  <section class="card vd-form" id="form">
+    <h2><%= __(editing ? 'تعديل الفني' : 'إضافة فني') %></h2>
+    <form method="post" action="<%= editing ? `/office/vendors/${editing.id}` : '/office/vendors' %>" novalidate>
+      <div class="field">
+        <label for="name"><%= __("الاسم") %></label>
+        <input id="name" name="name" class="input" maxlength="<%= limits.name %>" value="<%= values.name %>" placeholder="<%= __("مثال: أبو سالم للسباكة") %>" <%= errors.name ? 'aria-invalid=true' : '' %>>
+        <% if (errors.name) { %><p class="field-error"><%= __(errors.name) %></p><% } %>
+      </div>
+      <div class="field">
+        <label for="trade"><%= __("التخصص") %></label>
+        <select id="trade" name="trade" class="select" <%= errors.trade ? 'aria-invalid=true' : '' %>>
+          <option value=""><%= __("اختر") %></option>
+          <% Object.entries(trades).forEach(function ([key, label]) { %><option value="<%= key %>" <%= values.trade === key ? 'selected' : '' %>><%= __(label) %></option><% }) %>
+        </select>
+        <% if (errors.trade) { %><p class="field-error"><%= __(errors.trade) %></p><% } %>
+      </div>
+      <div class="field">
+        <label for="phone"><%= __("رقم الجوال") %></label>
+        <input id="phone" name="phone" class="input" inputmode="tel" dir="ltr" maxlength="16" value="<%= values.phoneLocal || '' %>" placeholder="05xxxxxxxx" <%= errors.phone ? 'aria-invalid=true' : '' %>>
+        <% if (errors.phone) { %><p class="field-error"><%= __(errors.phone) %></p><% } %>
+      </div>
+      <div class="field">
+        <label for="notes"><%= __("ملاحظات (اختياري)") %></label>
+        <input id="notes" name="notes" class="input" maxlength="<%= limits.notes %>" value="<%= values.notes || '' %>" placeholder="<%= __("مثال: يعمل مساءً، أسعاره مناسبة") %>" <%= errors.notes ? 'aria-invalid=true' : '' %>>
+        <% if (errors.notes) { %><p class="field-error"><%= __(errors.notes) %></p><% } %>
+      </div>
+      <div class="button-row">
+        <button type="submit" class="btn btn--success"><%= __(editing ? 'حفظ التعديل' : 'إضافة الفني') %></button>
+        <% if (editing) { %><a href="/office/vendors" class="btn btn--secondary"><%= __("إلغاء") %></a><% } %>
+      </div>
+    </form>
+  </section>
+
+  <section class="vd-list">
+    <nav class="vd-filter" aria-label="<%= __("التخصص") %>">
+      <a href="/office/vendors" class="vd-chip<%= !trade ? ' is-on' : '' %>"><%= __("الكل") %></a>
+      <% Object.entries(trades).forEach(function ([key, label]) { %><a href="/office/vendors?trade=<%= key %>" class="vd-chip<%= trade === key ? ' is-on' : '' %>"><%= __(label) %></a><% }) %>
+    </nav>
+    <% if (!rows.length) { %>
+      <div class="card empty-card"><p class="lead"><%= __(trade ? 'لا يوجد فنيون بهذا التخصص.' : 'لم تضف فنيين بعد. أضف أول فني ليظهر في قائمة إسناد طلبات الصيانة.') %></p></div>
+    <% } else { %>
+      <ul class="vd-cards">
+        <% rows.forEach(function (v) { %>
+          <li class="vd-card<%= v.is_active ? '' : ' is-off' %>">
+            <div class="vd-card__top">
+              <span class="vd-card__avatar" aria-hidden="true"><%= String(v.name).trim().charAt(0) %></span>
+              <div class="vd-card__who">
+                <b><%= v.name %></b>
+                <span class="badge badge--calm"><%= __(v.tradeLabel) %></span>
+                <% if (!v.is_active) { %><span class="badge badge--ended"><%= __("موقوف") %></span><% } %>
+              </div>
+            </div>
+            <p class="vd-card__phone"><a href="tel:<%= v.phoneLocal %>" dir="ltr"><%= v.phoneLocal %></a></p>
+            <% if (v.notes) { %><p class="vd-card__notes muted"><%= v.notes %></p><% } %>
+            <p class="vd-card__jobs muted"><%= __("طلبات الصيانة:") %> <%= v.jobs %> · <%= __("المفتوحة:") %> <%= v.open_jobs %></p>
+            <div class="vd-card__actions">
+              <a href="https://wa.me/<%= String(v.phone).replace(/\D/g, '') %>" class="btn btn--secondary btn--small" target="_blank" rel="noopener"><%= __("واتساب") %></a>
+              <a href="/office/vendors/<%= v.id %>/edit#form" class="btn btn--secondary btn--small"><%= __("تعديل") %></a>
+              <form method="post" action="/office/vendors/<%= v.id %>/active"><input type="hidden" name="active" value="<%= v.is_active ? '0' : '1' %>"><button type="submit" class="btn btn--small <%= v.is_active ? 'btn--danger-soft' : 'btn--success' %>"><%= __(v.is_active ? 'إيقاف' : 'تفعيل') %></button></form>
+              <form method="post" action="/office/vendors/<%= v.id %>/delete"><button type="submit" class="btn btn--small btn--link-danger"><%= __("حذف") %></button></form>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </section>
+</div>

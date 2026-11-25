@@ -8,12 +8,39 @@
     <h1><%= __(request.unit_label || __('وحدة')) %> · <%= __(request.categoryLabel) %></h1>
     <span class="badge badge--maint-<%= __(request.status) %>"><%= __(request.statusLabel) %></span>
   </div>
+  <% const steps = ['new', 'seen', 'in_progress', 'done']; const at = request.status === 'rejected' ? -1 : steps.indexOf(request.status); %>
+  <% if (request.status === 'rejected') { %>
+    <p class="flash flash--warning"><%= __("اعتذر المكتب عن تنفيذ هذا الطلب. يمكنك الاستفسار في الردود.") %></p>
+  <% } else { %>
+    <ol class="mt-steps" aria-label="<%= __("مراحل الطلب") %>">
+      <% steps.forEach(function (st, i) { %>
+        <li class="mt-steps__item<%= i < at ? ' is-done' : i === at ? ' is-current' : '' %>"><span class="mt-steps__dot" aria-hidden="true"><% if (i < at || (i === at && st === 'done')) { %><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg><% } else { %><%= i + 1 %><% } %></span><span class="mt-steps__label"><%= __({ new: 'استُلم الطلب', seen: 'اطّلع عليه المكتب', in_progress: 'قيد التنفيذ', done: 'تم الإنجاز' }[st]) %></span></li>
+      <% }) %>
+    </ol>
+  <% } %>
+  <% if (kind === 'tenant' && request.status === 'done') { %>
+    <div class="mt-rate">
+      <% if (request.tenant_rating) { %>
+        <p class="mt-rate__done"><%= __("تقييمك للخدمة") %>: <span class="mt-rate__stars" aria-label="<%= __(request.tenant_rating) %> <%= __("من 5") %>"><%= '★'.repeat(request.tenant_rating) %><span class="mt-rate__off"><%= '★'.repeat(5 - request.tenant_rating) %></span></span></p>
+      <% } else { %>
+        <form method="post" action="<%= __(base) %>/rate" class="mt-rate__form">
+          <p class="mt-rate__q"><%= __("كيف كانت خدمة الصيانة؟") %></p>
+          <div class="mt-rate__btns">
+            <% [5, 4, 3, 2, 1].forEach(function (n) { %><button type="submit" name="rating" value="<%= n %>" class="mt-rate__btn" title="<%= n %> <%= __("من 5") %>"><%= '★'.repeat(n) %></button><% }) %>
+          </div>
+        </form>
+      <% } %>
+    </div>
+  <% } %>
   <dl class="details">
     <% if (request.building_name) { %><dt><%= __("المبنى") %></dt><dd><%= __(request.building_name) %></dd><% } %>
     <dt><%= __("الأولوية") %></dt><dd><%= __(request.priorityLabel) %></dd>
     <dt><%= __("تاريخ الطلب") %></dt><dd dir="ltr"><%= __(createdAt) %></dd>
     <% if (changedAt) { %><dt><%= __("آخر تغيير للحالة") %></dt><dd dir="ltr"><%= __(changedAt) %></dd><% } %>
     <% if (kind === 'office') { %><dt><%= __("المسؤول") %></dt><dd><%= __(request.assigneeLabel || __('غير محدد')) %></dd><% } %>
+    <% if (kind === 'office' && request.vendor_name) { %><dt><%= __("الفني") %></dt><dd><%= __(request.vendor_name) %> · <%= __(tradeLabels[request.vendor_trade] || '') %> · <a href="tel:<%= vendorPhone %>" dir="ltr"><%= vendorPhone %></a></dd><% } %>
+    <% if (kind !== 'office' && request.assigned_vendor_id) { %><dt><%= __("الفني") %></dt><dd><%= __("تم تعيين فني للطلب") %></dd><% } %>
+    <% if (kind === 'office' && request.tenant_rating) { %><dt><%= __("تقييم المستأجر") %></dt><dd><%= request.tenant_rating %> <%= __("من 5") %></dd><% } %>
   </dl>
   <h2><%= __("الوصف") %></h2>
   <p class="pre-line"><%= __(request.description) %></p>
@@ -48,6 +75,17 @@
         </select>
       </div>
       <button type="submit" class="btn btn--secondary btn--block"><%= __("حفظ الإسناد") %></button>
+    </form>
+    <form method="post" action="<%= __(base) %>/vendor">
+      <div class="field">
+        <label for="vendor"><%= __("الفني المنفذ") %></label>
+        <select id="vendor" name="vendor" class="select">
+          <option value=""><%= __("بدون فني") %></option>
+          <% vendorList.forEach(function (v) { %><option value="<%= __(v.id) %>" <%= __(Number(request.assigned_vendor_id) === Number(v.id) ? 'selected' : '') %>><%= __(v.name) %> (<%= __(v.tradeLabel) %>)</option><% }) %>
+        </select>
+        <p class="field-hint"><%= __("أضف الفنيين وأرقامهم من") %> <a href="/office/vendors"><%= __("صفحة الفنيين") %></a>. <%= __("رقم الفني لا يظهر للمستأجر أو المالك.") %></p>
+      </div>
+      <button type="submit" class="btn btn--secondary btn--block"><%= __("حفظ الفني") %></button>
     </form>
   </section>
 <% } %>

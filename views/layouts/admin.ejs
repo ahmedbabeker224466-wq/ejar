@@ -27,7 +27,6 @@
     </div>
     <%- include('../partials/lang-switch') %>
     <%- include('../partials/bell', { bellHref: '/admin/notifications' }) %>
-    <a href="/admin/logout" class="btn btn--secondary btn--small"><%= __("خروج") %></a>
   </header>
   <div class="office-shell">
     <nav id="office-nav" class="office-nav" aria-label="<%= __("قائمة الإدارة") %>">
@@ -59,6 +58,9 @@
           <% }) %>
         </ul>
       <% }) %>
+      <ul class="office-nav__end">
+        <li><a href="/admin/logout" class="office-nav__logout"><svg class="office-nav__icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4M6 12h10"/></svg><span><%= __("تسجيل الخروج") %></span></a></li>
+      </ul>
     </nav>
     <div class="office-backdrop" id="office-backdrop" hidden></div>
     <main class="office-main">

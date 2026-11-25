@@ -42,6 +42,7 @@ const KIND_LABELS = {
   ops_clear: 'عاد النظام لوضعه الطبيعي',
   sms_low: 'رصيد الرسائل منخفض',
   ops_report: 'التقرير الشهري للمنصة',
+  landlord_monthly: 'الملخص الشهري لعقاراتك',
   contact_new: 'رسالة من نموذج التواصل',
   domain_update: 'تحديث طلب نطاق المكتب',
   domain_connect: 'ربط نطاق مكتب',

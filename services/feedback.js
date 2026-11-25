@@ -17,7 +17,8 @@ const { withTransaction } = require('./transaction');
 const paymentEntries = require('./paymentEntries');
 
 const DECISIONS = { renew: 'سيجدد', not_renew: 'لن يجدد', undecided: 'لم يقرر بعد' };
-const REQUEST_TYPES = { rent_reduction: 'طلب تخفيض الإيجار' };
+const REQUEST_TYPES = { rent_reduction: 'طلب تخفيض الإيجار', renew_intent: 'يرغب في التجديد', leave_intent: 'لا يرغب في التجديد' };
+const INTENTS = ['renew_intent', 'leave_intent'];
 const REQUEST_STATUSES = { pending: 'بانتظار المكتب', accepted: 'مقبول', rejected: 'مرفوض' };
 const NOTE_MAX = { decision: 280, request: 500 };
 
@@ -91,6 +92,32 @@ async function requestReduction(pool, officeId, { contract, userId, body, today,
   await event(scoped, contract.id, userId, 'tenant_request', { type: 'rent_reduction' });
   await createAudit(pool).log(userId, officeId, 'contract.request', 'contract', contract.id, null, { type: 'rent_reduction' }, ip);
   return { result: 'created' };
+}
+
+/**
+ * The tenant tells the office whether they want to renew. One pending intent
+ * per tenant and contract: a new answer replaces the pending one. Only while
+ * the contract runs. Returns 'created' | 'updated' | 'unchanged' | 'not_allowed'.
+ */
+async function recordIntent(pool, officeId, { contract, userId, intent, today, ip }) {
+  if (!INTENTS.includes(intent)) return 'not_allowed';
+  if (!engine.LIVE_STAGES.includes(contract.status)) return 'not_allowed';
+  if (engine.daysUntil(today, contract.end_date) < 0) return 'not_allowed';
+  const scoped = scopeToOffice(pool, officeId);
+  const [pending] = await scoped.query(
+    `SELECT id, request_type FROM contract_requests
+      WHERE contract_id = ? AND user_id = ? AND status = 'pending' AND request_type IN (?) AND office_id = :office_id`,
+    [contract.id, userId, INTENTS],
+  );
+  if (pending && pending.request_type === intent) return 'unchanged';
+  if (pending) {
+    await scoped.query("UPDATE contract_requests SET request_type = ?, created_at = UTC_TIMESTAMP() WHERE id = ? AND office_id = :office_id", [intent, pending.id]);
+  } else {
+    await scoped.insert('contract_requests', { contract_id: contract.id, user_id: userId, request_type: intent, note: null });
+  }
+  await event(scoped, contract.id, userId, 'tenant_request', { type: intent });
+  await createAudit(pool).log(userId, officeId, 'contract.request', 'contract', contract.id, null, { type: intent }, ip);
+  return pending ? 'updated' : 'created';
 }
 
 async function requestsFor(pool, officeId, contractId) {
@@ -210,6 +237,8 @@ async function pendingContracts(pool, officeId, limit = 10) {
 module.exports = {
   DECISIONS,
   REQUEST_TYPES,
+  INTENTS,
+  recordIntent,
   REQUEST_STATUSES,
   validateDecision,
   addDecision,

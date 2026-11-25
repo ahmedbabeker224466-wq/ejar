@@ -1,7 +1,7 @@
 <p class="back-link no-print"><a href="<%= __(backUrl) %>"><%= dir === 'rtl' ? '→' : '←' %> <%= __("رجوع") %></a></p>
 <section class="card detail-card receipt" id="receipt">
   <div class="page-head">
-    <h1><%= __("كشف دفعات العقد") %></h1>
+    <h1><%= __(locals.heading || "كشف دفعات العقد") %></h1>
     <button type="button" class="btn btn--primary btn--small no-print" data-print><%= __("طباعة") %></button>
   </div>
   <dl class="details">
@@ -16,7 +16,7 @@
       <% history.forEach(function (p, i) { %>
         <li class="receipt-row">
           <div class="receipt-row__head">
-            <strong><%= __("دفعة") %> <%= __(i + 1) %> · <span dir="ltr"><%= __(String(p.due_date).slice(0, 10)) %></span></strong>
+            <strong><%= __("دفعة") %> <%= __(locals.numbers ? numbers[i] : i + 1) %> · <span dir="ltr"><%= __(String(p.due_date).slice(0, 10)) %></span></strong>
             <span class="badge badge--pay-<%= __(p.partial ? 'partial' : p.shownStatus) %>"><%= __(p.partial ? __('دفعة جزئية') : paymentLabels[p.shownStatus]) %></span>
           </div>
           <dl class="receipt-row__figures">

@@ -168,4 +168,10 @@ portal.get('/landlord/account', ...area, wrap(async (req, res) => {
   return res.render('accounting/landlord', { title: 'حسابي الشهري', ...helpers, period, statements, nav: monthNav(period, day) });
 }));
 
+// Income per month, occupancy and a per-unit comparison (owner's request, Nov 2026).
+portal.get('/landlord/insights', ...area, wrap(async (req, res) => {
+  const data = await require('../services/landlordInsights').insights(db.pool, req.links, today());
+  return res.render('portal/insights', { title: 'أداء عقاراتك', ...data, fmt: require('../services/money').formatHalalas });
+}));
+
 module.exports = { office, portal };

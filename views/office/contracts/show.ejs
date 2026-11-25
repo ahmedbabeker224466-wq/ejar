@@ -152,7 +152,9 @@
           <span class="badge badge--<%= __(r.status === 'pending' ? 'soon' : 'calm') %>"><%= __(requestStatuses[r.status]) %></span>
           <span class="muted" dir="ltr"><%= __(r.createdOn) %></span>
           <% if (r.note) { %><p class="pre-line"><%= __(r.note) %></p><% } %>
-          <% if (r.status === 'pending') { %>
+          <% if (r.status === 'pending' && r.request_type !== 'rent_reduction') { %>
+            <form method="post" action="/office/contracts/<%= __(contract.id) %>/requests/<%= __(r.id) %>"><input type="hidden" name="status" value="accepted"><button type="submit" class="btn btn--secondary btn--small"><%= __("تم الاطلاع") %></button></form>
+          <% } else if (r.status === 'pending') { %>
             <div class="button-row">
               <form method="post" action="/office/contracts/<%= __(contract.id) %>/requests/<%= __(r.id) %>"><input type="hidden" name="status" value="accepted"><button type="submit" class="btn btn--primary btn--small"><%= __("قبول") %></button></form>
               <form method="post" action="/office/contracts/<%= __(contract.id) %>/requests/<%= __(r.id) %>"><input type="hidden" name="status" value="rejected"><button type="submit" class="btn btn--secondary btn--small"><%= __("رفض") %></button></form>
