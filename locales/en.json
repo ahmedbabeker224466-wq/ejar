@@ -3255,5 +3255,6 @@
  "اكتب اسم الفني أو الشركة.": "Enter the technician or company name.",
  "لا تكتب أرقاماً في الاسم.": "Do not put numbers in the name.",
  "اختر التخصص.": "Choose a trade.",
- "لا تكتب أرقام حسابات أو هويات في الملاحظات.": "Do not write account or ID numbers in the notes."
+ "لا تكتب أرقام حسابات أو هويات في الملاحظات.": "Do not write account or ID numbers in the notes.",
+ "ملاحظة للمكتب (اختياري)": "Note to the office (optional)"
 }

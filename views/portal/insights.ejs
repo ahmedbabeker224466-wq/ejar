@@ -13,11 +13,11 @@
   <div class="pt-section__head"><h2><%= __("الإيجار المحصّل شهرياً") %></h2><span class="muted"><%= __("بالريال") %></span></div>
   <% if (totalH > 0) { %>
     <div class="ins-chart" role="img" aria-label="<%= __("رسم بياني للإيجار المحصّل في آخر 12 شهراً") %>">
-      <% months.forEach(function (m) { %>
-        <div class="ins-chart__col" title="<%= monthName(m.ym) %> <%= m.ym.slice(0, 4) %>: <%= fmt(m.h) %>">
+      <% months.forEach(function (m, i) { %>
+        <div class="ins-chart__col<%= i % 2 ? ' ins-chart__col--odd' : '' %>" title="<%= monthName(m.ym) %> <%= m.ym.slice(0, 4) %>: <%= fmt(m.h) %>">
           <span class="ins-chart__val"><%= m.h ? fmt(m.h).replace(/\.00$/, '') : '' %></span>
           <span class="ins-chart__bar pt-h-<%= Math.round(m.pct / 5) * 5 %>"></span>
-          <span class="ins-chart__lbl"><%= monthName(m.ym) %></span>
+          <span class="ins-chart__lbl"><%= lang === 'en' ? monthName(m.ym).slice(0, 3) : monthName(m.ym) %></span>
         </div>
       <% }) %>
     </div>
