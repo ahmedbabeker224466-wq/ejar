@@ -7,13 +7,16 @@
 <% } else { %>
   <ul class="item-list">
     <% rows.forEach(function (t) { %>
-      <li class="item">
-        <div class="item__title">
-          <a href="<%= __(base) %>/<%= __(t.id) %>"><%= __(t.unit_label || __('عقد')) %></a>
+      <li class="thread-row">
+        <span class="thread-row__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg></span>
+        <div class="thread-row__body">
+          <a href="<%= __(base) %>/<%= __(t.id) %>" class="thread-row__link"><%= __(t.unit_label || __('عقد')) %></a>
+          <p class="thread-row__meta"><%= __(t.officeName ? `${t.officeName} · ` : '') %><%= __(t.at ? `آخر رسالة ${t.at}` : __('لا توجد رسائل بعد')) %></p>
+        </div>
+        <div class="thread-row__badges">
           <% if (t.unread) { %><span class="badge badge--soon"><%= __(t.unread) %> <%= __("جديدة") %></span><% } %>
           <% if (kind === 'office' && t.muted) { %><span class="badge badge--ended"><%= __("مكتومة") %></span><% } %>
         </div>
-        <p class="item__meta"><%= __(t.officeName ? `${t.officeName} · ` : '') %><%= __(t.at ? `آخر رسالة ${t.at}` : __('لا توجد رسائل بعد')) %></p>
       </li>
     <% }) %>
   </ul>

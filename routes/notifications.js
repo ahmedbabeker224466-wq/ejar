@@ -33,7 +33,39 @@ function notFound(res) {
   return res.status(404).render('errors/404', { title: 'الصفحة غير موجودة' });
 }
 
-const signedIn = [requireAuth, requirePerm('settings.basic')];
+// The shared notification pages open inside the shell of the account that
+// opened them: the office panel for office members, the landlord or tenant
+// shell for those (owner, Nov 2026).
+async function areaShell(req, res, next) {
+  try {
+    const role = req.user && req.user.role;
+    if (['office_owner', 'office_manager', 'office_staff'].includes(role)) {
+      const { membershipsFor } = require('../services/offices');
+      const memberships = await membershipsFor(db.pool, req.user.id);
+      if (!memberships.some((m) => m.is_active)) return next();
+      const office = require('../middleware/loadOffice');
+      return office.loadOffice(db.pool)(req, res, next);
+    }
+    if (role === 'landlord' || role === 'tenant') {
+      const { landlordLinks, tenantLinks } = require('../services/memberships');
+      const [landlord, tenant] = await Promise.all([landlordLinks(db.pool, req.user.id), tenantLinks(db.pool, req.user.id)]);
+      const used = req.sessionCookie && req.sessionCookie.name;
+      let area = used === auth.TENANT_COOKIE ? 'tenant' : used === auth.LANDLORD_COOKIE ? 'landlord' : role;
+      if (area === 'landlord' && !landlord.length && tenant.length) area = 'tenant';
+      if (area === 'tenant' && !tenant.length && landlord.length) area = 'landlord';
+      if (!landlord.length && !tenant.length) return next();
+      res.locals.layout = 'layouts/portal';
+      res.locals.currentArea = area;
+      res.locals.areas = [['landlord', landlord, 'صفحة المالك'], ['tenant', tenant, 'صفحة المستأجر']]
+        .filter((x) => x[1].length).map((x) => ({ key: x[0], href: `/${x[0]}`, label: x[2] }));
+    }
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+}
+
+const signedIn = [requireAuth, requirePerm('settings.basic'), areaShell];
 
 // ------------------------------------------------------------ notification center
 

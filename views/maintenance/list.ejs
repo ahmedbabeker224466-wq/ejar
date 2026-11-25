@@ -4,9 +4,9 @@
 </div>
 <% if (locals.message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
 
-<% if (kind === 'tenant' && form) { %>
-  <section class="card form-card" id="new">
-    <h2><%= __("طلب صيانة جديد") %></h2>
+<% if (kind === 'tenant' && form) { const openForm = Boolean(Object.keys(form.errors || {}).length) || !rows.length; %>
+  <details class="card new-request" id="new" <%= openForm ? 'open' : '' %>>
+    <summary class="new-request__summary"><span class="btn btn--primary"><%= __("طلب صيانة جديد") %></span><span class="muted new-request__hint"><%= __("سباكة أو كهرباء أو تكييف، مع صور إن وجدت") %></span></summary>
     <% if (form.errors.form) { %><div class="flash flash--danger" role="alert"><%= __(form.errors.form) %></div><% } %>
     <% if (form.contracts.length === 0) { %>
       <p class="empty-state"><%= __("لا يوجد عقد مرتبط بحسابك لرفع طلب صيانة عليه.") %></p>
@@ -49,10 +49,10 @@
           <p class="field-hint"><%= __("تُحذف بيانات الموقع من الصور تلقائياً.") %></p>
           <% if (form.errors.photos) { %><p class="field-error"><%= __(form.errors.photos) %></p><% } %>
         </div>
-        <button type="submit" class="btn btn--primary btn--block btn--large"><%= __("إرسال الطلب") %></button>
+        <button type="submit" class="btn btn--primary"><%= __("إرسال الطلب") %></button>
       </form>
     <% } %>
-  </section>
+  </details>
 <% } %>
 
 <% if (kind === 'office') { %>
@@ -102,7 +102,7 @@
           <% if (r.priority === 'high') { %><span class="badge badge--prio-high"><%= __("عاجلة") %></span><% } %>
         </div>
         <p class="item__meta">
-          <span dir="ltr"><%= __(String(r.created_at).slice(0, 10)) %></span>
+          <span dir="ltr"><%= riyadhDay(r.created_at) %></span>
           <%= __(r.photo_count ? ` · ${r.photo_count} صور` : '') %>
           <%= __(kind === 'office' ? ` · المسؤول: ${r.assigneeLabel || 'غير محدد'}` : '') %>
           <%= __(r.officeName ? ` · ${r.officeName}` : '') %>

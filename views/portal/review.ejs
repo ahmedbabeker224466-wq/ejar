@@ -1,30 +1,45 @@
-<%- include('../partials/area-nav') %>
 <div class="page-head"><h1><%= __("تقييم المكتب") %></h1></div>
 <% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
-<p class="muted"><%= __("تقييمك يساعد غيرك على اختيار مكتب موثوق، ويظهر بدون اسمك: نعرض فقط أنك مستأجر أو مالك.") %></p>
+<p class="muted page-lead"><%= __("تقييمك يساعد غيرك على اختيار مكتب موثوق، ويظهر بدون اسمك: نعرض فقط أنك مستأجر أو مالك.") %></p>
 
 <% offices.forEach(function (o) { const own = mine[o.officeId]; const isErr = errorOffice === o.officeId; const v = isErr ? values : { rating: own ? String(own.rating) : '', comment: own ? own.comment || '' : '' }; const e = isErr ? errors : {}; %>
-  <section class="card detail-card review-card">
-    <h2><%= o.officeName %></h2>
-    <% if (own) { %>
-      <p class="muted"><%= __("تقييمك الحالي") %>: <b><%= own.rating %></b> <%= __("من 5") %><% if (own.comment) { %> · <%= __("التعليق") %>: <%= __(commentStatus[own.comment_status]) %><% } %></p>
+  <section class="card review-card">
+    <div class="review-card__head">
+      <h2><%= o.officeName %></h2>
+      <% if (own) { %><span class="review-stars" aria-label="<%= own.rating %> <%= __("من 5") %>"><% for (var i = 1; i <= 5; i++) { %><span class="<%= i <= own.rating ? 'star-on' : 'star-off' %>"><%- icon('star') %></span><% } %></span><% } %>
+    </div>
+    <% const form = function (open) { %>
+      <form method="post" action="<%= base %>/review" novalidate class="review-form">
+        <input type="hidden" name="office_id" value="<%= o.officeId %>">
+        <p class="review-form__label"><%= __("عدد النجوم") %></p>
+        <fieldset class="rate-pick" aria-label="<%= __("عدد النجوم") %>">
+          <% [5, 4, 3, 2, 1].forEach(function (n) { %>
+            <input type="radio" name="rating" id="r<%= o.officeId %>-<%= n %>" value="<%= n %>" <%= String(v.rating) === String(n) ? 'checked' : '' %>>
+            <label for="r<%= o.officeId %>-<%= n %>" title="<%= n %>"><%- icon('star') %><span class="visually-hidden"><%= n %> <%= __("من 5") %></span></label>
+          <% }) %>
+        </fieldset>
+        <% if (e.rating) { %><p class="field-error" role="alert"><%= __(e.rating) %></p><% } %>
+        <div class="field">
+          <label for="c<%= o.officeId %>"><%= __("تعليق قصير (اختياري)") %></label>
+          <textarea id="c<%= o.officeId %>" name="comment" class="textarea" rows="3" maxlength="<%= commentMax %>"><%= v.comment || '' %></textarea>
+          <p class="field-hint"><%= __("يظهر التعليق بعد مراجعته. لا تكتب أرقام جوال أو روابط.") %></p>
+          <% if (e.comment) { %><p class="field-error" role="alert"><%= __(e.comment) %></p><% } %>
+        </div>
+        <button type="submit" class="btn btn--success"><%= __(own ? 'حفظ التعديل' : 'إرسال التقييم') %></button>
+      </form>
+    <% }; %>
+    <% if (own && !isErr) { %>
+      <p class="review-card__score"><%= __("تقييمك") %>: <b><%= own.rating %></b> <%= __("من 5") %></p>
+      <% if (own.comment) { %>
+        <blockquote class="review-card__comment"><%= own.comment %></blockquote>
+        <p class="review-card__status review-card__status--<%= own.comment_status %>"><%= __(commentStatus[own.comment_status]) %></p>
+      <% } %>
+      <details class="review-edit">
+        <summary class="btn btn--secondary btn--small"><%= __("تعديل التقييم") %></summary>
+        <% form(); %>
+      </details>
+    <% } else { %>
+      <% form(); %>
     <% } %>
-    <form method="post" action="<%= base %>/review" novalidate>
-      <input type="hidden" name="office_id" value="<%= o.officeId %>">
-      <fieldset class="rate-pick" aria-label="<%= __("عدد النجوم") %>">
-        <% [5, 4, 3, 2, 1].forEach(function (n) { %>
-          <input type="radio" name="rating" id="r<%= o.officeId %>-<%= n %>" value="<%= n %>" <%= String(v.rating) === String(n) ? 'checked' : '' %>>
-          <label for="r<%= o.officeId %>-<%= n %>" title="<%= n %>"><%- icon('star') %><span class="visually-hidden"><%= n %> <%= __("من 5") %></span></label>
-        <% }) %>
-      </fieldset>
-      <% if (e.rating) { %><p class="field-error" role="alert"><%= __(e.rating) %></p><% } %>
-      <div class="field">
-        <label for="c<%= o.officeId %>"><%= __("تعليق قصير (اختياري)") %></label>
-        <textarea id="c<%= o.officeId %>" name="comment" class="textarea" rows="3" maxlength="<%= commentMax %>"><%= v.comment || '' %></textarea>
-        <p class="field-hint"><%= __("يظهر التعليق بعد مراجعته. لا تكتب أرقام جوال أو روابط.") %></p>
-        <% if (e.comment) { %><p class="field-error" role="alert"><%= __(e.comment) %></p><% } %>
-      </div>
-      <button type="submit" class="btn btn--success"><%= __(own ? 'تحديث التقييم' : 'إرسال التقييم') %></button>
-    </form>
   </section>
 <% }) %>
