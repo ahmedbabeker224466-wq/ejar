@@ -2790,3 +2790,32 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 .rate-pick label svg { width: 34px; height: 34px; fill: currentColor; }
 .rate-pick input:checked ~ label, .rate-pick label:hover, .rate-pick label:hover ~ label { color: #f5a524; }
 .rate-pick input:focus-visible + label { outline: 2px solid #2b6cf6; border-radius: 6px; }
+
+/* Office panel: denser, calmer scale (owner, Nov 2026: buttons and type were too large).
+   Variables are redefined here so every rule that reads them shrinks together. */
+.office-body {
+  --text-base: .9375rem;
+  --text-lg: 1rem;
+  --text-xl: 1.125rem;
+  --text-2xl: 1.375rem;
+  --tap-min: 40px;
+  font-size: .9375rem;
+}
+.office-body h1 { font-size: 1.375rem; letter-spacing: -.01em; }
+.office-body h2 { font-size: 1.0625rem; }
+.office-body h3 { font-size: .975rem; }
+.office-body .btn { font-size: .9rem; font-weight: 600; min-height: 38px; padding: 7px 16px; border-width: 1px; border-radius: 9px; }
+.office-body .btn--small { font-size: .82rem; min-height: 32px; padding: 5px 12px; }
+.office-body .input, .office-body .select, .office-body .textarea { font-size: .9375rem; border-radius: 9px; }
+.office-body .input, .office-body .select { height: 42px; min-height: 42px; padding-block: 0; line-height: 40px; }
+.office-body .textarea { min-height: 96px; padding-block: 10px; }
+.office-body .field label, .office-body label { font-size: .875rem; }
+.office-body .field-hint, .office-body .field-error { font-size: .8rem; }
+.office-body .card { padding: 18px 20px; border-radius: 12px; }
+.office-body .badge { font-size: .75rem; padding: 2px 9px; }
+.office-body .office-nav a { font-size: .9rem; min-height: 40px; }
+.office-body .flash { font-size: .875rem; padding: 10px 14px; }
+@media (min-width: 700px) {
+  /* A full-width bar is for phones; on wider screens the main action sits at its natural size. */
+  .office-body form .btn--block, .office-body .card > .btn--block { width: auto; min-width: 150px; }
+}
