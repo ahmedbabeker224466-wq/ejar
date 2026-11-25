@@ -596,6 +596,7 @@ const TABLES = [
     `unit_id ${REF} NOT NULL`,
     'title VARCHAR(160) NOT NULL',
     'description TEXT NOT NULL',
+    'ad_license_number VARCHAR(20) NULL',
     `price ${MONEY} NOT NULL`, // annual rent
     CURRENCY,
     'rega_ad_license VARCHAR(40) NULL', // unused: this app makes no claim about advertising licences
@@ -629,6 +630,8 @@ const TABLES = [
     'phone VARCHAR(20) NULL',
     'email VARCHAR(190) NULL',
     'message TEXT NULL',
+    'visit_date DATE NULL',
+    'visit_slot VARCHAR(12) NULL',
     "status ENUM('new','contacted','closed') NOT NULL DEFAULT 'new'",
     'KEY idx_listing_inquiries_created (created_at)',
     'KEY idx_listing_inquiries_listing (listing_id, id)',
@@ -1272,6 +1275,9 @@ const COLUMN_ADDITIONS = [
   { table: 'listings', column: 'admin_hidden', definition: 'TINYINT(1) NOT NULL DEFAULT 0 AFTER features' },
   { table: 'listings', column: 'admin_hidden_reason', definition: 'VARCHAR(200) NULL AFTER admin_hidden' },
   { table: 'listing_inquiries', column: 'email', definition: 'VARCHAR(190) NULL AFTER phone' },
+  { table: 'listing_inquiries', column: 'visit_date', definition: 'DATE NULL AFTER message' },
+  { table: 'listing_inquiries', column: 'visit_slot', definition: 'VARCHAR(12) NULL AFTER visit_date' },
+  { table: 'listings', column: 'ad_license_number', definition: 'VARCHAR(20) NULL AFTER description' },
   { table: 'unit_photos', column: 'thumb_path', definition: 'VARCHAR(255) NULL AFTER is_cover' },
   { table: 'unit_photos', column: 'size_bytes', definition: 'INT UNSIGNED NULL AFTER thumb_path' },
   { table: 'blog_posts', column: 'meta_title', definition: 'VARCHAR(160) NULL AFTER views' },

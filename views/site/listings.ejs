@@ -40,10 +40,16 @@
   </form>
 </section>
 
-<p class="results-count"><%= __(total) %> <%= __("إعلان") %></p>
-<ul class="listing-grid">
+<nav class="type-chips" aria-label="<%= __("نوع العقار") %>">
+  <a href="/listings<%= __(filters.city ? '?city=' + encodeURIComponent(filters.city) : '') %>" class="type-chip<%= __(!filters.type ? ' is-on' : '') %>"><%= __("الكل") %></a>
+  <% ['apartment', 'villa', 'shop', 'office', 'warehouse', 'land'].forEach(function (t) { %>
+    <a href="/listings?type=<%= __(t) %><%= __(filters.city ? '&city=' + encodeURIComponent(filters.city) : '') %>" class="type-chip<%= __(filters.type === t ? ' is-on' : '') %>"><%= __(types[t]) %></a>
+  <% }) %>
+</nav>
+<p class="results-count"><strong><%= __(total) %></strong> <%= __("إعلان متاح للإيجار السنوي") %></p>
+<ul class="lgrid">
   <% rows.forEach(function (l) { %>
-    <%- include('_listing-card', { l, fmt }) %>
+    <%- include('_listing-card', { l, fmt, icon, types }) %>
   <% }) %>
 </ul>
 <% if (!rows.length) { %><p class="empty-state"><%= __("لا توجد إعلانات مطابقة الآن.") %></p><% } %>

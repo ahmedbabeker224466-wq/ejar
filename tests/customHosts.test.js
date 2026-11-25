@@ -249,7 +249,7 @@ test('allow-list: own listings and the inquiry form; another office\'s listing i
   assert.equal((await raw(`/listings/${listingB}`, { host: 'tch-a.com' })).status, 404);
   assert.equal((await raw(`/listings/${listingB}/inquiry`, { host: 'tch-a.com', method: 'POST', headers: { Origin: 'https://tch-a.com' }, form: { name: 'زائر', phone: '0555000111', message: 'مرحبا' } })).status, 404);
 
-  const sent = await raw(`/listings/${listingA}/inquiry`, { host: 'tch-a.com', method: 'POST', headers: { Origin: 'https://tch-a.com' }, form: { name: 'زائر', phone: '0555000111', message: 'أريد التفاصيل' } });
+  const sent = await raw(`/listings/${listingA}/inquiry`, { host: 'tch-a.com', method: 'POST', headers: { Origin: 'https://tch-a.com' }, form: { name: 'زائر', phone: '0555000111', message: 'أريد التفاصيل', visit_date: require('../services/inquiries').visitDays()[0].value, visit_slot: 'morning' } });
   assert.equal(sent.status, 302, sent.text.slice(0, 200));
   assert.equal(sent.headers.location, `/listings/${listingA}?sent=1#inquiry`);
   const [[row]] = await db.pool.query('SELECT office_id FROM listing_inquiries WHERE listing_id = ? ORDER BY id DESC LIMIT 1', [listingA]);

@@ -184,7 +184,7 @@ test('happy path: office, landlord, building, unit, contract, tenant, reminder, 
   const listingId = Number(/listings\/(\d+)/.exec(created.location)[1]);
   const saveRes = await post(`/office/listings/${listingId}`, owner.cookie, {
     unit_type: 'apartment', city: 'الرياض', neighborhood: 'الملقا', price: '36000', rooms: '3', bathrooms: '2', area_sqm: '140',
-    description: 'شقة نظيفة وواسعة في حي هادئ قريبة من الخدمات والمدارس.', features: ['ac', 'parking'],
+    description: 'شقة نظيفة وواسعة في حي هادئ قريبة من الخدمات والمدارس.', features: ['ac', 'parking'], ad_license_number: '7100012345',
   });
   assert.equal(saveRes.status, 302, saveRes.text.slice(0, 300));
   const photo = await fx.multipart(`/office/listings/${listingId}/photos`, owner.cookie, {}, [{ field: 'photos', name: 'a.jpg', type: 'image/jpeg', data: await jpeg() }]);
@@ -198,7 +198,7 @@ test('happy path: office, landlord, building, unit, contract, tenant, reminder, 
   for (const secret of ['شقة 2', 'مالك الرحلة', 'عمارة الرحلة', '0555000999', 'ملاحظة']) assert.ok(!detail.includes(secret), `the public page shows ${secret}`);
   const inquiry = await fetch(`${http.base()}/listings/${listingId}/inquiry`, {
     method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Origin: http.base() }, redirect: 'manual',
-    body: new URLSearchParams({ name: 'زائر', phone: '0555000111', message: 'هل ما زالت متاحة؟', website: '' }).toString(),
+    body: new URLSearchParams({ name: 'زائر', phone: '0555000111', message: 'هل ما زالت متاحة؟', website: '', visit_date: require('../services/inquiries').visitDays()[0].value, visit_slot: 'evening' }).toString(),
   });
   assert.equal(inquiry.status, 302);
   assert.equal(Number((await one('SELECT COUNT(*) AS n FROM listing_inquiries WHERE listing_id = ?', [listingId])).n), 1);

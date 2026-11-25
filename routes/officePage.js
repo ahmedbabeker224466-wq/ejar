@@ -71,6 +71,8 @@ async function renderOffice(req, res, office) {
     pageBase: onOwnDomain ? '/' : `/${office.slug}`,
     ...result,
     fmt: money.formatHalalas,
+    icon: require('../services/listingIcons').icon,
+    types: require('../services/listings').TYPE_LABELS,
   });
 }
 

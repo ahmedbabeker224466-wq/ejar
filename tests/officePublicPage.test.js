@@ -229,7 +229,7 @@ test('public page: name, city, escaped description and this office\'s published 
   assert.match(page.text, new RegExp(`<link rel="canonical" href="https://aqdi.example/${SLUG('page-a')}">`));
   assert.match(page.text, /content="index,follow"/);
   assert.match(page.response.headers.get('cache-control') || '', /public, max-age=60/);
-  assert.match(page.text, /نموذج الاستفسار/);
+  assert.match(page.text, /لطلب معاينة افتح الإعلان/);
 
   // The inquiry form of the listing is the way to reach the office.
   const listing = await get(`/listings/${mine}`);

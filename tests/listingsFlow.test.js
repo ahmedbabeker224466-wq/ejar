@@ -124,8 +124,9 @@ const publicText = async (p) => (await getPublic(p)).text();
 
 const FIELDS = {
   unit_type: 'apartment', city: 'الرياض', neighborhood: 'الملقا', price: '36000', rooms: '3', bathrooms: '2', area_sqm: '150',
-  description: 'شقة نظيفة وواسعة في حي هادئ قريبة من الخدمات والمدارس.', features: ['ac', 'parking'],
+  description: 'شقة نظيفة وواسعة في حي هادئ قريبة من الخدمات والمدارس.', features: ['ac', 'parking'], ad_license_number: '7100012345',
 };
+const VISIT = () => ({ visit_date: require('../services/inquiries').visitDays()[0].value, visit_slot: 'morning' });
 
 const jpeg = (w = 3000, h = 2000) => sharp({ create: { width: w, height: h, channels: 3, background: '#7a8' } })
   .withExif({ IFD0: { ImageDescription: MARKER } }).jpeg().toBuffer();
@@ -357,7 +358,8 @@ test('publish needs a photo, price, description and a neighborhood; only publish
   const html = await page.text();
   assert.match(html, /شقة للإيجار في حي الملقا، الرياض/);
   assert.match(html, /36,000\.00/);
-  assert.match(html, /تواصل مع المكتب/);
+  assert.match(html, /اطلب معاينة/);
+  assert.match(html, /رقم ترخيص الإعلان[\s\S]{0,120}7100012345/, "the REGA ad licence is shown");
   assert.equal((html.match(/<h1/g) || []).length, 1);
   assert.match(html, /<link rel="canonical" href="https:\/\/aqdi\.example\/listings\/\d+">/);
   assert.match(html, /property="og:title"/);
@@ -532,11 +534,11 @@ test('inquiry: validated, stored for the listing\'s own office, the owner is not
   const o = await newOffice(17);
   const other = await newOffice(18);
   const id = await published(o);
-  const send = (form) => post(`/listings/${id}/inquiry`, null, form);
+  const send = (form) => post(`/listings/${id}/inquiry`, null, { ...VISIT(), ...form });
 
   const none = await send({ name: 'زائر', message: 'هل ما زالت متاحة؟' });
   assert.equal(none.status, 422);
-  assert.match(none.text, /اكتب رقم جوالك أو بريدك/);
+  assert.match(none.text, /اكتب رقم جوالك ليتواصل معك المكتب/);
   assert.equal((await send({ phone: '123', message: 'x' })).status, 422);
   assert.equal((await send({ email: 'not-an-email' })).status, 422);
   assert.equal((await send({ phone: '0555000111', message: 'x'.repeat(501) })).status, 422);
@@ -552,9 +554,11 @@ test('inquiry: validated, stored for the listing\'s own office, the owner is not
   assert.equal(row.phone, '966555000111');
   assert.equal(row.email, 'visitor@example.com');
   assert.equal(row.status, 'new');
-  // An email alone is enough too.
-  assert.equal((await send({ email: 'only@example.com' })).status, 302);
-  assert.match(await publicText(`/listings/${id}?sent=1`), /وصل استفسارك/);
+  // A viewing request needs a phone; the day and the time are stored.
+  assert.equal((await send({ email: 'only@example.com' })).status, 422);
+  assert.equal(row.visit_slot, 'morning');
+  assert.match(row.visit_date, /^\d{4}-\d{2}-\d{2}$/);
+  assert.match(await publicText(`/listings/${id}?sent=1`), /وصل طلب المعاينة/);
 
   const note = await one("SELECT * FROM notifications WHERE user_id = ? AND kind = 'listing_inquiry' ORDER BY id DESC LIMIT 1", [o.user.id]);
   assert.ok(note);
@@ -580,7 +584,7 @@ test('inquiry: validated, stored for the listing\'s own office, the owner is not
 test('inquiry anti-spam: honeypot stores nothing; 5 per hour per IP; 10 per hour per listing', { skip }, async () => {
   const o = await newOffice(19);
   const id = await published(o);
-  const send = (form) => post(`/listings/${id}/inquiry`, null, form);
+  const send = (form) => post(`/listings/${id}/inquiry`, null, { ...VISIT(), ...form });
   const bot = await send({ phone: '0555000111', message: 'hello', website: 'http://bot.example' });
   assert.equal(bot.status, 302, 'the bot gets the normal thank-you');
   assert.equal(await count('SELECT COUNT(*) FROM listing_inquiries WHERE listing_id = ?', [id]), 0, 'nothing stored');

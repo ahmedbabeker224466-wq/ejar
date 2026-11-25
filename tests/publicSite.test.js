@@ -143,8 +143,10 @@ test('listing form: title never holds a unit label; filters keep only valid valu
   assert.deepEqual([filters.city, filters.neighborhood, filters.type, filters.rooms.min, filters.rooms.exact, filters.minPrice, filters.maxPrice, filters.sort, filters.page], ['الرياض', 'الملقا', 'villa', 4, false, 100000, undefined, 'price_desc', 3]);
   const junk = listings.parseFilters({ city: "' OR 1=1", neighborhood: 'x'.repeat(500), type: 'castle', rooms: '99', sort: 'DROP', page: '-4' });
   assert.deepEqual([junk.city, junk.neighborhood, junk.type, junk.rooms, junk.sort, junk.page], [undefined, undefined, undefined, undefined, 'newest', 1]);
-  assert.deepEqual(listings.missingForPublish({ price: '0.00', description: '', neighborhood: '' }, 0), ['الإيجار السنوي', 'وصف قصير (10 أحرف على الأقل)', 'الحي', 'صورة واحدة على الأقل']);
-  assert.deepEqual(listings.missingForPublish({ price: '100.00', description: 'وصف قصير جداً', neighborhood: 'الملقا' }, 2), []);
+  assert.deepEqual(listings.missingForPublish({ price: '0.00', description: '', neighborhood: '' }, 0), ['الإيجار السنوي', 'وصف قصير (10 أحرف على الأقل)', 'الحي', 'صورة واحدة على الأقل', 'رقم ترخيص الإعلان من الهيئة العامة للعقار']);
+  assert.deepEqual(listings.missingForPublish({ price: '100.00', description: 'وصف قصير جداً', neighborhood: 'الملقا', ad_license_number: '7100012345' }, 2), []);
+  assert.equal(listings.validateListing({ ad_license_number: '٧١٠٠ ٠١٢٣٤٥' }).values.ad_license_number, '7100012345', 'Arabic digits and spaces are cleaned');
+  assert.ok(listings.validateListing({ ad_license_number: 'ABC123' }).errors.ad_license_number);
 });
 
 test('visitor forms: phone or email, honeypot, links refused, normalized numbers', () => {
@@ -154,10 +156,20 @@ test('visitor forms: phone or email, honeypot, links refused, normalized numbers
   assert.equal(inquiries.cleanPhone(''), '');
   assert.equal(inquiries.cleanEmail('A@B.CO'), 'a@b.co');
   assert.equal(inquiries.cleanEmail('a@b'), null);
-  const v = (body) => inquiries.validateInquiry(body);
-  assert.deepEqual(Object.keys(v({ message: 'x' }).errors), ['contact']);
+  const day = inquiries.visitDays()[0].value;
+  const v = (body) => inquiries.validateInquiry({ visit_date: day, visit_slot: 'morning', ...body });
+  assert.deepEqual(Object.keys(v({ message: 'x' }).errors), ['phone'], 'a viewing request needs a phone');
   assert.deepEqual(v({ phone: '0555000111' }).errors, {});
-  assert.deepEqual(v({ email: 'a@b.co', message: 'مرحبا' }).errors, {});
+  assert.deepEqual(Object.keys(v({ email: 'a@b.co', message: 'مرحبا' }).errors), ['phone']);
+  // The day must be one of the next 14 days (from tomorrow) and the time one of the three parts of the day.
+  assert.ok(inquiries.validateInquiry({ phone: '0555000111', visit_slot: 'morning' }).errors.visit_date);
+  assert.ok(v({ phone: '0555000111', visit_date: '2020-01-01' }).errors.visit_date);
+  assert.ok(v({ phone: '0555000111', visit_date: inquiries.visitDays().at(-1).value.replace(/\d\d$/, '99') }).errors.visit_date);
+  assert.ok(v({ phone: '0555000111', visit_slot: 'night' }).errors.visit_slot);
+  assert.equal(inquiries.visitDays().length, 14);
+  const fixed = inquiries.visitDays(new Date('2026-11-25T21:30:00Z'));
+  assert.equal(fixed[0].value, '2026-11-27', 'tomorrow on the Riyadh calendar (already the 26th there)');
+  assert.equal(fixed[0].weekday, 'الجمعة');
   assert.equal(v({ phone: '0555000111', website: 'http://bot' }).bot, true);
   assert.equal(v({ phone: '0555000111', website: '' }).bot, false);
   assert.ok(v({ phone: '0555000111', message: 'see https://spam.example' }).errors.message);

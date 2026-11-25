@@ -25,7 +25,9 @@ const inquiryIp = hourly('inquiry-ip', rules.INQUIRY_PER_IP_PER_HOUR, (req) => r
 const inquiryListing = hourly('inquiry-listing', rules.INQUIRY_PER_LISTING_PER_HOUR, (req) => req.params.id);
 const reportIp = hourly('report-ip', rules.REPORT_PER_IP_PER_HOUR, (req) => req.ip);
 
-const common = { types: listings.TYPE_LABELS, featureLabels: listings.FEATURES, fmt: money.formatHalalas, reasons: inquiries.REPORT_REASONS };
+const { icon } = require('../services/listingIcons');
+
+const common = { types: listings.TYPE_LABELS, featureLabels: listings.FEATURES, fmt: money.formatHalalas, reasons: inquiries.REPORT_REASONS, icon };
 
 // ------------------------------------------------------------ search
 
@@ -91,11 +93,15 @@ async function renderListing(req, res, found, { values = {}, errors = {}, status
     jsonLd: seo.listingJsonLd({ listing, base, imageUrl }),
     cache: !sent && status === 200 && !Object.keys(errors).length,
   });
+  const similar = await listings.similarPublic(db.pool, listing, { officeId: req.customOffice ? req.customOffice.id : null });
   return res.status(status).render('site/listing', {
     ...common,
     title: listing.title,
     listing,
     photos,
+    similar,
+    visitDays: inquiries.visitDays(),
+    visitSlots: inquiries.VISIT_SLOTS,
     values,
     errors,
     sent,
@@ -138,7 +144,7 @@ router.post('/listings/:id/inquiry', inquiryIp, inquiryListing, wrap(async (req,
   if (bot) return res.redirect(`/listings/${found.listing.id}?sent=1#inquiry`);
   if (Object.keys(errors).length) {
     privatePage(res);
-    return renderListing(req, res, found, { values: { name: values.name, phone: String(req.body.phone || '').slice(0, 30), email: String(req.body.email || '').slice(0, 190), message: values.message }, errors, status: 422 });
+    return renderListing(req, res, found, { values: { name: values.name, phone: String(req.body.phone || '').slice(0, 30), email: String(req.body.email || '').slice(0, 190), message: values.message, visit_date: String(req.body.visit_date || '').slice(0, 10), visit_slot: String(req.body.visit_slot || '').slice(0, 12) }, errors, status: 422 });
   }
   await inquiries.createInquiry(db.pool, { listing: found.listing, values });
   return res.redirect(`/listings/${found.listing.id}?sent=1#inquiry`);

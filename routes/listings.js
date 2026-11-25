@@ -57,6 +57,7 @@ function formValues(listing) {
     area_sqm: listing.area === null ? '' : String(listing.area),
     price: listing.price > 0 ? priceInput(listing.price) : '',
     description: listing.description,
+    ad_license_number: listing.adLicense || '',
     features: listing.features,
   };
 }
@@ -74,6 +75,7 @@ async function renderEdit(req, res, listing, { values = null, errors = {}, statu
     photos,
     inquiries: listing.status === 'rented' ? [] : await inquiries.inquiriesFor(db.pool, req.office.id, listing.id),
     inquiryStatuses: inquiries.INQUIRY_STATUSES,
+    visitSlots: inquiries.VISIT_SLOTS,
     cities: SAUDI_CITIES,
     byCity: BY_CITY,
     other: OTHER,

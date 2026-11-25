@@ -1,63 +1,125 @@
-<article class="listing-detail">
-  <p class="back-link"><a href="/listings"><%= dir === 'rtl' ? '→' : '←' %> <%= __("كل الإعلانات") %></a></p>
-  <h1><%= __(listing.title) %></h1>
-  <p class="listing-detail__price"><strong><%= __(fmt(listing.price)) %></strong> <%= __("ريال سنوياً") %></p>
+<% const hasHood = listing.neighborhood && listing.neighborhood !== 'أخرى'; const place = lang === 'en' ? (hasHood ? listing.neighborhood + ', ' : '') + __(listing.city) : (hasHood ? 'حي ' + listing.neighborhood + '، ' : '') + listing.city; const monthly = Math.round(listing.price / 12); %>
+<article class="ld">
+  <p class="ld__crumbs"><a href="/listings"><%= __("الإعلانات") %></a> <span aria-hidden="true">/</span> <a href="/listings?city=<%= encodeURIComponent(listing.city) %>"><%= __(listing.city) %></a></p>
+
+  <header class="ld__head">
+    <div>
+      <h1><%= __(listing.title) %></h1>
+      <p class="ld__place"><%- icon('pin') %><%= place %></p>
+    </div>
+    <% if (listing.adLicense) { %><p class="ld__licence"><%- icon('shield') %><span><%= __("رقم ترخيص الإعلان") %></span> <bdi dir="ltr"><%= __(listing.adLicense) %></bdi></p><% } %>
+  </header>
 
   <% if (photos.length) { %>
-    <section class="gallery" aria-label="<%= __("صور الإعلان") %>" data-gallery>
-      <a href="/listings/photos/<%= __(photos[0]) %>/full" class="gallery__main-link" target="_blank" rel="noopener noreferrer">
-        <img src="/listings/photos/<%= __(photos[0]) %>/full" alt="<%= __(listing.title) %>" width="1200" height="900" class="gallery__main" data-gallery-main>
-      </a>
-      <% if (photos.length > 1) { %>
-        <ul class="gallery__thumbs">
-          <% photos.forEach(function (id, i) { %>
-            <li><a href="/listings/photos/<%= __(id) %>/full" target="_blank" rel="noopener noreferrer" data-gallery-thumb>
-              <img src="/listings/photos/<%= __(id) %>/thumb" alt="<%= __("صورة") %> <%= __(i + 1) %> <%= __("من") %> <%= __(photos.length) %>" width="120" height="90" loading="lazy"></a></li>
-          <% }) %>
-        </ul>
+    <section class="ld-gallery ld-gallery--<%= Math.min(photos.length, 5) %>" aria-label="<%= __("صور الإعلان") %>">
+      <% photos.slice(0, 5).forEach(function (id, i) { %>
+        <a href="#photo-<%= i + 1 %>" class="ld-gallery__item<%= i === 0 ? ' ld-gallery__item--main' : '' %>">
+          <img src="/listings/photos/<%= __(id) %>/<%= i === 0 ? 'full' : 'thumb' %>" alt="<%= __("صورة") %> <%= i + 1 %> <%= __("من") %> <%= photos.length %>" <%= i === 0 ? '' : 'loading=lazy' %>>
+        </a>
+      <% }) %>
+      <% if (photos.length > 1) { %><a href="#photo-1" class="ld-gallery__all"><%- icon('photos') %><%= __("عرض كل الصور") %> (<%= photos.length %>)</a><% } %>
+    </section>
+    <% photos.forEach(function (id, i) { %>
+      <div class="lightbox" id="photo-<%= i + 1 %>" role="dialog" aria-label="<%= __("صورة") %> <%= i + 1 %> <%= __("من") %> <%= photos.length %>">
+        <a href="#gallery-closed" class="lightbox__close" aria-label="<%= __("إغلاق") %>"><%- icon('close') %></a>
+        <img src="/listings/photos/<%= __(id) %>/full" alt="" loading="lazy">
+        <div class="lightbox__nav">
+          <% if (i > 0) { %><a href="#photo-<%= i %>"><%= __("السابقة") %></a><% } else { %><span></span><% } %>
+          <span><%= i + 1 %> / <%= photos.length %></span>
+          <% if (i < photos.length - 1) { %><a href="#photo-<%= i + 2 %>"><%= __("التالية") %></a><% } else { %><span></span><% } %>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+
+  <div class="ld__cols">
+    <div class="ld__main">
+      <ul class="ld-facts">
+        <li><%- icon('home') %><span><%= __("النوع") %></span><strong><%= __(types[listing.unitType] || __('عقار')) %></strong></li>
+        <% if (listing.rooms !== null) { %><li><%- icon('bed') %><span><%= __("الغرف") %></span><strong><%= __(listing.rooms) %></strong></li><% } %>
+        <% if (listing.bathrooms !== null) { %><li><%- icon('bath') %><span><%= __("دورات المياه") %></span><strong><%= __(listing.bathrooms) %></strong></li><% } %>
+        <% if (listing.area !== null) { %><li><%- icon('area') %><span><%= __("المساحة") %></span><strong><%= __(listing.area) %> <%= __("م²") %></strong></li><% } %>
+      </ul>
+
+      <% if (listing.description) { %>
+        <section class="ld-sec">
+          <h2><%= __("عن العقار") %></h2>
+          <p class="pre-line"><%= listing.description %></p>
+        </section>
       <% } %>
+
+      <% if (listing.features.length) { %>
+        <section class="ld-sec">
+          <h2><%= __("المزايا") %></h2>
+          <ul class="ld-features"><% listing.features.forEach(function (f) { %><li><%- icon(f) %><%= __(featureLabels[f]) %></li><% }) %></ul>
+        </section>
+      <% } %>
+
+      <section class="ld-sec">
+        <h2><%= __("الموقع") %></h2>
+        <p class="ld__place"><%- icon('pin') %><%= place %></p>
+        <p class="muted"><%= __("يُرسل المكتب العنوان الدقيق بعد تأكيد موعد المعاينة.") %></p>
+      </section>
+
+      <section class="ld-sec ld-office">
+        <span class="ld-office__icon"><%- icon('office') %></span>
+        <div>
+          <span class="muted"><%= __("يعرض هذا العقار") %></span>
+          <strong><%= __(listing.officeName) %></strong>
+        </div>
+        <% if (listing.officeSlug && !locals.isCustomHost) { %><a class="btn btn--secondary btn--small" href="/<%= __(listing.officeSlug) %>"><%= __("كل إعلانات المكتب") %></a><% } %>
+      </section>
+    </div>
+
+    <aside class="ld__side" id="inquiry">
+      <div class="ld-book">
+        <p class="ld-book__price"><strong><%= __(fmt(listing.price).replace(/\.00$/, '')) %></strong> <%= __("ريال سنوياً") %></p>
+        <p class="muted ld-book__monthly"><%= __("ما يعادل") %> <%= __(fmt(monthly).replace(/\.00$/, '')) %> <%= __("ريال شهرياً") %></p>
+        <% if (sent) { %>
+          <div class="flash flash--success" role="status"><%= __("وصل طلب المعاينة إلى المكتب، وسيتصل بك لتأكيد الموعد.") %></div>
+        <% } %>
+        <h2 class="ld-book__title"><%- icon('cal') %><%= __("اطلب معاينة") %></h2>
+        <form method="post" action="/listings/<%= __(listing.id) %>/inquiry" novalidate>
+          <div class="field">
+            <label for="q-day"><%= __("اليوم") %></label>
+            <select id="q-day" name="visit_date" class="select" <%= __(errors.visit_date ? 'aria-invalid=true' : '') %>>
+              <option value=""><%= __("اختر اليوم") %></option>
+              <% visitDays.forEach(function (d) { %><option value="<%= __(d.value) %>" <%= __(values.visit_date === d.value ? 'selected' : '') %>><%= lang === 'en' ? d.weekdayEn : d.weekday %> <%= d.label.split(' ')[1] %></option><% }) %>
+            </select>
+            <% if (errors.visit_date) { %><p class="field-error"><%= __(errors.visit_date) %></p><% } %>
+          </div>
+          <fieldset class="field slot-chips">
+            <legend><%= __("الوقت المناسب") %></legend>
+            <% Object.keys(visitSlots).forEach(function (k) { %>
+              <label class="slot-chip"><input type="radio" name="visit_slot" value="<%= __(k) %>" <%= __(values.visit_slot === k ? 'checked' : '') %>><span><%= __(visitSlots[k]) %></span></label>
+            <% }) %>
+            <% if (errors.visit_slot) { %><p class="field-error"><%= __(errors.visit_slot) %></p><% } %>
+          </fieldset>
+          <div class="field"><label for="q-name"><%= __("اسمك") %></label><input id="q-name" name="name" class="input" maxlength="60" value="<%= __(values.name || '') %>" autocomplete="name">
+            <% if (errors.name) { %><p class="field-error"><%= __(errors.name) %></p><% } %></div>
+          <div class="field"><label for="q-phone"><%= __("جوالك") %></label><input id="q-phone" name="phone" class="input" type="tel" inputmode="tel" dir="ltr" maxlength="30" placeholder="05xxxxxxxx" value="<%= __(values.phone || '') %>" autocomplete="tel">
+            <% if (errors.phone) { %><p class="field-error"><%= __(errors.phone) %></p><% } %></div>
+          <details class="ld-book__more" <%= __(values.message || values.email || errors.message || errors.email ? 'open' : '') %>>
+            <summary><%= __("أضف بريدك أو تفاصيل أخرى") %></summary>
+            <div class="field"><label for="q-email"><%= __("بريدك الإلكتروني (اختياري)") %></label><input id="q-email" name="email" class="input" type="email" dir="ltr" maxlength="190" value="<%= __(values.email || '') %>" autocomplete="email">
+              <% if (errors.email) { %><p class="field-error"><%= __(errors.email) %></p><% } %></div>
+            <div class="field"><label for="q-message"><%= __("رسالة للمكتب (اختياري)") %></label><textarea id="q-message" name="message" class="textarea" rows="3" maxlength="500"><%= __(values.message || '') %></textarea>
+              <% if (errors.message) { %><p class="field-error"><%= __(errors.message) %></p><% } %></div>
+          </details>
+          <div class="hp" aria-hidden="true"><label for="q-website"><%= __("اترك هذا الحقل فارغاً") %></label><input id="q-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+          <button type="submit" class="btn btn--success btn--large btn--block"><%= __("اطلب المعاينة") %></button>
+          <p class="field-hint"><%= __("لا يوجد أي دفع هنا. يرى المكتب طلبك فقط ويتصل بك لتأكيد الموعد، وتُحذف بياناتك بعد 90 يوماً.") %></p>
+        </form>
+      </div>
+    </aside>
+  </div>
+
+  <% if (similar.length) { %>
+    <section class="ld-similar">
+      <h2><%= __("عقارات مشابهة في") %> <%= __(listing.city) %></h2>
+      <ul class="lgrid lgrid--3"><% similar.forEach(function (l) { %><%- include('_listing-card', { l, fmt, icon, types }) %><% }) %></ul>
     </section>
   <% } %>
 
-  <section class="card">
-    <h2><%= __("المواصفات") %></h2>
-    <dl class="details">
-      <dt><%= __("النوع") %></dt><dd><%= __(types[listing.unitType] || __('عقار')) %></dd>
-      <dt><%= __("المدينة") %></dt><dd><%= __(listing.city) %></dd>
-      <% if (listing.neighborhood) { %><dt><%= __("الحي") %></dt><dd><%= __(listing.neighborhood) %></dd><% } %>
-      <% if (listing.rooms !== null) { %><dt><%= __("الغرف") %></dt><dd><%= __(listing.rooms) %></dd><% } %>
-      <% if (listing.bathrooms !== null) { %><dt><%= __("دورات المياه") %></dt><dd><%= __(listing.bathrooms) %></dd><% } %>
-      <% if (listing.area !== null) { %><dt><%= __("المساحة") %></dt><dd><%= __(listing.area) %> م²</dd><% } %>
-      <dt><%= __("الإيجار السنوي") %></dt><dd><%= __(fmt(listing.price)) %> <%= __("ريال") %></dd>
-      <dt><%= __("المكتب") %></dt><dd><%= __(listing.officeName) %></dd>
-    </dl>
-    <% if (listing.features.length) { %>
-      <h3><%= __("المزايا") %></h3>
-      <ul class="tag-list"><% listing.features.forEach(function (f) { %><li><%= __(featureLabels[f]) %></li><% }) %></ul>
-    <% } %>
-    <% if (listing.description) { %><h3><%= __("الوصف") %></h3><p class="pre-line"><%= __(listing.description) %></p><% } %>
-  </section>
-
-  <section class="card" id="inquiry">
-    <h2><%= __("تواصل مع المكتب") %></h2>
-    <% if (sent) { %><div class="flash flash--success" role="status"><%= __("وصل استفسارك إلى المكتب وسيتواصل معك.") %></div><% } %>
-    <form method="post" action="/listings/<%= __(listing.id) %>/inquiry" novalidate>
-      <div class="field"><label for="q-name"><%= __("اسمك أو لقبك (اختياري)") %></label><input id="q-name" name="name" class="input" maxlength="60" value="<%= __(values.name || '') %>" autocomplete="nickname">
-        <% if (errors.name) { %><p class="field-error"><%= __(errors.name) %></p><% } %></div>
-      <div class="form-grid">
-        <div class="field"><label for="q-phone"><%= __("جوالك") %></label><input id="q-phone" name="phone" class="input" type="tel" inputmode="tel" dir="ltr" maxlength="30" value="<%= __(values.phone || '') %>" autocomplete="tel">
-          <% if (errors.phone) { %><p class="field-error"><%= __(errors.phone) %></p><% } %></div>
-        <div class="field"><label for="q-email"><%= __("بريدك الإلكتروني") %></label><input id="q-email" name="email" class="input" type="email" dir="ltr" maxlength="190" value="<%= __(values.email || '') %>" autocomplete="email">
-          <% if (errors.email) { %><p class="field-error"><%= __(errors.email) %></p><% } %></div>
-      </div>
-      <% if (errors.contact) { %><p class="field-error"><%= __(errors.contact) %></p><% } %>
-      <p class="field-hint"><%= __("اكتب جوالك أو بريدك. لا نعرض بياناتك للعموم، ويراها المكتب فقط، وتُحذف بعد 90 يوماً.") %></p>
-      <div class="field"><label for="q-message"><%= __("رسالتك (حتى 500 حرف)") %></label><textarea id="q-message" name="message" class="textarea" rows="4" maxlength="500"><%= __(values.message || '') %></textarea>
-        <% if (errors.message) { %><p class="field-error"><%= __(errors.message) %></p><% } %></div>
-      <div class="hp" aria-hidden="true"><label for="q-website"><%= __("اترك هذا الحقل فارغاً") %></label><input id="q-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-      <button type="submit" class="btn btn--primary btn--large btn--block"><%= __("إرسال الاستفسار") %></button>
-    </form>
-  </section>
-  <p class="muted"><%= __("الإعلان من المكتب أعلاه، وميعاد وسيط تقني فقط.") %> <a href="/listings/<%= __(listing.id) %>/report" rel="nofollow"><%= __("الإبلاغ عن هذا الإعلان") %></a></p>
+  <p class="muted ld__foot"><%= __("الإعلان من المكتب المذكور، وميعاد وسيط تقني فقط.") %> <a href="/listings/<%= __(listing.id) %>/report" rel="nofollow"><%= __("الإبلاغ عن هذا الإعلان") %></a></p>
 </article>
-<script src="<%= assetUrl('/js/gallery.js') %>" defer></script>

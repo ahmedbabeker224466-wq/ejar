@@ -21,7 +21,7 @@
       <form method="post" action="/office/listings/<%= __(listing.id) %>/hide"><button type="submit" class="btn btn--secondary"><%= __("إخفاء") %></button></form>
     <% } %>
   </div>
-  <p class="muted"><%= __("للنشر: الإيجار والحي ووصف قصير وصورة واحدة على الأقل، والوحدة شاغرة.") %></p>
+  <p class="muted"><%= __("للنشر: الإيجار والحي ووصف قصير وصورة واحدة على الأقل ورقم ترخيص الإعلان، والوحدة شاغرة.") %></p>
 </section>
 
 <% if (listing.status !== 'rented') { %>
@@ -60,8 +60,12 @@
       <% Object.keys(featureLabels).forEach(function (f) { %><label class="check"><input type="checkbox" name="features" value="<%= __(f) %>" <%= __(values.features.indexOf(f) >= 0 ? 'checked' : '') %>> <%= __(featureLabels[f]) %></label><% }) %>
     </div>
     <% if (errors.features) { %><p class="field-error"><%= __(errors.features) %></p><% } %></fieldset>
+  <div class="field"><label for="ad-license"><%= __("رقم ترخيص الإعلان من الهيئة العامة للعقار") %></label>
+    <input id="ad-license" name="ad_license_number" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="24" value="<%= __(values.ad_license_number || '') %>" <%= __(errors.ad_license_number ? 'aria-invalid=true' : '') %>>
+    <p class="field-hint"><%= __("مطلوب قبل النشر، ويظهر في صفحة الإعلان. يصدر من منصة الهيئة لكل إعلان عقاري.") %></p>
+    <% if (errors.ad_license_number) { %><p class="field-error"><%= __(errors.ad_license_number) %></p><% } %></div>
   <div class="field"><label for="description"><%= __("وصف قصير (حتى 800 حرف)") %></label>
-    <textarea id="description" name="description" class="textarea" rows="5" maxlength="800"><%= __(values.description) %></textarea>
+    <textarea id="description" name="description" class="textarea" rows="5" maxlength="800"><%= values.description %></textarea>
     <p class="field-hint"><%= __("لا تكتب أرقام هواتف أو روابط أو حسابات؛ سيصلك الاستفسار من نموذج التواصل.") %></p>
     <% if (errors.description) { %><p class="field-error"><%= __(errors.description) %></p><% } %></div>
   <button type="submit" class="btn btn--primary btn--large btn--block"><%= __("حفظ") %></button>
@@ -96,13 +100,14 @@
 </section>
 
 <section class="card detail-card" id="inquiries">
-  <h2><%= __("الاستفسارات") %> (<%= __(inquiries.length) %>)</h2>
+  <h2><%= __("طلبات المعاينة والاستفسارات") %> (<%= __(inquiries.length) %>)</h2>
   <p class="muted"><%= __("بيانات الزائر له وحده، وتُحذف تلقائياً بعد 90 يوماً.") %></p>
   <ul class="item-list">
     <% inquiries.forEach(function (q) { %>
       <li class="item">
         <div class="item__title"><strong><%= __(q.name || __('زائر')) %></strong> <span class="badge badge--role"><%= __(inquiryStatuses[q.status]) %></span></div>
         <div class="item__meta"><% if (q.phone) { %><span dir="ltr"><%= __(q.phone) %></span><% } %> <% if (q.email) { %><span dir="ltr"><%= __(q.email) %></span><% } %> · <span dir="ltr"><%= __(stamp(q.created_at)) %></span></div>
+        <% if (q.visit_date) { %><p class="visit-req"><strong><%= __("طلب معاينة:") %></strong> <span dir="ltr"><%= __(q.visit_date) %></span> · <%= __(visitSlots[q.visit_slot] || '') %></p><% } %>
         <% if (q.message) { %><p class="pre-line"><%= __(q.message) %></p><% } %>
         <form method="post" action="/office/listings/<%= __(listing.id) %>/inquiries/<%= __(q.id) %>/status" class="inline-form">
           <label class="visually-hidden" for="st-<%= __(q.id) %>"><%= __("الحالة") %></label>

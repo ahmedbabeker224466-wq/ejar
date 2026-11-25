@@ -1,10 +1,20 @@
-<li class="listing-card card">
-  <a href="/listings/<%= __(l.id) %>" class="listing-card__link">
-    <% if (l.coverId) { %><img src="/listings/photos/<%= __(l.coverId) %>/thumb" alt="<%= __(l.title) %>" width="480" height="360" loading="lazy" class="listing-card__img">
-    <% } else { %><div class="listing-card__img listing-card__img--empty" role="img" aria-label="<%= __("بدون صورة") %>"></div><% } %>
-    <h2><%= __(l.title) %></h2>
-    <p class="listing-card__price"><strong><%= __(fmt(l.price)) %></strong> <%= __("ريال / سنة") %></p>
-    <p class="muted"><%= __(l.rooms !== null ? l.rooms + __(' غرف · ') : '') %><%= __(l.bathrooms !== null ? l.bathrooms + __(' دورات مياه · ') : '') %><%= __(l.area !== null ? l.area + __(' م²') : '') %></p>
-    <p class="muted"><%= __(l.officeName) %></p>
+<li class="lcard">
+  <a href="/listings/<%= __(l.id) %>" class="lcard__link">
+    <span class="lcard__media">
+      <% if (l.coverId) { %><img src="/listings/photos/<%= __(l.coverId) %>/thumb" alt="<%= __(l.title) %>" width="480" height="360" loading="lazy">
+      <% } else { %><span class="lcard__noimg" role="img" aria-label="<%= __("بدون صورة") %>"><%- icon('photos', 'lcard__noimg-icon') %></span><% } %>
+      <span class="lcard__type"><%= __((locals.types && types[l.unitType]) || __('عقار')) %></span>
+      <% if (l.photoCount > 1) { %><span class="lcard__count"><%- icon('photos') %><%= __(l.photoCount) %></span><% } %>
+    </span>
+    <span class="lcard__body">
+      <span class="lcard__place"><%- icon('pin') %><% const hood = l.neighborhood && l.neighborhood !== 'أخرى'; %><%= lang === 'en' ? (hood ? l.neighborhood + ', ' : '') + __(l.city) : (hood ? 'حي ' + l.neighborhood + '، ' : '') + l.city %></span>
+      <span class="lcard__facts">
+        <% if (l.rooms !== null) { %><span><%- icon('bed') %><%= __(l.rooms) %> <%= __("غرف") %></span><% } %>
+        <% if (l.bathrooms !== null) { %><span><%- icon('bath') %><%= __(l.bathrooms) %> <%= __("دورات مياه") %></span><% } %>
+        <% if (l.area !== null) { %><span><%- icon('area') %><%= __(l.area) %> <%= __("م²") %></span><% } %>
+      </span>
+      <span class="lcard__price"><strong><%= __(fmt(l.price).replace(/\.00$/, '')) %></strong> <%= __("ريال سنوياً") %></span>
+      <span class="lcard__office"><%- icon('office') %><%= __(l.officeName) %></span>
+    </span>
   </a>
 </li>

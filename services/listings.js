@@ -86,6 +86,12 @@ function validateListing(body = {}) {
   if (picked.some((f) => !has(FEATURES, f))) errors.features = 'اختر المزايا من القائمة فقط.';
   values.features = [...new Set(picked.filter((f) => has(FEATURES, f)))];
 
+  // REGA advertising licence of this ad (required before publishing, shown on the public page).
+  const licence = toWesternDigits(String(body.ad_license_number ?? '')).replace(/[\s-]/g, '');
+  if (licence === '') values.ad_license_number = null;
+  else if (!/^\d{6,20}$/.test(licence)) errors.ad_license_number = 'رقم ترخيص الإعلان أرقام فقط (من 6 إلى 20 رقماً).';
+  else values.ad_license_number = licence;
+
   values.description = cleanText(body.description, rules.DESCRIPTION_MAX + 1, { multiline: true });
   if (values.description.length > rules.DESCRIPTION_MAX) errors.description = `الوصف ${rules.DESCRIPTION_MAX} حرفاً كحد أقصى.`;
   else {
@@ -102,6 +108,7 @@ function missingForPublish(listing, photoCount) {
   if (String(listing.description || '').trim().length < 10) missing.push('وصف قصير (10 أحرف على الأقل)');
   if (!listing.neighborhood) missing.push('الحي');
   if (photoCount < 1) missing.push('صورة واحدة على الأقل');
+  if (!listing.ad_license_number) missing.push('رقم ترخيص الإعلان من الهيئة العامة للعقار');
   return missing;
 }
 
@@ -122,6 +129,7 @@ function present(row) {
     unitId: Number(row.unit_id),
     title: row.title,
     description: row.description,
+    adLicense: row.ad_license_number || null,
     status: row.status,
     price: money.fromDecimal(row.price),
     currency: row.currency,
@@ -138,6 +146,7 @@ function present(row) {
     adminHiddenReason: row.admin_hidden_reason,
     updatedAt: row.updated_at,
     officeName: row.office_name,
+    officeSlug: row.office_slug && Number(row.office_page_on) ? row.office_slug : null,
     coverId: row.cover_id === undefined || row.cover_id === null ? null : Number(row.cover_id),
     photoCount: row.photo_count === undefined ? undefined : Number(row.photo_count),
     inquiryCount: row.inquiry_count === undefined ? undefined : Number(row.inquiry_count),
@@ -240,14 +249,14 @@ async function update(pool, { officeId, id, values, actorId, ip }) {
   if (!row) return { ok: false, error: 'not_found' };
   if (row.status === 'rented') return { ok: false, error: 'rented' };
   const next = { ...values };
-  const changed = ['unit_type', 'city', 'neighborhood', 'rooms', 'bathrooms', 'area_sqm', 'price', 'description', 'features']
+  const changed = ['unit_type', 'city', 'neighborhood', 'rooms', 'bathrooms', 'area_sqm', 'price', 'description', 'ad_license_number', 'features']
     .filter((f) => String(f === 'features' ? JSON.stringify(next[f]) : next[f] ?? '') !== String(f === 'features' ? JSON.stringify(present(row).features) : f === 'price' ? money.fromDecimal(row.price) : row[f] ?? ''));
   await scoped.query(
     `UPDATE listings SET title = ?, unit_type = ?, city = ?, neighborhood = ?, rooms = ?, bathrooms = ?, area_sqm = ?, price = ?,
-            description = ?, features = ? WHERE id = ? AND office_id = :office_id`,
+            description = ?, ad_license_number = ?, features = ? WHERE id = ? AND office_id = :office_id`,
     [
       titleFor(next), next.unit_type, next.city, next.neighborhood, next.rooms, next.bathrooms, next.area_sqm,
-      money.toDecimal(next.price), next.description, JSON.stringify(next.features), id,
+      money.toDecimal(next.price), next.description, next.ad_license_number ?? null, JSON.stringify(next.features), id,
     ],
   );
   // Names of the changed fields only: never the description text.
@@ -399,7 +408,8 @@ const PUBLIC_WHERE = `l.status = 'published' AND l.admin_hidden = 0 AND l.expire
   AND (o.status IN ('active','past_due') OR (o.status = 'trial' AND o.trial_ends_at > ?))`;
 
 const PUBLIC_COLUMNS = `l.id, l.office_id, l.unit_id, l.title, l.description, l.status, l.price, l.currency, l.unit_type, l.city, l.neighborhood,
-  l.rooms, l.bathrooms, l.area_sqm, l.features, l.published_at, l.expires_at, l.admin_hidden, l.admin_hidden_reason, l.updated_at, o.name AS office_name,
+  l.rooms, l.bathrooms, l.area_sqm, l.features, l.ad_license_number, l.published_at, l.expires_at, l.admin_hidden, l.admin_hidden_reason, l.updated_at, o.name AS office_name,
+  o.public_slug AS office_slug, o.public_page_enabled AS office_page_on,
   (SELECT p.id FROM unit_photos p WHERE p.unit_id = l.unit_id ORDER BY p.is_cover DESC, p.sort_order ASC, p.id ASC LIMIT 1) AS cover_id,
   (SELECT COUNT(*) FROM unit_photos p WHERE p.unit_id = l.unit_id) AS photo_count`;
 
@@ -488,6 +498,19 @@ async function publicForOffice(pool, officeId, { page = 1 } = {}, now = new Date
   return { rows: rows.map(present), total, page: current, pages };
 }
 
+/** Up to `limit` other public listings in the same city, newest first (the "similar" row on a listing page). */
+async function similarPublic(pool, listing, { limit = 3, officeId = null } = {}, now = new Date()) {
+  const where = [PUBLIC_WHERE, 'l.city = ?', 'l.id <> ?'];
+  const params = [now, now, listing.city, listing.id];
+  if (officeId) { where.push('l.office_id = ?'); params.push(officeId); }
+  const [rows] = await pool.query(
+    `SELECT ${PUBLIC_COLUMNS} FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${where.join(' AND ')}
+      ORDER BY (l.unit_type = ?) DESC, ${SORTS.newest} LIMIT ${Number(limit)}`,
+    [...params, listing.unitType],
+  );
+  return rows.map(present);
+}
+
 /** Ids and timestamps of every public listing (for the sitemap). */
 async function publicIndex(pool, now = new Date(), limit = 5000) {
   const [rows] = await pool.query(
@@ -498,6 +521,7 @@ async function publicIndex(pool, now = new Date(), limit = 5000) {
 }
 
 module.exports = {
+  similarPublic,
   TYPE_LABELS,
   FEATURES,
   STATUS_LABELS,

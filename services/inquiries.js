@@ -9,7 +9,7 @@ const { scopeToOffice } = require('./scopeToOffice');
 const { createNotification } = require('./notifications');
 const { cleanText, hasLink } = require('./publicText');
 const { normalizeSaudi, toWesternDigits } = require('../utils/phone');
-const { daysAfter } = require('./contractDates');
+const { daysAfter, riyadhDate, addDays, weekdayOf, isValidYmd, compareYmd } = require('./contractDates');
 
 const REPORT_REASONS = { spam: 'إعلان مزعج أو مكرر', wrong_info: 'معلومات غير صحيحة', fake: 'إعلان وهمي', other: 'سبب آخر' };
 const INQUIRY_STATUSES = { new: 'جديد', contacted: 'تم التواصل', closed: 'مغلق' };
@@ -58,7 +58,38 @@ function validateContact(body = {}, { messageMax, messageRequired = false } = {}
   return { values, errors, bot };
 }
 
-const validateInquiry = (body) => validateContact(body, { messageMax: rules.INQUIRY_MESSAGE_MAX });
+// Viewing requests (owner's decision, Nov 2026): the visitor picks a day in
+// the next VISIT_DAYS days (from tomorrow, Riyadh calendar) and a part of the day.
+const VISIT_DAYS = 14;
+const VISIT_SLOTS = { morning: 'صباحاً (9 إلى 12)', afternoon: 'ظهراً (12 إلى 4)', evening: 'مساءً (4 إلى 9)' };
+const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+/** Pure: the days a visitor may pick, [{ value: 'YYYY-MM-DD', label: 'الخميس 26/11' }]. */
+function visitDays(now = new Date()) {
+  const today = riyadhDate(now);
+  return Array.from({ length: VISIT_DAYS }, (_, i) => {
+    const day = addDays(today, i + 1);
+    return { value: day, weekday: WEEKDAYS[weekdayOf(day)], weekdayEn: WEEKDAYS_EN[weekdayOf(day)], label: `${WEEKDAYS[weekdayOf(day)]} ${Number(day.slice(8))}/${Number(day.slice(5, 7))}` };
+  });
+}
+
+function validateInquiry(body = {}, now = new Date()) {
+  const result = validateContact(body, { messageMax: rules.INQUIRY_MESSAGE_MAX });
+  const { values, errors } = result;
+  if (!errors.phone && !values.phone) {
+    delete errors.contact;
+    errors.phone = 'اكتب رقم جوالك ليتواصل معك المكتب ويؤكد الموعد.';
+  }
+  const day = String(body.visit_date ?? '').trim();
+  const today = riyadhDate(now);
+  if (!isValidYmd(day) || compareYmd(day, today) <= 0 || compareYmd(day, addDays(today, VISIT_DAYS)) > 0) errors.visit_date = 'اختر يوم المعاينة من القائمة.';
+  else values.visit_date = day;
+  const slot = String(body.visit_slot ?? '');
+  if (!Object.hasOwn(VISIT_SLOTS, slot)) errors.visit_slot = 'اختر وقت المعاينة.';
+  else values.visit_slot = slot;
+  return result;
+}
 
 /** Active owner and managers of an office: who hears about an inquiry. */
 async function recipients(pool, officeId) {
@@ -78,11 +109,14 @@ async function createInquiry(pool, { listing, values, now = new Date() }) {
   const scoped = scopeToOffice(pool, listing.officeId);
   const id = await scoped.insert('listing_inquiries', {
     listing_id: listing.id, name: values.name || null, phone: values.phone, email: values.email, message: values.message || null,
+    visit_date: values.visit_date || null, visit_slot: values.visit_slot || null,
   });
   for (const userId of await recipients(pool, listing.officeId)) {
     await createNotification(pool, {
-      userId, officeId: listing.officeId, kind: 'listing_inquiry', title: 'استفسار جديد على إعلان',
-      body: `وصلك استفسار جديد على الإعلان رقم ${listing.id}. افتح صفحة الإعلان لتراه.`,
+      userId, officeId: listing.officeId, kind: 'listing_inquiry', title: values.visit_date ? 'طلب معاينة جديد' : 'استفسار جديد على إعلان',
+      body: values.visit_date
+        ? `وصلك طلب معاينة للإعلان رقم ${listing.id} يوم ${values.visit_date} ${VISIT_SLOTS[values.visit_slot] || ''}. افتح صفحة الإعلان لتؤكد الموعد مع الزائر.`
+        : `وصلك استفسار جديد على الإعلان رقم ${listing.id}. افتح صفحة الإعلان لتراه.`,
       link: `/office/listings/${listing.id}`, dedupeKey: `listing_inquiry:${id}:u${userId}`, now,
     });
   }
@@ -92,7 +126,7 @@ async function createInquiry(pool, { listing, values, now = new Date() }) {
 async function inquiriesFor(pool, officeId, listingId) {
   const scoped = scopeToOffice(pool, officeId);
   return scoped.query(
-    `SELECT id, name, phone, email, message, status, created_at FROM listing_inquiries
+    `SELECT id, name, phone, email, message, visit_date, visit_slot, status, created_at FROM listing_inquiries
       WHERE listing_id = ? AND office_id = :office_id ORDER BY id DESC LIMIT 100`,
     [listingId],
   );
@@ -149,6 +183,9 @@ async function createContactMessage(pool, { values, now = new Date() }) {
 }
 
 module.exports = {
+  VISIT_SLOTS,
+  VISIT_DAYS,
+  visitDays,
   REPORT_REASONS,
   INQUIRY_STATUSES,
   cleanPhone,
