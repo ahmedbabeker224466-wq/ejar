@@ -55,6 +55,17 @@ test('an office and a landlord signed in together each see their own area', { sk
     const area = await http.request('/landlord', { cookie: both });
     assert.equal(area.status, 200);
     assert.match(area.text, /صفحة المالك/);
+    // Shared pages follow ?as= even when the last area used was another one.
+    const own = await db.pool.query('SELECT id FROM users WHERE phone = ?', [phone(1)]);
+    const [ins] = await db.pool.query("INSERT INTO notifications (user_id, office_id, kind, title, body, link, dedupe_key) VALUES (?, ?, 'sub_reminder', 't', 'b', '/office', ?)", [own[0][0].id, o.office.id, `as-test:${Date.now()}`]);
+    const asLandlord = await http.request('/notifications?as=landlord', { cookie: `${both}; aqdi_area=office` });
+    assert.match(asLandlord.text, /صفحة المالك/);
+    assert.match(asLandlord.text, /\?as=landlord/);
+    const asOffice = await http.request('/notifications?as=office', { cookie: `${both}; aqdi_area=landlord` });
+    assert.doesNotMatch(asOffice.text, /صفحة المالك/);
+    const opened = await http.request(`/notifications/${ins.insertId}/open?as=office`, { method: 'POST', cookie: `${both}; aqdi_area=landlord`, form: {} });
+    assert.equal(opened.status, 302);
+    assert.equal(opened.location, '/office');
     // Signing the landlord out leaves the office signed in.
     const out = await http.request('/logout', { cookie: `${both}; aqdi_area=landlord` });
     assert.ok(out.response.headers.getSetCookie().some((c) => c.startsWith('aqdi_landlord_session=;')));

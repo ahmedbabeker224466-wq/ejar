@@ -29,13 +29,21 @@ function loadUser(authService = auth) {
     const area = auth.areaOfPath(req.path);
     let hint = null;
     if (!area) {
+      // A shared page carries its area in ?as= (the bell adds it), so two
+      // windows signed in as different accounts never swap sessions.
+      const AREAS = ['office', 'landlord', 'tenant'];
+      if (AREAS.includes(req.query && req.query.as)) hint = req.query.as;
       try {
         const ref = req.get('referer');
-        if (ref) {
+        if (!hint && ref) {
           const u = new URL(ref);
-          if (u.host === req.get('host')) hint = auth.areaOfPath(u.pathname);
+          if (u.host === req.get('host')) {
+            hint = auth.areaOfPath(u.pathname);
+            if (!hint && AREAS.includes(u.searchParams.get('as'))) hint = u.searchParams.get('as');
+          }
         }
       } catch { /* a bad referer is ignored */ }
+      if (hint) res.locals.areaAs = hint;
       if (!hint && ['office', 'landlord', 'tenant'].includes(cookies[auth.AREA_HINT_COOKIE])) hint = cookies[auth.AREA_HINT_COOKIE];
     } else if (req.method === 'GET' && cookies[auth.AREA_HINT_COOKIE] !== area) {
       res.cookie(auth.AREA_HINT_COOKIE, area, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/' });

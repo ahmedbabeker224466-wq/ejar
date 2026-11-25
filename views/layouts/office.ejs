@@ -52,7 +52,7 @@
         </div>
         <div class="office-top__actions">
           <%- include('../partials/lang-switch') %>
-          <%- include('../partials/bell') %>
+          <%- include('../partials/bell', { bellHref: '/notifications?as=office' }) %>
           <% if (bare) { %><a href="/logout" class="btn btn--secondary btn--small"><%= __("خروج") %></a><% } %>
         </div>
       </header>

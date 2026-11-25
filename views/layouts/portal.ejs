@@ -61,7 +61,7 @@
         </div>
         <div class="office-top__actions">
           <%- include('../partials/lang-switch') %>
-          <%- include('../partials/bell') %>
+          <%- include('../partials/bell', { bellHref: '/notifications?as=' + (locals.currentArea || 'landlord') }) %>
         </div>
       </header>
       <main class="office-main">

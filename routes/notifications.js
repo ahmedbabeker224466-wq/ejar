@@ -76,8 +76,9 @@ const signedIn = [requireAuth, requirePerm('settings.basic'), areaShell];
 function mountCenter(target, base, guard) {
   const root = `${base}/notifications`;
 
-  function listUrl(kind, page) {
+  function listUrl(kind, page, as) {
     const params = new URLSearchParams();
+    if (as) params.set('as', as);
     if (kind) params.set('kind', kind);
     if (page > 1) params.set('page', String(page));
     const query = params.toString();
@@ -98,9 +99,9 @@ function mountCenter(target, base, guard) {
       kindLabels: notifications.KIND_LABELS,
       home: auth.homeFor(req.user.role),
       rows: list.rows.map((n) => ({ ...n, at: riyadhNow(new Date(n.created_at)).slice(0, 16) })),
-      back: listUrl(kind, list.page),
-      prevUrl: list.page > 1 ? listUrl(kind, list.page - 1) : null,
-      nextUrl: list.page < list.pages ? listUrl(kind, list.page + 1) : null,
+      back: listUrl(kind, list.page, res.locals.areaAs),
+      prevUrl: list.page > 1 ? listUrl(kind, list.page - 1, res.locals.areaAs) : null,
+      nextUrl: list.page < list.pages ? listUrl(kind, list.page + 1, res.locals.areaAs) : null,
     });
   }));
 
@@ -181,7 +182,7 @@ router.post('/settings/notifications', signedIn, wrap(async (req, res) => {
     return renderSettings(req, res, { status: 422, errors: { email: 'هذا البريد مستخدم في حساب آخر. اكتب بريداً آخر.' }, values: { ...values, email } });
   }
   await notifications.savePrefs(db.pool, req.user.id, values);
-  return res.redirect('/settings/notifications?done=saved');
+  return res.redirect(`/settings/notifications?${res.locals.areaAs ? `as=${res.locals.areaAs}&` : ''}done=saved`);
 }));
 
 const contactLimit = rateLimit({
@@ -198,12 +199,12 @@ router.post('/settings/notifications/telegram/code', signedIn, contactLimit, wra
 
 router.post('/settings/notifications/telegram/unlink', signedIn, wrap(async (req, res) => {
   await contacts.unlinkTelegram(db.pool, req.user.id);
-  return res.redirect('/settings/notifications?done=telegram_removed#telegram');
+  return res.redirect(`/settings/notifications?${res.locals.areaAs ? `as=${res.locals.areaAs}&` : ''}done=telegram_removed#telegram`);
 }));
 
 router.post('/settings/notifications/whatsapp/login-phone', signedIn, wrap(async (req, res) => {
   await contacts.useLoginPhone(db.pool, req.user);
-  return res.redirect('/settings/notifications?done=whatsapp#whatsapp');
+  return res.redirect(`/settings/notifications?${res.locals.areaAs ? `as=${res.locals.areaAs}&` : ''}done=whatsapp#whatsapp`);
 }));
 
 router.post('/settings/notifications/whatsapp/change', signedIn, contactLimit, wrap(async (req, res) => {
@@ -217,12 +218,12 @@ router.post('/settings/notifications/whatsapp/verify', signedIn, contactLimit, w
   if (!result.ok) {
     return renderSettings(req, res, { status: 422, whatsappStep: true, errors: { whatsapp: OTP_ERRORS[result.error] || OTP_ERRORS.invalid } });
   }
-  return res.redirect('/settings/notifications?done=whatsapp#whatsapp');
+  return res.redirect(`/settings/notifications?${res.locals.areaAs ? `as=${res.locals.areaAs}&` : ''}done=whatsapp#whatsapp`);
 }));
 
 router.post('/settings/notifications/whatsapp/remove', signedIn, wrap(async (req, res) => {
   await contacts.removeWhatsapp(db.pool, req.user.id);
-  return res.redirect('/settings/notifications?done=whatsapp_removed#whatsapp');
+  return res.redirect(`/settings/notifications?${res.locals.areaAs ? `as=${res.locals.areaAs}&` : ''}done=whatsapp_removed#whatsapp`);
 }));
 
 // ------------------------------------------------------------ Telegram webhook

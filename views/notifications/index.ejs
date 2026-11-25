@@ -2,7 +2,7 @@
 <section class="card detail-card">
   <div class="page-head">
     <h1><%= __("الإشعارات") %></h1>
-    <% if (!locals.base) { %><a href="/settings/notifications" class="btn btn--secondary btn--small"><%= __("الإعدادات") %></a><% } %>
+    <% if (!locals.base) { %><a href="/settings/notifications<%= locals.areaAs ? '?as=' + areaAs : '' %>" class="btn btn--secondary btn--small"><%= __("الإعدادات") %></a><% } %>
   </div>
 
   <form method="get" action="<%= locals.base || '' %>/notifications" class="filter-bar">
@@ -11,11 +11,12 @@
       <option value=""><%= __("كل الأنواع") %></option>
       <% Object.entries(kindLabels).forEach(function ([key, label]) { %><option value="<%= __(key) %>" <%= __(kind === key ? 'selected' : '') %>><%= __(label) %></option><% }) %>
     </select>
+    <% if (locals.areaAs) { %><input type="hidden" name="as" value="<%= areaAs %>"><% } %>
     <button type="submit" class="btn btn--secondary"><%= __("عرض") %></button>
   </form>
 
   <% if (rows.some(function (n) { return !n.read_at; })) { %>
-    <form method="post" action="<%= locals.base || '' %>/notifications/read-all">
+    <form method="post" action="<%= locals.base || '' %>/notifications/read-all<%= locals.areaAs ? '?as=' + areaAs : '' %>">
       <input type="hidden" name="back" value="<%= __(back) %>">
       <button type="submit" class="btn btn--secondary btn--block"><%= __("تعليم الكل كمقروء") %></button>
     </form>
@@ -30,10 +31,10 @@
           <div class="note__actions">
             <span class="muted" dir="ltr"><%= __(n.at) %></span>
             <% if (n.link) { %>
-              <form method="post" action="<%= locals.base || '' %>/notifications/<%= __(n.id) %>/open"><button type="submit" class="btn btn--primary btn--small"><%= __("فتح") %></button></form>
+              <form method="post" action="<%= locals.base || '' %>/notifications/<%= __(n.id) %>/open<%= locals.areaAs ? '?as=' + areaAs : '' %>"><button type="submit" class="btn btn--primary btn--small"><%= __("فتح") %></button></form>
             <% } %>
             <% if (!n.read_at) { %>
-              <form method="post" action="<%= locals.base || '' %>/notifications/<%= __(n.id) %>/read">
+              <form method="post" action="<%= locals.base || '' %>/notifications/<%= __(n.id) %>/read<%= locals.areaAs ? '?as=' + areaAs : '' %>">
                 <input type="hidden" name="back" value="<%= __(back) %>">
                 <button type="submit" class="btn btn--secondary btn--small"><%= __("تعليم كمقروء") %></button>
               </form>
