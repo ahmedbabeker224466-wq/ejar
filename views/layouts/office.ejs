@@ -58,7 +58,7 @@
       </header>
   <% if (access.onTrial) { %>
         <div class="office-banner office-banner--info" role="status">
-          <% const dl = access.trialDaysLeft; const days = dl === 1 ? 'يوم واحد' : dl === 2 ? 'يومين' : (dl >= 3 && dl <= 10) ? `${dl} أيام` : `${dl} يوماً`; %><%= __(dl === 0 ? __('تجربتك المجانية تنتهي اليوم') : `تجربتك المجانية تنتهي بعد ${days}`) %>
+          <% const dl = access.trialDaysLeft; const days = dl === 1 ? 'يوم واحد' : dl === 2 ? 'يومين' : (dl >= 3 && dl <= 10) ? `${dl} أيام` : `${dl} يوماً`; %><%= lang === 'en' ? (dl === 0 ? 'Your free trial ends today' : `Your free trial ends in ${dl} day${dl === 1 ? '' : 's'}`) : (dl === 0 ? 'تجربتك المجانية تنتهي اليوم' : `تجربتك المجانية تنتهي بعد ${days}`) %>
           <% if (can('billing')) { %><a href="/office/billing"><%= __("اشترك الآن") %></a><% } %>
         </div>
       <% } else if (access.readOnly) { %>
