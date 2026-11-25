@@ -89,6 +89,7 @@ function loadArea(kind) {
       req.memberRole = kind;
       res.locals.areas = areas;
       res.locals.currentArea = kind;
+      res.locals.layout = 'layouts/portal';
       return next();
     } catch (err) {
       return next(err);

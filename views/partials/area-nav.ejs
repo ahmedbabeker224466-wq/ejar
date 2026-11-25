@@ -1,5 +1,5 @@
 <%# Links between a landlord's or tenant's pages. Uses currentPath (set for every request) and currentArea. %>
-<% if (locals.currentArea) { %>
+<% if (locals.currentArea && locals.layout !== 'layouts/portal') { %>
   <nav class="area-links" aria-label="<%= __("صفحات") %> <%= __(currentArea === 'landlord' ? __('المالك') : __('المستأجر')) %>">
     <% const items = currentArea === 'landlord'
       ? [['/landlord', __('الرئيسية')], ['/landlord/maintenance', __('الصيانة')], ['/landlord/messages', __('الرسائل')], ['/landlord/statement', __('كشف الحساب')], ['/landlord/account', __('حسابي الشهري')], ['/landlord/review', __('تقييم المكتب')]]

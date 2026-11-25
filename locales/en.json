@@ -2400,7 +2400,7 @@
  "القائمة الرئيسية": "Main menu",
  "سجّل مكتبك": "Register your office",
  "تسجيل الخروج": "Sign out",
- "التبديل بين الصفحات": "Switch between pages",
+ "التبديل بين الصفحات": "Switch area",
  "جوال أو هاتف ثابت، مثال: 0512345678": "Mobile or landline, for example: 0512345678",
  "رقم السجل التجاري": "Commercial registration number",
  "رقم ترخيص فال من الهيئة العامة للعقار": "FAL license number from the Real Estate General Authority",
@@ -3156,5 +3156,7 @@
  "{0} عقداً": "{0} contracts",
  "دفعة واحدة": "1 payment",
  "دفعتان": "2 payments",
- "{0} دفعات": "{0} payments"
+ "{0} دفعات": "{0} payments",
+ "عقاراتك وعقودك": "Your properties and contracts",
+ "عقدك ودفعاتك": "Your contract and payments"
 }

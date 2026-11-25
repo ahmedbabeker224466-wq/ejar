@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="<%= lang %>" dir="<%= dir %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title><%= __(title) %> | <%= __("ميعاد") %></title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0f1d45">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@800&text=miaad&display=swap">
+  <link rel="stylesheet" href="<%= assetUrl('/css/main.css') %>">
+  <script src="<%= assetUrl('/js/office.js') %>" defer></script>
+</head>
+<%# Shell for the landlord and tenant areas: the same look as the office panel, with the area's own menu. %>
+<body class="office-body portal-body">
+  <%- include('../partials/platform-banner') %>
+  <% const icons = {home:'<path d="M3 11 12 4l9 7v9H5v-9"/>',maintenance:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',messages:'<path d="M4 5h16v11H9l-5 4z"/>',statement:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',account:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',review:'<path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>'};
+     const base = '/' + currentArea;
+     const items = currentArea === 'landlord'
+       ? [['home', base, 'الرئيسية'], ['maintenance', base + '/maintenance', 'الصيانة'], ['messages', base + '/messages', 'الرسائل'], ['statement', base + '/statement', 'كشف الحساب'], ['account', base + '/account', 'حسابي الشهري'], ['review', base + '/review', 'تقييم المكتب']]
+       : [['home', base, 'الرئيسية'], ['maintenance', base + '/maintenance', 'الصيانة'], ['messages', base + '/messages', 'الرسائل'], ['review', base + '/review', 'تقييم المكتب']];
+     const isHere = function (href) { return href === base ? (currentPath === base || currentPath.indexOf(base + '/contracts') === 0) : (currentPath === href || currentPath.indexOf(href + '/') === 0); };
+     const me = locals.currentUser || {};
+     const who = (me.name && String(me.name).trim()) || me.email || (me.phone ? '0' + String(me.phone).slice(3) : '');
+     const areaTitle = currentArea === 'landlord' ? 'صفحة المالك' : 'صفحة المستأجر'; %>
+  <div class="office-shell">
+    <nav id="office-nav" class="office-nav" aria-label="<%= __(areaTitle) %>">
+      <div class="office-nav__brand"><span class="office-nav__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'p' }) %></span><span class="brand-word" lang="en" dir="ltr">miaad</span></div>
+      <ul>
+        <% items.forEach(function (it) { %>
+          <li><a href="<%= it[1] %>" <%- isHere(it[1]) ? 'aria-current="page"' : '' %>><svg class="office-nav__icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><%- icons[it[0]] %></svg><span><%= __(it[2]) %></span></a></li>
+        <% }) %>
+      </ul>
+      <% if (locals.areas && areas.length > 1) { %>
+        <p class="office-nav__group"><%= __("التبديل بين الصفحات") %></p>
+        <ul class="area-switch">
+          <% areas.filter(function (a) { return a.key !== currentArea; }).forEach(function (a) { %>
+            <li><a href="<%= a.href %>"><svg class="office-nav__icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span><%= __(a.label) %></span></a></li>
+          <% }) %>
+        </ul>
+      <% } %>
+      <ul class="office-nav__end">
+        <li><a href="/logout" class="office-nav__logout"><svg class="office-nav__icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4M6 12h10"/></svg><span><%= __("تسجيل الخروج") %></span></a></li>
+      </ul>
+    </nav>
+    <div class="office-backdrop" id="office-backdrop" hidden></div>
+    <div class="office-col">
+      <header class="office-top">
+        <button type="button" class="office-menu-btn" id="office-menu-toggle" aria-controls="office-nav" aria-expanded="false">
+          <span class="office-menu-btn__bars" aria-hidden="true"></span>
+          <span class="visually-hidden"><%= __("القائمة") %></span>
+        </button>
+        <div class="office-top__title">
+          <a href="<%= base %>" class="office-top__name"><%= __(areaTitle) %></a>
+          <div class="office-top__user">
+            <% if (who) { %><span class="office-top__user-name" dir="auto"><%= who %></span><% } %>
+            <span class="badge badge--role"><%= __(currentArea === 'landlord' ? 'مالك' : 'مستأجر') %></span>
+          </div>
+        </div>
+        <div class="office-top__actions">
+          <%- include('../partials/lang-switch') %>
+          <%- include('../partials/bell') %>
+        </div>
+      </header>
+      <main class="office-main">
+        <%- include('../partials/flash') %>
+        <%- body %>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
