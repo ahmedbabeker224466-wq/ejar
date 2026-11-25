@@ -25,7 +25,7 @@
         <img src="/listings/photos/<%= __(id) %>/full" alt="" loading="lazy">
         <div class="lightbox__nav">
           <% if (i > 0) { %><a href="#photo-<%= i %>"><%= __("السابقة") %></a><% } else { %><span></span><% } %>
-          <span><%= i + 1 %> / <%= photos.length %></span>
+          <bdi dir="ltr"><%= i + 1 %> / <%= photos.length %></bdi>
           <% if (i < photos.length - 1) { %><a href="#photo-<%= i + 2 %>"><%= __("التالية") %></a><% } else { %><span></span><% } %>
         </div>
       </div>
