@@ -10,7 +10,7 @@ const { scopeToOffice } = require('./scopeToOffice');
 
 const PAGE_SIZE = 20;
 const STATUSES = ['joined', 'invited', 'not_invited'];
-const STATUS_LABELS = { joined: 'انضم', invited: 'مدعو', not_invited: 'غير مدعو' };
+const STATUS_LABELS = { joined: 'منضم', invited: 'مدعو', not_invited: 'غير مدعو' };
 
 const JOINED = `EXISTS (SELECT 1 FROM contract_members cm
   WHERE cm.contract_id = c.id AND cm.role = 'tenant')`;

@@ -56,6 +56,7 @@ const PORTAL_ICONS = {
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
 };
 app.locals.picon = (name) => `<svg class="picon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${PORTAL_ICONS[name] || ''}</svg>`;
+app.locals.countOf = require('./services/tr').countOf;
 app.locals.riyadhDay = (at) => (at ? require('./utils/time').riyadhNow(new Date(at)).slice(0, 10) : '');
 app.locals.otherCity = require('./config/saudiCities').OTHER_CITY;
 

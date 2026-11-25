@@ -136,7 +136,7 @@ test('buildings: validation, other offices\' landlords, landlord moves, delete r
   const [[still]] = await db.pool.query('SELECT landlord_id, name, city FROM buildings WHERE id = ?', [building.id]);
   assert.deepEqual({ ...still }, { landlord_id: secondLandlord, name: 'عمارة الملقا', city: 'الرياض' }, 'no partial update');
 
-  assert.match((await http.request('/office/units?tab=buildings', { cookie: a.cookie })).text, /1 وحدة/);
+  assert.match((await http.request('/office/units?tab=buildings', { cookie: a.cookie })).text, /وحدة واحدة/);
 
   assert.equal((await http.request(`/office/units/buildings/${building.id}/delete`, { method: 'POST', cookie: staff })).status, 403);
   const withUnits = await http.request(`/office/units/buildings/${building.id}/delete`, { method: 'POST', cookie: a.cookie });
@@ -229,7 +229,7 @@ test('units: validation, building of another landlord or office, city from build
   assert.match(landlordPage.text, /شقة 3 أ/);
   const quick = await http.request(`/office/units/new?landlord=${a.landlordId}`, { cookie: a.cookie });
   assert.match(quick.text, new RegExp(`<option value="${a.landlordId}" selected>`));
-  assert.match((await http.request('/office/landlords', { cookie: a.cookie })).text, /1 وحدة/);
+  assert.match((await http.request('/office/landlords', { cookie: a.cookie })).text, /وحدة واحدة/);
 });
 
 test('the unit list searches, filters and pages by 20', { skip }, async () => {

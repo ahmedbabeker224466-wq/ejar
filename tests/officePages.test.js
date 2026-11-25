@@ -101,7 +101,7 @@ test('tenants page: empty state, then one row per contract with unit, stage and 
   assert.ok(onlyNone.text.includes(`/office/contracts/${none}"`));
   assert.ok(!onlyNone.text.includes(`/office/contracts/${joined}"`));
   const search = await get(`/office/tenants?q=${encodeURIComponent('أبو سعد')}`, a.cookie);
-  assert.match(search.text, /1 مستأجر/);
+  assert.match(search.text, /مستأجر واحد/);
   const nothing = await get('/office/tenants?q=zzz-none', a.cookie);
   assert.match(nothing.text, /لا توجد نتائج تطابق البحث/);
   assert.equal((await get('/office/tenants?page=abc&status=bogus', a.cookie)).status, 200);

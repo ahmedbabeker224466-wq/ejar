@@ -22,7 +22,7 @@ const { rateLimit } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
-const STATUS_LABELS = { joined: 'انضم', invited: 'مدعو', not_invited: 'غير مدعو' };
+const STATUS_LABELS = { joined: 'منضم', invited: 'مدعو', not_invited: 'غير مدعو' };
 const INVITE_LABELS = { active: 'فعّال', used: 'مستخدم', expired: 'منتهي', revoked: 'ملغى' };
 const MESSAGES = {
   saved: 'تم حفظ بيانات المالك.',

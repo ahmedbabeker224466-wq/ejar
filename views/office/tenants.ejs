@@ -35,7 +35,7 @@
       <a href="/office/tenants" class="btn btn--secondary"><%= __("عرض كل المستأجرين") %></a>
     </section>
   <% } else { %>
-    <p class="muted"><%= __(total) %> <%= __("مستأجر") %></p>
+    <p class="muted"><%= countOf(total, 'مستأجر', lang) %></p>
     <ul class="item-list">
       <% rows.forEach(function (row) { %>
         <li class="card item">

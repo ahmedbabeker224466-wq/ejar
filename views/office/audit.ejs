@@ -10,7 +10,7 @@
     <p class="lead"><%= __("ستظهر هنا الإجراءات المهمة مثل إضافة عقد أو تسجيل دفعة أو إيقاف عضو.") %></p>
   </section>
 <% } else { %>
-  <p class="muted"><%= __(total) %> <%= __("إجراء") %></p>
+  <p class="muted"><%= countOf(total, 'إجراء', lang) %></p>
   <ul class="item-list">
     <% rows.forEach(function (row) { %>
       <li class="card item">

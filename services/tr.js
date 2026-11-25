@@ -65,7 +65,27 @@ const COUNTED = {
   'يوم': { one: 'يوم واحد', two: 'يومان', few: 'أيام', many: 'يوماً' },
   'دفعة': { one: 'دفعة واحدة', two: 'دفعتان', few: 'دفعات', many: 'دفعة' },
   'عقد': { one: 'عقد واحد', two: 'عقدان', few: 'عقود', many: 'عقداً' },
+  'مالك': { one: 'مالك واحد', two: 'مالكان', few: 'ملاك', many: 'مالكاً' },
+  'وحدة': { one: 'وحدة واحدة', two: 'وحدتان', few: 'وحدات', many: 'وحدة' },
+  'طلب': { one: 'طلب واحد', two: 'طلبان', few: 'طلبات', many: 'طلباً' },
+  'مستأجر': { one: 'مستأجر واحد', two: 'مستأجران', few: 'مستأجرين', many: 'مستأجراً' },
+  'سجل': { one: 'سجل واحد', two: 'سجلان', few: 'سجلات', many: 'سجلاً' },
+  'مكتب': { one: 'مكتب واحد', two: 'مكتبان', few: 'مكاتب', many: 'مكتباً' },
+  'إجراء': { one: 'إجراء واحد', two: 'إجراءان', few: 'إجراءات', many: 'إجراءً' },
+  'إعلان': { one: 'إعلان واحد', two: 'إعلانان', few: 'إعلانات', many: 'إعلاناً' },
 };
+// English forms for countOf (singular, plural).
+const COUNTED_EN = {
+  'يوم': ['day', 'days'], 'دفعة': ['payment', 'payments'], 'عقد': ['contract', 'contracts'], 'مالك': ['landlord', 'landlords'],
+  'وحدة': ['unit', 'units'], 'طلب': ['request', 'requests'], 'مستأجر': ['tenant', 'tenants'], 'سجل': ['entry', 'entries'],
+  'مكتب': ['office', 'offices'], 'إجراء': ['action', 'actions'], 'إعلان': ['listing', 'listings'],
+};
+
+/** "n noun" in the page language: correct Arabic counted form, or English singular/plural. */
+function countOf(n, noun, lang) {
+  if (lang === 'en' && COUNTED_EN[noun]) return `${n} ${Number(n) === 1 ? COUNTED_EN[noun][0] : COUNTED_EN[noun][1]}`;
+  return arCount(n, noun);
+}
 const COUNTED_RE = /(^|[^\d.,\-/])(\d+) (يوم|دفعة|عقد)(?=$|[\s.،:؛)]|<)/g;
 
 /** The Arabic phrase for n of a counted noun: 1 يوم واحد, 2 يومان, 3-10 أيام, 11-99 يوماً, 100 يوم. */
@@ -124,4 +144,4 @@ function langOf(value) {
 
 load();
 
-module.exports = { arCount, fixCounts, translate, load, langOf, LANGS, FILE };
+module.exports = { arCount, countOf, fixCounts, translate, load, langOf, LANGS, FILE };

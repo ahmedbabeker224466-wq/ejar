@@ -50,7 +50,7 @@
             <span><%= __(b.city) %><%= __(b.district ? ` · ${b.district}` : '') %></span>
             <span><%= __("المالك:") %> <%= __(b.landlord_label) %></span>
           </p>
-          <p class="item__meta"><a href="/office/units?building=<%= __(b.id) %>"><%= __(b.units_count) %> <%= __("وحدة") %></a></p>
+          <p class="item__meta"><a href="/office/units?building=<%= __(b.id) %>"><%= countOf(b.units_count, 'وحدة', lang) %></a></p>
         </li>
       <% }) %>
     </ul>
@@ -110,7 +110,7 @@
       <p class="lead"><%= __(filtered ? __('لا توجد نتائج تطابق البحث.') : __('لا توجد وحدات بعد.')) %></p>
     </section>
   <% } else { %>
-    <p class="muted"><%= __(total) %> <%= __("وحدة") %></p>
+    <p class="muted"><%= countOf(total, 'وحدة', lang) %></p>
     <ul class="item-list">
       <% rows.forEach(function (u) { %>
         <li class="card item">

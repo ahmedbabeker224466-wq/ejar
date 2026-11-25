@@ -12,7 +12,7 @@
   <div class="field"><label for="to"><%= __("إلى") %></label><input id="to" name="to" class="input" type="date" dir="ltr" value="<%= __(filters.to) %>"></div>
   <button type="submit" class="btn btn--primary"><%= __("تصفية") %></button>
 </form>
-<p class="adm-count"><%= __(total) %> <%= __("سجل") %></p>
+<p class="adm-count"><%= countOf(total, 'سجل', lang) %></p>
 <% if (rows.length) { %>
 <div class="table-wrap">
   <table class="table adm-table">

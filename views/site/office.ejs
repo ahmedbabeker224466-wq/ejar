@@ -22,7 +22,7 @@
 <% } %>
 
 <% if (total) { %>
-  <p class="muted"><%= __(total) %> <%= __("إعلان") %></p>
+  <p class="muted"><%= countOf(total, 'إعلان', lang) %></p>
   <ul class="lgrid">
     <% rows.forEach(function (l) { %>
       <%- include('_listing-card', { l, fmt, icon, types, displayTitle }) %>

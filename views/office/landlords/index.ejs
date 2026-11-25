@@ -35,7 +35,7 @@
       <a href="/office/landlords" class="btn btn--secondary"><%= __("عرض كل الملاك") %></a>
     </section>
   <% } else { %>
-    <p class="muted"><%= __(total) %> <%= __("مالك") %></p>
+    <p class="muted"><%= countOf(total, 'مالك', lang) %></p>
     <ul class="item-list">
       <% rows.forEach(function (row) { %>
         <li class="card item<%= __(row.is_active ? '' : ' item--inactive') %>">
@@ -47,7 +47,7 @@
           <p class="item__meta">
             <% if (row.city) { %><span><%= __(row.city) %></span><% } %>
             <% if (row.phoneLocal) { %><span dir="ltr"><%= __(row.phoneLocal) %></span><% } %>
-            <span><%= __(row.units_count) %> <%= __("وحدة") %></span>
+            <span><%= countOf(row.units_count, 'وحدة', lang) %></span>
           </p>
         </li>
       <% }) %>

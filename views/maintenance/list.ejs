@@ -92,7 +92,7 @@
     <% if (filtered) { %><a href="/office/maintenance" class="btn btn--secondary"><%= __("عرض الكل") %></a><% } %>
   </section>
 <% } else { %>
-  <p class="muted"><%= __(total) %> <%= __("طلب") %></p>
+  <p class="muted"><%= countOf(total, 'طلب', lang) %></p>
   <ul class="item-list">
     <% rows.forEach(function (r) { %>
       <li class="item">
