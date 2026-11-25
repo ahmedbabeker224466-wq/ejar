@@ -88,7 +88,7 @@ async function login(canonicalPhone) {
   );
   const step = auth.signStepToken({ phone: canonicalPhone, sentAt: Date.now() }, 'login-phone', 600);
   const result = await request('/login/verify', { method: 'POST', cookie: `aqdi_login=${step}`, form: { code: '123456' } });
-  const setCookie = result.response.headers.getSetCookie().find((c) => /^aqdi_(admin_)?session=/.test(c));
+  const setCookie = result.response.headers.getSetCookie().find((c) => /^aqdi_(admin_|landlord_|tenant_)?session=/.test(c));
   return { location: result.location, cookie: setCookie ? setCookie.split(';')[0] : null };
 }
 

@@ -463,7 +463,8 @@ router.post('/login/2fa/setup', async (req, res, next) => {
 router.get('/logout', async (req, res, next) => {
   try {
     if (req.user) await auth.revokeSession(req.user.tokenId);
-    res.clearCookie(auth.SESSION_COOKIE, { path: '/' });
+    const used = req.sessionCookie || { name: auth.SESSION_COOKIE, path: '/' };
+    res.clearCookie(used.name, { path: used.path });
     return res.redirect('/login');
   } catch (err) {
     return next(err);
@@ -474,6 +475,8 @@ router.post('/logout-all', requireAuth, async (req, res, next) => {
   try {
     await auth.logoutAll(req.user.id);
     res.clearCookie(auth.SESSION_COOKIE, { path: '/' });
+    res.clearCookie(auth.LANDLORD_COOKIE, { path: '/' });
+    res.clearCookie(auth.TENANT_COOKIE, { path: '/' });
     res.clearCookie(auth.ADMIN_COOKIE, { path: auth.ADMIN_COOKIE_PATH });
     return res.redirect('/login');
   } catch (err) {

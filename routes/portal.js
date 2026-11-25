@@ -185,9 +185,11 @@ router.post('/join/verify', wrap(async (req, res) => {
   if (!found.ok) return renderJoin(req, res, { status: 403, error: joins.MESSAGES.invalid, code: pending.code, email: pending.email });
   const user = found.user;
   if (joins.OFFICE_ROLES.has(user.role)) return renderJoin(req, res, { status: 403, error: joins.MESSAGES.office_user });
-  await auth.issueSession(req, res, user);
   const joined = await joins.joinWithCode(db.pool, { userId: user.id, code: pending.code, ip: req.ip });
-  if (!joined.ok) return res.redirect(auth.homeFor(user.role));
+  // The session goes into the cookie of the role the person has now (landlord or tenant keep their own).
+  const [[fresh]] = await db.pool.query('SELECT role FROM users WHERE id = ?', [user.id]);
+  await auth.issueSession(req, res, { ...user, role: fresh ? fresh.role : user.role });
+  if (!joined.ok) return res.redirect(auth.homeFor(fresh ? fresh.role : user.role));
   return res.redirect(joined.kind === 'staff' ? '/office' : `${AREAS[joined.kind].href}?done=joined`);
 }));
 
@@ -206,6 +208,14 @@ router.post('/join', wrap(async (req, res) => {
   if (!result.ok) {
     const status = result.reason === 'office_user' ? 403 : result.reason === 'member_limit' ? 409 : 422;
     return renderJoin(req, res, { status, error: joins.MESSAGES[result.reason] || joins.MESSAGES.invalid, code: typed });
+  }
+  // A first join gives the person a role: move the session to that role's cookie.
+  const [[fresh]] = await db.pool.query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+  const target = auth.cookieFor(fresh && fresh.role);
+  const used = req.sessionCookie;
+  if (used && target.name !== used.name && req.cookies && req.cookies[used.name]) {
+    res.cookie(target.name, req.cookies[used.name], auth.cookieOptions(7 * 24 * 60 * 60, target.path));
+    res.clearCookie(used.name, { path: used.path });
   }
   return res.redirect(result.kind === 'staff' ? '/office' : `${AREAS[result.kind].href}?done=joined`);
 }));

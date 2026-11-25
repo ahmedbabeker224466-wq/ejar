@@ -78,7 +78,7 @@ async function loginWithPhoneCode({ nodeEnv, flag, twofaEnabled }) {
     },
     body: 'code=123456',
   });
-  const setCookie = response.headers.getSetCookie().find((c) => /^aqdi_(admin_)?session=/.test(c));
+  const setCookie = response.headers.getSetCookie().find((c) => /^aqdi_(admin_|landlord_|tenant_)?session=/.test(c));
   const token = setCookie ? setCookie.split(';')[0].split('=').slice(1).join('=') : null;
   return { status: response.status, location: response.headers.get('location'), session: token ? jwt.decode(token) : null };
 }

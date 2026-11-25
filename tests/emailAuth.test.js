@@ -85,7 +85,7 @@ const flag = (on) => {
 };
 const emailPost = (email, intent = 'login') => http.request('/login/email', { method: 'POST', form: { email, intent } });
 const sessionOf = (res) => {
-  const c = res.response.headers.getSetCookie().find((x) => /^aqdi_(admin_)?session=/.test(x));
+  const c = res.response.headers.getSetCookie().find((x) => /^aqdi_(admin_|landlord_|tenant_)?session=/.test(x));
   return c ? c.split(';')[0] : null;
 };
 const userByEmail = async (email) => (await db.pool.query('SELECT * FROM users WHERE email = ?', [email]))[0][0];

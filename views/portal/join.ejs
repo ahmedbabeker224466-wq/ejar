@@ -5,7 +5,7 @@
   <% if (!signedIn && locals.guestByEmail) { %>
     <p class="lead"><%= __("اكتب الرمز الذي أرسله لك مكتب العقار وبريدك الإلكتروني، وسنرسل إليه رمز تحقق لتدخل إلى حسابك.") %></p>
     <% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
-    <form method="post" action="/join" novalidate>
+    <form method="post" action="/join<%= locals.addAccount ? '?add=1' : '' %>" novalidate>
       <div class="field">
         <label for="code"><%= __("رمز الدعوة") %></label>
         <input id="code" name="code" class="input input--code" type="text" dir="ltr" autocomplete="off" autocapitalize="characters"
@@ -30,7 +30,7 @@
   <% } else { %>
     <p class="lead"><%= __("أدخل الرمز الذي وصلك من مكتب العقار.") %></p>
     <% if (error) { %><div class="flash flash--danger" role="alert"><%= __(error) %></div><% } %>
-    <form method="post" action="/join" novalidate>
+    <form method="post" action="/join<%= locals.addAccount ? '?add=1' : '' %>" novalidate>
       <div class="field">
         <label for="code"><%= __("رمز الدعوة") %></label>
         <input id="code" name="code" class="input input--code" type="text" dir="ltr" autocomplete="off" autocapitalize="characters"

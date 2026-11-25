@@ -221,7 +221,7 @@ test('session cookies are HttpOnly, SameSite and Secure in production', { skip }
   await db.pool.query("INSERT INTO otp_codes (phone, code_hash, purpose, expires_at) VALUES (?, ?, 'login', UTC_TIMESTAMP() + INTERVAL 5 MINUTE)", [phone(9), hashCode(phone(9), '123456')]);
   const step = auth.signStepToken({ phone: phone(9), sentAt: Date.now() }, 'login-phone', 600);
   const res = await http.request('/login/verify', { method: 'POST', cookie: `aqdi_login=${step}`, form: { code: '123456' } });
-  const cookie = res.response.headers.getSetCookie().find((c) => /^aqdi_(admin_)?session=/.test(c));
+  const cookie = res.response.headers.getSetCookie().find((c) => /^aqdi_(admin_|landlord_|tenant_)?session=/.test(c));
   assert.match(cookie, /HttpOnly/i);
   assert.match(cookie, /SameSite=Lax/i);
 });

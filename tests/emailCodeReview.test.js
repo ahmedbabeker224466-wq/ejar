@@ -126,7 +126,7 @@ const stepOf = (res) => {
   return c ? c.split(';')[0] : null;
 };
 const sessionOf = (res) => {
-  const c = res.response.headers.getSetCookie().find((x) => /^aqdi_(admin_)?session=/.test(x));
+  const c = res.response.headers.getSetCookie().find((x) => /^aqdi_(admin_|landlord_|tenant_)?session=/.test(x));
   return c ? c.split(';')[0] : null;
 };
 const lastCode = (to) => {

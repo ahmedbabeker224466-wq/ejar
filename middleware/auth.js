@@ -12,14 +12,35 @@ function loadUser(authService = auth) {
     req.user = null;
     req.sessionCookie = null;
     const cookies = req.cookies || {};
+    // /login?add=1 and /join?add=1 sign in a second account (a landlord or a
+    // tenant next to an office) without leaving the one already signed in.
+    if ((req.path === '/login' || req.path === '/join') && req.query && req.query.add === '1') {
+      res.locals.currentUser = null;
+      res.locals.addAccount = true;
+      return next();
+    }
     // /admin runs on the admin cookie first; everything else on the normal one.
     // Without an admin cookie /admin falls back to the normal one, so a platform
     // account signed in before the split stays in, and anyone else is refused
     // by the admin guard (a GET goes to /admin/login).
-    const admin = auth.isAdminPath(req.path);
-    const candidates = admin
-      ? [{ name: auth.ADMIN_COOKIE, path: auth.ADMIN_COOKIE_PATH }, { name: auth.SESSION_COOKIE, path: '/' }]
-      : [{ name: auth.SESSION_COOKIE, path: '/' }];
+    // Each area reads its own cookie first (office: aqdi_session, landlord and
+    // tenant their own). Shared pages use the area of the page that linked
+    // here, else the area this browser used last.
+    const area = auth.areaOfPath(req.path);
+    let hint = null;
+    if (!area) {
+      try {
+        const ref = req.get('referer');
+        if (ref) {
+          const u = new URL(ref);
+          if (u.host === req.get('host')) hint = auth.areaOfPath(u.pathname);
+        }
+      } catch { /* a bad referer is ignored */ }
+      if (!hint && ['office', 'landlord', 'tenant'].includes(cookies[auth.AREA_HINT_COOKIE])) hint = cookies[auth.AREA_HINT_COOKIE];
+    } else if (req.method === 'GET' && cookies[auth.AREA_HINT_COOKIE] !== area) {
+      res.cookie(auth.AREA_HINT_COOKIE, area, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/' });
+    }
+    const candidates = auth.cookieCandidates(req.path, hint);
     for (const cookie of candidates) {
       const token = cookies[cookie.name];
       if (!token) continue;

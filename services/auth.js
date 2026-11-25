@@ -18,9 +18,39 @@ const ADMIN_COOKIE = 'aqdi_admin_session';
 const ADMIN_COOKIE_PATH = '/admin';
 const PLATFORM_ROLES = new Set(['platform_admin', 'platform_staff']);
 
+// Landlords and tenants get their own cookies too (owner, Nov 2026), so an
+// office, a landlord and a tenant can be signed in side by side in one browser.
+const LANDLORD_COOKIE = 'aqdi_landlord_session';
+const TENANT_COOKIE = 'aqdi_tenant_session';
+// Remembers which area the browser used last, for shared pages (/notifications ...).
+const AREA_HINT_COOKIE = 'aqdi_area';
+
 /** Which cookie holds the session of a user with this role. */
 function cookieFor(role) {
-  return PLATFORM_ROLES.has(role) ? { name: ADMIN_COOKIE, path: ADMIN_COOKIE_PATH } : { name: SESSION_COOKIE, path: '/' };
+  if (PLATFORM_ROLES.has(role)) return { name: ADMIN_COOKIE, path: ADMIN_COOKIE_PATH };
+  if (role === 'landlord') return { name: LANDLORD_COOKIE, path: '/' };
+  if (role === 'tenant') return { name: TENANT_COOKIE, path: '/' };
+  return { name: SESSION_COOKIE, path: '/' };
+}
+
+const C_SESSION = { name: SESSION_COOKIE, path: '/' };
+const C_LANDLORD = { name: LANDLORD_COOKIE, path: '/' };
+const C_TENANT = { name: TENANT_COOKIE, path: '/' };
+
+/** office | landlord | tenant | null for a path. */
+function areaOfPath(path) {
+  const m = /^\/(office|landlord|tenant)(?:\/|$)/.exec(String(path || ''));
+  return m ? m[1] : null;
+}
+
+/** The session cookies to try, in order, for a request on this path. */
+function cookieCandidates(path, hint) {
+  if (isAdminPath(path)) return [{ name: ADMIN_COOKIE, path: ADMIN_COOKIE_PATH }, C_SESSION];
+  const area = areaOfPath(path) || hint;
+  if (areaOfPath(path) === 'office') return [C_SESSION, C_LANDLORD, C_TENANT];
+  if (area === 'landlord') return [C_LANDLORD, C_TENANT, C_SESSION];
+  if (area === 'tenant') return [C_TENANT, C_LANDLORD, C_SESSION];
+  return [C_SESSION, C_LANDLORD, C_TENANT];
 }
 const SESSION_AUDIENCE = 'session';
 const TTL_SECONDS = {
@@ -272,6 +302,12 @@ module.exports = {
   cookieOptions,
   SESSION_COOKIE,
   ADMIN_COOKIE,
+  LANDLORD_COOKIE,
+  TENANT_COOKIE,
+  AREA_HINT_COOKIE,
+  areaOfPath,
+  cookieCandidates,
+  cookieOptions,
   ADMIN_COOKIE_PATH,
   cookieFor,
   isAdminPath,
