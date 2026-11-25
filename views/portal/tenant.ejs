@@ -1,83 +1,158 @@
-<%- include('../partials/area-nav') %>
-<h1><%= __("عقدك ودفعاتك") %></h1>
+<% const money = function (v) { return Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }; %>
+<div class="page-head"><h1><%= __("عقدك ودفعاتك") %></h1></div>
 <% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
 
 <% if (!contracts.length) { %>
-  <section class="card detail-card">
-    <p class="empty-state"><%= __("لا يوجد عقد مرتبط بحسابك الآن. إذا وصلك رمز جديد من المكتب، أدخله من") %> <a href="/join"><%= __("صفحة الانضمام") %></a>.</p>
+  <section class="card pt-empty">
+    <span class="pt-empty__icon" aria-hidden="true"><%- picon('home') %></span>
+    <p><%= __("لا يوجد عقد مرتبط بحسابك الآن. إذا وصلك رمز جديد من المكتب، أدخله من") %> <a href="/join"><%= __("صفحة الانضمام") %></a>.</p>
   </section>
 <% } %>
 
-<% contracts.forEach(function (view) { const c = view.contract; const d = view.described; %>
-  <section class="card detail-card" id="contract-<%= __(c.id) %>">
-    <div class="page-head">
-      <h2><%= __(c.unit_label || __('عقد الإيجار')) %></h2>
-      <span class="badge badge--stage-<%= __(d.stage) %>"><%= __(stageLabels[d.stage]) %></span>
-    </div>
-    <p class="muted"><%= __("المكتب:") %> <%= __(view.link.office_name) %></p>
-
-    <% if (d.live) { %>
-      <p class="lead"><%= __(d.daysToEnd >= 0 ? `باقي ${d.daysToEnd} يوم على نهاية العقد` : __('انتهى العقد')) %></p>
-    <% } %>
-    <% if (d.notStarted) { %><p class="muted"><%= __("لم يبدأ العقد بعد.") %></p><% } %>
-
-    <dl class="details">
-      <dt><%= __("البداية") %></dt><dd><span dir="ltr"><%= __(c.start_date) %></span> <span class="muted nowrap">(<%= __(d.hijri.start) %> <%= __("تقريبي)") %></span></dd>
-      <dt><%= __("النهاية") %></dt><dd><span dir="ltr"><%= __(c.end_date) %></span> <span class="muted nowrap">(<%= __(d.hijri.end) %> <%= __("تقريبي)") %></span></dd>
-      <dt><%= __("الإيجار السنوي") %></dt><dd><%= __(Number(c.annual_rent).toLocaleString('en-US', { minimumFractionDigits: 2 })) %> <%= __("ريال") %></dd>
-      <dt><%= __("طريقة الدفع") %></dt><dd><%= __(frequencyLabels[c.payment_frequency] || '—') %></dd>
-    </dl>
-
-    <% if (d.live) { %>
-      <ul class="deadlines">
-        <li><span><%= __("آخر موعد لإبلاغ المكتب بقرار التجديد") %></span><strong dir="ltr"><%= __(d.noticeDeadline) %></strong><span class="muted"><%= __(d.daysToNotice >= 0 ? `باقي ${d.daysToNotice} يوم` : `فات منذ ${-d.daysToNotice} يوم`) %></span></li>
-      </ul>
-      <% if (d.policy.reason === 'riyadh_freeze') { %>
-        <p class="flash flash--info"><%= __("الإيجار مجمّد في الرياض حتى") %> <span dir="ltr"><%= __(d.policy.freezeUntil) %></span>: <%= __("لا يمكن رفع إيجارك عند التجديد.") %></p>
+<% contracts.forEach(function (view) { const c = view.contract; const d = view.described; const s = view.summary; const next = s.next;
+   const total = view.upcoming.length; const paidCount = s.counts.paid; const paidPct = total ? Math.round(paidCount * 100 / total) : 0;
+   const open = view.upcoming.filter(function (p) { return p.shownStatus !== 'paid'; }); const done = view.upcoming.filter(function (p) { return p.shownStatus === 'paid'; }); %>
+  <article class="pt-contract" id="contract-<%= __(c.id) %>">
+    <section class="pt-hero">
+      <div class="pt-hero__top">
+        <div>
+          <p class="pt-hero__office"><%= __(view.link.office_name) %></p>
+          <h2 class="pt-hero__title"><%= __(c.unit_label || __('عقد الإيجار')) %></h2>
+        </div>
+        <span class="badge badge--stage-<%= __(d.stage) %>"><%= __(stageLabels[d.stage]) %></span>
+      </div>
+      <% if (d.live && !d.notStarted) { %>
+        <p class="pt-hero__big"><b><%= __(Math.max(d.daysToEnd, 0)) %></b> <%= __("يوماً على نهاية العقد") %></p>
+      <% } else if (d.notStarted) { %>
+        <p class="pt-hero__big"><%= __("لم يبدأ العقد بعد.") %></p>
+      <% } else { %>
+        <p class="pt-hero__big"><%= __("انتهى العقد") %></p>
       <% } %>
+      <div class="pt-bar" role="img" aria-label="<%= __(`مضى ${d.progress}% من مدة العقد`) %>"><span class="pt-bar__fill pt-w-<%= __(Math.round(d.progress / 5) * 5) %>"></span></div>
+      <div class="pt-hero__ends">
+        <span><%= __("البداية") %> <b dir="ltr"><%= __(c.start_date) %></b></span>
+        <span><%= __("النهاية") %> <b dir="ltr"><%= __(c.end_date) %></b></span>
+      </div>
+      <p class="pt-hero__hijri"><%= __("بالهجري:") %> <%= __(d.hijri.start) %> - <%= __(d.hijri.end) %> <%= __("(تقريبي)") %></p>
+    </section>
+
+    <div class="pt-tiles">
+      <section class="pt-tile pt-tile--next">
+        <p class="pt-tile__label"><%= __("الدفعة القادمة") %></p>
+        <% if (next) { %>
+          <p class="pt-tile__value"><%= __(money(next.amount)) %> <small><%= __("ريال") %></small></p>
+          <p class="pt-tile__sub"><span dir="ltr"><%= __(next.due_date) %></span> · <span class="badge badge--pay-<%= __(next.shownStatus) %>"><%= __(paymentLabels[next.shownStatus]) %></span></p>
+          <% if (['due', 'late'].includes(next.status)) { %>
+            <form method="post" action="/tenant/contracts/<%= __(c.id) %>/payments/<%= __(next.id) %>/report" class="pt-tile__action">
+              <button type="submit" class="btn btn--success btn--small"><%= __("دفعت هذه الدفعة") %></button>
+            </form>
+          <% } %>
+        <% } else { %>
+          <p class="pt-tile__value pt-tile__value--ok"><%= __("لا شيء مستحق") %></p>
+          <p class="pt-tile__sub"><%= __("سددت كل الدفعات المسجلة.") %></p>
+        <% } %>
+      </section>
+      <section class="pt-tile">
+        <p class="pt-tile__label"><%= __("ما سددته") %></p>
+        <p class="pt-tile__value"><%= __(paidCount) %> <small><%= __("من أصل") %> <%= __(total) %></small></p>
+        <div class="pt-bar pt-bar--thin"><span class="pt-bar__fill pt-bar__fill--green pt-w-<%= __(Math.round(paidPct / 5) * 5) %>"></span></div>
+        <p class="pt-tile__sub"><%= __(money(s.totals.paid)) %> <%= __("ريال مدفوعة") %></p>
+      </section>
+      <section class="pt-tile">
+        <p class="pt-tile__label"><%= __("قرار التجديد") %></p>
+        <% if (d.live) { %>
+          <p class="pt-tile__value"><%= __(d.daysToNotice >= 0 ? d.daysToNotice : 0) %> <small><%= __("يوماً") %></small></p>
+          <p class="pt-tile__sub"><%= __("أبلغ المكتب بقرارك قبل") %> <span dir="ltr"><%= __(d.noticeDeadline) %></span></p>
+        <% } else { %>
+          <p class="pt-tile__value">—</p>
+        <% } %>
+      </section>
+    </div>
+
+    <% if (d.live && d.policy.reason === 'riyadh_freeze') { %>
+      <p class="pt-note"><%- picon('info') %> <span><%= __("الإيجار مجمّد في الرياض حتى") %> <span dir="ltr"><%= __(d.policy.freezeUntil) %></span>: <%= __("لا يمكن رفع إيجارك عند التجديد.") %></span></p>
     <% } %>
 
-    <div class="page-head"><h3><%= __("الدفعات") %></h3><a href="/tenant/contracts/<%= __(c.id) %>/receipt" class="btn btn--secondary btn--small"><%= __("كشف الدفعات") %></a></div>
-    <% if (view.upcoming.length) { %>
-      <ul class="payments">
-        <% view.upcoming.forEach(function (p, i) { %>
-          <li class="payment">
-            <%- include('_payment', { p: p, index: i, paymentLabels: paymentLabels }) %>
-            <% if (['due', 'late'].includes(p.status)) { %>
-              <form method="post" action="/tenant/contracts/<%= __(c.id) %>/payments/<%= __(p.id) %>/report">
-                <button type="submit" class="btn btn--secondary btn--small"><%= __("دفعت هذه الدفعة") %></button>
-              </form>
-            <% } else if (p.status === 'tenant_reported') { %>
-              <p class="muted"><%= __("بانتظار تأكيد المكتب أو المالك.") %></p>
-            <% } %>
-          </li>
-        <% }) %>
-      </ul>
-    <% } else { %>
-      <p class="empty-state"><%= __("لا توجد دفعات مسجلة لهذا العقد.") %></p>
-    <% } %>
+    <nav class="pt-quick" aria-label="<%= __("إجراءات سريعة") %>">
+      <a href="/tenant/maintenance#new" class="pt-quick__item"><%- picon('wrench') %><span><%= __("صيانة جديدة") %></span></a>
+      <a href="/tenant/messages/<%= __(c.id) %>" class="pt-quick__item"><%- picon('message') %><span><%= __("راسل المكتب") %></span></a>
+      <a href="/tenant/contracts/<%= __(c.id) %>/receipt" class="pt-quick__item"><%- picon('receipt') %><span><%= __("كشف الدفعات") %></span></a>
+      <a href="/tenant/review" class="pt-quick__item"><%- picon('star') %><span><%= __("قيّم المكتب") %></span></a>
+    </nav>
 
-    <% if (view.reduction.allowed && !view.pendingRequest) { %>
-      <details class="payment__edit">
-        <summary><%= __("طلب تخفيض الإيجار عند التجديد") %></summary>
-        <form method="post" action="/tenant/contracts/<%= __(c.id) %>/requests">
-          <input type="hidden" name="request_type" value="rent_reduction">
-          <div class="field">
-            <label for="note-<%= __(c.id) %>"><%= __("سبب الطلب (اختياري)") %></label>
-            <textarea id="note-<%= __(c.id) %>" name="note" class="textarea" rows="3" maxlength="<%= __(noteMax) %>"></textarea>
-            <p class="field-hint"><%= __("حتى") %> <%= __(noteMax) %> <%= __("حرف. يصل الطلب للمكتب ليتواصل معك.") %></p>
-          </div>
-          <button type="submit" class="btn btn--primary btn--block"><%= __("إرسال الطلب") %></button>
-        </form>
-      </details>
+    <section class="card pt-section">
+      <div class="pt-section__head">
+        <h3><%= __("تفاصيل العقد") %></h3>
+      </div>
+      <dl class="pt-facts">
+        <div><dt><%= __("الإيجار السنوي") %></dt><dd><%= __(money(c.annual_rent)) %> <%= __("ريال") %></dd></div>
+        <div><dt><%= __("طريقة الدفع") %></dt><dd><%= __(frequencyLabels[c.payment_frequency] || '—') %></dd></div>
+        <div><dt><%= __("آخر موعد لإبلاغ المكتب بقرار التجديد") %></dt><dd dir="ltr"><%= __(d.noticeDeadline) %></dd></div>
+        <div><dt><%= __("التجديد التلقائي") %></dt><dd><%= __(d.autoRenew ? 'نعم، ما لم يُبلَّغ بغير ذلك' : 'لا') %></dd></div>
+      </dl>
+    </section>
+
+    <section class="card pt-section" id="payments-<%= __(c.id) %>">
+      <div class="pt-section__head">
+        <h3><%= __("الدفعات") %></h3>
+        <span class="muted"><%= __(open.length) %> <%= __("متبقية") %></span>
+      </div>
+      <% if (!total) { %>
+        <p class="empty-state"><%= __("لا توجد دفعات مسجلة لهذا العقد.") %></p>
+      <% } %>
+      <% if (open.length) { %>
+        <ul class="payments pt-payments">
+          <% open.forEach(function (p) { const i = view.upcoming.indexOf(p); %>
+            <li class="payment pt-pay pt-pay--<%= __(p.shownStatus) %>">
+              <%- include('_payment', { p: p, index: i, paymentLabels: paymentLabels }) %>
+              <% if (['due', 'late'].includes(p.status) && (!next || p.id !== next.id)) { %>
+                <form method="post" action="/tenant/contracts/<%= __(c.id) %>/payments/<%= __(p.id) %>/report">
+                  <button type="submit" class="btn btn--secondary btn--small"><%= __("دفعت هذه الدفعة") %></button>
+                </form>
+              <% } else if (p.status === 'tenant_reported') { %>
+                <p class="muted"><%= __("بانتظار تأكيد المكتب أو المالك.") %></p>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+      <% if (done.length) { %>
+        <details class="pt-done">
+          <summary><%= __("الدفعات المدفوعة") %> (<%= __(done.length) %>)</summary>
+          <ul class="payments pt-payments">
+            <% done.forEach(function (p) { const i = view.upcoming.indexOf(p); %>
+              <li class="payment pt-pay pt-pay--paid"><%- include('_payment', { p: p, index: i, paymentLabels: paymentLabels }) %></li>
+            <% }) %>
+          </ul>
+        </details>
+      <% } %>
+    </section>
+
+    <% if ((view.reduction.allowed && !view.pendingRequest) || view.requests.length) { %>
+      <section class="card pt-section">
+        <div class="pt-section__head"><h3><%= __("طلباتك") %></h3></div>
+        <% if (view.requests.length) { %>
+          <ul class="pt-requests">
+            <% view.requests.forEach(function (r) { %>
+              <li><span><%= __(requestTypes[r.request_type]) %></span><span class="badge badge--calm"><%= __(requestStatuses[r.status]) %></span><span class="muted" dir="ltr"><%= __(r.createdOn) %></span></li>
+            <% }) %>
+          </ul>
+        <% } %>
+        <% if (view.reduction.allowed && !view.pendingRequest) { %>
+          <details class="pt-request">
+            <summary class="btn btn--secondary btn--small"><%= __("طلب تخفيض الإيجار عند التجديد") %></summary>
+            <form method="post" action="/tenant/contracts/<%= __(c.id) %>/requests">
+              <input type="hidden" name="request_type" value="rent_reduction">
+              <div class="field">
+                <label for="note-<%= __(c.id) %>"><%= __("سبب الطلب (اختياري)") %></label>
+                <textarea id="note-<%= __(c.id) %>" name="note" class="textarea" rows="3" maxlength="<%= __(noteMax) %>"></textarea>
+                <p class="field-hint"><%= __("حتى") %> <%= __(noteMax) %> <%= __("حرف. يصل الطلب للمكتب ليتواصل معك.") %></p>
+              </div>
+              <button type="submit" class="btn btn--primary"><%= __("إرسال الطلب") %></button>
+            </form>
+          </details>
+        <% } %>
+      </section>
     <% } %>
-    <% if (view.requests.length) { %>
-      <h3><%= __("طلباتك") %></h3>
-      <ul class="item-list">
-        <% view.requests.forEach(function (r) { %>
-          <li class="item"><%= __(requestTypes[r.request_type]) %> · <span class="badge badge--calm"><%= __(requestStatuses[r.status]) %></span> <span class="muted" dir="ltr"><%= __(r.createdOn) %></span></li>
-        <% }) %>
-      </ul>
-    <% } %>
-  </section>
+  </article>
 <% }) %>

@@ -1,13 +1,32 @@
-<%- include('../partials/area-nav') %>
-<h1><%= __("عقاراتك وعقودك") %></h1>
+<% const money = function (v) { return Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+   let nContracts = 0, nUnits = 0, nRented = 0, nLate = 0, nReported = 0, frozen = null, nextDecision = null;
+   offices.forEach(function (o) {
+     nContracts += o.contracts.length; nUnits += o.units.length;
+     o.units.forEach(function (u) { if (u.status === 'rented') nRented += 1; });
+     o.contracts.forEach(function (c) {
+       nLate += c.payments.counts.late; nReported += c.payments.counts.tenant_reported;
+       if (c.described.policy.reason === 'riyadh_freeze') frozen = c.described.policy.freezeUntil;
+       if (c.described.daysToNotice >= 0 && (!nextDecision || c.described.daysToNotice < nextDecision.days)) nextDecision = { days: c.described.daysToNotice, date: c.described.noticeDeadline, unit: c.unit_label };
+     });
+   }); %>
+<div class="page-head"><h1><%= __("عقاراتك وعقودك") %></h1></div>
 <% if (message) { %><div class="flash flash--success" role="status"><%= __(message) %></div><% } %>
 
-<section class="card detail-card">
-  <h2><%= __("يحتاج إجراء") %></h2>
+<div class="pt-stats">
+  <div class="pt-stat"><span class="pt-stat__icon"><%- picon('doc') %></span><div><p class="pt-stat__label"><%= __("العقود السارية") %></p><p class="pt-stat__value"><%= __(nContracts) %></p></div></div>
+  <div class="pt-stat"><span class="pt-stat__icon"><%- picon('building') %></span><div><p class="pt-stat__label"><%= __("الوحدات المؤجرة") %></p><p class="pt-stat__value"><%= __(nRented) %> <small><%= __("من أصل") %> <%= __(nUnits) %></small></p></div></div>
+  <div class="pt-stat<%= nLate ? ' pt-stat--bad' : '' %>"><span class="pt-stat__icon"><%- picon('alert') %></span><div><p class="pt-stat__label"><%= __("دفعات متأخرة") %></p><p class="pt-stat__value"><%= __(nLate) %></p></div></div>
+  <div class="pt-stat"><span class="pt-stat__icon"><%- picon('clock') %></span><div><p class="pt-stat__label"><%= __("أقرب قرار تجديد") %></p><p class="pt-stat__value"><% if (nextDecision) { %><%= __(nextDecision.days) %> <small><%= __("يوماً") %></small><% } else { %>—<% } %></p></div></div>
+</div>
+
+<section class="card pt-section pt-actions<%= actions.length ? '' : ' pt-actions--clear' %>">
+  <div class="pt-section__head">
+    <h2><%= __("يحتاج إجراء") %><% if (actions.length) { %> <span class="pt-count"><%= __(actions.length) %></span><% } %></h2>
+  </div>
   <% if (actions.length) { %>
     <ul class="board">
       <% actions.forEach(function (a) { %>
-        <li class="board__row">
+        <li class="board__row pt-action pt-action--<%= __(a.type) %>">
           <div>
             <strong><%= __(a.contract.unit_label || __('وحدة')) %></strong>
             <% if (a.type === 'decision') { %>
@@ -22,56 +41,64 @@
             <% } %>
             <p class="muted"><%= __("المكتب:") %> <%= __(a.office.office_name) %></p>
           </div>
-          <a class="btn btn--secondary btn--small" href="/landlord/contracts/<%= __(a.contract.id) %>"><%= __("فتح العقد") %></a>
+          <a class="btn btn--primary btn--small" href="/landlord/contracts/<%= __(a.contract.id) %>"><%= __("فتح العقد") %></a>
         </li>
       <% }) %>
     </ul>
   <% } else { %>
-    <p class="empty-state"><%= __("لا يوجد ما يحتاج قراراً منك الآن. سنعرض هنا العقود التي يقترب موعد قرارها والدفعات التي تحتاج تأكيدك.") %></p>
+    <p class="pt-clear"><%- picon('check') %> <span><%= __("لا يوجد ما يحتاج قراراً منك الآن. سنعرض هنا العقود التي يقترب موعد قرارها والدفعات التي تحتاج تأكيدك.") %></span></p>
   <% } %>
 </section>
 
-<% offices.forEach(function (office) { %>
-  <section class="card detail-card">
-    <h2><%= __("عقاراتك مع") %> <%= __(office.office_name) %></h2>
-    <p class="muted"><%= __("اسمك لدى المكتب:") %> <%= __(office.label) %></p>
+<% if (frozen) { %>
+  <p class="pt-note pt-note--warn"><%- picon('info') %> <span><%= __("الإيجار مجمّد في الرياض حتى") %> <span dir="ltr"><%= __(frozen) %></span>: <%= __("لا يمكن رفع الإيجار عند التجديد.") %></span></p>
+<% } %>
 
-    <h3><%= __("العقود السارية") %> (<%= __(office.contracts.length) %>)</h3>
+<% offices.forEach(function (office) { %>
+  <section class="pt-office">
+    <div class="pt-office__head">
+      <div>
+        <h2><%= __("عقاراتك مع") %> <%= __(office.office_name) %></h2>
+        <p class="muted"><%= __("اسمك لدى المكتب:") %> <%= __(office.label) %></p>
+      </div>
+      <a class="btn btn--secondary btn--small" href="/landlord/messages"><%- picon('message') %> <%= __("الرسائل") %></a>
+    </div>
+
+    <h3 class="pt-subhead"><%= __("العقود السارية") %> <span class="pt-count pt-count--soft"><%= __(office.contracts.length) %></span></h3>
     <% if (office.contracts.length) { %>
-      <ul class="item-list">
-        <% office.contracts.forEach(function (c) { const d = c.described; %>
-          <li class="item">
-            <div class="item__title">
-              <a href="/landlord/contracts/<%= __(c.id) %>"><%= __(c.unit_label || __('وحدة')) %></a>
+      <div class="pt-grid">
+        <% office.contracts.forEach(function (c) { const d = c.described; const pc = c.payments.counts; const allPay = pc.paid + pc.due + pc.late + pc.tenant_reported; %>
+          <a class="pt-card" href="/landlord/contracts/<%= __(c.id) %>">
+            <div class="pt-card__top">
+              <strong class="pt-card__title"><%= __(c.unit_label || __('وحدة')) %></strong>
               <span class="badge badge--stage-<%= __(d.stage) %>"><%= __(stageLabels[d.stage]) %></span>
             </div>
-            <ul class="deadlines">
-              <li><span><%= __("نهاية العقد") %></span><strong dir="ltr"><%= __(c.end_date) %></strong><span class="muted"><%= __(d.daysToEnd >= 0 ? `باقي ${d.daysToEnd} يوم` : __('انتهى')) %> · <%= __(d.hijri.end) %> <%= __("تقريبي") %></span></li>
-              <li><span><%= __("آخر موعد لقرار التجديد") %></span><strong dir="ltr"><%= __(d.noticeDeadline) %></strong><span class="muted"><%= __(d.daysToNotice >= 0 ? `باقي ${d.daysToNotice} يوم` : `فات منذ ${-d.daysToNotice} يوم`) %></span></li>
-              <li><span><%= __("آخر موعد لطلب تغيير الإيجار") %></span><strong dir="ltr"><%= __(d.rentChangeDeadline) %></strong><span class="muted"><%= __(d.daysToRentChange >= 0 ? `باقي ${d.daysToRentChange} يوم` : `فات منذ ${-d.daysToRentChange} يوم`) %></span></li>
-            </ul>
-            <% if (d.policy.reason === 'riyadh_freeze') { %>
-              <p class="flash flash--warning"><%= __("الإيجار مجمّد في الرياض حتى") %> <span dir="ltr"><%= __(d.policy.freezeUntil) %></span>: <%= __("لا يمكن رفع الإيجار عند التجديد.") %></p>
-            <% } %>
-            <p class="item__meta">
-              <%= __("الدفعات:") %> <%= __(c.payments.counts.paid) %> <%= __("مدفوعة") %> · <%= __(c.payments.counts.due) %> <%= __("مستحقة") %> · <%= __(c.payments.counts.late) %> <%= __("متأخرة") %><% if (c.payments.counts.tenant_reported) { %> · <%= __(c.payments.counts.tenant_reported) %> <%= __("بانتظار تأكيدك") %><% } %>
-            </p>
-            <p class="item__meta"><%= __("قرارك:") %> <%= __(c.decision ? decisionLabels[c.decision.decision] : __('لم تسجل قراراً بعد')) %></p>
-          </li>
+            <p class="pt-card__rent"><%= __(money(c.annual_rent)) %> <small><%= __("ريال سنوياً") %></small></p>
+            <div class="pt-bar pt-bar--thin"><span class="pt-bar__fill pt-w-<%= __(Math.round(d.progress / 5) * 5) %>"></span></div>
+            <dl class="pt-card__rows">
+              <div><dt><%= __("نهاية العقد") %></dt><dd><b dir="ltr"><%= __(c.end_date) %></b> <span class="muted"><%= __(d.daysToEnd >= 0 ? `باقي ${d.daysToEnd} يوم` : __('انتهى')) %></span></dd></div>
+              <div><dt><%= __("آخر موعد لقرار التجديد") %></dt><dd><b dir="ltr"><%= __(d.noticeDeadline) %></b> <span class="muted"><%= __(d.daysToNotice >= 0 ? `باقي ${d.daysToNotice} يوم` : `فات منذ ${-d.daysToNotice} يوم`) %></span></dd></div>
+              <div><dt><%= __("آخر موعد لطلب تغيير الإيجار") %></dt><dd><b dir="ltr"><%= __(d.rentChangeDeadline) %></b></dd></div>
+            </dl>
+            <p class="pt-card__hijri muted"><%= __("نهاية العقد بالهجري:") %> <%= __(d.hijri.end) %> <%= __("تقريبي") %></p>
+            <div class="pt-card__foot">
+              <span class="pt-chip"><%= __(pc.paid) %>/<%= __(allPay) %> <%= __("مدفوعة") %></span>
+              <% if (pc.late) { %><span class="pt-chip pt-chip--bad"><%= __(pc.late) %> <%= __("متأخرة") %></span><% } %>
+              <% if (pc.tenant_reported) { %><span class="pt-chip pt-chip--warn"><%= __(pc.tenant_reported) %> <%= __("بانتظار تأكيدك") %></span><% } %>
+              <span class="pt-chip pt-chip--soft"><%= __("قرارك:") %> <%= __(c.decision ? decisionLabels[c.decision.decision] : __('لم تسجل قراراً بعد')) %></span>
+            </div>
+          </a>
         <% }) %>
-      </ul>
+      </div>
     <% } else { %>
       <p class="empty-state"><%= __("لا توجد عقود سارية الآن.") %></p>
     <% } %>
 
-    <h3><%= __("الوحدات") %> (<%= __(office.units.length) %>)</h3>
+    <h3 class="pt-subhead"><%= __("الوحدات") %> <span class="pt-count pt-count--soft"><%= __(office.units.length) %></span></h3>
     <% if (office.units.length) { %>
-      <ul class="item-list">
+      <ul class="pt-units">
         <% office.units.forEach(function (u) { %>
-          <li class="item">
-            <div class="item__title"><%= __(u.label) %> <span class="badge badge--unit-<%= __(u.status) %>"><%= __(unitStatusLabels[u.status]) %></span></div>
-            <p class="item__meta"><%= __(u.building_name ? `${u.building_name} · ` : '') %><%= __(u.city) %></p>
-          </li>
+          <li><span class="pt-units__icon"><%- picon('home') %></span><div><b><%= __(u.label) %></b><span class="muted"><%= __(u.building_name ? `${u.building_name} · ` : '') %><%= __(u.city) %></span></div><span class="badge badge--unit-<%= __(u.status) %>"><%= __(unitStatusLabels[u.status]) %></span></li>
         <% }) %>
       </ul>
     <% } else { %>
@@ -80,4 +107,4 @@
   </section>
 <% }) %>
 
-<p class="muted"><%= __("هذه الصفحة للاطلاع فقط. لأي تعديل تواصل مع المكتب.") %></p>
+<p class="muted pt-footnote"><%= __("هذه الصفحة للاطلاع فقط. لأي تعديل تواصل مع المكتب.") %></p>

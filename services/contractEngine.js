@@ -132,6 +132,20 @@ function describeContract(contract, today, rules = RULES) {
   };
 }
 
+/**
+ * How far through its term a contract is, as a whole percent 0..100 (0 before
+ * the start, 100 after the end day). For progress bars only.
+ */
+function termProgress(contract, today) {
+  const start = requireDate(contract.start_date, 'start_date');
+  const end = requireDate(contract.end_date, 'end_date');
+  const total = daysBetween(start, end) + 1;
+  const done = daysBetween(start, requireDate(today, 'today'));
+  if (total <= 0 || done <= 0) return 0;
+  if (done >= total) return 100;
+  return Math.floor((done * 100) / total);
+}
+
 // ------------------------------------------------------------ rent change
 
 /**
@@ -424,6 +438,7 @@ module.exports = {
   daysUntil,
   describeDeadlines,
   classifyContract,
+  termProgress,
   describeContract,
   rentChangePolicy,
   termMonths,

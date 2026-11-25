@@ -456,3 +456,13 @@ test('Hijri and Arabic Gregorian are display strings, stable for the same input'
   assert.equal(engine.formatGregorianAr('2025-09-25'), gregorian);
   assert.throws(() => engine.formatHijri('2025-02-30'), isCode('invalid_date'));
 });
+
+test('termProgress: 0 before the start, 100 after the end, whole percent in between', () => {
+  const engine = require('../services/contractEngine');
+  const c = { start_date: '2026-01-01', end_date: '2026-12-31' };
+  assert.equal(engine.termProgress(c, '2025-12-31'), 0);
+  assert.equal(engine.termProgress(c, '2026-01-01'), 0);
+  assert.equal(engine.termProgress(c, '2026-07-02'), 49);
+  assert.equal(engine.termProgress(c, '2026-12-31'), 99);
+  assert.equal(engine.termProgress(c, '2027-01-01'), 100);
+});

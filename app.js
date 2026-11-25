@@ -39,6 +39,23 @@ app.locals.__ = (text, vars) => require('./services/tr').translate('ar', text, v
 app.locals.lang = 'ar';
 app.locals.dir = 'rtl';
 app.locals.cityGroups = require('./config/saudiCities').CITY_GROUPS;
+// Small line icons for the landlord and tenant pages (no user text inside).
+const PORTAL_ICONS = {
+  home: '<path d="M3 11 12 4l9 7v9H5v-9"/>',
+  wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+  message: '<path d="M4 5h16v11H9l-5 4z"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  star: '<path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  doc: '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',
+  building: '<path d="M4 21V5l8-2v18M12 9h8v12M8 8v.01M8 12v.01M8 16v.01M16 13v.01M16 17v.01M2 21h20"/>',
+  alert: '<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  wallet: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+};
+app.locals.picon = (name) => `<svg class="picon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${PORTAL_ICONS[name] || ''}</svg>`;
 app.locals.riyadhDay = (at) => (at ? require('./utils/time').riyadhNow(new Date(at)).slice(0, 10) : '');
 app.locals.otherCity = require('./config/saudiCities').OTHER_CITY;
 

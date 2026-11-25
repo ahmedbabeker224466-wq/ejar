@@ -33,6 +33,7 @@ function describe(contract, today) {
   return {
     ...described,
     live: isLive(contract),
+    progress: engine.termProgress(contract, today),
     policy: engine.rentChangePolicy({ city: contract.city, today, endDate: contract.end_date }),
     hijri: { start: engine.formatHijri(contract.start_date), end: engine.formatHijri(contract.end_date) },
   };

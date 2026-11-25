@@ -261,12 +261,12 @@ test('tenant joins with the contract code and sees dates, countdown, decision de
   assert.equal(page.status, 200);
   const [[c]] = await db.pool.query('SELECT start_date, end_date FROM contracts WHERE id = ?', [contractId]);
   assert.ok(page.text.includes(c.start_date) && page.text.includes(c.end_date));
-  assert.ok(page.text.includes(`باقي ${arCount(engine.daysUntil(TODAY, c.end_date), 'يوم')} على نهاية العقد`));
+  assert.ok(page.text.includes(`<b>${engine.daysUntil(TODAY, c.end_date)}</b> يوماً على نهاية العقد`));
   assert.ok(page.text.includes(engine.noticeDeadline(c.end_date)));
-  assert.ok(page.text.includes(`${engine.formatHijri(c.end_date)} تقريبي`));
+  assert.ok(page.text.includes(engine.formatHijri(c.end_date)) && page.text.includes('(تقريبي)'));
   assert.match(page.text, /36,000\.00 ريال/);
   assert.match(page.text, /كل 3 أشهر/);
-  assert.equal((page.text.match(/class="payment"/g) || []).length, 4);
+  assert.equal((page.text.match(/class="payment[ "]/g) || []).length, 4);
   assert.match(page.text, /دفعت هذه الدفعة/);
   assert.match(page.text, /مكتب المستأجرين/);
 
