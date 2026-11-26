@@ -2235,7 +2235,7 @@ body.office-body, body.app-body {
 .adm-table td, .adm-table th { vertical-align: middle; }
 .adm-table th { font-size: .85rem; color: var(--color-text-muted); font-weight: 600; }
 .adm-table td a.adm-strong { font-weight: 700; color: var(--color-text); text-decoration: none; }
-.adm-table td a.adm-strong:hover { color: var(--color-primary); text-decoration: underline; }
+.adm-table td a.adm-strong:hover { color: var(--color-primary); }
 .adm-table .adm-sub { display: block; font-size: .82rem; color: var(--color-text-muted); margin-top: 2px; }
 .adm-table tbody tr:hover { background: var(--color-bg); }
 .adm-plans { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
@@ -2594,7 +2594,7 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 .office-body .office-banner--danger a { background: var(--color-danger, #c62828); }
 /* Office panel links: no underlines; standalone actions are buttons */
 .office-body .office-main a:not(.btn) { text-decoration: none; font-weight: 600; }
-.office-body .office-main a:not(.btn):hover { text-decoration: underline; text-underline-offset: 3px; }
+.office-body .office-main a:not(.btn):hover { text-decoration: none; }
 .office-body .back-link a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid #dfe4ef; border-radius: 999px; background: #fff; color: #1d3b8f; font-size: .9rem; }
 .office-body .back-link a:hover { text-decoration: none; background: #f2f5fc; }
 /* Office home: setup steps */
@@ -3117,7 +3117,6 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 .office-body .item-list .item:has(.item__title a, a.item__title):hover { background: #f5f8ff; }
 .office-body .item-list :is(.item__title a, a.item__title) { color: var(--ofx-ink, #0f1d45); font-weight: 600; }
 .office-body .item-list :is(.item__title a, a.item__title)::after { content: ''; position: absolute; inset: 0; z-index: 0; }
-.office-body .item-list .item:has(.item__title a, a.item__title):hover :is(.item__title a, a.item__title) { color: #1b6af5; }
 .office-body .item-list .item :is(form, button, .btn, details, select, input, .badge) { position: relative; z-index: 1; }
 .office-body .item-list .item a:not(.item__title):not(.item__title a) { position: relative; z-index: 1; }
 .office-body .item-list .item:has(.item__title a, a.item__title) { padding-inline-end: 104px; }
@@ -3149,3 +3148,5 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 @media (max-width: 900px) { .portal-body .pt-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .portal-body .pt-tiles { grid-template-columns: 1fr; } }
 @media (max-width: 560px) { .portal-body .ins-chart__col--odd .ins-chart__lbl { visibility: hidden; } .portal-body .ins-chart__lbl { font-size: .62rem; } }
+
+.office-body .item-list :is(.item__title a, a.item__title):hover { text-decoration: none; color: inherit; }
