@@ -78,7 +78,18 @@ router.get(['/', '/offices'], wrap(async (req, res) => {
     jsonLd: homeJsonLd(req, t),
     path: '/',
   });
-  const showcase = await listings.publicShowcase(db.pool, { limit: 10, cities: 0 }).catch(() => null);
+  // The home page puts public listings first (owner's request, Nov 2026); the office
+  // marketing page stays on /offices and takes over the home page while nothing is published.
+  const onHome = req.path !== '/offices';
+  const showcase = await listings.publicShowcase(db.pool, { limit: onHome ? 12 : 10, cities: onHome ? 3 : 0 }).catch(() => null);
+  if (onHome && showcase && showcase.total) {
+    return res.render('site/home-listings', {
+      ...shared(),
+      showcase,
+      displayTitle: listings.displayTitle, types: listings.TYPE_LABELS, fmt: money.formatHalalas, icon: listingIcons.icon,
+      layout: 'layouts/site', mkStd: false, title: t('brand'), metaTitle: t('meta.homeTitle'),
+    });
+  }
   return res.render('site/landing', {
     ...shared(),
     showcase,

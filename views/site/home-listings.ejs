@@ -1,0 +1,48 @@
+<% const check = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>'; %>
+<section class="hl-hero" aria-labelledby="hl-title">
+  <div class="mk-wrap">
+    <h1 id="hl-title"><%= __("عقارك للإيجار السنوي، من مكاتب العقار مباشرة") %></h1>
+    <p class="hl-hero__lead"><%= __("شقق وفلل ومحلات ومكاتب بصورها ومواصفاتها وإيجارها السنوي، واطلب المعاينة في يوم يناسبك.") %></p>
+    <form method="get" action="/listings" class="hl-search" role="search">
+      <label class="hl-search__field"><span><%= __("المدينة") %></span>
+        <select name="city" class="hl-search__control"><option value=""><%= __("كل المدن") %></option><%- include('../partials/city-options', { selected: '' }) %></select></label>
+      <label class="hl-search__field"><span><%= __("نوع العقار") %></span>
+        <select name="type" class="hl-search__control"><option value=""><%= __("كل الأنواع") %></option><% Object.keys(types).filter(function (k) { return k !== 'other'; }).forEach(function (k) { %><option value="<%= k %>"><%= __(types[k]) %></option><% }) %></select></label>
+      <label class="hl-search__field"><span><%= __("الغرف") %></span>
+        <select name="rooms" class="hl-search__control"><option value=""><%= __("كل الغرف") %></option><% ['1', '2', '3', '4', '5+'].forEach(function (r) { %><option value="<%= r %>"><%= r %></option><% }) %></select></label>
+      <label class="hl-search__field"><span><%= __("أعلى إيجار سنوي") %></span>
+        <input name="max_price" class="hl-search__control" inputmode="numeric" dir="ltr" maxlength="9" placeholder="<%= __("بالريال") %>"></label>
+      <button type="submit" class="hl-search__btn" aria-label="<%= __("بحث") %>"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span><%= __("بحث") %></span></button>
+    </form>
+  </div>
+</section>
+
+<div class="mk-wrap hl-body">
+  <nav class="city-chips" aria-label="<%= __("المدن") %>">
+    <% ['الرياض', 'جدة', 'مكة المكرمة', 'المدينة المنورة', 'الدمام', 'الخبر', 'أبها', 'الطائف'].forEach(function (c) { %><a href="/listings?city=<%= encodeURIComponent(c) %>" class="city-chip"><%= __(c) %></a><% }) %>
+  </nav>
+  <% if (showcase.topRated.length) { %><%- include('_prow', { rowId: 'hl-top', heading: __('الأعلى تقييماً'), rows: showcase.topRated, moreHref: '/listings?sort=rating&all=1' }) %><% } %>
+  <% showcase.byCity.forEach(function (c, i) { %><%- include('_prow', { rowId: 'hl-city-' + i, heading: (lang === 'en' ? 'In ' : 'في ') + __(c.city), rows: c.rows, moreHref: '/listings?city=' + encodeURIComponent(c.city) }) %><% }) %>
+  <% if (showcase.newest.length) { %><%- include('_prow', { rowId: 'hl-new', heading: __('أُضيفت حديثاً'), rows: showcase.newest, moreHref: '/listings?sort=newest' }) %><% } %>
+</div>
+
+<section class="hl-offices" aria-labelledby="hl-offices-title">
+  <div class="mk-wrap hl-offices__inner">
+    <div class="hl-offices__text">
+      <p class="hl-offices__eyebrow"><%= __("لمكاتب العقار") %></p>
+      <h2 id="hl-offices-title"><%= __(t('hero.title')) %></h2>
+      <p><%= __(t('hero.lead')) %></p>
+      <ul class="hl-offices__list">
+        <li><%- check %><%= __("تنبيه قبل آخر موعد لإشعار عدم التجديد") %></li>
+        <li><%- check %><%= __("متابعة الدفعات والمتأخرات لكل عقد") %></li>
+        <li><%- check %><%= __("بوابة للمالك وأخرى للمستأجر، وإعلاناتك تظهر هنا") %></li>
+      </ul>
+      <div class="hl-offices__actions">
+        <a href="/register" class="mk-btn mk-btn--accent mk-btn--lg"><%= __(t('hero.cta')) %></a>
+        <a href="<%= L('/offices') %>" class="mk-btn mk-btn--ghost mk-btn--lg"><%= __("تعرّف على ميعاد للمكاتب") %></a>
+      </div>
+      <p class="hl-offices__note"><%= __(t('hero.trial', { days: trialDays })) %></p>
+    </div>
+  </div>
+</section>
+<script src="<%= assetUrl('/js/carousel.js') %>" defer></script>

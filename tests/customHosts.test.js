@@ -205,10 +205,12 @@ test('main hosts behave exactly as before', { skip }, async () => {
     assert.equal(res.status, 200, host);
     assert.equal(res.headers['x-aqdi-office-host'], undefined, host);
     // The main host's home page is the platform's own page, never an office's own page.
-    assert.match(res.text, /<h1 id="hero-title">مواعيد عقود مكتبك محسوبة، والتذكير يصل في وقته<\/h1>/, host);
+    // (listings first while any are published, the office marketing page otherwise).
+    assert.match(res.text, /<h1 id="hero-title">مواعيد عقود مكتبك محسوبة، والتذكير يصل في وقته<\/h1>|<h1 id="hl-title">عقارك للإيجار السنوي، من مكاتب العقار مباشرة<\/h1>/, host);
     assert.match((await raw('/listings', { host })).text, /<h1>إعلانات العقارات للإيجار<\/h1>/, host);
   }
   assert.equal((await raw('/login', { host: MAIN })).status, 200);
+  assert.match((await raw('/offices', { host: MAIN })).text, /<h1 id="hero-title">/, '/offices always shows the office page');
 });
 
 test('an unknown host answers a plain 404 and reveals nothing', { skip }, async () => {
