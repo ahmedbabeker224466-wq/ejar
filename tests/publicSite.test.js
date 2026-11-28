@@ -143,7 +143,8 @@ test('listing form: title never holds a unit label; filters keep only valid valu
   assert.deepEqual([filters.city, filters.neighborhood, filters.type, filters.rooms.min, filters.rooms.exact, filters.minPrice, filters.maxPrice, filters.sort, filters.page], ['الرياض', 'الملقا', 'villa', 4, false, 100000, undefined, 'price_desc', 3]);
   const junk = listings.parseFilters({ city: "' OR 1=1", neighborhood: 'x'.repeat(500), type: 'castle', rooms: '99', sort: 'DROP', page: '-4' });
   assert.deepEqual([junk.city, junk.neighborhood, junk.type, junk.rooms, junk.sort, junk.page], [undefined, undefined, undefined, undefined, 'rating', 1]);
-  assert.deepEqual(listings.missingForPublish({ price: '0.00', description: '', neighborhood: '' }, 0), ['الإيجار السنوي', 'وصف قصير (10 أحرف على الأقل)', 'الحي', 'صورة واحدة على الأقل', 'رقم ترخيص الإعلان من الهيئة العامة للعقار']);
+  assert.deepEqual(listings.missingForPublish({ price: '0.00', description: '', neighborhood: '' }, 0), ['الإيجار السنوي', 'وصف قصير (10 أحرف على الأقل)', 'الحي', 'صورة واحدة على الأقل']);
+  assert.deepEqual(listings.missingForPublish({ price: '100.00', description: 'وصف قصير جداً', neighborhood: 'الملقا' }, 1), [], 'the licence number is optional (the office declares instead)');
   assert.deepEqual(listings.missingForPublish({ price: '100.00', description: 'وصف قصير جداً', neighborhood: 'الملقا', ad_license_number: '7100012345' }, 2), []);
   assert.equal(listings.validateListing({ ad_license_number: '٧١٠٠ ٠١٢٣٤٥' }).values.ad_license_number, '7100012345', 'Arabic digits and spaces are cleaned');
   assert.ok(listings.validateListing({ ad_license_number: 'ABC123' }).errors.ad_license_number);

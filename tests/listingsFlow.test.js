@@ -742,3 +742,25 @@ test('sitemap and robots: published listings and public pages only; private area
   assert.match(text, /^Sitemap: https:\/\/aqdi\.example\/sitemap\.xml$/m);
   assert.doesNotMatch(text, /Disallow: \/listings/, 'listings stay crawlable');
 });
+
+test('the ad licence number is optional: without one the office must tick the declaration, which is recorded', { skip }, async () => {
+  const o = await newOffice(40);
+  const id = await createListing(o);
+  await completeListing(o, id, { ad_license_number: '' });
+  assert.equal((await upload(o, id, [await jpeg(800, 600)])).status, 302);
+  const refused = await post(`/office/listings/${id}/publish`, o.cookie, {});
+  assert.equal(refused.status, 422);
+  assert.match(refused.text, /أكّد أن مكتبك مسؤول عن ترخيص هذا الإعلان/);
+  assert.match(refused.text, /name="ack" value="1"/, 'the declaration box is on the page');
+  const ok = await post(`/office/listings/${id}/publish`, o.cookie, { ack: '1' });
+  assert.equal(ok.location, `/office/listings/${id}?done=published`);
+  const [[row]] = await db.pool.query('SELECT status, ad_ack_at, ad_license_number FROM listings WHERE id = ?', [id]);
+  assert.equal(row.status, 'published');
+  assert.ok(row.ad_ack_at, 'the declaration time is stored');
+  assert.equal(row.ad_license_number, null);
+  const page = await publicText(`/listings/${id}`);
+  assert.doesNotMatch(page, /رقم ترخيص الإعلان/, 'no licence line without a number');
+  // A licensed listing shows the badge on its card and needs no declaration.
+  const second = await published(o, 1);
+  assert.match(await publicText('/listings?sort=newest'), new RegExp(`href="/listings/${second}"[\\s\\S]{0,1200}مرخّص`));
+});

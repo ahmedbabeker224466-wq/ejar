@@ -14,7 +14,12 @@
   <% } %>
   <div class="button-row">
     <% if (listing.status === 'draft' || listing.status === 'hidden') { %>
-      <form method="post" action="/office/listings/<%= __(listing.id) %>/publish"><button type="submit" class="btn btn--primary"><%= __(listing.status === 'hidden' ? __('نشر مرة أخرى') : __('نشر الإعلان')) %></button></form>
+      <form method="post" action="/office/listings/<%= __(listing.id) %>/publish" class="publish-form">
+        <% if (!listing.adLicense) { %>
+          <label class="check publish-ack"><input type="checkbox" name="ack" value="1" required> <span><%= __("أقرّ بأن مكتبي مسؤول عن الحصول على ترخيص هذا الإعلان من الهيئة العامة للعقار.") %></span></label>
+        <% } %>
+        <button type="submit" class="btn btn--primary"><%= __(listing.status === 'hidden' ? __('نشر مرة أخرى') : __('نشر الإعلان')) %></button>
+      </form>
     <% } %>
     <% if (listing.status === 'published') { %>
       <form method="post" action="/office/listings/<%= __(listing.id) %>/renew"><button type="submit" class="btn btn--primary"><%= __("تجديد") %> <%= __(days) %> <%= __("يوماً") %></button></form>
@@ -60,9 +65,9 @@
       <% Object.keys(featureLabels).forEach(function (f) { %><label class="check"><input type="checkbox" name="features" value="<%= __(f) %>" <%= __(values.features.indexOf(f) >= 0 ? 'checked' : '') %>> <%= __(featureLabels[f]) %></label><% }) %>
     </div>
     <% if (errors.features) { %><p class="field-error"><%= __(errors.features) %></p><% } %></fieldset>
-  <div class="field"><label for="ad-license"><%= __("رقم ترخيص الإعلان من الهيئة العامة للعقار") %></label>
+  <div class="field"><label for="ad-license"><%= __("رقم ترخيص الإعلان من الهيئة العامة للعقار (اختياري)") %></label>
     <input id="ad-license" name="ad_license_number" class="input" type="text" inputmode="numeric" dir="ltr" maxlength="24" value="<%= __(values.ad_license_number || '') %>" <%= __(errors.ad_license_number ? 'aria-invalid=true' : '') %>>
-    <p class="field-hint"><%= __("مطلوب قبل النشر، ويظهر في صفحة الإعلان. يصدر من منصة الهيئة لكل إعلان عقاري.") %></p>
+    <p class="field-hint"><%= __("اختياري. إن أضفته ظهر في صفحة الإعلان مع شارة «مرخّص». يصدر من منصة الهيئة لكل إعلان عقاري.") %></p>
     <% if (errors.ad_license_number) { %><p class="field-error"><%= __(errors.ad_license_number) %></p><% } %></div>
   <div class="field"><label for="description"><%= __("وصف قصير (حتى 800 حرف)") %></label>
     <textarea id="description" name="description" class="textarea" rows="5" maxlength="800"><%= values.description %></textarea>

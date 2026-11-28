@@ -110,7 +110,6 @@ function missingForPublish(listing, photoCount) {
   if (String(listing.description || '').trim().length < 10) missing.push('وصف قصير (10 أحرف على الأقل)');
   if (!listing.neighborhood) missing.push('الحي');
   if (photoCount < 1) missing.push('صورة واحدة على الأقل');
-  if (!listing.ad_license_number) missing.push('رقم ترخيص الإعلان من الهيئة العامة للعقار');
   return missing;
 }
 
@@ -274,7 +273,11 @@ async function update(pool, { officeId, id, values, actorId, ip }) {
  * platform admin, or a listing missing required parts.
  * Returns { ok, expiresAt } or { ok: false, error, message }.
  */
-async function publish(pool, { officeId, id, actorId, ip, now = new Date() }) {
+// The REGA ad licence number is optional since Nov 2026 (owner's decision): without one the
+// office must tick a declaration that it holds the licence the law requires (listings.ad_ack_at).
+const ACK_MESSAGE = 'أكّد أن مكتبك مسؤول عن ترخيص هذا الإعلان من الهيئة العامة للعقار، أو أضف رقم الترخيص.';
+
+async function publish(pool, { officeId, id, actorId, ip, acknowledged = false, now = new Date() }) {
   return withTransaction(pool, async (conn) => {
     const scoped = scopeToOffice(conn, officeId);
     const [row] = await scoped.query('SELECT * FROM listings WHERE id = ? AND office_id = :office_id FOR UPDATE', [id]);
@@ -290,12 +293,14 @@ async function publish(pool, { officeId, id, actorId, ip, now = new Date() }) {
     );
     const missing = missingForPublish(row, Number(n));
     if (missing.length) return { ok: false, error: 'incomplete', message: `أكمل أولاً: ${missing.join('، ')}.` };
+    const licensed = Boolean(row.ad_license_number);
+    if (!licensed && !acknowledged) return { ok: false, error: 'ack', message: ACK_MESSAGE };
     const expiresAt = daysAfter(now, rules.LISTING_DAYS);
     await scoped.query(
-      "UPDATE listings SET status = 'published', published_at = COALESCE(published_at, ?), expires_at = ? WHERE id = ? AND office_id = :office_id",
-      [now, expiresAt, id],
+      "UPDATE listings SET status = 'published', published_at = COALESCE(published_at, ?), expires_at = ?, ad_ack_at = ? WHERE id = ? AND office_id = :office_id",
+      [now, expiresAt, licensed ? null : now, id],
     );
-    await createAudit(conn).write(actorId, officeId, 'listing.publish', 'listing', Number(id), { status: row.status }, { status: 'published' }, ip);
+    await createAudit(conn).write(actorId, officeId, 'listing.publish', 'listing', Number(id), { status: row.status }, { status: 'published', licensed }, ip);
     return { ok: true, expiresAt };
   });
 }

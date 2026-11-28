@@ -162,7 +162,7 @@ function action(name, handler, done) {
 }
 
 const ctx = (req, listing) => ({ officeId: req.office.id, id: listing.id, actorId: req.user.id, ip: req.ip });
-action('publish', ({ req, listing }) => listings.publish(db.pool, ctx(req, listing)), 'published');
+action('publish', ({ req, listing }) => listings.publish(db.pool, { ...ctx(req, listing), acknowledged: req.body.ack === '1' }), 'published');
 action('hide', ({ req, listing }) => listings.hide(db.pool, ctx(req, listing)), 'hidden');
 action('renew', ({ req, listing }) => listings.renew(db.pool, ctx(req, listing)), 'renewed');
 

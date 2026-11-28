@@ -140,3 +140,4 @@ input.hl-search__control::placeholder { color: #9aa4bd; font-weight: 500; }
   .hl-offices h2 { font-size: 24px; }
 }
 .mk:has(.hl-offices) .mk-footer { margin-block-start: 0; border-top: 1px solid rgba(255, 255, 255, .08); }
+.pcard__lic { position: absolute; bottom: 10px; inset-inline-start: 10px; display: inline-flex; align-items: center; gap: 4px; background: rgba(21, 122, 67, .92); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; } .pcard__lic svg { width: 13px; height: 13px; }

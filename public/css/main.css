@@ -3150,3 +3150,4 @@ html[dir='ltr'] .office-body dd[dir='rtl'] { text-align: left; }
 @media (max-width: 560px) { .portal-body .ins-chart__col--odd .ins-chart__lbl { visibility: hidden; } .portal-body .ins-chart__lbl { font-size: .62rem; } }
 
 .office-body .item-list :is(.item__title a, a.item__title):hover { text-decoration: none; color: inherit; }
+.publish-form { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; } .publish-ack { font-size: .88rem; max-width: 520px; align-items: flex-start; }

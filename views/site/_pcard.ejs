@@ -4,6 +4,7 @@
       <% if (l.coverId) { %><img src="/listings/photos/<%= l.coverId %>/thumb" alt="<%= displayTitle(l, lang, __) %>" width="480" height="360" loading="lazy">
       <% } else { %><span class="pcard__noimg" aria-hidden="true"><%- icon('home') %></span><% } %>
       <span class="pcard__type"><%= __(types[l.unitType] || 'عقار') %></span>
+      <% if (l.adLicense) { %><span class="pcard__lic"><%- icon('shield') %><%= __("مرخّص") %></span><% } %>
       <% if (l.photoCount > 1) { %><span class="pcard__count"><%- icon('photos') %><%= l.photoCount %></span><% } %>
     </span>
     <span class="pcard__body">

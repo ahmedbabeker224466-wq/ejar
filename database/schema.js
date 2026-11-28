@@ -600,6 +600,7 @@ const TABLES = [
     'title VARCHAR(160) NOT NULL',
     'description TEXT NOT NULL',
     'ad_license_number VARCHAR(20) NULL',
+    'ad_ack_at DATETIME NULL', // published without a licence number: when the office declared it is responsible for the licence
     `price ${MONEY} NOT NULL`, // annual rent
     CURRENCY,
     'rega_ad_license VARCHAR(40) NULL', // unused: this app makes no claim about advertising licences
@@ -1330,6 +1331,8 @@ const COLUMN_ADDITIONS = [
   { table: 'vendors', column: 'is_active', definition: 'TINYINT(1) NOT NULL DEFAULT 1 AFTER notes' },
   { table: 'maintenance_requests', column: 'tenant_rating', definition: 'TINYINT UNSIGNED NULL AFTER closed_at' },
   { table: 'maintenance_requests', column: 'rated_at', definition: 'DATETIME NULL AFTER tenant_rating' },
+  // The ad licence number became optional; publishing without one records the office's declaration (Nov 2026).
+  { table: 'listings', column: 'ad_ack_at', definition: 'DATETIME NULL AFTER ad_license_number' },
 ];
 
 // ENUM values added after a table first shipped: MODIFY COLUMN runs only when
