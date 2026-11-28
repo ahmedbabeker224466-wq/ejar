@@ -1,5 +1,5 @@
 <section class="search-hero search-hero--rich">
-  <h1><%= __("إعلانات العقارات للإيجار") %></h1>
+  <h1><%= locals.cityPage ? (lang === 'en' ? 'Properties for rent in ' + __(filters.city) : 'عقارات للإيجار في ' + filters.city) : __("إعلانات العقارات للإيجار") %></h1>
   <p class="search-hero__lead"><%= __("شقق وفلل ومحلات للإيجار السنوي من مكاتب العقار، بالريال السعودي.") %></p>
   <form method="get" action="/listings" class="search-bar" novalidate>
     <div class="search-bar__main">
@@ -57,14 +57,17 @@
   <% }) %>
 </nav>
 <nav class="city-chips" aria-label="<%= __("المدن") %>">
+  <a href="/listings/favorites" class="city-chip city-chip--fav" data-fav-link><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.3C1.7 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.5 3.5 4.4 6.7-1.7 4.7-9.2 9.3-9.2 9.3z"/></svg><%= __("المفضلة") %> <span class="city-chip__n" data-fav-count hidden></span></a>
   <% ['الرياض', 'جدة', 'مكة المكرمة', 'المدينة المنورة', 'الدمام', 'الخبر', 'أبها', 'الطائف'].forEach(function (c) { %><a href="/listings?city=<%= encodeURIComponent(c) %>" class="city-chip<%= filters.city === c ? ' is-on' : '' %>"><%= __(c) %></a><% }) %>
 </nav>
 <% if (locals.showcase) { %>
   <% if (showcase.total) { %>
     <p class="results-count"><strong><%= showcase.total %></strong> <%= __("إعلان متاح للإيجار السنوي") %></p>
     <% if (showcase.topRated.length) { %><%- include('_prow', { rowId: 'row-top', heading: __('الأعلى تقييماً'), rows: showcase.topRated, moreHref: '/listings?sort=rating&all=1' }) %><% } %>
+    <% showcase.themes.forEach(function (th) { %><%- include('_prow', { rowId: 'row-' + th.key, heading: __(th.heading), rows: th.rows, moreHref: { reduced: '/listings?sort=newest', villas: '/listings?type=villa', furnished: '/listings?type=apartment', business: '/listings?type=shop' }[th.key] }) %><% }) %>
     <% showcase.byCity.forEach(function (c, i) { %><%- include('_prow', { rowId: 'row-city-' + i, heading: (lang === 'en' ? 'In ' : 'في ') + __(c.city), rows: c.rows, moreHref: '/listings?city=' + encodeURIComponent(c.city) }) %><% }) %>
     <% if (showcase.newest.length) { %><%- include('_prow', { rowId: 'row-new', heading: __('أُضيفت حديثاً'), rows: showcase.newest, moreHref: '/listings?sort=newest' }) %><% } %>
+    <%- include('_trust', { stats: showcase.stats }) %>
   <% } else { %>
     <%- include('_listings-empty') %>
   <% } %>
@@ -86,4 +89,5 @@
   <% } %>
 <% } %>
 <script src="<%= assetUrl('/js/carousel.js') %>" defer></script>
+<script src="<%= assetUrl('/js/favorites.js') %>" defer></script>
 <script src="<%= assetUrl('/js/listingForm.js') %>" defer></script>

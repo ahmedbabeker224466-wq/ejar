@@ -1,0 +1,17 @@
+<section class="search-hero search-hero--rich search-hero--slim">
+  <h1><%= __("المفضلة") %></h1>
+  <p class="search-hero__lead"><%= __("الإعلانات التي حفظتها على هذا الجهاز.") %></p>
+</section>
+<div data-fav-page data-asked="<%= asked ? '1' : '0' %>">
+  <% if (rows.length) { %>
+    <ul class="pgrid"><% rows.forEach(function (l) { %><%- include('_pcard', { l: l }) %><% }) %></ul>
+  <% } else { %>
+    <div class="plist-empty">
+      <span class="plist-empty__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.2-9.3C1.7 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.5 3.5 4.4 6.7-1.7 4.7-9.2 9.3-9.2 9.3z"/></svg></span>
+      <h2><%= __("لا توجد إعلانات محفوظة") %></h2>
+      <p><%= __("اضغط القلب على أي إعلان ليُحفظ هنا، فتعود إليه متى شئت.") %></p>
+      <div class="plist-empty__actions"><a href="/listings" class="btn btn--primary"><%= __("تصفح الإعلانات") %></a></div>
+    </div>
+  <% } %>
+</div>
+<script src="<%= assetUrl('/js/favorites.js') %>" defer></script>

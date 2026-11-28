@@ -1,3 +1,5 @@
+<% const ic = { office: '<path d="M4 20V6l8-3v17M12 9h8v11M8 8v.01M8 12v.01M8 16v.01M16 13v.01M16 17v.01"/>', key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>', search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>', shield: '<path d="M12 3 5 6v6c0 4.2 3 7.6 7 9 4-1.4 7-4.8 7-9V6z"/><path d="m9 12 2 2 4-4"/>', eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>' };
+   const svg = (k) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + ic[k] + '</svg>'; %>
 <section class="mk-phero mk-phero--sm" aria-labelledby="page-title">
   <div class="mk-wrap">
     <h1 id="page-title"><%= __(t('about.title')) %></h1>
@@ -5,10 +7,30 @@
   </div>
 </section>
 <section class="mk-lift">
-  <div class="mk-wrap">
-    <div class="mk-panel mk-prose">
+  <div class="mk-wrap ab">
+    <div class="ab-story">
+      <h2><%= __(t('about.storyTitle')) %></h2>
+      <p><%= __(t('about.story1')) %></p>
+      <p><%= __(t('about.story2')) %></p>
       <p class="mk-about-idea"><%= __(t('about.idea')) %></p>
-      <% if (seller.legal_name || seller.cr_number || seller.vat_number || seller.address) { %>
+    </div>
+
+    <h2 class="ab-h"><%= __(t('about.offerTitle')) %></h2>
+    <div class="ab-grid ab-grid--4">
+      <% [['office', 'offices'], ['key', 'landlords'], ['user', 'tenants'], ['search', 'seekers']].forEach(function (x) { %>
+        <article class="ab-card"><span class="ab-card__icon"><%- svg(x[0]) %></span><h3><%= __(t('about.offer.' + x[1])) %></h3><p><%= __(t('about.offer.' + x[1] + 'P')) %></p></article>
+      <% }) %>
+    </div>
+
+    <h2 class="ab-h"><%= __(t('about.valuesTitle')) %></h2>
+    <div class="ab-grid ab-grid--3">
+      <% [['shield', 'privacy'], ['eye', 'clarity'], ['flag', 'independence']].forEach(function (x) { %>
+        <article class="ab-card ab-card--soft"><span class="ab-card__icon"><%- svg(x[0]) %></span><h3><%= __(t('about.value.' + x[1])) %></h3><p><%= __(t('about.value.' + x[1] + 'P')) %></p></article>
+      <% }) %>
+    </div>
+
+    <% if (seller.legal_name || seller.cr_number || seller.vat_number || seller.address) { %>
+      <div class="mk-panel mk-prose ab-operator">
         <h2><%= __(t('about.operator')) %></h2>
         <dl class="mk-dl">
           <% if (seller.legal_name) { %><dt><%= __(t('about.legalName')) %></dt><dd><%= __(seller.legal_name) %></dd><% } %>
@@ -16,8 +38,15 @@
           <% if (seller.vat_number) { %><dt><%= __(t('about.vat')) %></dt><dd dir="ltr"><%= __(seller.vat_number) %></dd><% } %>
           <% if (seller.address) { %><dt><%= __(t('about.address')) %></dt><dd><%= __(seller.address) %></dd><% } %>
         </dl>
-      <% } %>
-      <p class="mk-page-cta"><a href="<%= L('/contact') %>" class="mk-btn mk-btn--brand mk-btn--lg"><%= __(t('contact.title')) %></a></p>
+      </div>
+    <% } %>
+
+    <div class="ab-cta">
+      <div><h2><%= __(t('about.ctaTitle')) %></h2><p><%= __(t('about.ctaText')) %></p></div>
+      <div class="ab-cta__actions">
+        <% if (support.email) { %><a href="mailto:<%= support.email %>" class="mk-btn mk-btn--ghost mk-btn--lg" dir="ltr"><%= support.email %></a><% } %>
+        <a href="<%= L('/contact') %>" class="mk-btn mk-btn--accent mk-btn--lg"><%= __(t('contact.title')) %></a>
+      </div>
     </div>
   </div>
 </section>

@@ -133,6 +133,7 @@ function present(row) {
     adLicense: row.ad_license_number || null,
     status: row.status,
     price: money.fromDecimal(row.price),
+    previousPrice: row.previous_price === undefined || row.previous_price === null ? null : money.fromDecimal(row.previous_price),
     currency: row.currency,
     unitType: row.unit_type,
     city: row.city,
@@ -154,6 +155,12 @@ function present(row) {
     photoCount: row.photo_count === undefined ? undefined : Number(row.photo_count),
     inquiryCount: row.inquiry_count === undefined ? undefined : Number(row.inquiry_count),
   };
+}
+
+/** Whole percent off when the rent was reduced (previous > price), else 0. */
+function discountPercent(listing) {
+  if (!listing || !listing.previousPrice || !(listing.previousPrice > listing.price)) return 0;
+  return Math.floor(((listing.previousPrice - listing.price) * 100) / listing.previousPrice);
 }
 
 // ------------------------------------------------------------ office side
@@ -254,12 +261,20 @@ async function update(pool, { officeId, id, values, actorId, ip }) {
   const next = { ...values };
   const changed = ['unit_type', 'city', 'neighborhood', 'rooms', 'bathrooms', 'area_sqm', 'price', 'description', 'ad_license_number', 'features']
     .filter((f) => String(f === 'features' ? JSON.stringify(next[f]) : next[f] ?? '') !== String(f === 'features' ? JSON.stringify(present(row).features) : f === 'price' ? money.fromDecimal(row.price) : row[f] ?? ''));
+  // A lower rent on a listing that was already published keeps the old one to show the reduction;
+  // a higher rent (or a draft) clears it, so a "reduction" is never invented.
+  const oldPrice = money.fromDecimal(row.price);
+  const wasLive = Boolean(row.published_at);
+  let previous = row.previous_price === null ? null : money.fromDecimal(row.previous_price);
+  if (next.price > oldPrice || !wasLive) previous = null;
+  else if (next.price < oldPrice) previous = Math.max(previous || 0, oldPrice);
+  if (previous !== null && !(previous > next.price)) previous = null;
   await scoped.query(
-    `UPDATE listings SET title = ?, unit_type = ?, city = ?, neighborhood = ?, rooms = ?, bathrooms = ?, area_sqm = ?, price = ?,
+    `UPDATE listings SET title = ?, unit_type = ?, city = ?, neighborhood = ?, rooms = ?, bathrooms = ?, area_sqm = ?, price = ?, previous_price = ?,
             description = ?, ad_license_number = ?, features = ? WHERE id = ? AND office_id = :office_id`,
     [
       titleFor(next), next.unit_type, next.city, next.neighborhood, next.rooms, next.bathrooms, next.area_sqm,
-      money.toDecimal(next.price), next.description, next.ad_license_number ?? null, JSON.stringify(next.features), id,
+      money.toDecimal(next.price), previous === null ? null : money.toDecimal(previous), next.description, next.ad_license_number ?? null, JSON.stringify(next.features), id,
     ],
   );
   // Names of the changed fields only: never the description text.
@@ -452,7 +467,7 @@ async function hideUnlicensed(pool, now = new Date()) {
 const PUBLIC_WHERE = `l.status = 'published' AND l.admin_hidden = 0 AND l.expires_at > ? AND o.listings_banned = 0 AND o.verification = 'approved'
   AND (o.status IN ('active','past_due') OR (o.status = 'trial' AND o.trial_ends_at > ?))`;
 
-const PUBLIC_COLUMNS = `l.id, l.office_id, l.unit_id, l.title, l.description, l.status, l.price, l.currency, l.unit_type, l.city, l.neighborhood,
+const PUBLIC_COLUMNS = `l.id, l.office_id, l.unit_id, l.title, l.description, l.status, l.price, l.previous_price, l.currency, l.unit_type, l.city, l.neighborhood,
   l.rooms, l.bathrooms, l.area_sqm, l.features, l.ad_license_number, l.published_at, l.expires_at, l.admin_hidden, l.admin_hidden_reason, l.updated_at, o.name AS office_name,
   o.public_slug AS office_slug, o.public_page_enabled AS office_page_on,
   (SELECT p.id FROM unit_photos p WHERE p.unit_id = l.unit_id ORDER BY p.is_cover DESC, p.sort_order ASC, p.id ASC LIMIT 1) AS cover_id,
@@ -559,7 +574,7 @@ function displayTitle(listing, lang, cityName = (c) => c) {
  * best rated and the newest public listings, and the three cities with the
  * most public listings with their own row. One PUBLIC_WHERE for all of it.
  */
-async function publicShowcase(pool, { limit = 12, cities = 3, now = new Date() } = {}) {
+async function publicShowcase(pool, { limit = 12, cities = 3, themed = true, now = new Date() } = {}) {
   const run = async (order, extra = '', params = []) => {
     const [rows] = await pool.query(
       `SELECT ${PUBLIC_COLUMNS} FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${PUBLIC_WHERE} ${extra} ORDER BY ${order} LIMIT ${Number(limit)}`,
@@ -574,8 +589,43 @@ async function publicShowcase(pool, { limit = 12, cities = 3, now = new Date() }
   );
   const [topRated, newest] = await Promise.all([run(SORTS.rating), run(SORTS.newest)]);
   const byCity = await Promise.all(cityRows.map(async (c) => ({ city: c.city, count: Number(c.n), rows: await run(SORTS.rating, 'AND l.city = ?', [c.city]) })));
-  const total = topRated.length ? (await pool.query(`SELECT COUNT(*) AS n FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${PUBLIC_WHERE}`, [now, now]))[0][0].n : 0;
-  return { total: Number(total), topRated, newest, byCity };
+  if (!topRated.length) return { total: 0, topRated, newest, byCity, themes: [], reduced: [], stats: null };
+  // Themed rows (shown only when they hold listings).
+  const themes = [];
+  if (themed) {
+    for (const [key, heading, extra, params] of [
+      ['reduced', 'عروض مخفّضة', 'AND l.previous_price IS NOT NULL AND l.previous_price > l.price', []],
+      ['villas', 'فلل للعائلات', "AND l.unit_type = 'villa'", []],
+      ['furnished', 'شقق مفروشة', "AND l.unit_type = 'apartment' AND JSON_CONTAINS(l.features, '\"furnished\"')", []],
+      ['business', 'محلات ومكاتب تجارية', "AND l.unit_type IN ('shop','office','warehouse')", []],
+    ]) {
+      const rows = await run(key === 'reduced' ? '(l.previous_price - l.price) / l.previous_price DESC, l.id DESC' : SORTS.rating, extra, params);
+      if (rows.length >= (key === 'reduced' ? 1 : 3)) themes.push({ key, heading, rows });
+    }
+  }
+  const [[stats]] = await pool.query(
+    `SELECT COUNT(*) AS listings, COUNT(DISTINCT l.office_id) AS offices, COUNT(DISTINCT l.city) AS cities
+       FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${PUBLIC_WHERE}`,
+    [now, now],
+  );
+  // Avoid rows that only repeat the first one: one city alone, or "newest" while everything fits in one row.
+  const cityRows2 = byCity.length > 1 ? byCity.filter((c) => c.rows.length >= 3) : [];
+  const newestRow = Number(stats.listings) > Number(limit) ? newest : [];
+  return {
+    total: Number(stats.listings), topRated, newest: newestRow, byCity: cityRows2, themes,
+    stats: { listings: Number(stats.listings), offices: Number(stats.offices), cities: Number(stats.cities) },
+  };
+}
+
+/** Public listings by id (the visitor's favourites, kept in their browser). Unknown or hidden ids are skipped. */
+async function publicByIds(pool, ids, now = new Date()) {
+  const clean = [...new Set((ids || []).map(Number).filter((n) => Number.isInteger(n) && n > 0))].slice(0, 60);
+  if (!clean.length) return [];
+  const [rows] = await pool.query(
+    `SELECT ${PUBLIC_COLUMNS} FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${PUBLIC_WHERE} AND l.id IN (?) ORDER BY l.published_at DESC, l.id DESC`,
+    [now, now, clean],
+  );
+  return rows.map(present);
 }
 
 /** Up to `limit` other public listings in the same city, newest first (the "similar" row on a listing page). */
@@ -594,15 +644,17 @@ async function similarPublic(pool, listing, { limit = 3, officeId = null } = {},
 /** Ids and timestamps of every public listing (for the sitemap). */
 async function publicIndex(pool, now = new Date(), limit = 5000) {
   const [rows] = await pool.query(
-    `SELECT l.id, l.updated_at FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${PUBLIC_WHERE} ORDER BY l.id DESC LIMIT ${Number(limit)}`,
+    `SELECT l.id, l.city, l.updated_at FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${PUBLIC_WHERE} ORDER BY l.id DESC LIMIT ${Number(limit)}`,
     [now, now],
   );
-  return rows.map((r) => ({ id: Number(r.id), updatedAt: r.updated_at }));
+  return rows.map((r) => ({ id: Number(r.id), city: r.city, updatedAt: r.updated_at }));
 }
 
 module.exports = {
   hideUnlicensed,
   publicShowcase,
+  publicByIds,
+  discountPercent,
   similarPublic,
   displayTitle,
   TYPE_LABELS,

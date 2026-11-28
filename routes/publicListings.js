@@ -27,7 +27,7 @@ const reportIp = hourly('report-ip', rules.REPORT_PER_IP_PER_HOUR, (req) => req.
 
 const { icon } = require('../services/listingIcons');
 
-const common = { displayTitle: listings.displayTitle, types: listings.TYPE_LABELS, featureLabels: listings.FEATURES, fmt: money.formatHalalas, reasons: inquiries.REPORT_REASONS, icon };
+const common = { discountPercent: listings.discountPercent, displayTitle: listings.displayTitle, types: listings.TYPE_LABELS, featureLabels: listings.FEATURES, fmt: money.formatHalalas, reasons: inquiries.REPORT_REASONS, icon };
 
 // ------------------------------------------------------------ search
 
@@ -41,18 +41,26 @@ router.get('/listings', wrap(async (req, res) => {
     max_price: req.query.max_price && filters.maxPrice ? req.query.max_price : '', rooms: filters.rooms ? `${filters.rooms.min}${filters.rooms.exact ? '' : '+'}` : '',
     sort: filters.sort === 'rating' ? '' : filters.sort,
   })) if (value) query.set(key, String(value));
+  // A city alone is its own indexable page (/listings?city=...); other filters are not indexed.
+  const cityPage = Boolean(filters.city) && query.toString() === new URLSearchParams({ city: filters.city }).toString();
+  const cityEn = req.lang === 'en' ? res.locals.__(filters.city || '') : filters.city;
   publicPage(req, res, {
-    description: 'تصفح إعلانات العقارات للإيجار: شقق وفلل ومحلات ومكاتب في مدن المملكة، مع الصور والمواصفات والإيجار السنوي.',
+    description: cityPage
+      ? (req.lang === 'en' ? `Apartments, villas, shops and offices for annual rent in ${cityEn}, with photos, details and the rent, from real estate offices.` : `شقق وفلل ومحلات ومكاتب للإيجار السنوي في ${filters.city}، بالصور والمواصفات والإيجار، من مكاتب العقار.`)
+      : 'تصفح إعلانات العقارات للإيجار: شقق وفلل ومحلات ومكاتب في مدن المملكة، مع الصور والمواصفات والإيجار السنوي.',
     page: result.page,
-    path: '/listings',
-    cache: !query.toString(),
+    path: cityPage ? `/listings?city=${encodeURIComponent(filters.city)}` : '/listings',
+    cache: !query.toString() || cityPage,
   });
-  if (query.toString()) res.locals.indexable = false; // filtered result lists are not indexed; the base list is
+  if (query.toString() && !cityPage) res.locals.indexable = false; // filtered result lists are not indexed; the base list and city pages are
+  if (cityPage) res.locals.metaTitle = req.lang === 'en' ? `Properties for rent in ${cityEn}` : `عقارات للإيجار في ${filters.city}`;
   // No filter and no page: themed rows (best rated, top cities, newest) instead of one grid.
   const showcase = !query.toString() && !req.query.all && result.page === 1 ? await listings.publicShowcase(db.pool) : null;
   return res.render('site/listings', {
     ...common,
     showcase,
+    cityPage,
+    discountPercent: listings.discountPercent,
     title: 'إعلانات العقارات للإيجار',
     ...result,
     filters,
@@ -133,6 +141,15 @@ async function find(req, res) {
   }
   return found;
 }
+
+// The visitor's favourites: ids kept in their own browser (public/js/favorites.js), never on the server.
+router.get('/listings/favorites', wrap(async (req, res) => {
+  const ids = String(req.query.ids || '').split(',').slice(0, 60);
+  const rows = await listings.publicByIds(db.pool, ids);
+  res.locals.indexable = false;
+  res.set('Cache-Control', 'no-store');
+  return res.render('site/favorites', { ...common, title: 'المفضلة', rows, asked: Boolean(req.query.ids), discountPercent: listings.discountPercent });
+}));
 
 router.get('/listings/:id', wrap(async (req, res) => {
   const found = await find(req, res);

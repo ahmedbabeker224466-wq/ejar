@@ -81,19 +81,19 @@ router.get(['/', '/offices'], wrap(async (req, res) => {
   // The home page puts public listings first (owner's request, Nov 2026); the office
   // marketing page stays on /offices and takes over the home page while nothing is published.
   const onHome = req.path !== '/offices';
-  const showcase = await listings.publicShowcase(db.pool, { limit: onHome ? 12 : 10, cities: onHome ? 3 : 0 }).catch(() => null);
+  const showcase = await listings.publicShowcase(db.pool, { limit: onHome ? 12 : 10, cities: onHome ? 3 : 0, themed: onHome }).catch(() => null);
   if (onHome && showcase && showcase.total) {
     return res.render('site/home-listings', {
       ...shared(),
       showcase,
-      displayTitle: listings.displayTitle, types: listings.TYPE_LABELS, fmt: money.formatHalalas, icon: listingIcons.icon,
+      displayTitle: listings.displayTitle, discountPercent: listings.discountPercent, types: listings.TYPE_LABELS, fmt: money.formatHalalas, icon: listingIcons.icon,
       layout: 'layouts/site', mkStd: false, title: t('brand'), metaTitle: t('meta.homeTitle'),
     });
   }
   return res.render('site/landing', {
     ...shared(),
     showcase,
-    displayTitle: listings.displayTitle, types: listings.TYPE_LABELS, fmt: money.formatHalalas, icon: listingIcons.icon,
+    displayTitle: listings.displayTitle, discountPercent: listings.discountPercent, types: listings.TYPE_LABELS, fmt: money.formatHalalas, icon: listingIcons.icon,
     rules: { noticeDays: ejarRules.NON_RENEWAL_NOTICE_DAYS, rentChangeDays: ejarRules.RENT_CHANGE_NOTICE_DAYS },
     emailSignup: emailCode.enabled(),
     layout: 'layouts/site', mkStd: false, title: t('brand'), metaTitle: t('meta.homeTitle'), plans: await planCards(), faqs: req.lang === 'en' ? [] : await siteContent.faqs(db.pool),
@@ -205,6 +205,8 @@ router.get('/sitemap.xml', wrap(async (req, res) => {
   return res.send(seo.sitemapXml(base, [
     ...siteContent.PUBLIC_PAGES,
     ...index.map((l) => ({ path: `/listings/${l.id}`, lastmod: l.updatedAt, changefreq: 'weekly', priority: '0.7' })),
+    // One page per city that has public listings (/listings?city=...).
+    ...[...new Set(index.map((l) => l.city).filter(Boolean))].map((c) => ({ path: `/listings?city=${encodeURIComponent(c)}`, changefreq: 'daily', priority: '0.8' })),
     ...posts.map((p) => ({ path: `/blog/${p.slug}`, lastmod: p.updated_at || p.published_at, changefreq: 'monthly', priority: '0.5' })),
     ...officePages.map((o) => ({ path: `/${o.slug}`, lastmod: o.updatedAt, changefreq: 'weekly', priority: '0.6' })),
   ]));

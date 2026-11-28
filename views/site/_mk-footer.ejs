@@ -8,18 +8,26 @@
   </div>
 </section>
 <% } %>
-<footer class="mk-footer">
+<% const sup = locals.supportInfo || {}; %>
+<footer class="mk-footer mk-ft">
   <div class="mk-wrap">
-    <div class="mk-footer__top">
-      <a href="<%= L('/') %>" class="mk-logo"><span class="mk-logo__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'f' }) %></span><span class="brand-word" lang="en" dir="ltr">miaad</span></a>
-    </div>
-    <div class="mk-footer__cols">
-      <div class="mk-footer__about"><p><%= __(t('footer.about')) %></p></div>
+    <div class="mk-ft__grid">
+      <div class="mk-ft__brand">
+        <a href="<%= L('/') %>" class="mk-logo"><span class="mk-logo__mark" aria-hidden="true"><%- include('../partials/brand-mark', { bid: 'f' }) %></span><span class="brand-word" lang="en" dir="ltr">miaad</span></a>
+        <p><%= __(t('footer.about')) %></p>
+        <% if (sup.email || sup.phone || sup.whatsapp) { %>
+          <ul class="mk-ft__contact">
+            <% if (sup.email) { %><li><a href="mailto:<%= sup.email %>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="m3.5 6 8.5 7 8.5-7"/></svg><span dir="ltr"><%= sup.email %></span></a></li><% } %>
+            <% if (sup.whatsapp) { %><li><a href="https://wa.me/<%= sup.whatsapp %>" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.4-5.6A8.5 8.5 0 1 1 21 12z"/></svg><span dir="ltr">+<%= sup.whatsapp %></span></a></li><% } %>
+            <% if (sup.phone) { %><li><a href="tel:<%= String(sup.phone).replace(/[^\d+]/g, '') %>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg><span dir="ltr"><%= sup.phone %></span></a></li><% } %>
+          </ul>
+        <% } %>
+      </div>
       <nav aria-label="<%= __(t('footer.product')) %>"><h2><%= __(t('footer.product')) %></h2>
         <a href="<%= L('/features') %>"><%= __(t('nav.features')) %></a>
-        <a href="<%= L('/') %>#how"><%= __(t('nav.how')) %></a>
         <a href="<%= L('/pricing') %>"><%= __(t('nav.pricing')) %></a>
         <a href="/listings"><%= __(t('nav.listings')) %></a>
+        <a href="<%= L('/offices') %>"><%= __("ميعاد للمكاتب") %></a>
       </nav>
       <nav aria-label="<%= __(t('footer.company')) %>"><h2><%= __(t('footer.company')) %></h2>
         <a href="<%= L('/about') %>"><%= __(t('footer.aboutUs')) %></a>
@@ -31,14 +39,14 @@
         <a href="/register"><%= __(t('nav.trial')) %></a>
         <a href="/join"><%= __(t('footer.join')) %></a>
       </nav>
-    </div>
-    <div class="mk-footer__base">
-      <nav class="mk-footer__legal" aria-label="<%= __(t('footer.legal')) %>">
+      <nav aria-label="<%= __(t('footer.legal')) %>"><h2><%= __(t('footer.legal')) %></h2>
         <a href="<%= L('/privacy') %>"><%= __(t('footer.privacy')) %></a>
         <a href="<%= L('/terms') %>"><%= __(t('footer.terms')) %></a>
         <a href="<%= L('/disclaimer') %>"><%= __(t('footer.disclaimerLink')) %></a>
         <a href="/sitemap.xml"><%= __(t('footer.sitemap')) %></a>
       </nav>
+    </div>
+    <div class="mk-ft__base">
       <p>© <%= __(new Date().getFullYear()) %> <%= __(t('footer.rights')) %> <a href="https://phillote.com" class="mk-footer__credit" lang="en" dir="ltr" rel="noopener">Phillote</a></p>
     </div>
   </div>

@@ -189,6 +189,13 @@ function setLegalReviewed(value) {
   legalReviewed = Boolean(value);
 }
 
+let supportState = { phone: String(process.env.SUPPORT_PHONE || '').trim(), email: String(process.env.SUPPORT_EMAIL || '').trim(), whatsapp: String(process.env.SUPPORT_WHATSAPP || '').replace(/\D/g, '') };
+
+/** Support contacts for the site footer (memory only, refreshed every 30 s). */
+function supportNow() {
+  return supportState;
+}
+
 /** The banner message right now (memory only, '' = none). */
 function bannerNow() {
   return bannerText;
@@ -202,6 +209,7 @@ async function refreshBanner(pool = db.pool) {
     bannerText = all[KEYS.bannerMessage] || '';
     setAnalytics(all[KEYS.analyticsSnippet] || '');
     legalReviewed = Boolean(all[KEYS.legalReviewed]);
+    supportState = await support(pool);
     await require('./aiSettings').refresh(pool);
     const [[row]] = await pool.query("SELECT COUNT(*) AS n FROM blog_posts WHERE status = 'published' AND published_at IS NOT NULL AND published_at <= ?", [new Date()]);
     blogLive = Number(row.n) > 0;
@@ -234,6 +242,7 @@ function cleanBanner(value) {
 
 module.exports = {
   KEYS,
+  supportNow,
   invalidate,
   get,
   seller,

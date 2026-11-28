@@ -600,7 +600,8 @@ const TABLES = [
     'title VARCHAR(160) NOT NULL',
     'description TEXT NOT NULL',
     'ad_license_number VARCHAR(20) NULL',
-    'ad_ack_at DATETIME NULL', // published without a licence number: when the office declared it is responsible for the licence
+    'ad_ack_at DATETIME NULL',
+    `previous_price ${MONEY} NULL`, // the rent before the latest reduction (shown struck through); cleared when the rent goes up // published without a licence number: when the office declared it is responsible for the licence
     `price ${MONEY} NOT NULL`, // annual rent
     CURRENCY,
     'rega_ad_license VARCHAR(40) NULL', // unused: this app makes no claim about advertising licences
@@ -1333,6 +1334,7 @@ const COLUMN_ADDITIONS = [
   { table: 'maintenance_requests', column: 'rated_at', definition: 'DATETIME NULL AFTER tenant_rating' },
   // The ad licence number became optional; publishing without one records the office's declaration (Nov 2026).
   { table: 'listings', column: 'ad_ack_at', definition: 'DATETIME NULL AFTER ad_license_number' },
+  { table: 'listings', column: 'previous_price', definition: 'DECIMAL(12,2) NULL AFTER price' },
 ];
 
 // ENUM values added after a table first shipped: MODIFY COLUMN runs only when

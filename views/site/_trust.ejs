@@ -1,0 +1,14 @@
+<% if (locals.stats) { %>
+<section class="ptrust" aria-label="<%= __("لماذا ميعاد") %>">
+  <div class="ptrust__nums">
+    <div><b><%= stats.listings %></b><span><%= __("إعلان متاح") %></span></div>
+    <div><b><%= stats.offices %></b><span><%= __("مكتب عقاري") %></span></div>
+    <div><b><%= stats.cities %></b><span><%= __("مدينة") %></span></div>
+  </div>
+  <ul class="ptrust__points">
+    <li><%- icon('office') %><span><b><%= __("من المكاتب مباشرة") %></b><%= __("كل إعلان ينشره مكتب عقاري مسجّل في ميعاد.") %></span></li>
+    <li><%- icon('shield') %><span><b><%= __("شارة «مرخّص»") %></b><%= __("تظهر على الإعلان الذي أضاف له المكتب رقم ترخيص الهيئة العامة للعقار.") %></span></li>
+    <li><%- icon('cal') %><span><b><%= __("معاينة بلا دفع") %></b><%= __("طلب المعاينة مجاني، ولا يُطلب منك أي دفع داخل الموقع.") %></span></li>
+  </ul>
+</section>
+<% } %>

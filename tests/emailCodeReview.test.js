@@ -310,7 +310,7 @@ test('a guest joins with the invite code and an email code: no phone needed', { 
   assert.equal(page.status, 200);
   assert.match(page.text, /name="code"/);
   assert.match(page.text, /name="email"/);
-  assert.match(page.text, /class="mk-footer"/, 'the site footer, like every public page');
+  assert.match(page.text, /class="mk-footer[ "]/, 'the site footer, like every public page');
 
   require('../services/invites').inviteGuard.reset();
   const bad = await http.request('/join', { method: 'POST', form: { code: 'ZZZZZZZZ', email: mail('join') } });

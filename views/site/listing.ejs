@@ -1,3 +1,4 @@
+<% const off = discountPercent(listing); %>
 <% const hasHood = listing.neighborhood && listing.neighborhood !== 'أخرى'; const place = lang === 'en' ? (hasHood ? listing.neighborhood + ', ' : '') + __(listing.city) : (hasHood ? 'حي ' + listing.neighborhood + '، ' : '') + listing.city; const monthly = Math.round(listing.price / 12); %>
 <article class="ld">
   <p class="ld__crumbs"><a href="/listings"><%= __("الإعلانات") %></a> <span aria-hidden="true">/</span> <a href="/listings?city=<%= encodeURIComponent(listing.city) %>"><%= __(listing.city) %></a></p>
@@ -7,7 +8,11 @@
       <h1><%= displayTitle(listing, lang, __) %></h1>
       <p class="ld__place"><%- icon('pin') %><%= place %></p>
     </div>
-    <% if (listing.adLicense) { %><p class="ld__licence"><%- icon('shield') %><span><%= __("رقم ترخيص الإعلان") %></span> <bdi dir="ltr"><%= __(listing.adLicense) %></bdi></p><% } %>
+    <div class="ld__tools">
+      <% if (listing.adLicense) { %><p class="ld__licence"><%- icon('shield') %><span><%= __("رقم ترخيص الإعلان") %></span> <bdi dir="ltr"><%= __(listing.adLicense) %></bdi></p><% } %>
+      <button type="button" class="ld-tool" data-share data-title="<%= displayTitle(listing, lang, __) %>"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg><span data-share-label><%= __("مشاركة") %></span></button>
+      <button type="button" class="ld-tool" data-fav="<%= listing.id %>" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.3C1.7 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.5 3.5 4.4 6.7-1.7 4.7-9.2 9.3-9.2 9.3z"/></svg><span><%= __("حفظ") %></span></button>
+    </div>
   </header>
 
   <% if (photos.length) { %>
@@ -32,8 +37,19 @@
     <% }) %>
   <% } %>
 
+  <nav class="ld-tabs" aria-label="<%= __("أقسام الإعلان") %>">
+    <a href="#ld-specs"><%= __("المواصفات والمزايا") %></a>
+    <a href="#ld-location"><%= __("الموقع") %></a>
+    <a href="#ld-office"><%= __("عن المكتب") %></a>
+    <a href="#inquiry" class="ld-tabs__cta"><%= __("اطلب معاينة") %></a>
+  </nav>
   <div class="ld__cols">
     <div class="ld__main">
+      <div class="ld-assure">
+        <span class="ld-assure__icon"><%- icon('shield') %></span>
+        <div><b><%= __("من المكتب مباشرة، والمعاينة مجانية") %></b><span><%= __("ينشر الإعلان مكتب عقاري مسجّل في ميعاد، ولا يُطلب منك أي دفع داخل الموقع.") %></span></div>
+      </div>
+      <div id="ld-specs"></div>
       <ul class="ld-facts">
         <li><%- icon('home') %><span><%= __("النوع") %></span><strong><%= __(types[listing.unitType] || __('عقار')) %></strong></li>
         <% if (listing.rooms !== null) { %><li><%- icon('bed') %><span><%= __("الغرف") %></span><strong><%= __(listing.rooms) %></strong></li><% } %>
@@ -55,25 +71,28 @@
         </section>
       <% } %>
 
-      <section class="ld-sec">
+      <section class="ld-sec" id="ld-location">
         <h2><%= __("الموقع") %></h2>
         <p class="ld__place"><%- icon('pin') %><%= place %></p>
         <p class="muted"><%= __("يُرسل المكتب العنوان الدقيق بعد تأكيد موعد المعاينة.") %></p>
       </section>
 
-      <section class="ld-sec ld-office">
-        <span class="ld-office__icon"><%- icon('office') %></span>
-        <div>
-          <span class="muted"><%= __("يعرض هذا العقار") %></span>
-          <strong><%= listing.officeName %></strong>
-          <% if (listing.officeRatingCount) { %><span class="stars-mini"><%- icon('star', 'li-icon star-icon') %><b><%= listing.officeRating %></b> <span>(<%= listing.officeRatingCount %> <%= __("تقييم") %>)</span></span><% } else { %><span class="muted"><%= __("لا توجد تقييمات بعد") %></span><% } %>
+      <section class="ld-sec" id="ld-office">
+        <h2><%= __("عن المكتب") %></h2>
+        <div class="ld-host">
+          <span class="ld-host__avatar" aria-hidden="true"><%= String(listing.officeName || '').trim().charAt(0) %></span>
+          <div class="ld-host__who">
+            <strong><%= listing.officeName %></strong>
+            <% if (listing.officeRatingCount) { %><span class="ld-host__rating"><%- icon('star') %><b><%= listing.officeRating %></b> <span>(<%= listing.officeRatingCount %> <%= __("تقييم") %>)</span></span><% } else { %><span class="muted"><%= __("لا توجد تقييمات بعد") %></span><% } %>
+          </div>
+          <% if (listing.officeSlug && !locals.isCustomHost) { %><a class="ld-host__btn" href="/<%= __(listing.officeSlug) %>"><%= __("صفحة المكتب وإعلاناته") %></a><% } %>
         </div>
-        <% if (listing.officeSlug && !locals.isCustomHost) { %><a class="btn btn--secondary btn--small" href="/<%= __(listing.officeSlug) %>"><%= __("كل إعلانات المكتب") %></a><% } %>
       </section>
     </div>
 
     <aside class="ld__side" id="inquiry">
       <div class="ld-book">
+        <% if (off) { %><p class="ld-book__deal"><s><%= fmt(listing.previousPrice).replace(/\.00$/, '') %> <%= __("ريال") %></s><span class="pcard__off"><%= __("خصم") %> <%= off %>%</span></p><% } %>
         <p class="ld-book__price"><strong><%= __(fmt(listing.price).replace(/\.00$/, '')) %></strong> <%= __("ريال سنوياً") %></p>
         <p class="muted ld-book__monthly"><%= __("ما يعادل") %> <%= __(fmt(monthly).replace(/\.00$/, '')) %> <%= __("ريال شهرياً") %></p>
         <% if (sent) { %>
@@ -118,9 +137,11 @@
   <% if (similar.length) { %>
     <section class="ld-similar">
       <h2><%= __("عقارات مشابهة في") %> <%= __(listing.city) %></h2>
-      <ul class="lgrid lgrid--3"><% similar.forEach(function (l) { %><%- include('_listing-card', { l, fmt, icon, types, displayTitle }) %><% }) %></ul>
+      <ul class="pgrid"><% similar.forEach(function (l) { %><%- include('_pcard', { l: l }) %><% }) %></ul>
     </section>
   <% } %>
 
   <p class="muted ld__foot"><%= __("الإعلان من المكتب المذكور، وميعاد وسيط تقني فقط.") %> <a href="/listings/<%= __(listing.id) %>/report" rel="nofollow"><%= __("الإبلاغ عن هذا الإعلان") %></a></p>
 </article>
+<script src="<%= assetUrl('/js/favorites.js') %>" defer></script>
+<script src="<%= assetUrl('/js/share.js') %>" defer></script>

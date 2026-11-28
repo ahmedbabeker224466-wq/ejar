@@ -1,4 +1,5 @@
-<li class="pcard">
+<% const off = locals.discountPercent ? discountPercent(l) : 0; %>
+<li class="pcard" data-listing="<%= l.id %>">
   <a href="/listings/<%= l.id %>" class="pcard__link">
     <span class="pcard__media">
       <% if (l.coverId) { %><img src="/listings/photos/<%= l.coverId %>/thumb" alt="<%= displayTitle(l, lang, __) %>" width="480" height="360" loading="lazy">
@@ -17,8 +18,13 @@
         <% if (l.bathrooms !== null) { %><span><%- icon('bath') %><%= l.bathrooms %></span><% } %>
         <% if (l.area !== null) { %><span><%- icon('area') %><%= l.area %> <%= __("م²") %></span><% } %>
       </span>
-      <span class="pcard__price"><b><%= fmt(l.price).replace(/\.00$/, '') %></b> <%= __("ريال") %> <small>/ <%= __("سنوياً") %></small></span>
+      <span class="pcard__price">
+        <% if (off) { %><s class="pcard__was"><%= fmt(l.previousPrice).replace(/\.00$/, '') %></s><% } %>
+        <b><%= fmt(l.price).replace(/\.00$/, '') %></b> <%= __("ريال") %> <small>/ <%= __("سنوياً") %></small>
+        <% if (off) { %><span class="pcard__off"><%= __("خصم") %> <%= off %>%</span><% } %>
+      </span>
       <span class="pcard__office"><%- icon('office') %><%= l.officeName %></span>
     </span>
   </a>
+  <button type="button" class="pcard__fav" data-fav="<%= l.id %>" aria-pressed="false" aria-label="<%= __("أضف إلى المفضلة") %>" title="<%= __("المفضلة") %>"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.3C1.7 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.5 3.5 4.4 6.7-1.7 4.7-9.2 9.3-9.2 9.3z"/></svg></button>
 </li>

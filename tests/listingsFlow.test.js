@@ -764,3 +764,35 @@ test('the ad licence number is optional: without one the office must tick the de
   const second = await published(o, 1);
   assert.match(await publicText('/listings?sort=newest'), new RegExp(`href="/listings/${second}"[\\s\\S]{0,1200}مرخّص`));
 });
+
+test('rent reductions show the old rent and the percent; favourites by id; a city alone is an indexable page', { skip }, async () => {
+  const o = await newOffice(41);
+  const id = await published(o, 0, { price: '40000' });
+  await completeListing(o, id, { price: '30000' });
+  let [[row]] = await db.pool.query('SELECT price, previous_price FROM listings WHERE id = ?', [id]);
+  assert.equal(Number(row.previous_price), 40000, 'the old rent is kept after a reduction');
+  const page = await publicText(`/listings/${id}`);
+  assert.match(page, /<s>40,000 ريال<\/s><span class="pcard__off">خصم 25%<\/span>/);
+  await completeListing(o, id, { price: '45000' });
+  [[row]] = await db.pool.query('SELECT previous_price FROM listings WHERE id = ?', [id]);
+  assert.equal(row.previous_price, null, 'a higher rent clears the reduction');
+  // A draft never shows a reduction.
+  const draft = await createListing(o, 1);
+  await completeListing(o, draft, { price: '50000' });
+  await completeListing(o, draft, { price: '20000' });
+  [[row]] = await db.pool.query('SELECT previous_price FROM listings WHERE id = ?', [draft]);
+  assert.equal(row.previous_price, null);
+
+  const fav = await getPublic(`/listings/favorites?ids=${id},${draft},abc`);
+  const favText = await fav.text();
+  assert.equal(fav.status, 200);
+  assert.match(favText, new RegExp(`href="/listings/${id}"`));
+  assert.doesNotMatch(favText, new RegExp(`href="/listings/${draft}"`), 'a draft is never listed');
+  assert.match(favText, /<meta name="robots" content="noindex/);
+
+  const city = await publicText(`/listings?city=${encodeURIComponent('الرياض')}`);
+  assert.match(city, /<h1>عقارات للإيجار في الرياض<\/h1>/);
+  assert.match(city, /<meta name="robots" content="index,follow">/);
+  assert.match(city, /<link rel="canonical" href="https:\/\/aqdi\.example\/listings\?city=%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6">/);
+  assert.match(await publicText('/sitemap.xml'), /listings\?city=%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6/);
+});
