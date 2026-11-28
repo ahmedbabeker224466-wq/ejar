@@ -1,135 +1,37 @@
-<h1 class="office-title"><%= __("أهلاً بك في") %> <%= __(office.name) %></h1>
-
-<section class="stats" aria-label="<%= __("أرقام المكتب") %>">
-  <a class="stat card stat--link" href="/office/contracts">
-    <p class="stat__value"><%= __(counts.activeContracts) %></p>
-    <p class="stat__label"><%= __("عقود سارية") %></p>
-  </a>
-  <a class="stat card stat--link" href="/office/contracts?stage=action">
-    <p class="stat__value"><%= __(counts.deadline90) %></p>
-    <p class="stat__label"><%= __("موعد القرار خلال 90 يوماً") %></p>
-  </a>
-  <div class="stat card">
-    <p class="stat__value"><%= __(counts.latePayments) %></p>
-    <p class="stat__label"><%= __("دفعات متأخرة") %></p>
-    <% if (counts.latePayments > 0) { %><p class="stat__sub"><%= __(Number(counts.lateTotal).toLocaleString('en-US')) %> <%= __("ريال") %></p><% } %>
+<%
+  const ic = {
+    contract: '<rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 9.5h18"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    card: '<rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19M7 15h3"/>',
+    home: '<path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M10 21v-5h4v5"/>',
+    wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+    person: '<circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    alert: '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 2.5 17.5A2 2 0 0 0 4.2 20.5h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+    inbox: '<path d="M4 5h16v11H9l-5 4z"/>',
+    check: '<path d="m5 12 5 5 9-10"/>'
+  };
+  const svg = (k) => '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ic[k] + '</svg>';
+  const fmt = (n) => Number(n || 0).toLocaleString('en-US');
+  let dayLabel = '';
+  try { dayLabel = new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'ar-SA-u-ca-gregory-nu-latn', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Riyadh' }).format(new Date()); } catch (e) { dayLabel = ''; }
+  const doneCount = setupSteps.filter(function (s) { return s.done; }).length;
+  const u = counts.units;
+  const pct = (n) => u.total ? Math.round(Number(n) / u.total * 100) : 0;
+  const actionTotal = board.length + pendingContracts.length;
+%>
+<div class="dh-head">
+  <div>
+    <% if (dayLabel) { %><p class="dh-head__hi"><%= dayLabel %></p><% } %>
+    <h1 class="office-title"><%= __("أهلاً بك في") %> <%= __(office.name) %></h1>
   </div>
-  <a class="stat card stat--link" href="/office/units?status=vacant">
-    <p class="stat__value"><%= __(counts.units.vacant) %></p>
-    <p class="stat__label"><%= __("وحدات شاغرة") %></p>
-  </a>
-  <div class="stat card">
-    <p class="stat__value"><%= __(counts.openMaintenance) %></p>
-    <p class="stat__label"><%= __("طلبات صيانة مفتوحة") %></p>
+  <div class="dh-quick">
+    <% if (can('contracts')) { %><a class="btn btn--primary" href="/office/contracts/new"><%- svg('plus') %><%= __("إضافة عقد") %></a><% } %>
+    <% if (can('units')) { %><a class="btn btn--secondary" href="/office/units/new"><%= __("إضافة وحدة") %></a><% } %>
+    <% if (can('landlords')) { %><a class="btn btn--secondary" href="/office/landlords/new"><%= __("إضافة مالك") %></a><% } %>
   </div>
-  <% if (can('landlords')) { %>
-    <a class="stat card stat--link" href="/office/landlords">
-      <p class="stat__value"><%= __(counts.landlordsActive) %></p>
-      <p class="stat__label"><%= __("الملّاك") %></p>
-    </a>
-  <% } %>
-</section>
+</div>
 
-<% if (can('units')) { %>
-  <section class="card office-section">
-    <h2><a href="/office/units"><%= __("الوحدات") %></a></h2>
-    <div class="units-summary">
-      <div class="mini-stat"><strong class="stat__units-total"><%= __(counts.units.total) %></strong> <%= __("كل الوحدات") %></div>
-      <div class="mini-stat"><strong><%= __(counts.units.vacant) %></strong> <%= __("شاغرة") %></div>
-      <div class="mini-stat"><strong><%= __(counts.units.rented) %></strong> <%= __("مؤجرة") %></div>
-      <div class="mini-stat"><strong><%= __(counts.units.maintenance) %></strong> <%= __("تحت الصيانة") %></div>
-    </div>
-    <% if (counts.units.usageText) { %><p class="muted"><%= __("حد الباقة:") %> <%= __(counts.units.usageText) %></p><% } %>
-  </section>
-<% } %>
-
-<section class="card office-section">
-  <h2><%= __("يحتاج إجراء") %></h2>
-  <div class="units-summary">
-    <div class="mini-stat"><strong class="pending-requests"><%= __(pending.requests) %></strong> <%= __("طلبات جديدة من المستأجرين") %></div>
-    <div class="mini-stat"><strong class="pending-reported"><%= __(pending.reported) %></strong> <%= __("دفعات أبلغ عنها المستأجر بانتظار التأكيد") %></div>
-  </div>
-  <% if (pendingContracts.length) { %>
-    <ul class="board">
-      <% pendingContracts.forEach(function (c) { %>
-        <li class="board__row">
-          <div>
-            <strong><%= __(c.unit_label || __('وحدة')) %></strong>
-            <p class="muted board__days"><%= __([Number(c.requests) ? `${c.requests} طلب جديد` : '', Number(c.reported) ? `${c.reported} دفعة بانتظار التأكيد` : ''].filter(Boolean).join(' · ')) %></p>
-          </div>
-          <a class="btn btn--secondary btn--small" href="/office/contracts/<%= __(c.id) %>#feedback"><%= __("فتح العقد") %></a>
-        </li>
-      <% }) %>
-    </ul>
-  <% } %>
-  <% if (board.length) { %>
-    <ul class="board">
-      <% board.forEach(function (c) { %>
-        <li class="board__row">
-          <div>
-            <strong><%= __(c.unit_label || __('وحدة')) %></strong>
-            <span class="badge badge--stage-<%= __(c.status) %>"><%= __(stageLabels[c.status]) %></span>
-            <p class="muted board__days"><%= __(c.daysToNotice >= 0 ? `باقي ${c.daysToNotice} يوم على موعد القرار` : `فات موعد القرار منذ ${-c.daysToNotice} يوم`) %></p>
-          </div>
-          <a class="btn btn--secondary btn--small" href="/office/contracts/<%= __(c.id) %>"><%= __("فتح العقد") %></a>
-        </li>
-      <% }) %>
-    </ul>
-    <p><a href="/office/contracts?stage=action" class="btn btn--secondary btn--small"><%= __("عرض كل العقود التي تحتاج إجراء") %></a></p>
-  <% } else { %>
-    <p class="empty-state"><%= __("لا يوجد ما يحتاج إجراءً الآن. سنعرض هنا العقود التي يقترب موعد قرارها.") %></p>
-  <% } %>
-</section>
-
-<section class="card office-section" id="sent">
-  <h2><%= __("آخر الإشعارات المرسلة") %></h2>
-  <div class="units-summary">
-    <div class="mini-stat"><strong class="delivery-sent"><%= __(sent.counts.sent) %></strong> <%= __("أُرسلت") %></div>
-    <div class="mini-stat"><strong class="delivery-pending"><%= __(sent.counts.pending) %></strong> <%= __("بالانتظار") %></div>
-    <div class="mini-stat"><strong class="delivery-failed"><%= __(sent.counts.failed) %></strong> <%= __("فشلت (حاولنا ولم تصل)") %></div>
-    <div class="mini-stat"><strong class="delivery-skipped"><%= __(sent.counts.skipped) %></strong> <%= __("لم تُرسل (قناة غير مضبوطة)") %></div>
-  </div>
-  <p class="muted"><%= __("آخر 7 أيام، عبر البريد وواتساب وتيليجرام. التذكيرات تظهر دائماً داخل الموقع.") %></p>
-  <% if (sent.latest.length) { %>
-    <% var chName = { email: __('بريد'), whatsapp: __('واتساب'), telegram: __('تيليجرام') };
-       var seen = {}; var problems = [];
-       sent.latest.forEach(function (n) { n.deliveries.forEach(function (d) {
-         if (!d.reason || d.kind === 'sent') return;
-         var key = d.channel + '|' + d.kind + '|' + d.reason;
-         if (!seen[key]) { seen[key] = true; problems.push(d); }
-       }); }); %>
-    <% if (problems.length) { %>
-      <div class="delivery-why">
-        <ul class="delivery-reasons">
-          <% problems.forEach(function (d) { %>
-            <li class="delivery-reason delivery-reason--<%= d.kind %>"><strong><%= chName[d.channel] %>:</strong> <%= __({ not_configured: __('لم يُرسل لأن القناة غير مضبوطة'), failed: __('فشل الإرسال'), pending: __('بالانتظار') }[d.kind]) %>. <%= __(d.reason) %></li>
-          <% }) %>
-        </ul>
-        <a class="btn btn--secondary btn--small" href="<%= can('settings.office') ? '/office/settings/reminders' : '/settings/notifications' %>"><%= __("راجع إعدادات القنوات") %></a>
-      </div>
-    <% } %>
-    <ul class="sent-list">
-      <% sent.latest.forEach(function (n) { %>
-        <li class="sent-row">
-          <div class="sent-row__main">
-            <span class="sent-row__title"><%= __(n.title) %></span>
-            <span class="sent-row__meta"><%= __(kindLabels[n.kind] || '') %> · <span dir="ltr"><%= __(riyadhTime(n.created_at)) %></span></span>
-          </div>
-          <% if (n.deliveries.length) { %>
-            <span class="sent-row__channels">
-              <% n.deliveries.forEach(function (d) { %><span class="ch ch--<%= d.status %>" title="<%= __({ sent: __('أُرسل'), failed: __('فشل'), skipped: __('لم يُرسل'), pending: __('بالانتظار') }[d.status]) %>"><%= chName[d.channel] %></span><% }) %>
-            </span>
-          <% } %>
-        </li>
-      <% }) %>
-    </ul>
-  <% } else { %>
-    <p class="empty-state"><%= __("لم تُرسل إشعارات بعد. تبدأ التذكيرات تلقائياً كل صباح الساعة 7.") %></p>
-  <% } %>
-  <% if (can('settings.office')) { %><p><a href="/office/settings/reminders" class="btn btn--secondary"><%= __("إعدادات التذكيرات والقنوات") %></a></p><% } %>
-</section>
-
-<% const doneCount = setupSteps.filter(function (s) { return s.done; }).length; %>
 <% if (setupSteps.length && doneCount < setupSteps.length) { %>
   <section class="card office-section setup">
     <div class="setup__head">
@@ -150,3 +52,163 @@
     </ol>
   </section>
 <% } %>
+
+<section class="dh-kpis" aria-label="<%= __("أرقام المكتب") %>">
+  <a class="dh-kpi dh-kpi--blue" href="/office/contracts">
+    <span class="dh-kpi__icon"><%- svg('contract') %></span>
+    <p class="stat__value"><%= __(counts.activeContracts) %></p>
+    <p class="stat__label"><%= __("عقود سارية") %></p>
+  </a>
+  <a class="dh-kpi<%= counts.deadline90 > 0 ? ' dh-kpi--warn' : '' %>" href="/office/contracts?stage=action">
+    <span class="dh-kpi__icon"><%- svg('clock') %></span>
+    <p class="stat__value"><%= __(counts.deadline90) %></p>
+    <p class="stat__label"><%= __("موعد القرار خلال 90 يوماً") %></p>
+  </a>
+  <a class="dh-kpi<%= counts.latePayments > 0 ? ' dh-kpi--bad' : '' %>" href="<%= can('payments.read') ? '/office/payments' : '/office/contracts' %>">
+    <span class="dh-kpi__icon"><%- svg('card') %></span>
+    <p class="stat__value"><%= __(counts.latePayments) %></p>
+    <p class="stat__label"><%= __("دفعات متأخرة") %></p>
+    <% if (counts.latePayments > 0) { %><p class="stat__sub"><%= __(fmt(counts.lateTotal)) %> <%= __("ريال") %></p><% } %>
+  </a>
+  <a class="dh-kpi dh-kpi--good" href="/office/units?status=vacant">
+    <span class="dh-kpi__icon"><%- svg('home') %></span>
+    <p class="stat__value"><%= __(u.vacant) %></p>
+    <p class="stat__label"><%= __("وحدات شاغرة") %></p>
+  </a>
+  <a class="dh-kpi<%= counts.openMaintenance > 0 ? ' dh-kpi--warn' : '' %>" href="<%= can('maintenance') ? '/office/maintenance' : '/office' %>">
+    <span class="dh-kpi__icon"><%- svg('wrench') %></span>
+    <p class="stat__value"><%= __(counts.openMaintenance) %></p>
+    <p class="stat__label"><%= __("طلبات صيانة مفتوحة") %></p>
+  </a>
+  <% if (can('landlords')) { %>
+    <a class="dh-kpi" href="/office/landlords">
+      <span class="dh-kpi__icon"><%- svg('person') %></span>
+      <p class="stat__value"><%= __(counts.landlordsActive) %></p>
+      <p class="stat__label"><%= __("الملّاك") %></p>
+    </a>
+  <% } %>
+</section>
+
+<div class="dh-grid">
+  <div class="dh-col">
+    <section class="dh-panel" aria-labelledby="dh-action">
+      <div class="dh-panel__head">
+        <div>
+          <h2 id="dh-action"><%= __("يحتاج إجراء") %><% if (actionTotal) { %><span class="dh-count"><%= __(actionTotal) %></span><% } %></h2>
+          <p><%= __("طلبات جديدة من المستأجرين") %>: <strong class="pending-requests"><%= __(pending.requests) %></strong> · <%= __("دفعات بانتظار التأكيد") %>: <strong class="pending-reported"><%= __(pending.reported) %></strong></p>
+        </div>
+      </div>
+      <% if (pendingContracts.length || board.length) { %>
+        <% if (pendingContracts.length) { %>
+          <ul class="dh-rows">
+            <% pendingContracts.forEach(function (c) { %>
+              <li class="dh-row">
+                <span class="dh-row__dot dh-row__dot--req"><%- svg('inbox') %></span>
+                <span class="dh-row__main">
+                  <a class="dh-row__title dh-row__link" href="/office/contracts/<%= __(c.id) %>#feedback"><%= __(c.unit_label || __('وحدة')) %></a>
+                  <span class="dh-row__meta"><%= __([Number(c.requests) ? `${c.requests} طلب جديد` : '', Number(c.reported) ? `${c.reported} دفعة بانتظار التأكيد` : ''].filter(Boolean).join(' · ')) %></span>
+                </span>
+                <a class="btn btn--secondary btn--small" href="/office/contracts/<%= __(c.id) %>#feedback"><%= __("فتح العقد") %></a>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+        <% if (board.length) { %>
+          <ul class="board">
+            <% board.forEach(function (c) { %>
+              <li class="dh-row">
+                <span class="dh-row__dot dh-row__dot--<%= c.status %>"><%- svg(c.status === 'soon' ? 'clock' : 'alert') %></span>
+                <span class="dh-row__main">
+                  <a class="dh-row__title dh-row__link" href="/office/contracts/<%= __(c.id) %>"><%= __(c.unit_label || __('وحدة')) %></a>
+                  <span class="dh-row__meta"><%= __(c.daysToNotice >= 0 ? `باقي ${c.daysToNotice} يوم على موعد القرار` : `فات موعد القرار منذ ${-c.daysToNotice} يوم`) %></span>
+                </span>
+                <span class="badge badge--stage-<%= __(c.status) %>"><%= __(stageLabels[c.status]) %></span>
+                <a class="btn btn--secondary btn--small" href="/office/contracts/<%= __(c.id) %>"><%= __("فتح العقد") %></a>
+              </li>
+            <% }) %>
+          </ul>
+          <div class="dh-panel__foot"><a href="/office/contracts?stage=action" class="btn btn--secondary btn--small"><%= __("عرض كل العقود التي تحتاج إجراء") %></a></div>
+        <% } %>
+      <% } else { %>
+        <p class="dh-empty empty-state"><%- svg('check') %><span><%= __("لا يوجد ما يحتاج إجراءً الآن. سنعرض هنا العقود التي يقترب موعد قرارها.") %></span></p>
+      <% } %>
+    </section>
+
+    <section class="dh-panel" id="sent" aria-labelledby="dh-sent">
+      <div class="dh-panel__head">
+        <div>
+          <h2 id="dh-sent"><%= __("آخر الإشعارات المرسلة") %></h2>
+          <p><%= __("آخر 7 أيام، عبر البريد وواتساب وتيليجرام. التذكيرات تظهر دائماً داخل الموقع.") %></p>
+        </div>
+        <% if (can('settings.office')) { %><a href="/office/settings/reminders" class="btn btn--secondary btn--small"><%= __("الإعدادات") %></a><% } %>
+      </div>
+      <div class="dh-panel__body">
+        <div class="dh-dels">
+          <div class="dh-del"><strong class="delivery-sent"><%= __(sent.counts.sent) %></strong><span><%= __("أُرسلت") %></span></div>
+          <div class="dh-del"><strong class="delivery-pending"><%= __(sent.counts.pending) %></strong><span><%= __("بالانتظار") %></span></div>
+          <div class="dh-del<%= sent.counts.failed ? ' dh-del--bad' : '' %>"><strong class="delivery-failed"><%= __(sent.counts.failed) %></strong><span><%= __("فشلت (حاولنا ولم تصل)") %></span></div>
+          <div class="dh-del"><strong class="delivery-skipped"><%= __(sent.counts.skipped) %></strong><span><%= __("لم تُرسل (قناة غير مضبوطة)") %></span></div>
+        </div>
+        <% if (sent.latest.length) { %>
+          <% var chName = { email: __('بريد'), whatsapp: __('واتساب'), telegram: __('تيليجرام') };
+             var seen = {}; var problems = [];
+             sent.latest.forEach(function (n) { n.deliveries.forEach(function (d) {
+               if (!d.reason || d.kind === 'sent') return;
+               var key = d.channel + '|' + d.kind + '|' + d.reason;
+               if (!seen[key]) { seen[key] = true; problems.push(d); }
+             }); }); %>
+          <% if (problems.length) { %>
+            <div class="delivery-why">
+              <ul class="delivery-reasons">
+                <% problems.forEach(function (d) { %>
+                  <li class="delivery-reason delivery-reason--<%= d.kind %>"><strong><%= chName[d.channel] %>:</strong> <%= __({ not_configured: __('لم يُرسل لأن القناة غير مضبوطة'), failed: __('فشل الإرسال'), pending: __('بالانتظار') }[d.kind]) %>. <%= __(d.reason) %></li>
+                <% }) %>
+              </ul>
+              <a class="btn btn--secondary btn--small" href="<%= can('settings.office') ? '/office/settings/reminders' : '/settings/notifications' %>"><%= __("راجع إعدادات القنوات") %></a>
+            </div>
+          <% } %>
+        <% } else { %>
+          <p class="dh-note"><%= __("لم تُرسل إشعارات بعد. تبدأ التذكيرات تلقائياً كل صباح الساعة 7.") %></p>
+        <% } %>
+      </div>
+      <% if (sent.latest.length) { %>
+        <ul class="sent-list">
+          <% sent.latest.forEach(function (n) { %>
+            <li class="sent-row">
+              <div class="sent-row__main">
+                <span class="sent-row__title"><%= __(n.title) %></span>
+                <span class="sent-row__meta"><%= __(kindLabels[n.kind] || '') %> · <span dir="ltr"><%= __(riyadhTime(n.created_at)) %></span></span>
+              </div>
+              <% if (n.deliveries.length) { %>
+                <span class="sent-row__channels">
+                  <% n.deliveries.forEach(function (d) { %><span class="ch ch--<%= d.status %>" title="<%= __({ sent: __('أُرسل'), failed: __('فشل'), skipped: __('لم يُرسل'), pending: __('بالانتظار') }[d.status]) %>"><%= chName[d.channel] %></span><% }) %>
+                </span>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+  </div>
+
+  <div class="dh-col">
+    <% if (can('units')) { %>
+      <section class="dh-panel" aria-labelledby="dh-units">
+        <div class="dh-panel__head">
+          <h2 id="dh-units"><%= __("الوحدات") %></h2>
+          <a href="/office/units" class="btn btn--secondary btn--small"><%= __("عرض الوحدات") %></a>
+        </div>
+        <div class="dh-panel__body units-summary">
+          <p class="dh-occ__big"><strong class="stat__units-total"><%= __(u.total) %></strong> <span><%= __("كل الوحدات") %></span></p>
+          <div class="dh-occ" aria-hidden="true"><span class="is-rented pct-w-<%= pct(u.rented) %>"></span><span class="is-vacant pct-w-<%= pct(u.vacant) %>"></span><span class="is-maint pct-w-<%= pct(u.maintenance) %>"></span></div>
+          <ul class="dh-legend">
+            <li><i class="is-rented"></i><%= __("مؤجرة") %><strong><%= __(u.rented) %></strong></li>
+            <li><i class="is-vacant"></i><%= __("شاغرة") %><strong><%= __(u.vacant) %></strong></li>
+            <li><i class="is-maint"></i><%= __("تحت الصيانة") %><strong><%= __(u.maintenance) %></strong></li>
+          </ul>
+          <% if (u.usageText) { %><p class="dh-limit"><%= __("حد الباقة:") %> <%= __(u.usageText) %></p><% } %>
+        </div>
+      </section>
+    <% } %>
+  </div>
+</div>

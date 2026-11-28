@@ -469,11 +469,11 @@ test('dashboard unit numbers, checklist tick and sidebar highlight', { skip }, a
   await unitStatus.changeStatusByHand(a.scoped, ids[2], 'maintenance');
 
   const home = await http.request('/office', { cookie: a.cookie });
-  const summary = home.text.slice(home.text.indexOf('units-summary'), home.text.indexOf('يحتاج إجراء'));
-  assert.match(summary, /<strong class="stat__units-total">4<\/strong> كل الوحدات/);
-  assert.match(summary, /<strong>1<\/strong> شاغرة/);
-  assert.match(summary, /<strong>2<\/strong> مؤجرة/);
-  assert.match(summary, /<strong>1<\/strong> تحت الصيانة/);
+  const summary = home.text.slice(home.text.indexOf('units-summary'), home.text.indexOf('dh-legend') + 600);
+  assert.match(summary, /<strong class="stat__units-total">4<\/strong> <span>كل الوحدات/);
+  assert.match(summary, /شاغرة<strong>1<\/strong>/);
+  assert.match(summary, /مؤجرة<strong>2<\/strong>/);
+  assert.match(summary, /تحت الصيانة<strong>1<\/strong>/);
   assert.match(summary, /4 من 5 وحدة/);
   assert.match(home.text, /<li class="setup__item is-done">[\s\S]{0,400}أضف أول عقار أو وحدة/);
 
