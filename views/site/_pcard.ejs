@@ -1,0 +1,23 @@
+<li class="pcard">
+  <a href="/listings/<%= l.id %>" class="pcard__link">
+    <span class="pcard__media">
+      <% if (l.coverId) { %><img src="/listings/photos/<%= l.coverId %>/thumb" alt="<%= displayTitle(l, lang, __) %>" width="480" height="360" loading="lazy">
+      <% } else { %><span class="pcard__noimg" aria-hidden="true"><%- icon('home') %></span><% } %>
+      <span class="pcard__type"><%= __(types[l.unitType] || 'عقار') %></span>
+      <% if (l.photoCount > 1) { %><span class="pcard__count"><%- icon('photos') %><%= l.photoCount %></span><% } %>
+    </span>
+    <span class="pcard__body">
+      <span class="pcard__top">
+        <span class="pcard__place"><% const hood = l.neighborhood && l.neighborhood !== 'أخرى'; %><%= lang === 'en' ? (hood ? __(l.neighborhood) + ', ' : '') + __(l.city) : (hood ? 'حي ' + l.neighborhood + '، ' : '') + l.city %></span>
+        <% if (l.officeRatingCount) { %><span class="pcard__rating"><%- icon('star') %><b><%= l.officeRating %></b> <span>(<%= l.officeRatingCount %>)</span></span><% } %>
+      </span>
+      <span class="pcard__facts">
+        <% if (l.rooms !== null) { %><span><%- icon('bed') %><%= l.rooms %> <%= __("غرف") %></span><% } %>
+        <% if (l.bathrooms !== null) { %><span><%- icon('bath') %><%= l.bathrooms %></span><% } %>
+        <% if (l.area !== null) { %><span><%- icon('area') %><%= l.area %> <%= __("م²") %></span><% } %>
+      </span>
+      <span class="pcard__price"><b><%= fmt(l.price).replace(/\.00$/, '') %></b> <%= __("ريال") %> <small>/ <%= __("سنوياً") %></small></span>
+      <span class="pcard__office"><%- icon('office') %><%= l.officeName %></span>
+    </span>
+  </a>
+</li>

@@ -3256,5 +3256,15 @@
  "لا تكتب أرقاماً في الاسم.": "Do not put numbers in the name.",
  "اختر التخصص.": "Choose a trade.",
  "لا تكتب أرقام حسابات أو هويات في الملاحظات.": "Do not write account or ID numbers in the notes.",
- "ملاحظة للمكتب (اختياري)": "Note to the office (optional)"
+ "ملاحظة للمكتب (اختياري)": "Note to the office (optional)",
+ "سنوياً": "per year",
+ "خيارات أكثر": "More options",
+ "أُضيفت حديثاً": "Recently added",
+ "عقارات متاحة للإيجار الآن": "Properties available for rent now",
+ "عقارات متاحة للإيجار": "Properties available for rent",
+ "المدن": "Cities",
+ "الإعلانات في الطريق": "Listings are on the way",
+ "لا توجد إعلانات تطابق بحثك": "No listings match your search",
+ "تُنشر هنا عقارات الإيجار السنوي من مكاتب العقار المشتركة في ميعاد. جرّب مدينة أخرى، أو عد قريباً.": "Annual rentals from real estate offices on Mi3aad appear here. Try another city or check back soon.",
+ "أنت مكتب عقاري؟ انشر إعلاناتك": "Are you an office? Publish your listings"
 }

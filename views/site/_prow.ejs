@@ -1,0 +1,13 @@
+<section class="prow" aria-labelledby="<%= rowId %>">
+  <div class="prow__head">
+    <h2 id="<%= rowId %>"><%= heading %></h2>
+    <div class="prow__tools">
+      <% if (locals.moreHref) { %><a href="<%= moreHref %>" class="prow__more"><%= __("عرض الكل") %></a><% } %>
+      <button type="button" class="prow__arrow" data-scroll="-1" aria-label="<%= __("السابق") %>" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+      <button type="button" class="prow__arrow" data-scroll="1" aria-label="<%= __("التالي") %>" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+    </div>
+  </div>
+  <ul class="prow__track" data-track>
+    <% rows.forEach(function (l) { %><%- include('_pcard', { l: l }) %><% }) %>
+  </ul>
+</section>

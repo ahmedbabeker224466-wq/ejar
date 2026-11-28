@@ -13,6 +13,7 @@ const db = require('../config/db');
 const rules = require('../config/listings');
 const blog = require('../services/blog');
 const listings = require('../services/listings');
+const listingIcons = require('../services/listingIcons');
 const officeLink = require('../services/officeLink');
 const plans = require('../services/plans');
 const pricing = require('../services/pricing');
@@ -77,8 +78,11 @@ router.get(['/', '/offices'], wrap(async (req, res) => {
     jsonLd: homeJsonLd(req, t),
     path: '/',
   });
+  const showcase = await listings.publicShowcase(db.pool, { limit: 10, cities: 0 }).catch(() => null);
   return res.render('site/landing', {
     ...shared(),
+    showcase,
+    displayTitle: listings.displayTitle, types: listings.TYPE_LABELS, fmt: money.formatHalalas, icon: listingIcons.icon,
     rules: { noticeDays: ejarRules.NON_RENEWAL_NOTICE_DAYS, rentChangeDays: ejarRules.RENT_CHANGE_NOTICE_DAYS },
     emailSignup: emailCode.enabled(),
     layout: 'layouts/site', mkStd: false, title: t('brand'), metaTitle: t('meta.homeTitle'), plans: await planCards(), faqs: req.lang === 'en' ? [] : await siteContent.faqs(db.pool),

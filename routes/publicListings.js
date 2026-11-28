@@ -48,8 +48,11 @@ router.get('/listings', wrap(async (req, res) => {
     cache: !query.toString(),
   });
   if (query.toString()) res.locals.indexable = false; // filtered result lists are not indexed; the base list is
+  // No filter and no page: themed rows (best rated, top cities, newest) instead of one grid.
+  const showcase = !query.toString() && !req.query.all && result.page === 1 ? await listings.publicShowcase(db.pool) : null;
   return res.render('site/listings', {
     ...common,
+    showcase,
     title: 'إعلانات العقارات للإيجار',
     ...result,
     filters,

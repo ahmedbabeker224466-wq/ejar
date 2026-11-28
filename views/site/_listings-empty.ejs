@@ -1,0 +1,9 @@
+<div class="plist-empty">
+  <span class="plist-empty__icon" aria-hidden="true"><%- icon('home') %></span>
+  <h2><%= __(locals.filters && Object.keys(filters).some(function (k) { return k !== 'page' && k !== 'sort' && filters[k]; }) ? 'لا توجد إعلانات تطابق بحثك' : 'الإعلانات في الطريق') %></h2>
+  <p><%= __("تُنشر هنا عقارات الإيجار السنوي من مكاتب العقار المشتركة في ميعاد. جرّب مدينة أخرى، أو عد قريباً.") %></p>
+  <div class="plist-empty__actions">
+    <a href="/listings" class="btn btn--primary"><%= __("كل الإعلانات") %></a>
+    <a href="/register" class="btn btn--secondary"><%= __("أنت مكتب عقاري؟ انشر إعلاناتك") %></a>
+  </div>
+</div>

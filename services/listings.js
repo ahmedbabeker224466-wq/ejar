@@ -549,6 +549,30 @@ function displayTitle(listing, lang, cityName = (c) => c) {
   return `${TYPE_EN[listing.unitType] || TYPE_EN.other} for rent in ${hood}${cityName(listing.city)}`;
 }
 
+/**
+ * The public showcase (home page and the unfiltered /listings page): the
+ * best rated and the newest public listings, and the three cities with the
+ * most public listings with their own row. One PUBLIC_WHERE for all of it.
+ */
+async function publicShowcase(pool, { limit = 12, cities = 3, now = new Date() } = {}) {
+  const run = async (order, extra = '', params = []) => {
+    const [rows] = await pool.query(
+      `SELECT ${PUBLIC_COLUMNS} FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${PUBLIC_WHERE} ${extra} ORDER BY ${order} LIMIT ${Number(limit)}`,
+      [now, now, ...params],
+    );
+    return rows.map(present);
+  };
+  const [cityRows] = await pool.query(
+    `SELECT l.city, COUNT(*) AS n FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${PUBLIC_WHERE}
+      GROUP BY l.city ORDER BY n DESC, l.city LIMIT ${Number(cities)}`,
+    [now, now],
+  );
+  const [topRated, newest] = await Promise.all([run(SORTS.rating), run(SORTS.newest)]);
+  const byCity = await Promise.all(cityRows.map(async (c) => ({ city: c.city, count: Number(c.n), rows: await run(SORTS.rating, 'AND l.city = ?', [c.city]) })));
+  const total = topRated.length ? (await pool.query(`SELECT COUNT(*) AS n FROM listings l JOIN offices o ON o.id = l.office_id WHERE ${PUBLIC_WHERE}`, [now, now]))[0][0].n : 0;
+  return { total: Number(total), topRated, newest, byCity };
+}
+
 /** Up to `limit` other public listings in the same city, newest first (the "similar" row on a listing page). */
 async function similarPublic(pool, listing, { limit = 3, officeId = null } = {}, now = new Date()) {
   const where = [PUBLIC_WHERE, 'l.city = ?', 'l.id <> ?'];
@@ -573,6 +597,7 @@ async function publicIndex(pool, now = new Date(), limit = 5000) {
 
 module.exports = {
   hideUnlicensed,
+  publicShowcase,
   similarPublic,
   displayTitle,
   TYPE_LABELS,

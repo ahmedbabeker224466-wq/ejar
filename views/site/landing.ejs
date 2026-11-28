@@ -20,7 +20,7 @@
     </div>
     <% } %>
     <p class="mk-hero__note"><%= __(t('hero.trial', { days: trialDays })) %></p>
-    <p class="mk-hero__renter"><a href="/listings"><%= __(t('hero.renter')) %></a></p>
+    <p class="mk-hero__renter"><a href="/listings" class="mk-renter-btn"><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><%= __(t('hero.renter')) %></a></p>
 
     <figure class="mk-mock">
       <div class="mk-mock__screen" aria-hidden="true">
@@ -50,6 +50,14 @@
     </figure>
   </div>
 </section>
+<% if (showcase && showcase.total) { %>
+  <section class="mk-listings" aria-label="<%= __("عقارات متاحة للإيجار") %>">
+    <div class="mk-wrap">
+      <%- include('_prow', { rowId: 'home-listings', heading: __('عقارات متاحة للإيجار الآن'), rows: showcase.topRated, moreHref: '/listings' }) %>
+    </div>
+  </section>
+  <script src="<%= assetUrl('/js/carousel.js') %>" defer></script>
+<% } %>
 
 <section class="mk-sec" id="features" aria-labelledby="features-title">
   <div class="mk-wrap">
